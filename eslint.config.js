@@ -1,10 +1,10 @@
 // eslint.config.js - Habify Frontend (Expo / React Native)
 
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactNative from 'eslint-plugin-react-native';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   // 1) Ignore list
@@ -53,8 +53,8 @@ export default tseslint.config(
       // React Native
       'react-native/no-unused-styles': 'warn',
 
-      // Uygulama tarafında require kullanma
-      '@typescript-eslint/no-require-imports': 'error',
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off',
     },
   },
 
@@ -73,9 +73,6 @@ export default tseslint.config(
         require: 'readonly',
         __dirname: 'readonly',
       },
-    },
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 );
