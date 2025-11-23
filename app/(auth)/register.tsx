@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { authService } from '../../services/auth.service';
 
 export default function SignupScreen() {
   // 1. STATE
@@ -20,12 +21,9 @@ export default function SignupScreen() {
   const [birthDate, setBirthDate] = useState(''); 
   const [gender, setGender] = useState('');
   const [password, setPassword] = useState('');
-  
-  // API URL (iOS Simulator)
-  const API_URL = 'http://localhost:3000'; 
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. VALIDATION (Frontend Only)
+  // 2. VALIDATION 
   const validateForm = () => {
     // 1. Check if fields are empty
     if (!name || !email || !birthDate || !gender || !password) {
@@ -56,52 +54,32 @@ export default function SignupScreen() {
     return true;
   };
 
-  // --- API INTEGRATION ---
-  const handleRegister = async () => {
-    if (!validateForm()) return;
+    const handleRegister = async () => {
+      if (!validateForm()) return;
+      setIsLoading(true);
 
-    setIsLoading(true);
+      try {
+        const payload = {
+          name: name,
+          email: email,
+          password: password,
+          gender: gender.toLowerCase(),
+          birthDate: birthDate
+        };
 
-    try {
-      // 3. Prepare Payload
-      const payload = {
-        name: name,
-        email: email,
-        password: password,
-        gender: gender.toLowerCase(), 
-        birthDate: birthDate          
-      };
+        const data = await authService.register(payload);
 
-      // 4. Send Request to Backend
-      const response = await fetch(`${API_URL}/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      // 5. Handle Response
-      if (response.ok) {
         Alert.alert('Success', 'Account created successfully!');
         console.log('User created:', data);
-      } else {
-        const message = Array.isArray(data.message) 
-          ? data.message[0] 
-          : data.message;
-        Alert.alert('Registration Failed', message || 'Something went wrong');
+
+      } catch (error: any) {
+        Alert.alert('Registration Failed', error.message);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-    } catch (error) {
-      console.error('API Error:', error);
-      Alert.alert('Connection Error', 'Could not connect to the backend.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+ 
   return (
     // MAIN BACKGROUND GRADIENT
     <LinearGradient 
