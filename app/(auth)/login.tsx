@@ -1,30 +1,43 @@
-"use client";
+'use client';
 
-import { AntDesign, Ionicons } from "@expo/vector-icons";
-import Checkbox from "expo-checkbox";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { authService } from '@/services/auth.service';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
+import Checkbox from 'expo-checkbox';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
+} from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
-
-  const [email, setEmail] = useState("akcasueda@gmail.com");
-  const [password, setPassword] = useState("************");
+  // user input:
+  const [email, setEmail] = useState(''); // user will type
+  const [password, setPassword] = useState(''); // user will type
   const [remember, setRemember] = useState(true);
 
-  const handleLogin = () => {
-    // frontend-only for now 
-    // later navigate to home screen
-    router.push("/(personal)/home");
+  const handleLogin = async () => {
+    // basic frontend validation
+    if (!email || !password) {
+      Alert.alert('Missing fields', 'Please enter email and password.');
+      return;
+    }
+
+    try {
+      const data = await authService.login({ email, password });
+      // TODO: save data.accessToken & data.user
+      console.log('Login success:', data);
+      router.push('/(personal)/home');
+    } catch (error: any) {
+      Alert.alert('Login failed', error.message || 'Something went wrong.');
+    }
   };
 
   const handleGoogle = () => {
@@ -32,22 +45,13 @@ export default function LoginScreen() {
   };
 
   const handleApple = () => {
-    // TODO: integrate Apple auth 
+    // TODO: integrate Apple auth
   };
 
   return (
-    <LinearGradient
-      colors={["#061a3c", "#020b20"]}
-      style={styles.screen}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        <LinearGradient
-          colors={["#163b7b", "#081b47"]}
-          style={styles.card}
-        >
+    <LinearGradient colors={['#061a3c', '#020b20']} style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <LinearGradient colors={['#163b7b', '#081b47']} style={styles.card}>
           {/* Logo & title */}
           <View style={styles.logoWrapper}>
             <View style={styles.leafCircle}>
@@ -89,7 +93,7 @@ export default function LoginScreen() {
               <Checkbox
                 value={remember}
                 onValueChange={setRemember}
-                color={remember ? "#0ea5e9" : undefined}
+                color={remember ? '#0ea5e9' : undefined}
               />
               <Text style={styles.rememberText}>Remember me</Text>
             </View>
@@ -118,14 +122,14 @@ export default function LoginScreen() {
 
           {/* Apple button */}
           <TouchableOpacity style={styles.socialBtn} onPress={handleApple}>
-            <AntDesign name="apple" size={20} color="#ffffff" />            
+            <AntDesign name="apple" size={20} color="#ffffff" />
             <Text style={styles.socialText}>Continue with Apple</Text>
           </TouchableOpacity>
 
           {/* Bottom text for registration */}
           <View style={styles.bottomRow}>
             <Text style={styles.bottomText}>Don&apos;t have an account ? </Text>
-            <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
               <Text style={styles.bottomLink}>Register</Text>
             </TouchableOpacity>
           </View>
@@ -138,11 +142,11 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#020817",
+    backgroundColor: '#020817',
   },
   scroll: {
     flexGrow: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 32,
   },
@@ -152,7 +156,7 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   logoWrapper: {
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 32,
   },
   leafCircle: {
@@ -160,104 +164,104 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 1.2,
-    borderColor: "#ffffff",
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 8,
   },
   logoText: {
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 28,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   fieldGroup: {
     marginBottom: 18,
   },
   label: {
-    color: "#e5edff",
+    color: '#e5edff',
     marginBottom: 6,
     fontSize: 14,
   },
   input: {
-    backgroundColor: "#0f2c6b",
+    backgroundColor: '#0f2c6b',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 15,
   },
   rowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 24,
   },
   rememberRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
   rememberText: {
-    color: "#e5edff",
+    color: '#e5edff',
     fontSize: 13,
   },
   forgotText: {
-    color: "#60a5fa",
+    color: '#60a5fa',
     fontSize: 13,
   },
   primaryBtn: {
-    backgroundColor: "#007bff",
+    backgroundColor: '#007bff',
     borderRadius: 12,
     paddingVertical: 12,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 22,
   },
   primaryBtnText: {
-    color: "#ffffff",
-    fontWeight: "600",
+    color: '#ffffff',
+    fontWeight: '600',
     fontSize: 16,
   },
   dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 18,
   },
   dividerLine: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#475569",
+    backgroundColor: '#475569',
   },
   dividerText: {
-    color: "#9ca3af",
+    color: '#9ca3af',
     fontSize: 12,
     marginHorizontal: 8,
   },
   socialBtn: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    backgroundColor: "#0f2c6b",
+    backgroundColor: '#0f2c6b',
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
     marginBottom: 10,
   },
   socialText: {
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   bottomRow: {
-    flexDirection: "row",
-    justifyContent: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 12,
   },
   bottomText: {
-    color: "#9ca3af",
+    color: '#9ca3af',
     fontSize: 13,
   },
   bottomLink: {
-    color: "#3b82f6",
+    color: '#3b82f6',
     fontSize: 13,
   },
 });
