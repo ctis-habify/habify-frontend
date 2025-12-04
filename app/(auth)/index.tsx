@@ -1,7 +1,7 @@
 'use client';
 
 import { authService } from '@/services/auth.service';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -34,18 +34,10 @@ export default function LoginScreen() {
       const data = await authService.login({ email, password });
       // TODO: save data.accessToken & data.user
       console.log('Login success:', data);
-      router.push('/(personal)/home');
+      router.push('/(personal)/routines');
     } catch (error: any) {
       Alert.alert('Login failed', error.message || 'Something went wrong.');
     }
-  };
-
-  const handleGoogle = () => {
-    // TODO: integrate Google auth
-  };
-
-  const handleApple = () => {
-    // TODO: integrate Apple auth
   };
 
   return (
@@ -113,18 +105,6 @@ export default function LoginScreen() {
             <Text style={styles.dividerText}>Or continue with</Text>
             <View style={styles.dividerLine} />
           </View>
-
-          {/* Google button */}
-          <TouchableOpacity style={styles.socialBtn} onPress={handleGoogle}>
-            <AntDesign name="google" size={20} color="#ffffff" />
-            <Text style={styles.socialText}>Continue with Google</Text>
-          </TouchableOpacity>
-
-          {/* Apple button */}
-          <TouchableOpacity style={styles.socialBtn} onPress={handleApple}>
-            <AntDesign name="apple" size={20} color="#ffffff" />
-            <Text style={styles.socialText}>Continue with Apple</Text>
-          </TouchableOpacity>
 
           {/* Bottom text for registration */}
           <View style={styles.bottomRow}>

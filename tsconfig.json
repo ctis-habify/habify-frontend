@@ -3,7 +3,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "jsx": "react-native",
     "strict": true,
@@ -11,5 +13,10 @@
     "resolveJsonModule": true,
     "moduleResolution": "bundler"
   },
-  "include": ["**/*.ts", "**/*.tsx", "expo-env.d.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
+  ]
 }
