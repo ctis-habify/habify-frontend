@@ -216,21 +216,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginHorizontal: 8,
   },
-  socialBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#0f2c6b',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 10,
-  },
-  socialText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'center',
