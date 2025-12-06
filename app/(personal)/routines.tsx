@@ -10,34 +10,42 @@ import {
 
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
 import { RoutineRowProps } from '@/components/routines/RoutineRow';
+import { router, useRouter } from 'expo-router';
 
 
 const initialSportRoutines: RoutineRowProps[] = [
-  { name: 'Sport Routine 1', durationLabel: '40 Minutes' },
-  { name: 'Sport Routine 2', durationLabel: '8 Hours' },
-  { name: 'Sport Routine 3', durationLabel: '20 Minutes' },
-  { name: 'Sport Routine 4', durationLabel: '2 Hours' },
-  { name: 'Sport Routine 5', durationLabel: '10 Hours' },
-  { name: 'Sport Routine 6', durationLabel: '3 Hours' },
+  { id: '1', name: 'Sport Routine 1', durationLabel: '40 Minutes' },
+  { id: '2', name: 'Sport Routine 2', durationLabel: '8 Hours' },
+  { id: '3', name: 'Sport Routine 3', durationLabel: '20 Minutes' },
+  { id: '4', name: 'Sport Routine 4', durationLabel: '2 Hours' },
+  { id: '5', name: 'Sport Routine 5', durationLabel: '10 Hours' },
+  { id: '6', name: 'Sport Routine 6', durationLabel: '3 Hours' },
 ];
 
 
 const initialMusicRoutines: RoutineRowProps[] = [
-  { name: 'Music Routine 1', durationLabel: '40 Minutes' },
-  { name: 'Music Routine 2', durationLabel: '8 Hours' },
-  { name: 'Music Routine 3', durationLabel: '20 Minutes' },
-  { name: 'Music Routine 4', durationLabel: '2 Hours' },
-  { name: 'Music Routine 5', durationLabel: '10 Hours' },
-  { name: 'Music Routine 6', durationLabel: '3 Hours' },
+  { id: '7', name: 'Music Routine 1', durationLabel: '40 Minutes' },
+  { id: '8', name: 'Music Routine 2', durationLabel: '8 Hours' },
+  { id: '9', name: 'Music Routine 3', durationLabel: '20 Minutes' },
+  { id: '10', name: 'Music Routine 4', durationLabel: '2 Hours' },
+  { id: '11', name: 'Music Routine 5', durationLabel: '10 Hours' },
+  { id: '12', name: 'Music Routine 6', durationLabel: '3 Hours' },
 ];
 
 export default function RoutinesScreen() {
+  const router = useRouter(); // <--- Initialize Router
+
   // local state for completion tracking
   const [sportRoutines, setSportRoutines] =
     useState<RoutineRowProps[]>(initialSportRoutines);
 
   const [musicRoutines, setMusicRoutines] =
     useState<RoutineRowProps[]>(initialMusicRoutines);
+
+ // Handle Navigation to Edit Screen
+  const handleRoutinePress = (id: string) => {
+    router.push(`/(personal)/routine_${id}`);
+  };
 
   // Sport checkbox toggle
   const handleSportToggle = (index: number, value: boolean) => {
@@ -88,6 +96,7 @@ export default function RoutinesScreen() {
           routines={sportRoutines}
           showWeekDays={false}
           onRoutineToggle={handleSportToggle}
+          onItemPress={handleRoutinePress}
         />
 
         {/* MUSIC ROUTINES CARD */}
@@ -98,6 +107,7 @@ export default function RoutinesScreen() {
           routines={musicRoutines}
           showWeekDays={true}
           onRoutineToggle={handleMusicToggle}
+          onItemPress={handleRoutinePress}
         />
 
         {/* CREATE BUTTON */}
