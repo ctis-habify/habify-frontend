@@ -1,164 +1,174 @@
-'use client';
-
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRoutines } from '../../hooks/useRoutines';
-import { RoutineList } from '../../types/routine';
-import { BACKGROUND_GRADIENT, COLORS } from '../theme';
+
+import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
+import { RoutineRowProps } from '@/components/routines/RoutineRow';
+
+
+const initialSportRoutines: RoutineRowProps[] = [
+  { name: 'Sport Routine 1', durationLabel: '40 Minutes' },
+  { name: 'Sport Routine 2', durationLabel: '8 Hours' },
+  { name: 'Sport Routine 3', durationLabel: '20 Minutes' },
+  { name: 'Sport Routine 4', durationLabel: '2 Hours' },
+  { name: 'Sport Routine 5', durationLabel: '10 Hours' },
+  { name: 'Sport Routine 6', durationLabel: '3 Hours' },
+];
+
+
+const initialMusicRoutines: RoutineRowProps[] = [
+  { name: 'Music Routine 1', durationLabel: '40 Minutes' },
+  { name: 'Music Routine 2', durationLabel: '8 Hours' },
+  { name: 'Music Routine 3', durationLabel: '20 Minutes' },
+  { name: 'Music Routine 4', durationLabel: '2 Hours' },
+  { name: 'Music Routine 5', durationLabel: '10 Hours' },
+  { name: 'Music Routine 6', durationLabel: '3 Hours' },
+];
 
 export default function RoutinesScreen() {
-  const router = useRouter();
-  const { routineLists, isLoading, fetchRoutineLists } = useRoutines();
+  // local state for completion tracking
+  const [sportRoutines, setSportRoutines] =
+    useState<RoutineRowProps[]>(initialSportRoutines);
 
-  useEffect(() => {
-    fetchRoutineLists();
-  }, [fetchRoutineLists]);
+  const [musicRoutines, setMusicRoutines] =
+    useState<RoutineRowProps[]>(initialMusicRoutines);
 
-  const handleCreateRoutine = () => {
-    router.push('/(personal)/create-routine');
+  // Sport checkbox toggle
+  const handleSportToggle = (index: number, value: boolean) => {
+    const updated = [...sportRoutines];
+    updated[index].completed = value;
+    setSportRoutines(updated);
   };
 
-  const renderRoutineItem = ({ item }: { item: RoutineList }) => (
-    <View style={styles.routineItem}>
-      <Text style={styles.routineTitle}>{item.title}</Text>
-      <Text style={styles.routineDate}>
-        Created: {new Date(item.created_at).toLocaleDateString()}
-      </Text>
-    </View>
-  );
+  // Music checkbox toggle
+  const handleMusicToggle = (index: number, value: boolean) => {
+    const updated = [...musicRoutines];
+    updated[index].completed = value;
+    setMusicRoutines(updated);
+  };
 
   return (
-    <LinearGradient colors={BACKGROUND_GRADIENT as any} style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Routines</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={handleCreateRoutine}
-          disabled={isLoading}
-        >
-          <Ionicons name="add" size={28} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
+    <LinearGradient
+      colors={['#031138', '#02162f']}
+      style={styles.container}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* --- Tabs --- */}
+        <View style={styles.tabWrapper}>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity style={[styles.tab, styles.tabActive]}>
+              <Text style={[styles.tabTextActive]}>Personal</Text>
+            </TouchableOpacity>
 
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ffffff" />
+            <TouchableOpacity style={styles.tab}>
+              <Text style={styles.tabText}>Collaborative</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      ) : routineLists.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="calendar-outline" size={64} color="#ffffff99" />
-          <Text style={styles.emptyText}>No routines yet</Text>
-          <Text style={styles.emptySubtext}>Create your first routine to get started</Text>
-          <TouchableOpacity style={styles.createFirstButton} onPress={handleCreateRoutine}>
-            <Text style={styles.createFirstButtonText}>Create Routine</Text>
-          </TouchableOpacity>
+
+        {/* Title */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
         </View>
-      ) : (
-        <FlatList
-          data={routineLists}
-          renderItem={renderRoutineItem}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
+
+        {/* SPORT ROUTINES CARD */}
+        <RoutineCategoryCard
+          tagLabel="Sport"
+          frequencyLabel="Weekly"
+          title="Sport Routines"
+          routines={sportRoutines}
+          showWeekDays={false}
+          onRoutineToggle={handleSportToggle}
         />
-      )}
+
+        {/* MUSIC ROUTINES CARD */}
+        <RoutineCategoryCard
+          tagLabel="Music"
+          frequencyLabel="Daily"
+          title="Music Routines"
+          routines={musicRoutines}
+          showWeekDays={true}
+          onRoutineToggle={handleMusicToggle}
+        />
+
+        {/* CREATE BUTTON */}
+        <TouchableOpacity style={styles.createBtn}>
+          <Text style={styles.createBtnText}>Create Routine</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+  container: { flex: 1 },
+  scroll: {
+    paddingHorizontal: 18,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.inputBlue,
+
+  tabWrapper: {
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 20,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#1d3a80',
+    borderRadius: 24,
+    padding: 4,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 26,
+    borderRadius: 20,
   },
-  emptyText: {
-    fontSize: 24,
+  tabActive: {
+    backgroundColor: '#ffffff',
+  },
+  tabText: {
+    color: '#cbd5f5',
     fontWeight: '600',
-    color: '#ffffff',
-    marginTop: 20,
-    marginBottom: 8,
+    fontSize: 14,
   },
-  emptySubtext: {
-    fontSize: 16,
-    color: '#ffffff99',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  createFirstButton: {
-    backgroundColor: COLORS.inputBlue,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  createFirstButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
+  tabTextActive: {
+    color: '#020617',
     fontWeight: '600',
+    fontSize: 14,
   },
-  listContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+
+  sectionHeader: {
+    backgroundColor: '#0b2a73',
+    borderRadius: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 18,
   },
-  routineItem: {
-    backgroundColor: COLORS.formBackground,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  routineTitle: {
+  sectionTitle: {
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textDark,
-    marginBottom: 4,
   },
-  routineDate: {
-    fontSize: 14,
-    color: '#6b7280',
+
+  createBtn: {
+    backgroundColor: '#001b4f',
+    borderRadius: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  createBtnText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
