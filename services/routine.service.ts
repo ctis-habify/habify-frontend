@@ -1,3 +1,11 @@
+import api from './api';
+import {
+  Routine,
+  RoutineList,
+  RoutineLog,
+  CreateRoutineDto,
+  UpdateRoutineDto,
+} from '../types/routine';
 const API_URL = 'http://localhost:3000'; // Adjust for Android Emulator (10.0.2.2) if needed
 
 export type Routine = {
@@ -22,6 +30,12 @@ export const routineService = {
     return response.json();
   },
 
+  // Get routine by ID
+  async getRoutineById (routineId: string): Promise<Routine> {
+    const res = await api.get(`/routines/${routineId}`);
+    return res.data;
+  },
+  
   async updateRoutine(id: string, payload: UpdateRoutinePayload, token: string) {
     const response = await fetch(`${API_URL}/routines/${id}`, {
       method: 'PATCH',
@@ -45,4 +59,58 @@ export const routineService = {
     if (!response.ok) throw new Error('Failed to delete routine');
     return true; // Success
   },
+
+  async createRoutine (data: CreateRoutineDto): Promise<Routine> {
+    const res = await api.post('/routines', data);
+    return res.data;
+  },
+
+  // Get routine lists (routine groups)
+  async getRoutineLists (): Promise<RoutineList[]> {
+    const res = await api.get('/routine-lists');
+    return res.data;
+  },
+
+  async createRoutineList: (
+    categoryId: number,
+    title: string
+  ): Promise<RoutineList> {
+    const res = await api.post('/routine-lists', { category_id: categoryId, title });
+    return res.data;
+  },
+
+  async getRoutineLogs: (routineId?: string): Promise<RoutineLog[]> {
+    const endpoint = routineId
+      ? `/routines/${routineId}/logs`
+      : '/routine-logs';
+    const res = await api.get(endpoint);
+    return res.data;
+  },
+
+  // Create routine log (mark routine as completed)
+  async createRoutineLog: (
+    routineId: string,
+    logDate: string,
+    verificationImageUrl?: string ): Promise<RoutineLog> {
+    const res = await api.post('/routine-logs', {
+      routine_id: routineId,
+      log_date: logDate,
+      verification_image_url: verificationImageUrl,
+    });
+    return res.data;
+  },
+
+  // Update routine log verification
+  async updateRoutineLog (
+    logId: number,
+    isVerified: boolean,
+    verificationImageUrl?: string
+  ): Promise<RoutineLog> {
+    const res = await api.patch(`/routine-logs/${logId}`, {
+      is_verified: isVerified,
+      verification_image_url: verificationImageUrl,
+    });
+    return res.data;
+  },
 };
+
