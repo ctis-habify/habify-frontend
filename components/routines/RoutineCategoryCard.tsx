@@ -14,6 +14,7 @@ type Props = {
   showWeekDays?: boolean;
   routines: RoutineRowProps[];
   onRoutineToggle?: (index: number, value: boolean) => void;
+  onItemPress?: (id: string) => void;
 };
 
 export const RoutineCategoryCard: React.FC<Props> = ({
@@ -23,6 +24,7 @@ export const RoutineCategoryCard: React.FC<Props> = ({
   showWeekDays = false,
   routines,
   onRoutineToggle,
+  onItemPress,
 }) => {
   // tüm rutinler tamamlandı mı?
   const allCompleted =
@@ -100,6 +102,7 @@ export const RoutineCategoryCard: React.FC<Props> = ({
           <RoutineRow
             {...routine}
             onToggle={(val) => onRoutineToggle?.(idx, val)}
+            onPress={() => onItemPress?.(routine.id)}
           />
           {idx !== routines.length - 1 && (
             <View style={styles.lightDivider} />

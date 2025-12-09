@@ -4,11 +4,13 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export type RoutineRowProps = {
+  id: string;
   name: string;
   completed?: boolean;
   durationLabel: string;  
   showCamera?: boolean;
   onToggle?: (newValue: boolean) => void;
+  onPress?: () => void;
 };
 
 export const RoutineRow: React.FC<RoutineRowProps> = ({
@@ -17,6 +19,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   durationLabel,
   showCamera = true,
   onToggle,
+  onPress,
 }) => {
   const [isChecked, setIsChecked] = useState(completed);
 
@@ -49,7 +52,12 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   };
 
   return (
-    <View style={styles.row}>
+    <TouchableOpacity
+      style={styles.row}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+    //<View style={styles.row}>
       <CircularCheckbox value={isChecked} onToggle={toggle} />
 
       <Text style={[styles.name, isChecked && styles.completedText]}>
@@ -69,7 +77,8 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
           <Text style={styles.badgeText}>{durationLabel}</Text>
         </View>
       )}
-    </View>
+    //</View>
+    </TouchableOpacity>
   );
 };
 
