@@ -1,22 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Modal,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { routineService } from '../../services/routine.service';
-// Assuming you have a way to get the token (e.g. context or store)
-// import { useAuth } from '../../hooks/useAuth'; 
 
 export default function EditRoutineScreen() {
   const { id } = useLocalSearchParams();
@@ -27,28 +22,26 @@ export default function EditRoutineScreen() {
   const [isLoading, setIsLoading] = useState(false);
   
   // Form State
-  const [name, setName] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [routine_name, setName] = useState('');
+  const [start_time, setStartTime] = useState('');
+  const [end_time, setEndTime] = useState('');
   const [category, setCategory] = useState('');
-
   // Fetch data on load (Mocked for now as we don't have the full context)
   useEffect(() => {
     // In a real app, fetch routine details by ID here
     setName('Sport Routine 1');
     setStartTime('08:00');
     setEndTime('09:00');
-    setCategory('Sport');
+    setCategory('Sport')
   }, [id]);
 
   const handleSave = async () => {
     setIsLoading(true);
     try {
       await routineService.updateRoutine(id as string, {
-        name,
-        startTime,
-        endTime,
-        // category requires mapping ID logic in backend, passing raw for now
+        routine_name,
+        start_time,
+        end_time,
       }, token);
       
       Alert.alert('Success', 'Routine updated successfully');
@@ -86,7 +79,7 @@ export default function EditRoutineScreen() {
     <View style={styles.container}>
       {/* Header / Close Button */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{name}</Text>
+        <Text style={styles.headerTitle}>{routine_name}</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={24} color="#333" />
         </TouchableOpacity>
@@ -124,7 +117,7 @@ export default function EditRoutineScreen() {
               <Text style={styles.label}>Routine Start Time</Text>
               <TextInput
                 style={styles.input}
-                value={startTime}
+                value={start_time}
                 onChangeText={setStartTime}
                 placeholder="00:00"
               />
@@ -133,7 +126,7 @@ export default function EditRoutineScreen() {
               <Text style={styles.label}>Routine End Time</Text>
               <TextInput
                 style={styles.input}
-                value={endTime}
+                value={end_time}
                 onChangeText={setEndTime}
                 placeholder="00:00"
               />
@@ -144,7 +137,7 @@ export default function EditRoutineScreen() {
           <Text style={styles.label}>Name</Text>
           <TextInput
             style={styles.input}
-            value={name}
+            value={routine_name}
             onChangeText={setName}
             placeholder="Routine Name"
           />

@@ -1,5 +1,3 @@
-// app/theme.ts - Tasarıma Uyumlu Merkezi Tema Dosyası
-
 export const COLORS = {
   // Arka Plan Gradient 
   gradientTop: '#2452a2', 

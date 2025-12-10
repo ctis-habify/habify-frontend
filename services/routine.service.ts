@@ -1,23 +1,11 @@
-import api from './api';
 import {
+  CreateRoutineDto,
   Routine,
   RoutineList,
-  RoutineLog,
-  CreateRoutineDto,
-  UpdateRoutineDto,
+  RoutineLog
 } from '../types/routine';
-const API_URL = 'http://localhost:3000'; // Adjust for Android Emulator (10.0.2.2) if needed
-
-export type Routine = {
-  id: string;
-  name: string;
-  category: string; // routine_group_id mapped name
-  startTime: string;
-  endTime: string;
-  frequency: 'Daily' | 'Weekly';
-  startDate: string;
-  description?: string;
-};
+import api from './api';
+const API_URL = 'http://localhost:3000';
 
 export type UpdateRoutinePayload = Partial<Omit<Routine, 'id'>>;
 
@@ -71,7 +59,7 @@ export const routineService = {
     return res.data;
   },
 
-  async createRoutineList: (
+  async createRoutineList (
     categoryId: number,
     title: string
   ): Promise<RoutineList> {
@@ -79,7 +67,7 @@ export const routineService = {
     return res.data;
   },
 
-  async getRoutineLogs: (routineId?: string): Promise<RoutineLog[]> {
+  async getRoutineLogs (routineId?: string): Promise<RoutineLog[]> {
     const endpoint = routineId
       ? `/routines/${routineId}/logs`
       : '/routine-logs';
@@ -88,10 +76,10 @@ export const routineService = {
   },
 
   // Create routine log (mark routine as completed)
-  async createRoutineLog: (
+  async createRoutineLog (
     routineId: string,
     logDate: string,
-    verificationImageUrl?: string ): Promise<RoutineLog> {
+    verificationImageUrl?: string ): Promise<RoutineLog>{
     const res = await api.post('/routine-logs', {
       routine_id: routineId,
       log_date: logDate,

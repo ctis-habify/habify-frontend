@@ -10,7 +10,7 @@ import {
 
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
 import { RoutineRowProps } from '@/components/routines/RoutineRow';
-import { router, useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 
 
 const initialSportRoutines: RoutineRowProps[] = [
@@ -44,7 +44,7 @@ export default function RoutinesScreen() {
 
  // Handle Navigation to Edit Screen
   const handleRoutinePress = (id: string) => {
-    router.push(`/(personal)/routine_${id}`);
+    router.push(`/(personal)/routine_${id}` as Href);
   };
 
   // Sport checkbox toggle
