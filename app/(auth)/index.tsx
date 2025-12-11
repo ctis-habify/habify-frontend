@@ -1,6 +1,6 @@
 'use client';
 
-import { authService } from '@/services/auth.service';
+import { useAuth } from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,18 +22,16 @@ export default function LoginScreen() {
   const [email, setEmail] = useState(''); // user will type
   const [password, setPassword] = useState(''); // user will type
   const [remember, setRemember] = useState(true);
-
+  const { login, loading } = useAuth();
   const handleLogin = async () => {
-    // basic frontend validation
     if (!email || !password) {
       Alert.alert('Missing fields', 'Please enter email and password.');
       return;
     }
 
     try {
-      const data = await authService.login({ email, password });
-      // TODO: save data.accessToken & data.user
-      console.log('Login success:', data);
+      if (!email || !password) return;
+      await login(email, password);
       router.push('/(personal)/routines');
     } catch (error: any) {
       Alert.alert('Login failed', error.message || 'Something went wrong.');
@@ -95,7 +93,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Login button */}
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin}>
+          <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} disabled={loading}>
             <Text style={styles.primaryBtnText}>Log In</Text>
           </TouchableOpacity>
 

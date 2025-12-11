@@ -33,23 +33,19 @@ export const authService = {
   },
 
   async login(payload: LoginPayload): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      const message = Array.isArray((data as any).message)
+        ? (data as any).message[0]
+        : (data as any).message;
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        const message = Array.isArray(data.message) ? data.message[0] : data.message;
-        throw new Error(message || 'Login failed');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
+      throw new Error(message || 'Login failed');
     }
+    return data as AuthResponse;
   },
 };

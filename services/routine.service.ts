@@ -4,7 +4,7 @@ import {
   RoutineList,
   RoutineLog
 } from '../types/routine';
-import api from './api';
+import { api } from './api';
 const API_URL = 'http://localhost:3000';
 
 export type UpdateRoutinePayload = Partial<Omit<Routine, 'id'>>;

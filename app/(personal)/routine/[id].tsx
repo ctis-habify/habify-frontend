@@ -1,3 +1,4 @@
+import { useAuth } from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -11,21 +12,19 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { routineService } from '../../services/routine.service';
+import { routineService } from '../../../services/routine.service';
 
 export default function EditRoutineScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  // const { token } = useAuth(); 
-  const token = 'mock-token'; // Replace with real token logic
-
+  const { token } = useAuth(); 
   const [isLoading, setIsLoading] = useState(false);
-  
   // Form State
   const [routine_name, setName] = useState('');
   const [start_time, setStartTime] = useState('');
   const [end_time, setEndTime] = useState('');
   const [category, setCategory] = useState('');
+
   // Fetch data on load (Mocked for now as we don't have the full context)
   useEffect(() => {
     // In a real app, fetch routine details by ID here
@@ -37,6 +36,13 @@ export default function EditRoutineScreen() {
 
   const handleSave = async () => {
     setIsLoading(true);
+
+    if (!token) {
+      Alert.alert('Not authenticated', 'Please login again.');
+      router.push('/(auth)');
+      return;
+    }
+
     try {
       await routineService.updateRoutine(id as string, {
         routine_name,
@@ -54,6 +60,12 @@ export default function EditRoutineScreen() {
   };
 
   const handleDelete = async () => {
+    if (!token) {
+      Alert.alert('Not authenticated', 'Please login again.');
+      router.push('/(auth)');
+      return;
+    }
+    
     Alert.alert(
       'Delete Routine',
       'Are you sure you want to delete this routine?',
@@ -77,7 +89,6 @@ export default function EditRoutineScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header / Close Button */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{routine_name}</Text>
         <TouchableOpacity onPress={() => router.back()}>

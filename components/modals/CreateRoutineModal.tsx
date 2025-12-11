@@ -13,11 +13,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { BACKGROUND_GRADIENT } from '../app/theme';
-import { useCategories } from '../hooks/useCategories';
-import { useRoutines } from '../hooks/useRoutines';
-import { FrequencyType } from '../types/routine';
-import { routineFormStyles } from './routine-form-styles';
+import { BACKGROUND_GRADIENT } from '../../app/theme';
+import { useCategories } from '../../hooks/useCategories';
+import { useRoutine } from '../../hooks/useRoutine';
+import { FrequencyType } from '../../types/routine';
+import { routineFormStyles } from '.././routine-form-styles';
 
 interface CreateRoutineModalProps {
   onClose?: () => void;
@@ -26,7 +26,7 @@ interface CreateRoutineModalProps {
 export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps) {
   const router = useRouter();
   const { categories, isLoading: categoriesLoading, fetchCategories } = useCategories();
-  const { createRoutine, createRoutineList, isLoading: routinesLoading } = useRoutines();
+  const { createRoutine, createRoutineList, isLoading: routinesLoading } = useRoutine();
 
   // --- State'ler ---
   const [category, setCategory] = useState<number | undefined>();
