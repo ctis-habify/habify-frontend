@@ -2,6 +2,7 @@ export type FrequencyType = 'daily' | 'weekly' | 'monthly';
 
 export interface Routine {
   id: string; // uuid
+  routine_name: string
   routine_group_id: number;
   frequency_detail?: number;
   start_time: string; // time without time zone (HH:MM:SS)

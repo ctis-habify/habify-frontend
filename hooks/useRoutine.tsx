@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { routinesStore } from '../store/routines.store';
 import {
-  CreateRoutineDto,
-  UpdateRoutineDto,
+    CreateRoutineDto,
+    UpdateRoutineDto,
 } from '../types/routine';
 
-export const useRoutines = () => {
+export const useRoutine = () => {
   const [state, setState] = useState(routinesStore.getState());
 
   useEffect(() => {
@@ -41,4 +41,3 @@ export const useRoutines = () => {
     clearRoutines: () => routinesStore.clearRoutines(),
   };
 };
-

@@ -1,29 +1,29 @@
-// services/api.ts
-import axios from "axios";
-import * as SecureStore from "expo-secure-store";
+// src/services/api.ts
+import axios from 'axios';
 
-export const BASE_URL = "http://192.168.1.9:3000"; // <-- kendi backend URL’in
+let authToken: string | null = null;
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 10000,
+export const setAuthToken = (token: string | null) => {
+  authToken = token;
+};
+
+export const api = axios.create({
+  baseURL: 'http://localhost:3000', // backend address
 });
 
-// Her isteğe otomatik Authorization header ekle
-api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync("authToken");
-  if (token) {
-    // If headers is an AxiosHeaders instance use its set method, otherwise merge safely into a plain object
-    if (config.headers && typeof (config.headers as any).set === "function") {
-      (config.headers as any).set("Authorization", `Bearer ${token}`);
+api.interceptors.request.use(
+  (config) => {
+    // headers'ı any olarak ele al
+    const headers = (config.headers ?? {}) as any;
+
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
     } else {
-      config.headers = {
-        ...(config.headers as Record<string, any>),
-        Authorization: `Bearer ${token}`,
-      } as any;
+      delete headers.Authorization;
     }
-  }
-  return config;
-});
 
-export default api;
+    config.headers = headers;
+    return config;
+  },
+  (error) => Promise.reject(error),
+);

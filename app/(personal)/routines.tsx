@@ -10,11 +10,11 @@ import {
 
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
 import { RoutineRowProps } from '@/components/routines/RoutineRow';
-import { router, useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 
-
+// Silinsin ve db'den çekilsin
 const initialSportRoutines: RoutineRowProps[] = [
-  { id: '1', name: 'Sport Routine 1', durationLabel: '40 Minutes' },
+  { id: '6815ca3c-32eb-49ff-8c1c-3c9786627160', name: 'Sport Routine 1', durationLabel: '40 Minutes' },
   { id: '2', name: 'Sport Routine 2', durationLabel: '8 Hours' },
   { id: '3', name: 'Sport Routine 3', durationLabel: '20 Minutes' },
   { id: '4', name: 'Sport Routine 4', durationLabel: '2 Hours' },
@@ -44,7 +44,7 @@ export default function RoutinesScreen() {
 
  // Handle Navigation to Edit Screen
   const handleRoutinePress = (id: string) => {
-    router.push(`/(personal)/routine_${id}`);
+    router.push(`/(personal)/routine/${id}` as Href);
   };
 
   // Sport checkbox toggle
@@ -111,7 +111,7 @@ export default function RoutinesScreen() {
         />
 
         {/* CREATE BUTTON */}
-        <TouchableOpacity style={styles.createBtn}>
+        <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/(personal)/create-routine')}>
           <Text style={styles.createBtnText}>Create Routine</Text>
         </TouchableOpacity>
       </ScrollView>

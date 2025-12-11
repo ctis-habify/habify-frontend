@@ -1,10 +1,13 @@
-import api from './api';
+import 'axios';
 import { Category } from '../types/category';
+import api from './api';
+const API_URL = 'http://localhost:3000';
+
 
 export const categoryService = {
   // Get all categories
   getCategories: async (): Promise<Category[]> => {
-    const res = await api.get('/categories');
+    const res = await api.get(`${API_URL}/categories`);
     return res.data;
   },
 
