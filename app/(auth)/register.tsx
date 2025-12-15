@@ -1,4 +1,6 @@
+import { Ionicons } from '@expo/vector-icons'; // 2. Import Icons
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router'; // 1. Import Router
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
@@ -15,6 +17,8 @@ import {
 import { authService } from '../../services/auth.service';
 
 export default function SignupScreen() {
+  const router = useRouter(); // 3. Initialize Router
+
   // 1. STATE
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -54,34 +58,33 @@ export default function SignupScreen() {
     return true;
   };
 
-    const handleRegister = async () => {
-      if (!validateForm()) return;
-      setIsLoading(true);
+  const handleRegister = async () => {
+    if (!validateForm()) return;
+    setIsLoading(true);
 
-      try {
-        const payload = {
-          name: name,
-          email: email,
-          password: password,
-          gender: gender.toLowerCase(),
-          birthDate: birthDate
-        };
+    try {
+      const payload = {
+        name: name,
+        email: email,
+        password: password,
+        gender: gender.toLowerCase(),
+        birthDate: birthDate
+      };
 
-        const data = await authService.register(payload);
+      const data = await authService.register(payload);
 
-        Alert.alert('Success', 'Account created successfully!');
-        console.log('User created:', data);
+      Alert.alert('Success', 'Account created successfully!');
+      console.log('User created:', data);
 
-      } catch (error: any) {
-        Alert.alert('Registration Failed', error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    } catch (error: any) {
+      Alert.alert('Registration Failed', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
  
   return (
-    // MAIN BACKGROUND GRADIENT
     <LinearGradient 
       colors={['#375F9F', '#162451']} 
       style={styles.background}
@@ -95,6 +98,14 @@ export default function SignupScreen() {
           colors={['#1D3275', '#010D4C']} 
           style={styles.card}
         >
+          {/* 4. Back Button positioned absolutely within the card */}
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => router.back()}
+          >
+            <Ionicons name="chevron-back" size={28} color="white" />
+          </TouchableOpacity>
+
           {/* Header */}
           <View style={styles.header}>
             <Image 
@@ -216,6 +227,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 10,
+    position: 'relative', 
+  },
+  backButton: {
+    position: 'absolute',
+    top: 25,
+    left: 20,
+    zIndex: 10,
   },
   header: {
     alignItems: 'center',

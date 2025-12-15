@@ -1,14 +1,16 @@
 'use client';
 
 import { useAuth } from '@/hooks/useAuth';
-import { Ionicons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
-  ScrollView,
+  Image,
+  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -18,11 +20,15 @@ import {
 
 export default function LoginScreen() {
   const router = useRouter();
-  // user input:
-  const [email, setEmail] = useState(''); // user will type
-  const [password, setPassword] = useState(''); // user will type
+  
+  // State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
+  
+  // Auth Hook
   const { login, loading } = useAuth();
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Missing fields', 'Please enter email and password.');
@@ -30,7 +36,6 @@ export default function LoginScreen() {
     }
 
     try {
-      if (!email || !password) return;
       await login(email, password);
       router.push('/(personal)/routines');
     } catch (error: any) {
@@ -39,192 +44,213 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={['#061a3c', '#020b20']} style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <LinearGradient colors={['#163b7b', '#081b47']} style={styles.card}>
-          {/* Logo & title */}
-          <View style={styles.logoWrapper}>
-            <View style={styles.leafCircle}>
-              <Ionicons name="leaf" size={20} color="#ffffff" />
-            </View>
-            <Text style={styles.logoText}>Habify</Text>
-          </View>
+    <LinearGradient 
+      colors={['#375F9F', '#162451']} 
+      style={styles.background}
+    >
+      <StatusBar style="light" />
 
-          {/* Email */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              placeholderTextColor="#6c8bd9"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={styles.input}
+      <SafeAreaView style={styles.safeArea}>
+        
+        {/* CARD GRADIENT (Matches Signup) */}
+        <LinearGradient 
+          colors={['#1D3275', '#010D4C']} 
+          style={styles.card}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Image 
+              source={require('../../assets/images/habify-logo.png')} 
+              style={styles.icon} 
+              resizeMode="contain" 
             />
+            <Text style={styles.appName}>Habify</Text>
           </View>
 
-          {/* Password */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              placeholderTextColor="#6c8bd9"
-              secureTextEntry
-              style={styles.input}
-            />
-          </View>
-
-          {/* Remember me & Forgot */}
-          <View style={styles.rowBetween}>
-            <View style={styles.rememberRow}>
-              <Checkbox
-                value={remember}
-                onValueChange={setRemember}
-                color={remember ? '#0ea5e9' : undefined}
+          {/* Form */}
+          <View style={styles.form}>
+            
+            {/* Email Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="example@gmail.com"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
-              <Text style={styles.rememberText}>Remember me</Text>
             </View>
-            <TouchableOpacity>
-              <Text style={styles.forgotText}>Forgot?</Text>
+
+            {/* Password Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="***********"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                secureTextEntry
+              />
+            </View>
+
+            {/* Remember & Forgot Row */}
+            <View style={styles.rowBetween}>
+              <View style={styles.rememberRow}>
+                <Checkbox
+                  value={remember}
+                  onValueChange={setRemember}
+                  color={remember ? '#007AFF' : '#ffffff'}
+                  style={styles.checkbox}
+                />
+                <Text style={styles.rememberText}>Remember me</Text>
+              </View>
+              <TouchableOpacity>
+                <Text style={styles.forgotText}>Forgot?</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Login Button (Matches Signup Gradient) */}
+            <TouchableOpacity 
+              activeOpacity={0.8} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <LinearGradient
+                colors={['#007AFF', '#0056b3']}
+                style={styles.button}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.buttonText}>Log In</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
-          </View>
 
-          {/* Login button */}
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} disabled={loading}>
-            <Text style={styles.primaryBtnText}>Log In</Text>
-          </TouchableOpacity>
+            {/* Register Link */}
+            <View style={styles.bottomRow}>
+              <Text style={styles.bottomText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+                <Text style={styles.bottomLink}>Register</Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Or continue with</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Bottom text for registration */}
-          <View style={styles.bottomRow}>
-            <Text style={styles.bottomText}>Don&apos;t have an account ? </Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-              <Text style={styles.bottomLink}>Register</Text>
-            </TouchableOpacity>
           </View>
         </LinearGradient>
-      </ScrollView>
+      </SafeAreaView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  background: {
     flex: 1,
-    backgroundColor: '#020817',
   },
-  scroll: {
-    flexGrow: 1,
+  safeArea: {
+    flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    alignItems: 'center',
   },
   card: {
-    borderRadius: 32,
-    paddingHorizontal: 28,
-    paddingVertical: 32,
+    width: '90%',
+    borderRadius: 40,
+    paddingVertical: 40,
+    paddingHorizontal: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  logoWrapper: {
+  header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 25,
   },
-  leafCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.2,
-    borderColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
+  icon: {
+    width: 50,
+    height: 50,
+    marginBottom: 10,
   },
-  logoText: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '700',
+  appName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
   },
-  fieldGroup: {
-    marginBottom: 18,
+  form: {
+    width: '100%',
+  },
+  inputGroup: {
+    marginBottom: 15,
   },
   label: {
-    color: '#e5edff',
-    marginBottom: 6,
-    fontSize: 14,
+    color: '#E0E0E0',
+    fontSize: 15,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    backgroundColor: '#0f2c6b',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: '#ffffff',
-    fontSize: 15,
+    backgroundColor: 'rgba(30, 42, 94, 0.6)', 
+    color: 'white',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
   },
   rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+    marginTop: 5,
+    paddingHorizontal: 4,
   },
   rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+  },
+  checkbox: {
+    borderRadius: 4,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
   rememberText: {
-    color: '#e5edff',
-    fontSize: 13,
+    color: '#E0E0E0',
+    fontSize: 14,
   },
   forgotText: {
-    color: '#60a5fa',
-    fontSize: 13,
-  },
-  primaryBtn: {
-    backgroundColor: '#007bff',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 22,
-  },
-  primaryBtnText: {
-    color: '#ffffff',
+    color: '#60a5fa', 
+    fontSize: 14,
     fontWeight: '600',
-    fontSize: 16,
   },
-  dividerRow: {
-    flexDirection: 'row',
+  button: {
+    marginTop: 10,
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 18,
+    justifyContent: 'center',
+    height: 56,
   },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#475569',
-  },
-  dividerText: {
-    color: '#9ca3af',
-    fontSize: 12,
-    marginHorizontal: 8,
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 12,
+    marginTop: 25,
   },
   bottomText: {
     color: '#9ca3af',
-    fontSize: 13,
+    fontSize: 14,
   },
   bottomLink: {
-    color: '#3b82f6',
-    fontSize: 13,
+    color: '#60a5fa',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
