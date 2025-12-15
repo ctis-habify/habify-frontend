@@ -29,7 +29,6 @@ export const RoutineCategoryCard: React.FC<Props> = ({
   // tüm rutinler tamamlandı mı?
   const allCompleted =
     routines.length > 0 && routines.every((r) => r.completed);
-
   return (
     <View style={styles.card}>
       {/* HEADER */}
