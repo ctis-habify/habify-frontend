@@ -1,9 +1,11 @@
+import { categoryService } from '@/services/category.service';
+import { routineService } from '@/services/routine.service';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -13,9 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 import { BACKGROUND_GRADIENT } from '../../app/theme';
-import { useCategories } from '../../hooks/useCategories';
-import { useRoutine } from '../../hooks/useRoutine';
 import { FrequencyType } from '../../types/routine';
 import { routineFormStyles } from '.././routine-form-styles';
 
@@ -23,30 +24,51 @@ interface CreateRoutineModalProps {
   onClose?: () => void;
 }
 
-export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps) {
+export default async function CreateRoutineModal({ onClose }: CreateRoutineModalProps) {
   const router = useRouter();
-  const { categories, isLoading: categoriesLoading, fetchCategories } = useCategories();
-  const { createRoutine, createRoutineList, isLoading: routinesLoading } = useRoutine();
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        setCategories(data);
+      } catch {
+        Alert.alert('Error', 'Categories could not be loaded');
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const items = useMemo(
+    () =>
+      categories.map((c) => ({
+        label: c.name,
+        value: c.id,
+      })),
+    [categories],
+  );
 
   // --- State'ler ---
-  const [category, setCategory] = useState<number | undefined>();
+  const [category, setCategory] = useState<number | null>(null);
   const [newRoutineText, setNewRoutineText] = useState('');
   const [routineName, setRoutineName] = useState('');
   const [startTime, setStartTime] = useState(new Date(new Date().setHours(9, 0, 0)));
   const [endTime, setEndTime] = useState(new Date(new Date().setHours(10, 0, 0)));
   const [startDate, setStartDate] = useState(new Date());
-  const [frequency, setFrequency] = useState<FrequencyType | undefined>('daily');
+  const [frequency, setFrequency] = useState<FrequencyType | undefined>('DAILY');
   const [repeatAt, setRepeatAt] = useState<string | undefined>('Morning');
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const isLoading = categoriesLoading || routinesLoading;
+  // const isLoading = categoriesLoading || routinesLoading;
 
   // --- API Çağrısı: Kategorileri Çekme ---
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
 
   // Format time for display (HH:MM)
   const formatTime = (d: Date) => {
@@ -129,13 +151,12 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
       Alert.alert('Uyarı', 'Lütfen tüm zorunlu alanları doldurun.');
       return;
     }
-
     try {
       // Önce routine list (routine group) oluştur
-      const routineList = await createRoutineList(category, routineName);
+      const routineList = await routineService.createRoutineList(category, routineName);
 
       // Sonra routine oluştur
-      await createRoutine({
+      await routineService.createRoutine({
         routine_group_id: routineList.id,
         category_id: category,
         title: routineName,
@@ -158,13 +179,14 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
   };
 
   const handleAddRoutine = async () => {
+    // Ayrı kontroller ve ayrı alert verilmesi 
     if (!newRoutineText.trim() || !category) {
       Alert.alert('warning', 'please select category!');
       return;
     }
 
     try {
-      await createRoutineList(category, newRoutineText.trim());
+      await routineService.createRoutineList(category, newRoutineText.trim());
       setNewRoutineText('');
       Alert.alert('successfull', 'Routine list is added!');
     } catch (error: any) {
@@ -180,6 +202,8 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
           <ScrollView
             contentContainerStyle={routineFormStyles.content}
             showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
           >
             {/* Header (Başlık ve Kapatma İkonu) */}
             <View style={routineFormStyles.headerRow}>
@@ -191,27 +215,22 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
 
             {/* Category */}
             <Text style={routineFormStyles.sectionLabel}>Category</Text>
-            <View style={routineFormStyles.row}>
-              <View style={routineFormStyles.pickerWrapper}>
-                <Picker
-                  selectedValue={category}
-                  onValueChange={(itemValue) => setCategory(itemValue as number)}
-                  style={routineFormStyles.picker}
-                  dropdownIconColor="#ffffff"
-                  enabled={!isLoading}
-                >
-                  <Picker.Item label="Select Category" value={undefined} color="#ffffff" />
-                  {categories.map((cat) => (
-                    <Picker.Item
-                      key={cat.id}
-                      label={cat.name}
-                      value={cat.id}
-                      color="#ffffff"
-                    />
-                  ))}
-                </Picker>
-              </View>
-            </View>
+            <DropDownPicker
+              open={open}
+              value={category}
+              items={items}
+              setOpen={setOpen}
+              setValue={setCategory}
+              loading={loadingCategories}
+              placeholder="Select Category"
+              style={{ backgroundColor: '#fff' }}
+              dropDownContainerStyle={{ backgroundColor: '#fff' }}
+              textStyle={{ color: '#000' }}
+              zIndex={3000}
+              zIndexInverse={1000}
+              listMode="SCROLLVIEW"
+              dropDownDirection="BOTTOM"
+            />
 
             {/* Add Routine (Input + Buton) */}
             <View style={[routineFormStyles.row, { marginTop: 15 }]}>
@@ -222,13 +241,11 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
                   placeholder="Add Routine"
                   placeholderTextColor="#ffffff99"
                   style={routineFormStyles.textInput}
-                  editable={!isLoading}
                 />
               </View>
               <TouchableOpacity
                 style={routineFormStyles.addIconBtn}
                 onPress={handleAddRoutine}
-                disabled={isLoading}
               >
                 <Ionicons name="add" size={26} color="#ffffff" />
               </TouchableOpacity>
@@ -318,7 +335,6 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
                 onValueChange={(v) => setFrequency(v as FrequencyType)}
                 style={routineFormStyles.picker}
                 dropdownIconColor="#ffffff"
-                enabled={!isLoading}
               >
                 <Picker.Item
                   label="Select as daily/weekly"
@@ -339,7 +355,6 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
                 onValueChange={(v) => setRepeatAt(v as string)}
                 style={routineFormStyles.picker}
                 dropdownIconColor="#ffffff"
-                enabled={!isLoading}
               >
                 <Picker.Item label="Select as" value={undefined} color="#ffffff" />
                 <Picker.Item label="Morning" value="Morning" color="#ffffff" />
@@ -352,10 +367,8 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
             <TouchableOpacity
               style={routineFormStyles.createBtn}
               onPress={handleCreate}
-              disabled={isLoading}
             >
               <Text style={routineFormStyles.createBtnText}>
-                {isLoading ? 'Oluşturuluyor...' : 'Create New Routine'}
               </Text>
             </TouchableOpacity>
           </ScrollView>

@@ -10,12 +10,19 @@ const API_URL = 'http://localhost:3000';
 export type UpdateRoutinePayload = Partial<Omit<Routine, 'id'>>;
 
 export const routineService = {
+  // Get all routines for the authenticated user
   async getRoutines(token: string): Promise<Routine[]> {
     const response = await fetch(`${API_URL}/routines/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) throw new Error('Failed to fetch routines');
     return response.json();
+  },
+
+  // Get grouped routines
+  async getGroupedRoutines(): Promise<RoutineList[]> {
+    const res = await api.get('/routines/grouped');
+    return res.data;
   },
 
   // Get routine by ID

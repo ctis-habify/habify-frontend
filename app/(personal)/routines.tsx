@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -9,56 +9,39 @@ import {
 } from 'react-native';
 
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
-import { RoutineRowProps } from '@/components/routines/RoutineRow';
+import { routineService } from '@/services/routine.service';
+import {
+  mapBackendRoutineToRow
+} from '@/services/routines.mapper';
+import { RoutineList } from '@/types/routine';
 import { Href, useRouter } from 'expo-router';
 
-// Silinsin ve db'den çekilsin
-const initialSportRoutines: RoutineRowProps[] = [
-  { id: '6815ca3c-32eb-49ff-8c1c-3c9786627160', name: 'Sport Routine 1', durationLabel: '40 Minutes' },
-  { id: '2', name: 'Sport Routine 2', durationLabel: '8 Hours' },
-  { id: '3', name: 'Sport Routine 3', durationLabel: '20 Minutes' },
-  { id: '4', name: 'Sport Routine 4', durationLabel: '2 Hours' },
-  { id: '5', name: 'Sport Routine 5', durationLabel: '10 Hours' },
-  { id: '6', name: 'Sport Routine 6', durationLabel: '3 Hours' },
-];
-
-
-const initialMusicRoutines: RoutineRowProps[] = [
-  { id: '7', name: 'Music Routine 1', durationLabel: '40 Minutes' },
-  { id: '8', name: 'Music Routine 2', durationLabel: '8 Hours' },
-  { id: '9', name: 'Music Routine 3', durationLabel: '20 Minutes' },
-  { id: '10', name: 'Music Routine 4', durationLabel: '2 Hours' },
-  { id: '11', name: 'Music Routine 5', durationLabel: '10 Hours' },
-  { id: '12', name: 'Music Routine 6', durationLabel: '3 Hours' },
-];
-
 export default function RoutinesScreen() {
-  const router = useRouter(); // <--- Initialize Router
+  const router = useRouter();
 
-  // local state for completion tracking
-  const [sportRoutines, setSportRoutines] =
-    useState<RoutineRowProps[]>(initialSportRoutines);
+  const [lists, setLists] = useState<RoutineList[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [musicRoutines, setMusicRoutines] =
-    useState<RoutineRowProps[]>(initialMusicRoutines);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await routineService.getGroupedRoutines();
+        setLists(data);
+        console.log('Fetched routines:', data);
+        // console.log('Mapped routines:', data.map((list) => list.routines.map(mapBackendRoutineToRow)));
+        console.log('Routine Name: ', data[0]?.routines[0]?.routineName);
+      } catch (e) {
+        console.error('Failed to load routines', e);
+      } finally {
+        setLoading(false);
+      }
+    };
 
- // Handle Navigation to Edit Screen
+    fetchData();
+  }, []);
+
   const handleRoutinePress = (id: string) => {
     router.push(`/(personal)/routine/${id}` as Href);
-  };
-
-  // Sport checkbox toggle
-  const handleSportToggle = (index: number, value: boolean) => {
-    const updated = [...sportRoutines];
-    updated[index].completed = value;
-    setSportRoutines(updated);
-  };
-
-  // Music checkbox toggle
-  const handleMusicToggle = (index: number, value: boolean) => {
-    const updated = [...musicRoutines];
-    updated[index].completed = value;
-    setMusicRoutines(updated);
   };
 
   return (
@@ -70,11 +53,10 @@ export default function RoutinesScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* --- Tabs --- */}
         <View style={styles.tabWrapper}>
           <View style={styles.tabContainer}>
             <TouchableOpacity style={[styles.tab, styles.tabActive]}>
-              <Text style={[styles.tabTextActive]}>Personal</Text>
+              <Text style={styles.tabTextActive}>Personal</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.tab}>
@@ -83,36 +65,40 @@ export default function RoutinesScreen() {
           </View>
         </View>
 
-        {/* Title */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
         </View>
 
-        {/* SPORT ROUTINES CARD */}
-        <RoutineCategoryCard
-          tagLabel="Sport"
-          frequencyLabel="Weekly"
-          title="Sport Routines"
-          routines={sportRoutines}
-          showWeekDays={false}
-          onRoutineToggle={handleSportToggle}
-          onItemPress={handleRoutinePress}
-        />
+        {loading ? (
+          <Text style={{ color: '#fff', textAlign: 'center' }}>
+            Loading...
+          </Text>
+        ) : (
+          lists.map((list) => {
+            const frequencyType =
+              list.routines[3]?.frequencyType ?? 'DAILY';
 
-        {/* MUSIC ROUTINES CARD */}
-        <RoutineCategoryCard
-          tagLabel="Music"
-          frequencyLabel="Daily"
-          title="Music Routines"
-          routines={musicRoutines}
-          showWeekDays={true}
-          onRoutineToggle={handleMusicToggle}
-          onItemPress={handleRoutinePress}
-        />
+            return (
+              <RoutineCategoryCard
+                key={list.id}
+                tagLabel={list.categoryName}
+                frequencyLabel={
+                  frequencyType === 'DAILY' ? 'Daily' : 'Weekly'
+                }
+                title={list.title}
+                showWeekDays={frequencyType === 'daily'}
+                routines={list.routines.map(mapBackendRoutineToRow)}
+                onItemPress={handleRoutinePress}
+              />
+            );
+          })
+        )}
 
-        {/* CREATE BUTTON */}
-        <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/(personal)/create-routine')}>
-          <Text style={styles.createBtnText}>Create Routine</Text>
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={() => router.push('/(personal)/create-routine')}
+        >
+          <Text style={styles.createBtnText}>Create Routine List</Text>
         </TouchableOpacity>
       </ScrollView>
     </LinearGradient>
@@ -126,11 +112,7 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 40,
   },
-
-  tabWrapper: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
+  tabWrapper: { alignItems: 'center', marginBottom: 20 },
   tabContainer: {
     flexDirection: 'row',
     backgroundColor: '#1d3a80',
@@ -142,20 +124,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 26,
     borderRadius: 20,
   },
-  tabActive: {
-    backgroundColor: '#ffffff',
-  },
-  tabText: {
-    color: '#cbd5f5',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  tabTextActive: {
-    color: '#020617',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-
+  tabActive: { backgroundColor: '#ffffff' },
+  tabText: { color: '#cbd5f5', fontWeight: '600' },
+  tabTextActive: { color: '#020617', fontWeight: '600' },
   sectionHeader: {
     backgroundColor: '#0b2a73',
     borderRadius: 16,
@@ -168,7 +139,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-
   createBtn: {
     backgroundColor: '#001b4f',
     borderRadius: 18,
