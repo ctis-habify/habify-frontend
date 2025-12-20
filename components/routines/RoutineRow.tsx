@@ -1,5 +1,6 @@
 import { CircularCheckbox } from '@/components/ui/circular-checkbox';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -14,6 +15,7 @@ export type RoutineRowProps = {
 };
 
 export const RoutineRow: React.FC<RoutineRowProps> = ({
+  id,
   name,
   completed = false,
   durationLabel,
@@ -29,7 +31,16 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
     onToggle?.(newVal);
   };
 
+  const router = useRouter(); // Hook
 
+  const handleCameraPress = () => {
+    // Navigate to the modal, passing the routine ID
+    router.push({
+      pathname: '/(personal)/camera-modal',
+      params: { routineId: id }
+    });
+  }
+  
   const parseHours = () => {
     let lower = durationLabel.toLowerCase();
 
@@ -66,7 +77,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
 
       {/* CAMERA ICON — only if unchecked */}
       {!isChecked && showCamera && (
-        <TouchableOpacity onPress={() => console.log('Camera pressed')} style={styles.cameraBtn}>
+        <TouchableOpacity onPress={handleCameraPress} style={styles.cameraBtn}>
           <Ionicons name="camera-outline" size={20} color="#1d4ed8" />
         </TouchableOpacity>
       )}
