@@ -1,28 +1,21 @@
-'use client';
-
+import { AuthButton } from '@/components/auth/AuthButton';
+import { AuthHeader } from '@/components/auth/AuthHeader';
+import { AuthInput } from '@/components/auth/AuthInput';
+import { AuthLayout } from '@/components/auth/AuthLayout';
 import { useAuth } from '@/hooks/useAuth';
-import { Ionicons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
-  // user input:
-  const [email, setEmail] = useState(''); // user will type
-  const [password, setPassword] = useState(''); // user will type
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
+  
   const { login, loading } = useAuth();
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Missing fields', 'Please enter email and password.');
@@ -30,7 +23,6 @@ export default function LoginScreen() {
     }
 
     try {
-      if (!email || !password) return;
       await login(email, password);
       router.push('/(personal)/routines');
     } catch (error: any) {
@@ -39,192 +31,97 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={['#061a3c', '#020b20']} style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <LinearGradient colors={['#163b7b', '#081b47']} style={styles.card}>
-          {/* Logo & title */}
-          <View style={styles.logoWrapper}>
-            <View style={styles.leafCircle}>
-              <Ionicons name="leaf" size={20} color="#ffffff" />
-            </View>
-            <Text style={styles.logoText}>Habify</Text>
-          </View>
+    <AuthLayout>
+      <AuthHeader />
 
-          {/* Email */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              placeholderTextColor="#6c8bd9"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={styles.input}
+      <View style={{ width: '100%' }}>
+        <AuthInput 
+          label="Email Address"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="example@gmail.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <AuthInput 
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="***********"
+          secureTextEntry
+        />
+        <View style={styles.rowBetween}>
+          <View style={styles.rememberRow}>
+            <Checkbox
+              value={remember}
+              onValueChange={setRemember}
+              color={remember ? '#007AFF' : '#ffffff'}
+              style={styles.checkbox}
             />
+            <Text style={styles.rememberText}>Remember me</Text>
           </View>
-
-          {/* Password */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              placeholderTextColor="#6c8bd9"
-              secureTextEntry
-              style={styles.input}
-            />
-          </View>
-
-          {/* Remember me & Forgot */}
-          <View style={styles.rowBetween}>
-            <View style={styles.rememberRow}>
-              <Checkbox
-                value={remember}
-                onValueChange={setRemember}
-                color={remember ? '#0ea5e9' : undefined}
-              />
-              <Text style={styles.rememberText}>Remember me</Text>
-            </View>
-            <TouchableOpacity>
-              <Text style={styles.forgotText}>Forgot?</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Login button */}
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} disabled={loading}>
-            <Text style={styles.primaryBtnText}>Log In</Text>
+          <TouchableOpacity>
+            <Text style={styles.forgotText}>Forgot?</Text>
           </TouchableOpacity>
+        </View>
 
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Or continue with</Text>
-            <View style={styles.dividerLine} />
-          </View>
+        <AuthButton 
+          title="Log In" 
+          onPress={handleLogin} 
+          isLoading={loading} 
+        />
 
-          {/* Bottom text for registration */}
-          <View style={styles.bottomRow}>
-            <Text style={styles.bottomText}>Don&apos;t have an account ? </Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-              <Text style={styles.bottomLink}>Register</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-      </ScrollView>
-    </LinearGradient>
+        <View style={styles.bottomRow}>
+          <Text style={styles.bottomText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+            <Text style={styles.bottomLink}>Register</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#020817',
-  },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 32,
-  },
-  card: {
-    borderRadius: 32,
-    paddingHorizontal: 28,
-    paddingVertical: 32,
-  },
-  logoWrapper: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  leafCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.2,
-    borderColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  logoText: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  fieldGroup: {
-    marginBottom: 18,
-  },
-  label: {
-    color: '#e5edff',
-    marginBottom: 6,
-    fontSize: 14,
-  },
-  input: {
-    backgroundColor: '#0f2c6b',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: '#ffffff',
-    fontSize: 15,
-  },
   rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+    marginTop: 5,
+    paddingHorizontal: 4,
   },
   rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+  },
+  checkbox: {
+    borderRadius: 4,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
   rememberText: {
-    color: '#e5edff',
-    fontSize: 13,
+    color: '#E0E0E0',
+    fontSize: 14,
   },
   forgotText: {
-    color: '#60a5fa',
-    fontSize: 13,
-  },
-  primaryBtn: {
-    backgroundColor: '#007bff',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 22,
-  },
-  primaryBtnText: {
-    color: '#ffffff',
+    color: '#60a5fa', 
+    fontSize: 14,
     fontWeight: '600',
-    fontSize: 16,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#475569',
-  },
-  dividerText: {
-    color: '#9ca3af',
-    fontSize: 12,
-    marginHorizontal: 8,
   },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 12,
+    marginTop: 25,
   },
   bottomText: {
     color: '#9ca3af',
-    fontSize: 13,
+    fontSize: 14,
   },
   bottomLink: {
-    color: '#3b82f6',
-    fontSize: 13,
+    color: '#60a5fa',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
