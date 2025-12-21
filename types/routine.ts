@@ -1,24 +1,26 @@
 export type FrequencyType = 'DAILY' | 'WEEKLY';
 
 export interface Routine {
+  title(arg0: string, title: any, arg2: string, label: string, arg4: string, minsLeft: number): unknown;
   id: string; // uuid
   routineName: string
   routineListId: number;
   frequency_detail?: number;
-  startTime: string; // time without time zone (HH:MM:SS)
-  endTime: string; // time without time zone (HH:MM:SS)
-  startDate: string; // date (YYYY-MM-DD)
+  start_time: string; // time without time zone (HH:MM:SS)
+  end_time: string; // time without time zone (HH:MM:SS)
+  start_date: string; // date (YYYY-MM-DD)
   isDone: boolean;
   // user_id: string;
   frequencyType: string;
   remainingLabel: string;
   remainingMinutes: number;
+  categoryName: string;
 }
 
 export interface RoutineList {
   id: number;
   user_id: string; // uuid
-  category_id: number;
+  categoryId: number;
   categoryName: string
   title: string;
   created_at: string; // timestamp
@@ -30,26 +32,26 @@ export interface RoutineLog {
   routine_id: string; // uuid
   user_id: string; // uuid
   log_date: string; // date
-  is_verified: boolean;
+  isAiVerified: boolean;
   verification_image_url?: string;
 }
 
 export interface CreateRoutineDto {
-  routine_group_id: number;
-  category_id: number;
+  routineListId: number;
+  categoryId: number;
   title: string;
-  start_time: string; // HH:MM:SS format
-  end_time: string; // HH:MM:SS format
-  start_date: string; // YYYY-MM-DD format
-  frequency_type: string;
-  frequency_detail?: number;
+  startTime: string; // HH:MM:SS format
+  endTime: string; // HH:MM:SS format
+  startDate: string; // YYYY-MM-DD format
+  frequencyType: string;
+  frequencyDetail?: number;
 }
 
 export interface UpdateRoutineDto {
-  routine_group_id?: number;
-  start_time?: string;
-  end_time?: string;
-  frequency_type?: string;
-  frequency_detail?: number;
+  routineListId?: number;
+  startTime?: string;
+  endTime?: string;
+  frequencyType?: string;
+  frequencyDetail?: number;
 }
 

@@ -2,11 +2,12 @@ import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   ScrollView,
@@ -24,188 +25,231 @@ interface CreateRoutineModalProps {
   onClose?: () => void;
 }
 
-export default async function CreateRoutineModal({ onClose }: CreateRoutineModalProps) {
+export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps) {
   const router = useRouter();
+
+  // --- Dropdown States ---
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dropdown Open States
+  const [catOpen, setCatOpen] = useState(false);
+  const [freqOpen, setFreqOpen] = useState(false);
+  const [repeatOpen, setRepeatOpen] = useState(false);
+
+  // Dropdown açıldığında diğerlerini kapatma fonksiyonu
+  const onCatOpen = useCallback(() => {
+    setFreqOpen(false);
+    setRepeatOpen(false);
+  }, []);
+  const onFreqOpen = useCallback(() => {
+    setCatOpen(false);
+    setRepeatOpen(false);
+  }, []);
+  const onRepeatOpen = useCallback(() => {
+    setCatOpen(false);
+    setFreqOpen(false);
+  }, []);
+
+  // --- Form States ---
+  const [category, setCategory] = useState<number | null>(null);
+  const [routineName, setRoutineName] = useState(''); // routine list + routine title
+  const [startTime, setStartTime] = useState(new Date(new Date().setHours(9, 0, 0)));
+  const [endTime, setEndTime] = useState(new Date(new Date().setHours(10, 0, 0)));
+  const [startDate, setStartDate] = useState(new Date());
+  const [frequency, setFrequency] = useState<FrequencyType>('DAILY');
+  const [repeatAt, setRepeatAt] = useState<string>('Morning');
+
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Yeni kategori oluşturma UI
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  // --- API: Kategorileri Çekme ---
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const data = await categoryService.getCategories();
         setCategories(data);
-      } catch {
-        Alert.alert('Error', 'Categories could not be loaded');
+      } catch (e) {
+        console.error('Categories fetch failed', e);
       } finally {
         setLoadingCategories(false);
       }
     };
-
     fetchCategories();
   }, []);
 
-  const items = useMemo(
-    () =>
-      categories.map((c) => ({
-        label: c.name,
-        value: c.id,
-      })),
+  const categoryItems = useMemo(
+    () => categories.map((c) => ({ label: c.name, value: c.id })),
     [categories],
   );
 
-  // --- State'ler ---
-  const [category, setCategory] = useState<number | null>(null);
-  const [newRoutineText, setNewRoutineText] = useState('');
-  const [routineName, setRoutineName] = useState('');
-  const [startTime, setStartTime] = useState(new Date(new Date().setHours(9, 0, 0)));
-  const [endTime, setEndTime] = useState(new Date(new Date().setHours(10, 0, 0)));
-  const [startDate, setStartDate] = useState(new Date());
-  const [frequency, setFrequency] = useState<FrequencyType | undefined>('DAILY');
-  const [repeatAt, setRepeatAt] = useState<string | undefined>('Morning');
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const frequencyItems = [
+    { label: 'Daily', value: 'DAILY' as FrequencyType },
+    { label: 'Weekly', value: 'WEEKLY' as FrequencyType },
+  ];
 
-  // const isLoading = categoriesLoading || routinesLoading;
+  const repeatItems = [
+    { label: 'Morning', value: 'Morning' },
+    { label: 'Afternoon', value: 'Afternoon' },
+    { label: 'Evening', value: 'Evening' },
+  ];
 
-  // --- API Çağrısı: Kategorileri Çekme ---
+  // Helper formatters
+  const formatTime = (d: Date) =>
+    `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  const formatTimeForAPI = (d: Date) => `${formatTime(d)}:00`;
+  const formatDate = (d: Date) =>
+    `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}/${d.getFullYear()}`;
+  const formatDateForAPI = (d: Date) => d.toISOString().split('T')[0];
 
-  // Format time for display (HH:MM)
-  const formatTime = (d: Date) => {
-    const hours = d.getHours().toString().padStart(2, '0');
-    const minutes = d.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
+  // Time / Date change handlers
+  const handleStartTimeChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') setShowStartTimePicker(false);
+    if (selectedDate) setStartTime(selectedDate);
   };
 
-  // Format time for API (HH:MM:SS)
-  const formatTimeForAPI = (d: Date) => {
-    const hours = d.getHours().toString().padStart(2, '0');
-    const minutes = d.getMinutes().toString().padStart(2, '0');
-    const seconds = d.getSeconds().toString().padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
-  };
-
-  // Format date for display (DD/MM/YYYY)
-  const formatDate = (d: Date) => {
-    const day = d.getDate().toString().padStart(2, '0');
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
-  // Format date for API (YYYY-MM-DD)
-  const formatDateForAPI = (d: Date) => {
-    const year = d.getFullYear();
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const handleTimeChange = (type: 'start' | 'end') => (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowStartTimePicker(false);
-      setShowEndTimePicker(false);
-    }
-    if (selectedDate) {
-      if (type === 'start') {
-        setStartTime(selectedDate);
-        if (Platform.OS === 'ios') {
-          setShowStartTimePicker(false);
-        }
-      } else {
-        setEndTime(selectedDate);
-        if (Platform.OS === 'ios') {
-          setShowEndTimePicker(false);
-        }
-      }
-    } else if (Platform.OS === 'ios') {
-      setShowStartTimePicker(false);
-      setShowEndTimePicker(false);
-    }
+  const handleEndTimeChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') setShowEndTimePicker(false);
+    if (selectedDate) setEndTime(selectedDate);
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (selectedDate) setStartDate(selectedDate);
+  };
+
+  // Yeni kategori oluşturma
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) {
+      Alert.alert('Warning', 'Please enter a category name.');
+      return;
     }
-    if (selectedDate) {
-      setStartDate(selectedDate);
-      if (Platform.OS === 'ios') {
-        setShowDatePicker(false);
-      }
-    } else if (Platform.OS === 'ios') {
-      setShowDatePicker(false);
+
+    try {
+      // categoryService.createCategory fonksiyonunu backend’ine göre implemente etmen gerekiyor.
+      const created = await categoryService.createCategory(newCategoryName.trim());
+      setCategories((prev) => [...prev, created]);
+      setCategory(created.categoryId);
+      setNewCategoryName('');
+      setShowNewCategoryInput(false);
+    } catch (e: any) {
+      console.error('Create category failed', e.response?.data || e);
+      Alert.alert('Error', e.response?.data?.message || 'Failed to create category');
     }
   };
 
-  const handleClose = () => {
-    if (onClose) {
-      onClose();
-    } else {
-      router.back();
+  // Form validasyonu
+  const validateForm = () => {
+    const errors: string[] = [];
+
+    if (!category) errors.push('Please select a category.');
+    if (!routineName.trim()) errors.push('Please enter a routine name.');
+    if (!startDate) errors.push('Please select a start date.');
+
+    if (startTime >= endTime) {
+      errors.push('Routine end time must be after start time.');
     }
+
+    if (!frequency) errors.push('Please select a frequency.');
+
+    if (frequency === 'WEEKLY' && !repeatAt) {
+      errors.push('Please select repeat time for weekly frequency.');
+    }
+
+    if (errors.length) {
+      Alert.alert('Warning', errors.join('\n'));
+      return false;
+    }
+
+    return true;
   };
 
   const handleCreate = async () => {
-    if (!routineName || !category || !frequency) {
-      Alert.alert('Uyarı', 'Lütfen tüm zorunlu alanları doldurun.');
-      return;
-    }
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
     try {
-      // Önce routine list (routine group) oluştur
-      const routineList = await routineService.createRoutineList(category, routineName);
+      // 1) ÖNCE routine list oluştur (DTO: CreateRoutineListDto)
+      const routineList = await routineService.createRoutineList(
+        Number(category), // categoryId (dropdown'dan gelen)
+        routineName.trim(), // title
+      );
 
-      // Sonra routine oluştur
-      await routineService.createRoutine({
-        routine_group_id: routineList.id,
-        category_id: category,
-        title: routineName,
-        start_time: formatTimeForAPI(startTime),
-        end_time: formatTimeForAPI(endTime),
-        start_date: formatDateForAPI(startDate),
-        frequency_type: frequency,
-        frequency_detail: repeatAt === 'Morning' ? 1 : repeatAt === 'Afternoon' ? 2 : 3,
-      });
+      // 2) WEEKLY ise frequencyDetail hesapla (backend: number | undefined)
+      const frequencyDetail =
+        frequency === 'DAILY'
+          ? undefined
+          : repeatAt === 'Morning'
+            ? 1
+            : repeatAt === 'Afternoon'
+              ? 2
+              : 3;
 
-      Alert.alert('succesful', 'routine is created successfully!', [
-        {
-          text: 'okey',
-          onPress: handleClose,
-        },
+      // 3) BACKEND DTO: CreateRoutineDto ile birebir aynı body
+      const body = {
+        routineListId: Number(routineList.id), // 🔴 int
+        routineName: routineName.trim(), // 🔴 string
+        frequencyType: frequency, // 'DAILY' | 'WEEKLY'
+        ...(frequencyDetail !== undefined && { frequencyDetail }),
+        startTime: formatTimeForAPI(startTime), // "HH:mm:00"
+        endTime: formatTimeForAPI(endTime), // "HH:mm:00"
+        isAiVerified: false, // şimdilik sabit false
+        startDate: formatDateForAPI(startDate), // "YYYY-MM-DD"
+      };
+
+      console.log('CreateRoutine body:', JSON.stringify(body, null, 2));
+
+      const res = await routineService.createRoutine(body);
+      console.log('CreateRoutine response:', res);
+
+      Alert.alert('Success', 'Routine created successfully!', [
+        { text: 'OK', onPress: handleClose },
       ]);
-    } catch (error: any) {
-      Alert.alert('error', error.message || 'routien cannot be created.');
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        console.log('Create routine failed STATUS:', err.response?.status);
+        console.log('Create routine failed DATA:', JSON.stringify(err.response?.data, null, 2));
+        const msg = err.response?.data?.message;
+        Alert.alert(
+          'Error',
+          Array.isArray(msg) ? msg.join('\n') : (msg ?? 'Failed to create routine'),
+        );
+      } else {
+        console.log('Create routine failed UNKNOWN:', err);
+        Alert.alert('Error', 'Unexpected error while creating routine');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleAddRoutine = async () => {
-    // Ayrı kontroller ve ayrı alert verilmesi 
-    if (!newRoutineText.trim() || !category) {
-      Alert.alert('warning', 'please select category!');
-      return;
-    }
+  const handleClose = () => (onClose ? onClose() : router.back());
 
-    try {
-      await routineService.createRoutineList(category, newRoutineText.trim());
-      setNewRoutineText('');
-      Alert.alert('successfull', 'Routine list is added!');
-    } catch (error: any) {
-      Alert.alert('error', error.message || 'routine cannot be added.');
-    }
+  // Dropdown ortak stil
+  const dropDownStyle = {
+    backgroundColor: '#2196F3',
+    borderColor: 'transparent',
+    borderRadius: 8,
+    minHeight: 50,
   };
 
-  // --- UI RENDER ---
   return (
     <LinearGradient colors={BACKGROUND_GRADIENT as any} style={routineFormStyles.screen}>
       <View style={routineFormStyles.outerWrapper}>
         <View style={routineFormStyles.sheet}>
           <ScrollView
-            contentContainerStyle={routineFormStyles.content}
-            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[routineFormStyles.content, { paddingBottom: 60 }]}
             nestedScrollEnabled
             keyboardShouldPersistTaps="handled"
           >
-            {/* Header (Başlık ve Kapatma İkonu) */}
             <View style={routineFormStyles.headerRow}>
               <Text style={routineFormStyles.title}>Create Routine</Text>
               <TouchableOpacity onPress={handleClose}>
@@ -215,161 +259,211 @@ export default async function CreateRoutineModal({ onClose }: CreateRoutineModal
 
             {/* Category */}
             <Text style={routineFormStyles.sectionLabel}>Category</Text>
-            <DropDownPicker
-              open={open}
-              value={category}
-              items={items}
-              setOpen={setOpen}
-              setValue={setCategory}
-              loading={loadingCategories}
-              placeholder="Select Category"
-              style={{ backgroundColor: '#fff' }}
-              dropDownContainerStyle={{ backgroundColor: '#fff' }}
-              textStyle={{ color: '#000' }}
-              zIndex={3000}
-              zIndexInverse={1000}
-              listMode="SCROLLVIEW"
-              dropDownDirection="BOTTOM"
-            />
-
-            {/* Add Routine (Input + Buton) */}
-            <View style={[routineFormStyles.row, { marginTop: 15 }]}>
-              <View style={[routineFormStyles.inputContainer, routineFormStyles.routineInputWrapper]}>
-                <TextInput
-                  value={newRoutineText}
-                  onChangeText={setNewRoutineText}
-                  placeholder="Add Routine"
-                  placeholderTextColor="#ffffff99"
-                  style={routineFormStyles.textInput}
+            <View style={[routineFormStyles.row, { zIndex: 3000, alignItems: 'center' }]}>
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <DropDownPicker
+                  open={catOpen}
+                  value={category}
+                  items={categoryItems}
+                  setOpen={setCatOpen}
+                  setValue={setCategory}
+                  onOpen={onCatOpen}
+                  loading={loadingCategories}
+                  placeholder="Select Category"
+                  style={dropDownStyle}
+                  textStyle={{ color: '#fff', fontSize: 16 }}
+                  dropDownContainerStyle={{
+                    backgroundColor: '#2196F3',
+                    borderColor: '#1E88E5',
+                  }}
+                  placeholderStyle={{ color: '#ffffffcc' }}
+                  listMode="SCROLLVIEW"
                 />
               </View>
+
+              {/* Create Category Button */}
               <TouchableOpacity
-                style={routineFormStyles.addIconBtn}
-                onPress={handleAddRoutine}
+                style={[routineFormStyles.addIconBtn, { width: 44, height: 44, borderRadius: 22 }]}
+                onPress={() => setShowNewCategoryInput((prev) => !prev)}
               >
-                <Ionicons name="add" size={26} color="#ffffff" />
+                <Ionicons name="add" size={24} color="#ffffff" />
               </TouchableOpacity>
             </View>
 
-            {/* Routine Start Time / End Time Labels */}
-            <View style={[routineFormStyles.rowSpace, { marginTop: 30 }]}>
-              <Text style={routineFormStyles.smallLabel}>Routine Start Time</Text>
-              <Text style={routineFormStyles.smallLabel}>Routine End Time</Text>
-            </View>
-
-            {/* Time inputs */}
-            <View style={routineFormStyles.rowSpace}>
-              <TouchableOpacity
-                style={routineFormStyles.timeBox}
-                onPress={() => setShowStartTimePicker(true)}
-              >
-                <Text style={routineFormStyles.timeText}>{formatTime(startTime)}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={routineFormStyles.timeBox}
-                onPress={() => setShowEndTimePicker(true)}
-              >
-                <Text style={routineFormStyles.timeText}>{formatTime(endTime)}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Time Pickers */}
-            {showStartTimePicker && (
-              <DateTimePicker
-                value={startTime}
-                mode="time"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleTimeChange('start')}
-                is24Hour={true}
-              />
-            )}
-            {showEndTimePicker && (
-              <DateTimePicker
-                value={endTime}
-                mode="time"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleTimeChange('end')}
-                is24Hour={true}
-              />
+            {/* New Category Input */}
+            {showNewCategoryInput && (
+              <View style={{ marginTop: 10 }}>
+                <View
+                  style={[
+                    routineFormStyles.inputContainer,
+                    { backgroundColor: '#2196F3', flexDirection: 'row', alignItems: 'center' },
+                  ]}
+                >
+                  <TextInput
+                    value={newCategoryName}
+                    onChangeText={setNewCategoryName}
+                    placeholder="New category name"
+                    placeholderTextColor="#ffffffcc"
+                    style={[routineFormStyles.textInput, { color: '#fff', flex: 1 }]}
+                  />
+                  <TouchableOpacity onPress={handleCreateCategory} style={{ paddingHorizontal: 8 }}>
+                    <Text style={{ color: '#fff', fontWeight: '600' }}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             )}
 
-            {/* Name */}
-            <Text style={routineFormStyles.sectionLabel}>Name</Text>
-            <View style={routineFormStyles.inputContainer}>
+            {/* Routine Name (Routine List Name) */}
+            <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Routine Name</Text>
+            <View style={[routineFormStyles.inputContainer, { backgroundColor: '#2196F3' }]}>
               <TextInput
                 value={routineName}
                 onChangeText={setRoutineName}
-                placeholder="Enter your name"
-                placeholderTextColor="#ffffff99"
-                style={routineFormStyles.textInput}
+                placeholder="Enter your routine name"
+                placeholderTextColor="#ffffffcc"
+                style={[routineFormStyles.textInput, { color: '#fff' }]}
               />
+            </View>
+
+            {/* Times */}
+            <View style={[routineFormStyles.rowSpace, { marginTop: 25 }]}>
+              {/* START TIME */}
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={routineFormStyles.smallLabel}>Routine Start Time</Text>
+                <TouchableOpacity
+                  style={[routineFormStyles.timeBox, { backgroundColor: '#2196F3' }]}
+                  onPress={() => setShowStartTimePicker(true)}
+                >
+                  <Text style={[routineFormStyles.timeText, { color: '#fff' }]}>
+                    {formatTime(startTime)}
+                  </Text>
+                </TouchableOpacity>
+
+                {showStartTimePicker && (
+                  <DateTimePicker
+                    value={startTime}
+                    mode="time"
+                    is24Hour
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleStartTimeChange}
+                  />
+                )}
+              </View>
+
+              {/* END TIME */}
+              <View style={{ flex: 1 }}>
+                <Text style={routineFormStyles.smallLabel}>Routine End Time</Text>
+                <TouchableOpacity
+                  style={[routineFormStyles.timeBox, { backgroundColor: '#2196F3' }]}
+                  onPress={() => setShowEndTimePicker(true)}
+                >
+                  <Text style={[routineFormStyles.timeText, { color: '#fff' }]}>
+                    {formatTime(endTime)}
+                  </Text>
+                </TouchableOpacity>
+
+                {showEndTimePicker && (
+                  <DateTimePicker
+                    value={endTime}
+                    mode="time"
+                    is24Hour
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleEndTimeChange}
+                  />
+                )}
+              </View>
             </View>
 
             {/* Start Date */}
-            <Text style={routineFormStyles.sectionLabel}>Start Date</Text>
-            <TouchableOpacity
-              style={routineFormStyles.dateInputContainer}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={routineFormStyles.dateText}>{formatDate(startDate)}</Text>
-              <MaterialIcons name="calendar-today" size={22} color="#ffffff" />
-            </TouchableOpacity>
+            <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Start Date</Text>
+            <View>
+              <TouchableOpacity
+                style={[
+                  routineFormStyles.dateInputContainer,
+                  {
+                    backgroundColor: '#2196F3',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 15,
+                  },
+                ]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={{ color: '#fff', fontSize: 16 }}>{formatDate(startDate)}</Text>
+                <MaterialIcons name="calendar-today" size={22} color="#ffffff" />
+              </TouchableOpacity>
 
-            {/* Date Picker */}
-            {showDatePicker && (
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleDateChange}
-                minimumDate={new Date()}
+              {showDatePicker && (
+                <DateTimePicker
+                  value={startDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                />
+              )}
+            </View>
+
+            {/* Frequency Dropdown */}
+            <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Frequency</Text>
+            <View style={{ zIndex: 2000 }}>
+              <DropDownPicker
+                open={freqOpen}
+                value={frequency}
+                items={frequencyItems}
+                setOpen={setFreqOpen}
+                setValue={setFrequency}
+                onOpen={onFreqOpen}
+                placeholder="Select Frequency"
+                style={dropDownStyle}
+                textStyle={{ color: '#fff', fontSize: 16 }}
+                dropDownContainerStyle={{
+                  backgroundColor: '#2196F3',
+                  borderColor: '#1E88E5',
+                }}
+                placeholderStyle={{ color: '#ffffffcc' }}
+                listMode="SCROLLVIEW"
               />
+            </View>
+
+            {/* Repeat At Dropdown – sadece WEEKLY için */}
+            {frequency === 'WEEKLY' && (
+              <>
+                <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Repeat at</Text>
+                <View style={{ zIndex: 1000 }}>
+                  <DropDownPicker
+                    open={repeatOpen}
+                    value={repeatAt}
+                    items={repeatItems}
+                    setOpen={setRepeatOpen}
+                    setValue={setRepeatAt}
+                    onOpen={onRepeatOpen}
+                    placeholder="Select Repeat Time"
+                    style={dropDownStyle}
+                    textStyle={{ color: '#fff', fontSize: 16 }}
+                    dropDownContainerStyle={{
+                      backgroundColor: '#2196F3',
+                      borderColor: '#1E88E5',
+                    }}
+                    placeholderStyle={{ color: '#ffffffcc' }}
+                    listMode="SCROLLVIEW"
+                  />
+                </View>
+              </>
             )}
 
-            {/* Frequency */}
-            <Text style={routineFormStyles.sectionLabel}>Frequency</Text>
-            <View style={routineFormStyles.pickerContainer}>
-              <Picker
-                selectedValue={frequency}
-                onValueChange={(v) => setFrequency(v as FrequencyType)}
-                style={routineFormStyles.picker}
-                dropdownIconColor="#ffffff"
-              >
-                <Picker.Item
-                  label="Select as daily/weekly"
-                  value={undefined}
-                  color="#ffffff"
-                />
-                <Picker.Item label="Daily" value="daily" color="#ffffff" />
-                <Picker.Item label="Weekly" value="weekly" color="#ffffff" />
-                <Picker.Item label="Monthly" value="monthly" color="#ffffff" />
-              </Picker>
-            </View>
-
-            {/* Repeat at */}
-            <Text style={routineFormStyles.sectionLabel}>Repeat at</Text>
-            <View style={routineFormStyles.pickerContainer}>
-              <Picker
-                selectedValue={repeatAt}
-                onValueChange={(v) => setRepeatAt(v as string)}
-                style={routineFormStyles.picker}
-                dropdownIconColor="#ffffff"
-              >
-                <Picker.Item label="Select as" value={undefined} color="#ffffff" />
-                <Picker.Item label="Morning" value="Morning" color="#ffffff" />
-                <Picker.Item label="Afternoon" value="Afternoon" color="#ffffff" />
-                <Picker.Item label="Evening" value="Evening" color="#ffffff" />
-              </Picker>
-            </View>
-
-            {/* Create button */}
+            {/* Create Button */}
             <TouchableOpacity
-              style={routineFormStyles.createBtn}
+              style={[routineFormStyles.createBtn, { marginTop: 40, backgroundColor: '#111827' }]}
               onPress={handleCreate}
+              disabled={isSubmitting}
             >
-              <Text style={routineFormStyles.createBtnText}>
-              </Text>
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                  Create New Routine
+                </Text>
+              )}
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -377,4 +471,3 @@ export default async function CreateRoutineModal({ onClose }: CreateRoutineModal
     </LinearGradient>
   );
 }
-

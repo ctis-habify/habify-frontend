@@ -9,11 +9,15 @@ export type RoutineRowProps = {
   completed?: boolean;
   durationLabel: string;  
   showCamera?: boolean;
+  // eslint-disable-next-line no-unused-vars
   onToggle?: (newValue: boolean) => void;
-  onPress?: () => void;
+  // eslint-disable-next-line no-unused-vars
+  onPress?: (id: string) => void; // changed: accept id
+  categoryName?: string;
 };
 
 export const RoutineRow: React.FC<RoutineRowProps> = ({
+  id,
   name,
   completed = false,
   durationLabel,
@@ -54,10 +58,10 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   return (
     <TouchableOpacity
       style={styles.row}
-      onPress={onPress}
+      onPress={() => onPress?.(id)} // changed: pass id
       activeOpacity={0.7}
     >
-    //<View style={styles.row}>
+    
       <CircularCheckbox value={isChecked} onToggle={toggle} />
 
       <Text style={[styles.name, isChecked && styles.completedText]}>
@@ -77,7 +81,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
           <Text style={styles.badgeText}>{durationLabel}</Text>
         </View>
       )}
-    //</View>
+   
     </TouchableOpacity>
   );
 };
