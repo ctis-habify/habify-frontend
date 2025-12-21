@@ -53,3 +53,7 @@ export interface UpdateRoutineDto {
   frequency_detail?: number;
 }
 
+export interface TodayScreenResponse {
+  streak: number;
+  routines: Routine[];
+}

@@ -34,6 +34,10 @@ export default function EditRoutineScreen() {
     setCategory('Sport')
   }, [id]);
 
+  const handleClose = async () => {
+    router.back();
+  }
+
   const handleSave = async () => {
     setIsLoading(true);
 
@@ -91,7 +95,7 @@ export default function EditRoutineScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{routine_name}</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={handleClose}>
           <Ionicons name="close" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -190,6 +194,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    top: 20,
     backgroundColor: '#fff',
   },
   headerTitle: { fontSize: 18, fontWeight: 'bold' },
@@ -201,6 +206,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
+    marginTop: 10,
     alignItems: 'center',
   },
   trackerTitle: { fontSize: 16, fontWeight: '600', color: '#666', marginBottom: 10 },

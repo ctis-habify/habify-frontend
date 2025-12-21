@@ -24,7 +24,7 @@ interface CreateRoutineModalProps {
   onClose?: () => void;
 }
 
-export default async function CreateRoutineModal({ onClose }: CreateRoutineModalProps) {
+export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps) {
   const router = useRouter();
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
