@@ -57,7 +57,7 @@ export function RoutineCard({ routine, onPress }: Props) {
       const hoursUntilStart = Math.ceil(diffStartMs / (60 * 60 * 1000));
       return {
         minsLeft: hoursUntilStart * 60,
-        label: `Starts in ${hoursUntilStart} Hours`,
+        label: `${hoursUntilStart} Hours`,
       };
     }
 
