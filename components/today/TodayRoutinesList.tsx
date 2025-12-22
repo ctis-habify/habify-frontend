@@ -22,6 +22,8 @@ export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine }:
   const streakDays = 15;
   const points = 456;
   console.log("TodayRoutinesList rendering: items count =", items.length, "loading =", loading);
+  const safeItems = items ?? [];
+  console.log("TodayRoutinesList rendering: items count =", safeItems.length, "loading =", loading);
   console.log("Routines:", items);
   const header = useMemo(() => {
     return <TodayHeader loading={loading} streakDays={streakDays} points={points} />;

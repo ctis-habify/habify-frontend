@@ -13,7 +13,9 @@ type Props = {
   title: string;
   showWeekDays?: boolean;
   routines: RoutineRowProps[];
+  // eslint-disable-next-line no-unused-vars
   onRoutineToggle?: (index: number, value: boolean) => void;
+  // eslint-disable-next-line no-unused-vars
   onItemPress?: (id: string) => void;
 };
 

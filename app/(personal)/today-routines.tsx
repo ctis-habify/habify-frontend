@@ -1,21 +1,22 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useState } from "react";
-import { Platform, StatusBar, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { routineService } from "../../services/routine.service";
-import type { Routine } from "../../types/routine";
+import { routineService } from '../../services/routine.service';
+import type { Routine } from '../../types/routine';
 
-import { BottomReturnButton } from "../../components/today/BottomReturnButton";
-import { TodayRoutinesList } from "../../components/today/TodayRoutinesList";
+import { setAuthToken } from '@/services/api';
+import { BottomReturnButton } from '../../components/today/BottomReturnButton';
+import { TodayRoutinesList } from '../../components/today/TodayRoutinesList';
 
-const TOKEN_KEY = "habify_access_token";
+const TOKEN_KEY = 'habify_access_token';
 
 async function getToken(): Promise<string | null> {
-  if (Platform.OS === "web") {
-    return typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+  if (Platform.OS === 'web') {
+    return typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
   }
   return SecureStore.getItemAsync(TOKEN_KEY);
 }
@@ -29,34 +30,47 @@ export default function TodayRoutinesScreen() {
 
   const goToRoutineDetail = useCallback(
     (id: string) => {
-      router.push({ pathname: "/(personal)/routines", params: { routineId: id } });
+      router.push({ pathname: '/(personal)/routines', params: { routineId: id } });
     },
-    [router]
+    [router],
   );
 
   const load = useCallback(async () => {
-  setLoading(true);
-  try {
-    const token = await getToken();
-    if (!token) {
+    setLoading(true);
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        setAuthToken(null);
+        setItems([]);
+        return;
+      }
+
+      // Token'ı interceptor'a set et
+      setAuthToken(token);
+
+      const res = await routineService.getTodayRoutines(token);
+      console.log('/routines/today response:', res);
+
+      // Normalize et: array değilse içinden array çıkar
+      const normalized: Routine[] = Array.isArray(res)
+        ? res
+        : Array.isArray((res as any)?.data)
+          ? (res as any).data
+          : Array.isArray((res as any)?.items)
+            ? (res as any).items
+            : Array.isArray((res as any)?.routines)
+              ? (res as any).routines
+              : [];
+
+      setItems(normalized);
+    } catch (e) {
+      console.log('Today routines load error:', e);
       setItems([]);
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    // sadece token kontrolü değil, token ile istek atılması
-    const routines = await routineService.getTodayRoutines(token);
-
-    console.log('/routines/today response:', routines);
-
-    setItems(routines);
-
-  } catch (e) {
-    console.log('Today routines load error:', e);
-    setItems([]);
-  } finally {
-    setLoading(false);
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
     load();
@@ -67,7 +81,7 @@ export default function TodayRoutinesScreen() {
       <StatusBar barStyle="light-content" />
 
       <LinearGradient
-        colors={["#4F86E8", "#2C54C9", "#1E3C98", "#0D2A7A"]}
+        colors={['#4F86E8', '#2C54C9', '#1E3C98', '#0D2A7A']}
         style={StyleSheet.absoluteFill}
       />
 
@@ -81,7 +95,7 @@ export default function TodayRoutinesScreen() {
 
         <BottomReturnButton
           label="Return Routine Lists"
-          onPress={() => router.replace("/(personal)/routines")}
+          onPress={() => router.replace('/(personal)/routines')}
         />
       </View>
     </View>
