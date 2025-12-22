@@ -126,4 +126,27 @@ export const routineService = {
     if (!response.ok) throw new Error('Failed to delete routine');
     return true; // Success
   },
+
+  async verifyRoutine (routineId: string, imageUri: string) {
+    const formData = new FormData();
+    
+    // Append the file
+    // Note: 'as any' is needed in React Native TypeScript for FormData
+    formData.append('file', {
+      uri: imageUri,
+      name: 'verification.jpg',
+      type: 'image/jpeg',
+    } as any);
+
+    // Append other data
+    formData.append('routineId', routineId);
+
+    // Send to backend
+    const response = await api.post('/verify/submit', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };

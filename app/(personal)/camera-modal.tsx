@@ -1,3 +1,4 @@
+import { routineService } from '@/services/routine.service';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -71,22 +72,18 @@ export default function CameraModal() {
         { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      // B. Simulate Network Request (Mocking Backend)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // B. Upload
+      await routineService.verifyRoutine(routineId, manipulated.uri);
 
       // C. Success
       Alert.alert('Success', 'Routine Verified!', [
         {
           text: 'Awesome',
-          onPress: () => {
-            // Pass success signal back to previous screen? 
-            // For now, just close modal
-            router.back();
-          },
+          onPress: () => router.back(),
         },
       ]);
-    } catch (err) {
-      Alert.alert('Error', 'Upload failed');
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'Upload failed');
     } finally {
       setIsUploading(false);
     }
