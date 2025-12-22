@@ -43,13 +43,10 @@ export default function TodayRoutinesScreen() {
       return;
     }
 
-    // sadece token kontrolü değil, token ile istek atılması
-    const routines = await routineService.getTodayRoutines(token);
-
+    const routines = await routineService.getTodayRoutines();
     console.log('/routines/today response:', routines);
-
     setItems(routines);
-
+    console.log()
   } catch (e) {
     console.log('Today routines load error:', e);
     setItems([]);

@@ -10,11 +10,13 @@ export type RoutineRowProps = {
   completed?: boolean;
   durationLabel: string;  
   showCamera?: boolean;
+  frequencyType?: string;
   // eslint-disable-next-line no-unused-vars
   onToggle?: (newValue: boolean) => void;
   // eslint-disable-next-line no-unused-vars
   onPress?: (id: string) => void; // changed: accept id
   categoryName?: string;
+  failed?: boolean;
 };
 
 export const RoutineRow: React.FC<RoutineRowProps> = ({
@@ -23,18 +25,14 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   completed = false,
   durationLabel,
   showCamera = true,
-  onToggle,
   onPress,
+  frequencyType,
+  failed = false,
 }) => {
   const [isChecked, setIsChecked] = useState(completed);
-
-  const toggle = () => {
-    const newVal = !isChecked;
-    setIsChecked(newVal);
-    onToggle?.(newVal);
-  };
-
+  const [isFailed] = useState(failed);
   const router = useRouter(); // Hook
+
 
   const handleCameraPress = () => {
     // Navigate to the modal, passing the routine ID
@@ -60,9 +58,11 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   const hours = parseHours();
 
   const getColor = () => {
-    if (hours <= 1) return '#ef4444';    // red
-    if (hours <= 7) return '#f97316';    // orange
-    return '#16a34a';                    // green
+    if (hours <= 1) return '#ef4444';   // red
+    if (hours <= 7) return '#ff5656';   // pink-red
+    if (hours <= 14) return '#f97316';  // orange
+    if (hours <= 20) return '#16a34a'   // green
+    return '#ff93ff';              // soft pink     
   };
 
   return (
@@ -71,9 +71,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
       onPress={() => onPress?.(id)} // changed: pass id
       activeOpacity={0.7}
     >
-    
-      <CircularCheckbox value={isChecked} onToggle={toggle} />
-
+      <CircularCheckbox value={isChecked}/>
       <Text style={[styles.name, isChecked && styles.completedText]}>
         {name}
       </Text>
@@ -86,10 +84,16 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
       )}
 
       {/* DURATION BADGE — only if unchecked */}
-      {!isChecked && (
+      {!isChecked && !isFailed && (
         <View style={[styles.badge, { backgroundColor: getColor() }]}>
-          <Text style={styles.badgeText}>{durationLabel}</Text>
+          <Text style={styles.badgeText}>{hours > 24 ? frequencyType : durationLabel }</Text>
         </View>
+      )}
+
+      { isFailed && (
+                <View style={[styles.badge, { backgroundColor: getColor() }]}>
+                <Text style={styles.badgeText}>Failed</Text>
+              </View>
       )}
    
     </TouchableOpacity>
