@@ -1,21 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
 import { routineService } from '@/services/routine.service';
-import {
-  mapBackendRoutineToRow
-} from '@/services/routines.mapper';
+import { mapBackendRoutineToRow } from '@/services/routines.mapper';
 import { RoutineList } from '@/types/routine';
 import { Href, useRouter } from 'expo-router';
-
 export default function RoutinesScreen() {
   const router = useRouter();
 
@@ -26,10 +17,8 @@ export default function RoutinesScreen() {
     const fetchData = async () => {
       try {
         const data = await routineService.getGroupedRoutines();
+        console.log('getGroupedRoutines:', JSON.stringify(data, null, 2));
         setLists(data);
-        console.log('Fetched routines:', data);
-        // console.log('Mapped routines:', data.map((list) => list.routines.map(mapBackendRoutineToRow)));
-        console.log('Routine Name: ', data[0]?.routines[0]?.routineName);
       } catch (e) {
         console.error('Failed to load routines', e);
       } finally {
@@ -45,14 +34,9 @@ export default function RoutinesScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={['#031138', '#02162f']}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+    <LinearGradient colors={['#031138', '#02162f']} style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* tabs */}
         <View style={styles.tabWrapper}>
           <View style={styles.tabContainer}>
             <TouchableOpacity style={[styles.tab, styles.tabActive]}>
@@ -65,29 +49,37 @@ export default function RoutinesScreen() {
           </View>
         </View>
 
-        <View style={styles.sectionHeader}>
+        {/* today link */}
+        <TouchableOpacity
+          style={styles.sectionHeader}
+          onPress={() => router.push('/(personal)/today-routines')}
+        >
           <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
-        </View>
+        </TouchableOpacity>
 
+        {/* <Text style={styles.category}>{routine.categoryName}</Text> */}
         {loading ? (
-          <Text style={{ color: '#fff', textAlign: 'center' }}>
-            Loading...
-          </Text>
+          <Text style={{ color: '#fff', textAlign: 'center' }}>Loading...</Text>
         ) : (
-          lists.map((list) => {
-            const frequencyType =
-              list.routines[3]?.frequencyType ?? 'DAILY';
+          lists.map((list, index) => {
+            // en az bir routine varsa onun frequencyType'ını kullan
+            const firstRoutine = list.routines[0];
+            const frequencyType = firstRoutine?.frequencyType ?? 'DAILY';
+
+            // key garanti string olsun, id yoksa index fallback
+            const key = list.id ?? list.categoryId ?? index;
 
             return (
               <RoutineCategoryCard
-                key={list.id}
+                key={String(key)}
                 tagLabel={list.categoryName}
-                frequencyLabel={
-                  frequencyType === 'DAILY' ? 'Daily' : 'Weekly'
-                }
+                frequencyLabel={frequencyType === 'DAILY' ? 'Daily' : 'Weekly'}
                 title={list.title}
-                showWeekDays={frequencyType === 'daily'}
-                routines={list.routines.map(mapBackendRoutineToRow)}
+                showWeekDays={frequencyType === 'DAILY'}
+                routines={list.routines.map((routine) => ({
+                  ...mapBackendRoutineToRow(routine),
+                  onPress: () => handleRoutinePress(routine.id),
+                }))}
                 onItemPress={handleRoutinePress}
               />
             );
@@ -139,6 +131,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  // category: {
+  //   backgroundColor: '#2663F6',
+  //   color: '#fff',
+  //   fontWeight: '700',
+  //   paddingHorizontal: 10,
+  //   paddingVertical: 4,
+  //   borderRadius: 12,
+  //   marginBottom: 6,
+  //   alignSelf: 'flex-start',
+  // },
   createBtn: {
     backgroundColor: '#001b4f',
     borderRadius: 18,

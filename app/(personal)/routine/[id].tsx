@@ -20,7 +20,7 @@ export default function EditRoutineScreen() {
   const { token } = useAuth(); 
   const [isLoading, setIsLoading] = useState(false);
   // Form State
-  const [routine_name, setName] = useState('');
+  const [routineName, setName] = useState('');
   const [start_time, setStartTime] = useState('');
   const [end_time, setEndTime] = useState('');
   const [category, setCategory] = useState('');
@@ -49,7 +49,7 @@ export default function EditRoutineScreen() {
 
     try {
       await routineService.updateRoutine(id as string, {
-        routine_name,
+        routineName,
         start_time,
         end_time,
       }, token);
@@ -94,8 +94,8 @@ export default function EditRoutineScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{routine_name}</Text>
-        <TouchableOpacity onPress={handleClose}>
+        <Text style={styles.headerTitle}>{routineName}</Text>
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -152,7 +152,7 @@ export default function EditRoutineScreen() {
           <Text style={styles.label}>Name</Text>
           <TextInput
             style={styles.input}
-            value={routine_name}
+            value={routineName}
             onChangeText={setName}
             placeholder="Routine Name"
           />
