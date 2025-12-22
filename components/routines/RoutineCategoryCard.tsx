@@ -4,12 +4,10 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { RoutineRow, RoutineRowProps } from './RoutineRow';
 
-const WEEK_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const DOT_COUNT = 7; 
 
 type Props = {
   tagLabel: string;
-  frequencyLabel: string;
   title: string;
   showWeekDays?: boolean;
   routines: RoutineRowProps[];
@@ -21,9 +19,7 @@ type Props = {
 
 export const RoutineCategoryCard: React.FC<Props> = ({
   tagLabel,
-  frequencyLabel,
   title,
-  showWeekDays = false,
   routines,
   onRoutineToggle,
   onItemPress,
@@ -39,62 +35,24 @@ export const RoutineCategoryCard: React.FC<Props> = ({
           <View style={[styles.chip, styles.tagChip]}>
             <Text style={styles.chipText}>{tagLabel}</Text>
           </View>
-
-          <View style={[styles.chip, styles.freqChip]}>
-            <Text style={styles.chipText}>{frequencyLabel}</Text>
-          </View>
         </View>
-
         <Text style={styles.title}>{title}</Text>
       </View>
-
-      {/* SPORT — WEEKLY DOTS */}
-      {!showWeekDays && (
-        <View style={styles.dotRow}>
-          {Array.from({ length: DOT_COUNT }).map((_, idx) => {
-            const isCheckedDot = allCompleted && idx === 0;
-
-            return (
-              <View
-                key={idx}
-                style={[styles.dot, isCheckedDot && styles.filledDot]}
-              >
-                {isCheckedDot && (
-                  <Ionicons name="checkmark" size={20} color="#ffffff" />
-                )}
-              </View>
-            );
-          })}
-        </View>
-      )}
-
-      {/* MUSIC — WEEKDAYS */}
-      {showWeekDays && (
-        <View style={styles.weekRow}>
-          {WEEK_DAYS.map((d, idx) => {
-            const isDone = allCompleted && idx === 0;
-            return (
-              <View
-                key={idx}
-                style={[
-                  styles.dayPill,
-                  isDone && styles.dayPillDone,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dayText,
-                    isDone && styles.dayTextDone,
-                  ]}
-                >
-                  {d}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-      )}
-
+      <View style={styles.dotRow}>
+        {Array.from({ length: DOT_COUNT }).map((_, idx) => {
+          const isCheckedDot = allCompleted && idx === 0;
+          return (
+            <View
+              key={idx}
+              style={[styles.dot, isCheckedDot && styles.filledDot]}
+            >
+              {isCheckedDot && (
+                <Ionicons name="checkmark" size={20} color="#ffffff" />
+              )}
+            </View>
+          );
+        })}
+      </View>
       <View style={styles.divider} />
 
       {/* RUTINLER */}
@@ -138,7 +96,7 @@ const styles = StyleSheet.create({
   chipText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   title: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '500',
     color: '#111827',
   },
 
