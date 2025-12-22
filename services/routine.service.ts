@@ -4,16 +4,14 @@ const API_URL = 'http://localhost:3000';
 
 export type UpdateRoutinePayload = Partial<Omit<Routine, 'id'>>;
 
-async function getTodayRoutines(token: string): Promise<Routine[]> {
+async function getTodayRoutines(): Promise<Routine[]> {
   const res = await api.get('/routines/today');
-  return res.data;          // backend 'data' içinde döndürüyorsa: res.data.data
+  return res.data; // backend 'data' içinde döndürüyorsa: res.data.data
 }
 
 // Tüm rutinler
-async function getRoutines(token: string): Promise<Routine[]> {
-  const res = await api.get('/routines', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+async function getRoutines(): Promise<Routine[]> {
+  const res = await api.get('/routines');
   return res.data;
 }
 
@@ -26,31 +24,25 @@ async function getGroupedRoutines(): Promise<RoutineList[]> {
 export const routineService = {
   // Get all routines for the authenticated user
   getRoutines,
-
   // Get today's routines for the authenticated user
   getTodayRoutines,
-
   // Get grouped routines
   getGroupedRoutines,
-
   // Get routine by ID
-  async getRoutineById(routineId: string, p0: string): Promise<Routine> {
+  async getRoutineById(routineId: string): Promise<Routine> {
     const res = await api.get(`/routines/${routineId}`);
     return res.data;
   },
-
   // Get routine lists (routine groups)
   async getRoutineLists(): Promise<RoutineList[]> {
     const res = await api.get('/routine_lists');
     return res.data;
   },
-
   async getRoutineLogs(routineId?: string): Promise<RoutineLog[]> {
     const endpoint = routineId ? `/routines/${routineId}/logs` : '/routine-logs';
     const res = await api.get(endpoint);
     return res.data;
   },
-
    // ✅ Create Routine List
   async createRoutineList(categoryId: number, title: string) {
     const res = await api.post('/routine_lists', {

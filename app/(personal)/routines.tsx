@@ -62,26 +62,19 @@ export default function RoutinesScreen() {
           <Text style={{ color: '#fff', textAlign: 'center' }}>Loading...</Text>
         ) : (
           lists.map((list, index) => {
-            // en az bir routine varsa onun frequencyType'ını kullan
-            const firstRoutine = list.routines[0];
-            const frequencyType = firstRoutine?.frequencyType ?? 'DAILY';
-
             // key garanti string olsun, id yoksa index fallback
             const key = list.id ?? list.categoryId ?? index;
-
+            console.log("BACKEND TITLE: ", list.routineListTitle);
             return (
               <RoutineCategoryCard
-                key={String(key)}
-                tagLabel={list.categoryName}
-                frequencyLabel={frequencyType === 'DAILY' ? 'Daily' : 'Weekly'}
-                title={list.title}
-                showWeekDays={frequencyType === 'DAILY'}
+              key={`list-${(list as any).routineListId}`}                
+              tagLabel={list.categoryName}
+                title={list.routineListTitle}
                 routines={list.routines.map((routine) => ({
                   ...mapBackendRoutineToRow(routine),
                   onPress: () => handleRoutinePress(routine.id),
                 }))}
-                onItemPress={handleRoutinePress}
-              />
+                onItemPress={handleRoutinePress} />
             );
           })
         )}

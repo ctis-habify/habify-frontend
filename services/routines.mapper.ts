@@ -10,4 +10,6 @@ export const mapBackendRoutineToRow = (
   durationLabel: routine.remainingLabel,
   showCamera: !routine.isDone,
   categoryName: routine.categoryName,
+  frequencyType: routine.frequencyType,
+  failed: routine.isFailed,
 });

@@ -10,7 +10,8 @@ export interface Routine {
   end_time: string; // time without time zone (HH:MM:SS)
   start_date: string; // date (YYYY-MM-DD)
   isDone: boolean;
-  // user_id: string;
+  isFailed: boolean;
+  //user_id: string;
   frequencyType: string;
   remainingLabel: string;
   remainingMinutes: number;
@@ -22,7 +23,7 @@ export interface RoutineList {
   user_id: string; // uuid
   categoryId: number;
   categoryName: string
-  title: string;
+  routineListTitle: string;
   created_at: string; // timestamp
   routines: Routine[];
 }

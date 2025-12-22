@@ -1,5 +1,6 @@
 import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
+import { Category } from '@/types/category';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
@@ -29,7 +30,7 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
   const router = useRouter();
 
   // --- Dropdown States ---
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -85,7 +86,7 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
   }, []);
 
   const categoryItems = useMemo(
-    () => categories.map((c) => ({ label: c.name, value: c.id })),
+    () => categories.map((c) => ({ label: c.name, value: c.categoryId })),
     [categories],
   );
 
@@ -195,8 +196,8 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
 
       // 3) BACKEND DTO: CreateRoutineDto ile birebir aynı body
       const body = {
-        routineListId: Number(routineList.id), // 🔴 int
-        routineName: routineName.trim(), // 🔴 string
+        routineListId: Number(routineList.id), // int
+        routineName: routineName.trim(), // string
         frequencyType: frequency, // 'DAILY' | 'WEEKLY'
         ...(frequencyDetail !== undefined && { frequencyDetail }),
         startTime: formatTimeForAPI(startTime), // "HH:mm:00"
