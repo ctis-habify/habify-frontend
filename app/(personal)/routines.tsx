@@ -1,32 +1,48 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { Href, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import CreateRoutineInListModal from '@/components/modals/CreateRoutineInListModal';
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
 import { routineService } from '@/services/routine.service';
 import { mapBackendRoutineToRow } from '@/services/routines.mapper';
 import { RoutineList } from '@/types/routine';
-import { Href, useRouter } from 'expo-router';
+
 export default function RoutinesScreen() {
   const router = useRouter();
 
   const [lists, setLists] = useState<RoutineList[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await routineService.getGroupedRoutines();
-        console.log('getGroupedRoutines:', JSON.stringify(data, null, 2));
-        setLists(data);
-      } catch (e) {
-        console.error('Failed to load routines', e);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [showCreateInList, setShowCreateInList] = useState(false);
+  const [selectedRoutineListId, setSelectedRoutineListId] = useState<number | null>(null);
 
-    fetchData();
+  const openCreateInList = (routineListId: number) => {
+    setSelectedRoutineListId(routineListId);
+    setShowCreateInList(true);
+  };
+
+  const closeCreateInList = () => {
+    setShowCreateInList(false);
+    setSelectedRoutineListId(null);
+  };
+
+  const refreshLists = async () => {
+    setLoading(true);
+    try {
+      const data = await routineService.getGroupedRoutines();
+      console.log('getGroupedRoutines:', JSON.stringify(data, null, 2));
+      setLists(data);
+    } catch (e) {
+      console.error('Failed to load routines', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshLists();
   }, []);
 
   const handleRoutinePress = (id: string) => {
@@ -57,27 +73,43 @@ export default function RoutinesScreen() {
           <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
         </TouchableOpacity>
 
-        {/* <Text style={styles.category}>{routine.categoryName}</Text> */}
+        {/* lists */}
         {loading ? (
           <Text style={{ color: '#fff', textAlign: 'center' }}>Loading...</Text>
         ) : (
           lists.map((list, index) => {
-            // key garanti string olsun, id yoksa index fallback
-            const key = list.id ?? list.categoryId ?? index;
-            console.log("BACKEND TITLE: ", list.routineListTitle);
+            // ✅ routineListId'yi MAP içinde hesapla
+            const routineListIdRaw = (list as any).routineListId ?? (list as any).id ?? list.id;
+            const routineListId = Number(routineListIdRaw);
+            const canAdd = Number.isFinite(routineListId);
+
             return (
               <RoutineCategoryCard
-              key={`list-${(list as any).routineListId}`}                
-              tagLabel={list.categoryName}
-                title={list.routineListTitle}
+                key={`list-${canAdd ? routineListId : index}`}
+                tagLabel={list.categoryName}       // ✅ sol üst: sadece kategori adı
+                title={list.routineListTitle}      // ✅ sağ üst: liste adı
                 routines={list.routines.map((routine) => ({
                   ...mapBackendRoutineToRow(routine),
                   onPress: () => handleRoutinePress(routine.id),
                 }))}
-                onItemPress={handleRoutinePress} />
+                onItemPress={handleRoutinePress}
+                // ✅ + butonu için handler (id yoksa buton görünmez)
+                onPressAddRoutine={canAdd ? () => openCreateInList(routineListId) : undefined}
+              />
             );
           })
         )}
+
+        {/* ✅ Modal */}
+        <CreateRoutineInListModal
+          visible={showCreateInList}
+          routineListId={selectedRoutineListId}
+          onClose={closeCreateInList}
+          onCreated={async () => {
+            closeCreateInList();
+            await refreshLists();
+          }}
+        />
 
         <TouchableOpacity
           style={styles.createBtn}
@@ -124,16 +156,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  // category: {
-  //   backgroundColor: '#2663F6',
-  //   color: '#fff',
-  //   fontWeight: '700',
-  //   paddingHorizontal: 10,
-  //   paddingVertical: 4,
-  //   borderRadius: 12,
-  //   marginBottom: 6,
-  //   alignSelf: 'flex-start',
-  // },
   createBtn: {
     backgroundColor: '#001b4f',
     borderRadius: 18,
