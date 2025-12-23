@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { BACKGROUND_GRADIENT } from '../../app/theme';
-import { FrequencyType } from '../../types/routine';
 import { routineFormStyles } from '.././routine-form-styles';
 
 interface CreateRoutineModalProps {
@@ -101,7 +100,6 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
     const errors: string[] = [];
     if (!category) errors.push('Please select a category.');
     if (!routineListTitle.trim()) errors.push('Please enter a routine list title.');
-    if (!routineName.trim()) errors.push('Please enter a routine name.');
 
     if (errors.length) {
       Alert.alert('Warning', errors.join('\n'));
@@ -123,23 +121,7 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
 
       // routine oluştur (gizli default değerlerle)
       // Backend DTO'nun zorunlulukları için default atıyoruz
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-
-      const body = {
-        routineListId: Number(routineList.id),
-        routineName: routineName.trim(),
-        frequencyType: 'DAILY' as FrequencyType,
-        startTime: '09:00:00',
-        endTime: '10:00:00',
-        isAiVerified: false,
-        startDate: today,
-      };
-
       console.log('CreateRoutineList response:', routineList);
-      console.log('CreateRoutine body (defaults):', JSON.stringify(body, null, 2));
-
-      const res = await routineService.createRoutine(body);
-      console.log('CreateRoutine response:', res);
 
       Alert.alert('Success', 'Routine list created successfully!', [
         { text: 'OK', onPress: handleClose },
@@ -259,18 +241,6 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
                 value={routineListTitle}
                 onChangeText={setRoutineListTitle}
                 placeholder="Enter routine list title"
-                placeholderTextColor="#ffffffcc"
-                style={[routineFormStyles.textInput, { color: '#fff' }]}
-              />
-            </View>
-
-            {/* Routine Name */}
-            <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Routine Name</Text>
-            <View style={[routineFormStyles.inputContainer, { backgroundColor: '#2196F3' }]}>
-              <TextInput
-                value={routineName}
-                onChangeText={setRoutineName}
-                placeholder="Enter routine name"
                 placeholderTextColor="#ffffffcc"
                 style={[routineFormStyles.textInput, { color: '#fff' }]}
               />
