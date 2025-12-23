@@ -15,43 +15,61 @@ import {
 import { routineService } from '../../../services/routine.service';
 
 export default function EditRoutineScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { token } = useAuth(); 
   const [isLoading, setIsLoading] = useState(false);
   // Form State
-  const [routineName, setName] = useState('');
+  const [routine_name, setName] = useState('');
   const [start_time, setStartTime] = useState('');
   const [end_time, setEndTime] = useState('');
-  const [category, setCategory] = useState('');
-
-  // Fetch data on load (Mocked for now as we don't have the full context)
+  const [routineListId, setRoutineListId] = useState(0);
+  const [frequency_type, setFrequencyType] = useState('');
+  const [frequency_detail, setFrequencyDetail] = useState<number>(0);
+  const [is_ai_verified, setIsAiVerified] = useState(false);
+  const [start_date, setStartDate] = useState('2025-10-10');
+  console.log('FETCH ROUTINE ID:', id, typeof id);
   useEffect(() => {
-    // In a real app, fetch routine details by ID here
-    setName('Sport Routine 1');
-    setStartTime('08:00');
-    setEndTime('09:00');
-    setCategory('Sport')
-  }, [id]);
-
-  const handleClose = async () => {
-    router.back();
-  }
-
+    if (!id || !token) {
+      return;
+    }
+    const fetchData = async () => {
+      try {
+        const data = await routineService.getRoutineById(id, token || '');
+        console.log("ID ROUTINE NAME DATA:", data.routine_name);
+        console.log("DATA: ", data)
+        setName(data?.routine_name || '');
+        setStartTime(data?.start_time || '');
+        setEndTime(data?.end_time || '');
+        setRoutineListId(data?.routineListId || 1);
+        setFrequencyDetail(data?.frequency_detail || 0);
+        setFrequencyType(data?.frequency_type || 'Daily');
+        setIsAiVerified(data?.is_ai_verified || false);
+        setStartDate(data.start_date);
+      } catch (err) {
+        console.error("Failed to fetch routine:", err);
+      }
+    };
+  
+    fetchData();
+  }, [id, token]);
   const handleSave = async () => {
     setIsLoading(true);
-
     if (!token) {
       Alert.alert('Not authenticated', 'Please login again.');
       router.push('/(auth)');
       return;
     }
-
     try {
-      await routineService.updateRoutine(id as string, {
-        routineName,
-        start_time,
-        end_time,
+      await routineService.updateRoutine(id, {
+        routineListId,
+        routineName: routine_name,
+        frequencyType: frequency_type,
+        frequencyDetail: frequency_detail,
+        startTime: start_time,
+        endTime: end_time,
+        isAiVerified: is_ai_verified,
+        startDate: start_date,
       }, token);
       
       Alert.alert('Success', 'Routine updated successfully');
@@ -90,11 +108,10 @@ export default function EditRoutineScreen() {
       ]
     );
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{routineName}</Text>
+        <Text style={styles.headerTitle}>{routine_name}</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={24} color="#333" />
         </TouchableOpacity>
@@ -152,17 +169,10 @@ export default function EditRoutineScreen() {
           <Text style={styles.label}>Name</Text>
           <TextInput
             style={styles.input}
-            value={routineName}
+            value={routine_name}
             onChangeText={setName}
             placeholder="Routine Name"
           />
-
-          {/* Category (Dropdown Mock) */}
-          <Text style={styles.label}>Category</Text>
-          <View style={styles.dropdown}>
-            <Text style={styles.dropdownText}>{category}</Text>
-            <Ionicons name="chevron-down" size={20} color="#fff" />
-          </View>
 
           {/* Save Button */}
           <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={isLoading}>

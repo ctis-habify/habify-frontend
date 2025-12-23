@@ -2,19 +2,32 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Href, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
 import CreateRoutineInListModal from '@/components/modals/CreateRoutineInListModal';
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
 import { routineService } from '@/services/routine.service';
 import { mapBackendRoutineToRow } from '@/services/routines.mapper';
 import { RoutineList } from '@/types/routine';
-
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 export default function RoutinesScreen() {
   const router = useRouter();
 
   const [lists, setLists] = useState<RoutineList[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadLists = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await routineService.getGroupedRoutines();
+      setLists(data);
+    } catch (e) {
+      console.error("Failed to load routines", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   const [showCreateInList, setShowCreateInList] = useState(false);
   const [selectedRoutineListId, setSelectedRoutineListId] = useState<number | null>(null);
 
@@ -45,8 +58,16 @@ export default function RoutinesScreen() {
     refreshLists();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadLists();    
+    }, [loadLists])
+  );
   const handleRoutinePress = (id: string) => {
-    router.push(`/(personal)/routine/${id}` as Href);
+    router.push({
+      pathname: '/(personal)/routine/[id]',
+      params: { id: id },
+    });
   };
 
   return (
@@ -78,7 +99,7 @@ export default function RoutinesScreen() {
           <Text style={{ color: '#fff', textAlign: 'center' }}>Loading...</Text>
         ) : (
           lists.map((list, index) => {
-            // ✅ routineListId'yi MAP içinde hesapla
+            // routineListId'yi MAP içinde hesapla
             const routineListIdRaw = (list as any).routineListId ?? (list as any).id ?? list.id;
             const routineListId = Number(routineListIdRaw);
             const canAdd = Number.isFinite(routineListId);
@@ -86,21 +107,21 @@ export default function RoutinesScreen() {
             return (
               <RoutineCategoryCard
                 key={`list-${canAdd ? routineListId : index}`}
-                tagLabel={list.categoryName}       // ✅ sol üst: sadece kategori adı
-                title={list.routineListTitle}      // ✅ sağ üst: liste adı
+                tagLabel={list.categoryName}       // sol üst: sadece kategori adı
+                title={list.routineListTitle}      // sağ üst: liste adı
                 routines={list.routines.map((routine) => ({
                   ...mapBackendRoutineToRow(routine),
                   onPress: () => handleRoutinePress(routine.id),
                 }))}
                 onItemPress={handleRoutinePress}
-                // ✅ + butonu için handler (id yoksa buton görünmez)
+                // + butonu için handler (id yoksa buton görünmez)
                 onPressAddRoutine={canAdd ? () => openCreateInList(routineListId) : undefined}
               />
             );
           })
         )}
 
-        {/* ✅ Modal */}
+        {/* Modal */}
         <CreateRoutineInListModal
           visible={showCreateInList}
           routineListId={selectedRoutineListId}

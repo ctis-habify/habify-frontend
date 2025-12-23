@@ -2,37 +2,43 @@ import { Routine, RoutineList, RoutineLog } from '../types/routine';
 import { api } from './api';
 const API_URL = 'http://localhost:3000';
 
-export type UpdateRoutinePayload = Partial<Omit<Routine, 'id'>>;
-
-async function getTodayRoutines(): Promise<Routine[]> {
-  const res = await api.get('/routines/today');
-  return res.data; // backend 'data' içinde döndürüyorsa: res.data.data
-}
-
-// Tüm rutinler
-async function getRoutines(): Promise<Routine[]> {
-  const res = await api.get('/routines');
-  return res.data;
-}
-
-// Kategoriye göre gruplanmış rutin listeleri (RoutinesScreen için)
-async function getGroupedRoutines(): Promise<RoutineList[]> {
-  const res = await api.get('/routines/grouped'); 
-  return res.data;
-}
+export type UpdateRoutinePayload = Partial<{
+  routineListId: number;
+  routineName: string;
+  frequencyType: 'Daily' | 'Weekly' | string;
+  frequencyDetail: number;
+  startTime: string;
+  endTime: string;
+  isAiVerified: boolean;
+  startDate: string;
+}>;
 
 export const routineService = {
   // Get all routines for the authenticated user
-  getRoutines,
-  // Get today's routines for the authenticated user
-  getTodayRoutines,
-  // Get grouped routines
-  getGroupedRoutines,
-  // Get routine by ID
-  async getRoutineById(routineId: string): Promise<Routine> {
-    const res = await api.get(`/routines/${routineId}`);
+  async getRoutines(): Promise<Routine[]> {
+    const res = await api.get('/routines');
     return res.data;
   },
+// Today's routines
+  async getTodayRoutines(): Promise<Routine[]> {
+    const res = await api.get('/routines/today');
+    return res.data; // backend 'data' içinde döndürüyorsa: res.data.data
+  },
+
+  // Get grouped routines
+    async getGroupedRoutines(): Promise<RoutineList[]> {
+      const res = await api.get('/routines/grouped'); 
+      return res.data;
+    },
+
+  // Get routine by ID
+  async getRoutineById(routineId: string, token: string): Promise<Routine> {
+    const res = await api.get(`/routines/${routineId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  },
+  
   // Get routine lists (routine groups)
   async getRoutineLists(): Promise<RoutineList[]> {
     const res = await api.get('/routine_lists');
@@ -96,17 +102,13 @@ export const routineService = {
   },
 
   async updateRoutine(id: string, payload: UpdateRoutinePayload, token: string) {
-    const response = await fetch(`${API_URL}/routines/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
+    console.log("UPDATE PAYLOAD: ", payload);
+    const response = await api.patch(`${API_URL}/routines/${id}`, payload, {
+      headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!response.ok) throw new Error('Failed to update routine');
-    return response.json();
+    if (response.status !== 200) throw new Error('Failed to update routine');
+    return response;
   },
 
   async deleteRoutine(id: string, token: string) {
