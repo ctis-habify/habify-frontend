@@ -29,6 +29,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   frequencyType,
   failed = false,
 }) => {
+  // eslint-disable-next-line no-unused-vars
   const [isChecked, setIsChecked] = useState(completed);
   const [isFailed] = useState(failed);
   const router = useRouter(); // Hook
