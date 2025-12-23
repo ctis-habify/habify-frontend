@@ -1,14 +1,10 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { Href, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CreateRoutineInListModal from '@/components/modals/CreateRoutineInListModal';
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
 import { routineService } from '@/services/routine.service';
 import { mapBackendRoutineToRow } from '@/services/routines.mapper';
 import { RoutineList } from '@/types/routine';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 export default function RoutinesScreen() {
