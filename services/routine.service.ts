@@ -11,6 +11,8 @@ export type UpdateRoutinePayload = Partial<{
   endTime: string;
   isAiVerified: boolean;
   startDate: string;
+  isReminderEnabled: boolean;
+  reminderTime: string;
 }>;
 
 export const routineService = {
@@ -102,8 +104,24 @@ export const routineService = {
   },
 
   async updateRoutine(id: string, payload: UpdateRoutinePayload, token: string) {
-    console.log("UPDATE PAYLOAD: ", payload);
-    const response = await api.patch(`${API_URL}/routines/${id}`, payload, {
+    console.log("UPDATE PAYLOAD (Input): ", payload);
+    
+    // Map to snake_case for backend
+    const snakePayload: any = {};
+    if (payload.routineListId !== undefined) snakePayload.routine_list_id = payload.routineListId;
+    if (payload.routineName !== undefined) snakePayload.routine_name = payload.routineName;
+    if (payload.frequencyType !== undefined) snakePayload.frequency_type = payload.frequencyType;
+    if (payload.frequencyDetail !== undefined) snakePayload.frequency_detail = payload.frequencyDetail;
+    if (payload.startTime !== undefined) snakePayload.start_time = payload.startTime;
+    if (payload.endTime !== undefined) snakePayload.end_time = payload.endTime;
+    if (payload.isAiVerified !== undefined) snakePayload.is_ai_verified = payload.isAiVerified;
+    if (payload.startDate !== undefined) snakePayload.start_date = payload.startDate;
+    if (payload.isReminderEnabled !== undefined) snakePayload.is_reminder_enabled = payload.isReminderEnabled;
+    if (payload.reminderTime !== undefined) snakePayload.reminder_time = payload.reminderTime;
+
+    console.log("UPDATE PAYLOAD (Sent): ", snakePayload);
+
+    const response = await api.patch(`${API_URL}/routines/${id}`, snakePayload, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

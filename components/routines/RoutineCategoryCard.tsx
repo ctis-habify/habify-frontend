@@ -1,14 +1,17 @@
 /* eslint-disable no-unused-vars */
 import { RoutineRow, RoutineRowProps } from '@/components/routines/RoutineRow';
+import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ThemedText } from '../themed-text';
+import { ThemedView } from '../themed-view';
 
 const DOT_COUNT = 7;
 
 type Props = {
-  tagLabel: string; // kategori adı (Sport/Music/Study)
-  title: string;    // liste adı (Sport List vs)
+  tagLabel: string;
+  title: string;
   showWeekDays?: boolean;
   routines: RoutineRowProps[];
   onPressAddRoutine?: () => void;
@@ -27,15 +30,13 @@ export const RoutineCategoryCard: React.FC<Props> = ({
   const allCompleted = routines.length > 0 && routines.every((r) => r.completed);
 
   return (
-    <View style={styles.card}>
+    <ThemedView variant="card" style={styles.card}>
       {/* HEADER */}
       <View style={styles.headerRow}>
-        {/* ✅ sol üst: sadece kategori */}
-        <Text style={styles.categoryTitle}>{tagLabel}</Text>
+        <ThemedText type="label" style={styles.categoryTitle}>{tagLabel}</ThemedText>
 
-        {/* ✅ sağ üst: liste adı + küçük + */}
         <View style={styles.headerRight}>
-          <Text style={styles.title}>{title}</Text>
+          <ThemedText type="default" style={styles.title}>{title}</ThemedText>
 
           {!!onPressAddRoutine && (
             <TouchableOpacity
@@ -50,17 +51,7 @@ export const RoutineCategoryCard: React.FC<Props> = ({
         </View>
       </View>
 
-      {/* DOTS */}
-      <View style={styles.dotRow}>
-        {Array.from({ length: DOT_COUNT }).map((_, idx) => {
-          const isCheckedDot = allCompleted && idx === 0;
-          return (
-            <View key={idx} style={[styles.dot, isCheckedDot && styles.filledDot]}>
-              {isCheckedDot && <Ionicons name="checkmark" size={18} color="#ffffff" />}
-            </View>
-          );
-        })}
-      </View>
+
 
       <View style={styles.divider} />
 
@@ -75,33 +66,45 @@ export const RoutineCategoryCard: React.FC<Props> = ({
           {idx !== routines.length - 1 && <View style={styles.lightDivider} />}
         </View>
       ))}
-    </View>
+    </ThemedView>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(226, 232, 240, 0.92)',
-    borderRadius: 32,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginBottom: 18,
+    marginBottom: 24,
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    paddingVertical: 18,
+    // Stronger Shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
   },
 
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 22,
+    marginBottom: 10,
   },
 
   categoryTitle: {
+    color: "#fff",
+    backgroundColor: Colors.light.primary, // Back to solid pill as requested/implied
     fontSize: 12,
-    fontWeight: '800',
-    color: '#ffffffff',
-    backgroundColor: '#1d4ed8ff',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
 
   headerRight: {
@@ -111,53 +114,29 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#0f172a',
+    color: Colors.light.text, 
+    fontSize: 20, // Larger
+    fontWeight: '500', // Reduced to Medium
+    letterSpacing: -0.5, // Tighter tracking for modern look
   },
 
   plusBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#1d4ed8ff',
+    backgroundColor: Colors.light.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.10,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    opacity: 0.9,
   },
 
-  dotRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 14,
-    marginTop: 16,
-    marginBottom: 12,
-  },
-  dot: {
-    width: 20,
-    height: 20,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#2563eb',
-    backgroundColor: '#2563eb',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filledDot: {
-    width: 26,
-    height: 26,
-    borderRadius: 26,
-    backgroundColor: '#2563eb',
-  },
 
-  divider: { height: 10 },
+
+  divider: { height: 4 },
   lightDivider: {
     height: 1,
-    backgroundColor: 'rgba(15,23,42,0.06)',
+    backgroundColor: '#f3f4f6', // Ultra light
+    marginLeft: 66, 
+    marginRight: 20,
   },
 });

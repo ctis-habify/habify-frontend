@@ -1,21 +1,12 @@
-import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthHeader } from '@/components/auth/AuthHeader';
-import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthLayout } from '@/components/auth/AuthLayout';
+import { Button } from '@/components/ui/Button';
+import { TextInput } from '@/components/ui/TextInput';
+import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { authService } from '../../services/auth.service';
 
 export default function SignupScreen() {
@@ -82,55 +73,61 @@ export default function SignupScreen() {
         style={styles.backButton} 
         onPress={() => router.back()}
       >
-        <Ionicons name="chevron-back" size={28} color="white" />
+        <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
       </TouchableOpacity>
 
       <AuthHeader />
 
       <View style={{ width: '100%' }}>
-        <AuthInput 
+        <TextInput 
           label="Name Surname"
           value={name}
           onChangeText={setName}
           placeholder="Name Surname"
+          icon="person-outline"
         />
 
-        <AuthInput 
+        <TextInput 
           label="Email"
           value={email}
           onChangeText={setEmail}
           placeholder="example@gmail.com"
           keyboardType="email-address"
           autoCapitalize="none"
+          icon="mail-outline"
         />
 
-        <AuthInput 
+        <TextInput 
           label="Birth Date"
           value={birthDate}
           onChangeText={setBirthDate}
           placeholder="YYYY-MM-DD"
           keyboardType="numbers-and-punctuation"
+          icon="calendar-outline"
         />
 
-        <AuthInput 
+        <TextInput 
           label="Gender"
           value={gender}
           onChangeText={setGender}
           placeholder="Gender"
+          icon="male-female-outline"
         />
 
-        <AuthInput 
+        <TextInput 
           label="Password"
           value={password}
           onChangeText={setPassword}
           placeholder="***********"
           secureTextEntry
+          icon="lock-closed-outline"
         />
 
-        <AuthButton 
+        <Button 
           title="Sign Up" 
           onPress={handleRegister} 
           isLoading={isLoading} 
+          style={{ marginTop: 20 }}
         />
       </View>
     </AuthLayout>
@@ -140,8 +137,14 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
-    top: 25,
-    left: 20,
+    top: 24,
+    left: 24,
     zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

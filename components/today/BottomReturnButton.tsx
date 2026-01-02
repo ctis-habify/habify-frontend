@@ -24,17 +24,18 @@ const styles = StyleSheet.create({
     right: 24,
     bottom: 18,
     height: 54,
-    borderRadius: 28,
-    backgroundColor: "rgba(7, 18, 60, 0.55)",
+    borderRadius: 18, // Matched from routines.tsx
+    backgroundColor: 'rgba(255,255,255,0.1)', // Matched
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
+    borderColor: 'rgba(255,255,255,0.2)', // Matched
+    borderStyle: 'dashed', // Matched
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    // Removed Shadows to match the flat/dashed look
   },
-  text: { color: "rgba(255,255,255,0.9)", fontSize: 18, fontWeight: "800" },
+  text: { 
+    color: "#ffffff", 
+    fontSize: 16, 
+    fontWeight: "400" 
+  },
 });

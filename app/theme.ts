@@ -1,21 +1,23 @@
+import { Colors } from '@/constants/theme';
+
 export const COLORS = {
-  // Arka Plan Gradient 
-  gradientTop: '#2452a2', 
-  gradientBottom: '#112248', 
+  // Brand Gradients
+  gradientTop: '#6D28D9',  // Violet-700
+  gradientBottom: '#4C1D95', // Violet-900
   
-  // Ana Kart Arka Planı 
-  formBackground: '#ffffff', 
+  // Surfaces
+  formBackground: Colors.light.card,
   
-  // Input ve Birincil Buton Mavi Rengi
-  inputBlue: '#007bff', 
+  // Interactive
+  inputBlue: Colors.light.primary,
   
-  // Metin Renkleri
-  textDark: '#111827', // Başlıklar ve Etiketler için Koyu
-  textPrimary: '#ffffff', // Input içindeki beyaz metin
-  textSecondary: '#6c8bd9', // Placeholder metin
+  // Text
+  textDark: Colors.light.text,
+  textPrimary: '#FFFFFF',
+  textSecondary: Colors.light.icon,
 };
 
 export const BACKGROUND_GRADIENT = [
   COLORS.gradientTop, 
   COLORS.gradientBottom,
-];
+] as const;
