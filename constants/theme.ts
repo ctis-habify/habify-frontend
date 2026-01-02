@@ -10,20 +10,34 @@ const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#1F2937', // Deep Grey for primary text
+    background: '#F9FAFB', // Light greyish white for background
+    tint: '#7C3AED', // Violet-600
+    icon: '#6B7280', // Cool Grey-500
+    tabIconDefault: '#9CA3AF',
+    tabIconSelected: '#7C3AED',
+    primary: '#7C3AED',
+    secondary: '#8B5CF6', // Violet-500
+    success: '#10B981',
+    error: '#EF4444',
+    border: '#E5E7EB',
+    card: '#FFFFFF',
+    surface: '#FFFFFF',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#F9FAFB',
+    background: '#111827', // Gray-900
+    tint: '#A78BFA', // Violet-400
+    icon: '#9CA3AF',
+    tabIconDefault: '#9CA3AF',
+    tabIconSelected: '#A78BFA',
+    primary: '#8B5CF6',
+    secondary: '#A78BFA',
+    success: '#34D399',
+    error: '#F87171',
+    border: '#374151',
+    card: '#1F2937', // Gray-800
+    surface: '#1F2937',
   },
 };
 

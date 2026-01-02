@@ -17,22 +17,133 @@ export type RoutineRowProps = {
   onPress?: (id: string) => void; // changed: accept id
   categoryName?: string;
   failed?: boolean;
+  streak?: number;
+  missedCount?: number;
+  startTime?: string; // HH:MM:SS
+  endTime?: string;   // HH:MM:SS
 };
 
 export const RoutineRow: React.FC<RoutineRowProps> = ({
   id,
   name,
   completed = false,
-  durationLabel,
+  durationLabel: initialLabel,
   showCamera = true,
   onPress,
   frequencyType,
   failed = false,
+  streak = 0,
+  missedCount = 0,
+  startTime,
+  endTime,
 }) => {
   // eslint-disable-next-line no-unused-vars
   const [isChecked, setIsChecked] = useState(completed);
-  const [isFailed] = useState(failed);
   const router = useRouter(); // Hook
+
+  // Sync isChecked with prop
+  React.useEffect(() => {
+    setIsChecked(completed);
+  }, [completed]);
+
+  // Live state
+  const [displayLabel, setDisplayLabel] = useState(initialLabel);
+  const [effectiveFailed, setEffectiveFailed] = useState(failed || initialLabel === 'Failed');
+
+  // Helper to calculate minutes between dates
+  const diffMinutes = (dt2: Date, dt1: Date) => {
+    let diff = (dt2.getTime() - dt1.getTime()) / 1000;
+    diff /= 60;
+    return Math.ceil(diff); // Changed to ceil to avoid premature failure display
+  }
+
+  // Helper to format remaining time
+  const formatRemaining = (minutes: number) => {
+     if (minutes < 0) return 'Failed'; // Only if strictly negative, though main logic handles failure
+     if (minutes === 0) return '1 Min'; // Exact match or very close, treat as last minute
+     if (minutes < 60) return `${minutes} Min`;
+     const h = Math.floor(minutes / 60);
+     return `${h} Hours`; // Simplified matching backend style
+  }
+
+  // Update logic
+  React.useEffect(() => {
+     // Initial run
+     updateStatus();
+
+     const intervalId = setInterval(() => {
+        updateStatus();
+     }, 1000); // Check every second for immediate updates
+
+     return () => clearInterval(intervalId);
+  }, [startTime, endTime, failed, initialLabel]);
+
+  const updateStatus = () => {
+      // If manually failed prop is true, stick to it
+      if (failed) {
+          setEffectiveFailed(true);
+          return;
+      }
+      
+      // If it is Pending, force displayLabel to Pending and return
+      if (initialLabel === 'Pending') {
+          setDisplayLabel('Pending');
+          setEffectiveFailed(false);
+          return;
+      }
+      
+      const now = new Date();
+      
+      // Calculate Start Time Object
+      let startObj = null;
+      if (startTime) {
+          const [sh, sm] = startTime.split(':').map(Number);
+          startObj = new Date();
+          startObj.setHours(sh, sm, 0, 0);
+      }
+
+      // Calculate End Time Object
+      let endObj = null;
+      if (endTime) {
+          const [eh, em] = endTime.split(':').map(Number);
+          endObj = new Date();
+          endObj.setHours(eh, em, 0, 0);
+      }
+
+      // 1. Check if Upcoming
+      if (startObj && now < startObj) {
+          // It is upcoming
+          const hStr = startObj.getHours().toString().padStart(2, '0');
+          const mStr = startObj.getMinutes().toString().padStart(2, '0');
+          setDisplayLabel(`Starts ${hStr}:${mStr}`);
+          setEffectiveFailed(false);
+          return;
+      }
+
+      // 2. Check if Ongoing (Passed start, before end)
+      if (startObj && endObj && now >= startObj && now <= endObj) {
+          // Calculate remaining to end
+          const remainingMins = diffMinutes(endObj, now);
+          setDisplayLabel(formatRemaining(remainingMins));
+          setEffectiveFailed(false);
+          return;
+      }
+      
+      // 3. Check if Failed (Passed end) - Only if not completed!
+      // Ideally we check 'isChecked' but 'isChecked' is local state initiated from props.completed.
+      // If completed, usually row style changes and badges might differ, but if user is asking about status update:
+      if (endObj && now > endObj && !isChecked) {
+           setDisplayLabel('Failed');
+           setEffectiveFailed(true);
+           return;
+      }
+      
+      // Fallback to initial label if no time logic applies (e.g. Weekly without specific times)
+      if (!startTime || !endTime) {
+          setDisplayLabel(initialLabel);
+          setEffectiveFailed(failed || initialLabel === 'Failed');
+      }
+  };
 
 
   const handleCameraPress = () => {
@@ -44,9 +155,9 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   }
   
   const parseHours = () => {
-    let lower = durationLabel.toLowerCase();
+    let lower = displayLabel.toLowerCase();
 
-    if (lower.includes('minute')) {
+    if (lower.includes('minute') || lower.includes('min')) {
       const min = parseInt(lower);
       return min / 60; // convert to hours
     }
@@ -59,6 +170,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   const hours = parseHours();
 
   const getColor = () => {
+    if (displayLabel.startsWith('Starts')) return '#3b82f6'; // Blue for upcoming
     if (hours <= 1) return '#ef4444';   // red
     if (hours <= 7) return '#ff5656';   // pink-red
     if (hours <= 14) return '#f97316';  // orange
@@ -72,29 +184,47 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
       onPress={() => onPress?.(id)} // changed: pass id
       activeOpacity={0.7}
     >
-      <CircularCheckbox value={isChecked}/>
-      <Text style={[styles.name, isChecked && styles.completedText]}>
+      <TouchableOpacity onPress={handleCameraPress}>
+        <CircularCheckbox value={isChecked} />
+      </TouchableOpacity>
+      
+      <Text style={[styles.name, isChecked && styles.completedText]} numberOfLines={1}>
         {name}
       </Text>
 
-      {/* CAMERA ICON — only if unchecked */}
-      {!isChecked && showCamera && (
-        <TouchableOpacity onPress={handleCameraPress} style={styles.cameraBtn}>
-          <Ionicons name="camera-outline" size={20} color="#1d4ed8" />
-        </TouchableOpacity>
-      )}
-
-      {/* DURATION BADGE — only if unchecked */}
-      {!isChecked && !isFailed && (
-        <View style={[styles.badge, { backgroundColor: getColor() }]}>
-          <Text style={styles.badgeText}>{hours > 24 ? frequencyType : durationLabel }</Text>
+      {/* STREAK BADGE */}
+      {streak > 0 && (
+         <View style={[styles.badge, { backgroundColor: '#fef3c7', flexDirection: 'row', alignItems: 'center', gap: 2 }]}>
+          <Ionicons name="flame" size={12} color="#d97706" />
+          <Text style={[styles.badgeText, { color: '#d97706' }]}>{streak}</Text>
         </View>
       )}
 
-      { isFailed && (
-                <View style={[styles.badge, { backgroundColor: getColor() }]}>
-                <Text style={styles.badgeText}>Failed</Text>
-              </View>
+      {/* MISSED BADGE */}
+      {missedCount > 0 && (
+        <View style={[styles.badge, { backgroundColor: '#fee2e2' }]}>
+          <Text style={[styles.badgeText, { color: '#ef4444' }]}>Missed: {missedCount}</Text>
+        </View>
+      )}
+
+      {/* DURATION BADGE */}
+      {!isChecked && !effectiveFailed && displayLabel !== 'Pending' && (
+        <View style={[styles.badge, { backgroundColor: getColor() }]}>
+          <Text style={styles.badgeText}>{hours > 24 ? frequencyType : displayLabel }</Text>
+        </View>
+      )}
+
+      { effectiveFailed && (
+        <View style={[styles.badge, { backgroundColor: getColor() }]}>
+          <Text style={styles.badgeText}>Failed</Text>
+        </View>
+      )}
+
+      {/* CAMERA ICON — only if unchecked and started */}
+      {!isChecked && showCamera && !effectiveFailed && !displayLabel.startsWith('Starts') && (
+        <TouchableOpacity onPress={handleCameraPress} style={styles.cameraBtn}>
+          <Ionicons name="camera" size={18} color="#3b82f6" />
+        </TouchableOpacity>
       )}
    
     </TouchableOpacity>
@@ -105,30 +235,39 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    backgroundColor: 'transparent',
   },
   name: {
     flex: 1,
-    fontSize: 15,
-    color: '#0f172a',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1f2937', // Gray-800
+    marginLeft: 14,
   },
   completedText: {
-    color: '#6b7280',
+    color: '#9ca3af', // Gray-400
     textDecorationLine: 'line-through',
   },
   cameraBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginRight: 8,
+    padding: 8,
+    marginLeft: 8, // Changed from marginRight to marginLeft
+    backgroundColor: '#eff6ff', 
+    borderRadius: 8,
   },
   badge: {
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 999,
+    paddingVertical: 4,
+    borderRadius: 999, 
+    marginLeft: 4, // Reduced margin since it's now internal
+    opacity: 0.9,
   },
   badgeText: {
     color: '#fff',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
 });

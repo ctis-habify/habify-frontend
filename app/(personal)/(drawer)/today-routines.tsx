@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -5,12 +6,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { routineService } from '../../services/routine.service';
-import type { Routine } from '../../types/routine';
+import { routineService } from '../../../services/routine.service';
+import type { Routine } from '../../../types/routine';
 
+
+import { BACKGROUND_GRADIENT } from '@/app/theme';
 import { setAuthToken } from '@/services/api';
-import { BottomReturnButton } from '../../components/today/BottomReturnButton';
-import { TodayRoutinesList } from '../../components/today/TodayRoutinesList';
+import { BottomReturnButton } from '../../../components/today/BottomReturnButton';
+import { TodayRoutinesList } from '../../../components/today/TodayRoutinesList';
 
 const TOKEN_KEY = 'habify_access_token';
 
@@ -24,13 +27,15 @@ async function getToken(): Promise<string | null> {
 export default function TodayRoutinesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Routine[]>([]);
 
   const goToRoutineDetail = useCallback(
     (id: string) => {
-      router.push({ pathname: '/(personal)/routines', params: { routineId: id } });
+      // @ts-ignore
+      router.push({ pathname: '/(personal)/routine/[id]', params: { id } }); 
     },
     [router],
   );
@@ -48,8 +53,7 @@ export default function TodayRoutinesScreen() {
 
       // Token'ı interceptor'a set et
       setAuthToken(token);
-
-      const res = await routineService.getTodayRoutines(token);
+      const res = await routineService.getTodayRoutines();
       console.log('/routines/today response:', res);
 
       // Normalize et: array değilse içinden array çıkar
@@ -63,7 +67,28 @@ export default function TodayRoutinesScreen() {
               ? (res as any).routines
               : [];
 
-      setItems(normalized);
+      setItems(normalized.filter(r => {
+        if (!r.startTime) return true; 
+
+        const now = new Date();
+        const [h, m] = r.startTime.split(':').map(Number);
+        const start = new Date();
+        start.setHours(h, m, 0, 0);
+
+        // Check end time for failure
+        let isFailed = false;
+        if (r.endTime) {
+            const [eh, em] = r.endTime.split(':').map(Number);
+            const end = new Date();
+            end.setHours(eh, em, 0, 0);
+            if (now > end && !r.isDone) {
+                isFailed = true;
+            }
+        }
+
+        // Show if started AND not failed
+        return now >= start && !isFailed; 
+      }));
     } catch (e) {
       console.log('Today routines load error:', e);
       setItems([]);
@@ -73,15 +98,17 @@ export default function TodayRoutinesScreen() {
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (isFocused) {
+      load();
+    }
+  }, [isFocused, load]);
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
 
       <LinearGradient
-        colors={['#4F86E8', '#2C54C9', '#1E3C98', '#0D2A7A']}
+        colors={BACKGROUND_GRADIENT}
         style={StyleSheet.absoluteFill}
       />
 
@@ -95,7 +122,7 @@ export default function TodayRoutinesScreen() {
 
         <BottomReturnButton
           label="Return Routine Lists"
-          onPress={() => router.replace('/(personal)/routines')}
+          onPress={() => router.replace('/(personal)/(drawer)/routines')}
         />
       </View>
     </View>
@@ -105,4 +132,6 @@ export default function TodayRoutinesScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
+
+
 });

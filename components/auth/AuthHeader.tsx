@@ -1,15 +1,13 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import { ThemedText } from '../themed-text';
+import { Logo } from '../ui/Logo';
 
 export function AuthHeader() {
   return (
     <View style={styles.header}>
-      <Image 
-        source={require('../../assets/images/habify-logo.png')} 
-        style={styles.icon} 
-        resizeMode="contain" 
-      />
-      <Text style={styles.appName}>Habify</Text>
+      <Logo width={180} height={90} style={styles.icon} />
+      <ThemedText type="heading1" style={styles.appName}>Habify</ThemedText>
     </View>
   );
 }
@@ -20,13 +18,26 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   icon: {
-    width: 50,
-    height: 50,
-    marginBottom: 10,
+    marginBottom: 5,
   },
   appName: {
+    color: '#1e293b', // Deep Slate
     fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
+    marginTop: 4,
+    ...Platform.select({
+      ios: {
+        fontFamily: 'Avenir Next',
+        fontWeight: '700',
+        letterSpacing: -0.5,
+      },
+      android: {
+        fontFamily: 'serif',
+        fontWeight: '700',
+        letterSpacing: 0.5,
+      },
+      default: {
+        fontWeight: '700',
+      }
+    }),
   },
 });

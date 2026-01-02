@@ -1,111 +1,105 @@
+import { Colors } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
+  // eslint-disable-next-line no-unused-vars
 type Props = {
-  streakDays: number;
   points: number;
   loading: boolean;
+  onMenuPress?: () => void;
 };
 
-export function TodayHeader({ streakDays, points, loading }: Props) {
+export function TodayHeader({points, loading, onMenuPress }: Props) {
+  
+  const getLevel = (pts: number) => {
+    if (pts >= 100) return { label: "Pro", icon: "trophy-outline", color: "#FFD700" }; 
+    if (pts >= 50) return { label: "Good", icon: "star-outline", color: "#FF8C00" }; 
+    return { label: "Beginner", icon: "leaf-outline", color: "#4CAF50" }; 
+  };
+
+  const level = getLevel(points);
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
   return (
-    <>
-      <View style={styles.topSpacer} />
-
-      <View style={styles.pill}>
-        <View style={styles.pillLeft}>
-          <View style={styles.flame} />
-          <Text style={styles.pillTitle}>
-            {streakDays}-Days{"\n"}Streak
-          </Text>
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        
+        <View>
+          <Text style={styles.dateText}>{today}</Text>
+          <Text style={styles.title}>Today's Routine</Text>
         </View>
-
-        <View style={styles.pillMiddleBars}>
-          <View style={[styles.bar, styles.bar1]} />
-          <View style={[styles.bar, styles.bar2]} />
-          <View style={[styles.bar, styles.bar3]} />
+        
+        <View style={styles.levelBadge}>
+            <Ionicons name={level.icon as any} size={24} color={level.color} style={{ marginRight: 8 }} />
+            <Text style={[styles.levelText, { color: level.color }]}>
+                {level.label}
+            </Text>
         </View>
-
-        <Text style={styles.pillPoints}>{points} point</Text>
       </View>
 
-      <Text style={styles.title}>Today’s Routine List</Text>
       <View style={styles.divider} />
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator />
+          <ActivityIndicator color={Colors.light.primary} />
         </View>
       ) : null}
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topSpacer: { height: 10 },
-
-  pill: {
-    marginHorizontal: 18,
-    marginTop: 16,
-    marginBottom: 18,
-    borderRadius: 22,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: "rgba(186, 220, 255, 0.35)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.22)",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+    backgroundColor: Colors.light.background,
   },
-  pillLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  flame: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "#FF6A3D",
-    transform: [{ rotate: "-20deg" }],
-  },
-  pillTitle: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "800",
-    lineHeight: 20,
-    textShadowColor: "rgba(0,0,0,0.2)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-  },
-  pillMiddleBars: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
-  bar: { width: 10, borderRadius: 3 },
-  bar1: { height: 18, backgroundColor: "#FF5DA2" },
-  bar2: { height: 30, backgroundColor: "#E53935" },
-  bar3: { height: 22, backgroundColor: "#FF5DA2" },
-  pillPoints: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "800",
-    textShadowColor: "rgba(0,0,0,0.2)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
   },
 
+  dateText: {
+    fontSize: 13,
+    fontWeight: "400",
+    color: Colors.light.icon,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
   title: {
-    color: "white",
-    fontSize: 28,
-    fontWeight: "900",
-    textAlign: "center",
-    marginTop: 10,
-    marginBottom: 10,
-    textShadowColor: "rgba(0,0,0,0.25)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    fontSize: 24,
+    fontWeight: "400",
+    color: Colors.light.text,
+    letterSpacing: -0.5,
+  },
+  levelBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  levelText: {
+    fontSize: 16,
+    fontWeight: "400",
   },
   divider: {
     height: 1,
-    backgroundColor: "rgba(255,255,255,0.35)",
-    marginHorizontal: 26,
+    backgroundColor: Colors.light.border,
     marginBottom: 10,
   },
-
-  loadingWrap: { paddingVertical: 16 },
+  loadingWrap: { paddingVertical: 10 },
 });

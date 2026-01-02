@@ -1,3 +1,4 @@
+import { Colors } from '@/constants/theme';
 import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
 import { Category } from '@/types/category';
@@ -7,13 +8,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { BACKGROUND_GRADIENT } from '../../app/theme';
@@ -148,14 +149,14 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
   };
 
   const dropDownStyle = {
-    backgroundColor: '#2196F3',
-    borderColor: 'transparent',
-    borderRadius: 8,
+    backgroundColor: Colors.light.background,
+    borderColor: Colors.light.border,
+    borderRadius: 12,
     minHeight: 50,
   };
 
   return (
-    <LinearGradient colors={BACKGROUND_GRADIENT as any} style={routineFormStyles.screen}>
+    <LinearGradient colors={BACKGROUND_GRADIENT} style={routineFormStyles.screen}>
       <View style={routineFormStyles.outerWrapper}>
         <View style={[routineFormStyles.sheet, { overflow: 'visible' }]}>
           <ScrollView
@@ -167,7 +168,7 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
             <View style={routineFormStyles.headerRow}>
               <Text style={routineFormStyles.title}>Create Routine List</Text>
               <TouchableOpacity onPress={handleClose}>
-                <Ionicons name="close" size={30} color="#111827" />
+                <Ionicons name="close" size={30} color={Colors.light.text} />
               </TouchableOpacity>
             </View>
 
@@ -185,13 +186,13 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
                   loading={loadingCategories}
                   placeholder="Select Category"
                   style={dropDownStyle}
-                  textStyle={{ color: '#fff', fontSize: 16 }}
-                  placeholderStyle={{ color: '#ffffffcc' }}
+                  textStyle={{ color: Colors.light.text, fontSize: 16 }}
+                  placeholderStyle={{ color: Colors.light.icon }}
                   listMode="SCROLLVIEW"
                   dropDownDirection="BOTTOM"
                   dropDownContainerStyle={{
-                    backgroundColor: '#2196F3',
-                    borderColor: '#1E88E5',
+                    backgroundColor: Colors.light.background,
+                    borderColor: Colors.light.border,
                     zIndex: 9999,
                   }}
                   modalTitle="Select Category"
@@ -217,18 +218,18 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
                 <View
                   style={[
                     routineFormStyles.inputContainer,
-                    { backgroundColor: '#2196F3', flexDirection: 'row', alignItems: 'center' },
+                    { flexDirection: 'row', alignItems: 'center' },
                   ]}
                 >
                   <TextInput
                     value={newCategoryName}
                     onChangeText={setNewCategoryName}
                     placeholder="New category name"
-                    placeholderTextColor="#ffffffcc"
-                    style={[routineFormStyles.textInput, { color: '#fff', flex: 1 }]}
+                    placeholderTextColor={Colors.light.icon}
+                    style={[routineFormStyles.textInput, { flex: 1 }]}
                   />
                   <TouchableOpacity onPress={handleCreateCategory} style={{ paddingHorizontal: 8 }}>
-                    <Text style={{ color: '#fff', fontWeight: '600' }}>Save</Text>
+                    <Text style={{ color: Colors.light.primary, fontWeight: '600' }}>Save</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -236,19 +237,19 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
 
             {/* Routine List Title */}
             <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Routine List</Text>
-            <View style={[routineFormStyles.inputContainer, { backgroundColor: '#2196F3' }]}>
+            <View style={[routineFormStyles.inputContainer]}>
               <TextInput
                 value={routineListTitle}
                 onChangeText={setRoutineListTitle}
                 placeholder="Enter routine list title"
-                placeholderTextColor="#ffffffcc"
-                style={[routineFormStyles.textInput, { color: '#fff' }]}
+                placeholderTextColor={Colors.light.icon}
+                style={[routineFormStyles.textInput]}
               />
             </View>
 
             {/* Create Button */}
             <TouchableOpacity
-              style={[routineFormStyles.createBtn, { marginTop: 40, backgroundColor: '#111827' }]}
+              style={[routineFormStyles.createBtn, { marginTop: 40 }]}
               onPress={handleCreate}
               disabled={isSubmitting}
             >

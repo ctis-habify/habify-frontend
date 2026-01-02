@@ -1,3 +1,4 @@
+import { BACKGROUND_GRADIENT, COLORS } from '@/app/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
@@ -9,7 +10,7 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <LinearGradient colors={['#375F9F', '#162451']} style={styles.background}>
+    <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.background}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView 
@@ -20,7 +21,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             contentContainerStyle={styles.scrollContainer} 
             showsVerticalScrollIndicator={false}
           >
-            <LinearGradient colors={['#1D3275', '#010D4C']} style={styles.card}>
+            <LinearGradient colors={[COLORS.formBackground, COLORS.formBackground]} style={styles.card}>
               {children}
             </LinearGradient>
           </ScrollView>

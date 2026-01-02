@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -32,10 +32,10 @@ export default function CameraModal() {
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+        <Text style={{ textAlign: 'center', marginBottom: 20, color: 'white' }}>
           We need your permission to show the camera
         </Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.btn}>
+        <TouchableOpacity onPress={requestPermission} style={styles.permissionBtn}>
           <Text style={styles.btnText}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
@@ -57,7 +57,7 @@ export default function CameraModal() {
     }
   };
 
-  // 3. Mock Upload Process
+  // ... (handleUpload logic unchanged) ...
   const handleUpload = async () => {
     if (!photoUri) return;
 
@@ -79,9 +79,7 @@ export default function CameraModal() {
         {
           text: 'Awesome',
           onPress: () => {
-            // Pass success signal back to previous screen? 
-            // For now, just close modal
-            router.back();
+             router.back();
           },
         },
       ]);
@@ -91,6 +89,7 @@ export default function CameraModal() {
       setIsUploading(false);
     }
   };
+
 
   const toggleCameraFacing = () => {
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
@@ -134,26 +133,27 @@ export default function CameraModal() {
   // --- RENDER: CAMERA MODE ---
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-        <View style={styles.cameraUi}>
-          {/* Top Bar: Close & Flip */}
-          <View style={styles.topBar}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-              <Ionicons name="close" size={28} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={toggleCameraFacing} style={styles.iconBtn}>
-              <Ionicons name="camera-reverse" size={28} color="white" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Bottom Bar: Shutter */}
-          <View style={styles.bottomBar}>
-            <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
-              <View style={styles.shutterInner} />
-            </TouchableOpacity>
-          </View>
+      <CameraView style={StyleSheet.absoluteFill} facing={facing} ref={cameraRef} />
+      
+      {/* UI Overlay */}
+      <View style={styles.cameraUi}>
+        {/* Top Bar: Close & Flip */}
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+            <Ionicons name="close" size={28} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={toggleCameraFacing} style={styles.iconBtn}>
+            <Ionicons name="camera-reverse" size={28} color="white" />
+          </TouchableOpacity>
         </View>
-      </CameraView>
+
+        {/* Bottom Bar: Shutter */}
+        <View style={styles.bottomBar}>
+          <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
+            <View style={styles.shutterInner} />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -161,12 +161,24 @@ export default function CameraModal() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
   camera: { flex: 1 },
-  cameraUi: { flex: 1, justifyContent: 'space-between', padding: 20 },
+  cameraUi: { 
+    ...StyleSheet.absoluteFillObject, // Overlay on top
+    justifyContent: 'space-between', 
+    padding: 20,
+    zIndex: 10,
+  },
+  
+  permissionBtn: {
+    backgroundColor: '#2563eb', // Keep distinct blue for actions
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
   
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40, // Safe area
+    marginTop: 40, 
   },
   iconBtn: {
     padding: 10,
@@ -195,7 +207,7 @@ const styles = StyleSheet.create({
   },
 
   // Preview Styles
-  previewImage: { flex: 1, contentFit: 'contain' },
+  previewImage: { flex: 1, resizeMode: 'contain' },
   bottomControls: {
     position: 'absolute',
     bottom: 40,

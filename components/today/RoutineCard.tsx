@@ -1,13 +1,14 @@
+import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Routine } from '../../types/routine';
 
 function remainingColor(mins: number) {
-  if (mins <= 30) return '#E74C3C';
-  if (mins <= 60) return '#C0392B';
-  if (mins <= 240) return '#F39C12';
-  return '#2ecc71';
+  if (mins <= 30) return '#EF4444'; // Red-500
+  if (mins <= 60) return '#F97316'; // Orange-500
+  if (mins <= 240) return '#EAB308'; // Yellow-500
+  return '#10B981'; // Green-500
 }
 
 type Props = {
@@ -18,108 +19,89 @@ type Props = {
 // "YYYY-MM-DD" + "HH:mm[:ss]" -> Date
 function dateTimeFrom(dateStr?: string | null, timeStr?: string | null): Date | null {
   if (!timeStr) return null;
-
   const timeParts = timeStr.split(':').map((p) => Number(p));
   if (timeParts.length < 2) return null;
-
   const [h, m, s = 0] = timeParts;
-
   const base = dateStr ? new Date(dateStr) : new Date();
   if (isNaN(base.getTime())) return null;
-
   base.setHours(h, m, s, 0);
   return base;
 }
 
 export function RoutineCard({ routine, onPress }: Props) {
-  const { title, startTime, startDate } = routine as any;
+  const { title, startTime, endTime, remainingLabel } = routine as any;
 
-  // eslint-disable-next-line no-unused-vars
-  const { minsLeft, primaryLabel, secondaryLabel, isFuture } = useMemo(() => {
-    const start = dateTimeFrom(startDate, startTime);
-    if (!start) {
-      return { minsLeft: 0, primaryLabel: '', secondaryLabel: '', isFuture: false };
-    }
+  // Live update state
+  const [label, setLabel] = React.useState(remainingLabel === 'Pending' ? 'Pending' : '');
+  const [minsLeft, setMinsLeft] = React.useState(0);
 
-    const now = new Date();
-    const DAY_MS = 24 * 60 * 60 * 1000;
+  const updateState = React.useCallback(() => {
+     if (remainingLabel === 'Pending') {
+        setLabel('Pending');
+        return;
+     }
 
-    const diffStartMs = start.getTime() - now.getTime(); // start - now
+     if (!endTime) {
+        setLabel('Pending');
+        setMinsLeft(100);
+        return;
+     }
 
-    if (diffStartMs > DAY_MS) {
-      return { minsLeft: 0, primaryLabel: '', secondaryLabel: '', isFuture: false };
-    }
+     const now = new Date();
+     // Parse end time
+     const [eh, em] = endTime.split(':').map(Number);
+     const end = new Date();
+     end.setHours(eh, em, 0, 0);
 
-    if (diffStartMs > 0) {
-      const startMins = Math.ceil(diffStartMs / (60 * 1000));
-      const h = Math.floor(startMins / 60);
-      const m = startMins % 60;
+     const diffMs = end.getTime() - now.getTime();
+     if (diffMs < 0) {
+        setLabel('Failed');
+        setMinsLeft(-1);
+        return;
+     }
 
-      const startsIn =
-        h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `Starts in ${h}h` : `Starts in ${m}m`;
+     const diffMins = Math.ceil(diffMs / 60000);
+     setMinsLeft(diffMins);
 
-      return {
-        minsLeft: startMins,
-        primaryLabel: '',
-        secondaryLabel: startsIn,
-        isFuture: true,
-      };
-    }
+     if (diffMins < 60) {
+        setLabel(`${diffMins}m left`);
+     } else {
+        const h = Math.floor(diffMins / 60);
+        const m = diffMins % 60;
+        setLabel(`${h}h ${m}m left`);
+     }
+  }, [endTime, remainingLabel]);
 
-    // Başlamış (start + 24h içinde)
-    const elapsedMs = -diffStartMs;
-    if (elapsedMs > DAY_MS) {
-      return { minsLeft: 0, primaryLabel: '', secondaryLabel: '', isFuture: false };
-    }
+  React.useEffect(() => {
+     updateState();
+     const id = setInterval(updateState, 1000);
+     return () => clearInterval(id);
+  }, [updateState]);
 
-    const remainingMs = DAY_MS - elapsedMs;
-    const totalMins = Math.ceil(remainingMs / (60 * 1000));
-    const h = Math.floor(totalMins / 60);
-    const m = totalMins % 60;
 
-    const left = h > 0 && m > 0 ? `${h}h ${m}m left` : h > 0 ? `${h}h left` : `${m}m left`;
-
-    return {
-      minsLeft: totalMins,
-      primaryLabel: left,
-      secondaryLabel: '',
-      isFuture: false,
-    };
-  }, [startTime, startDate]);
+  
   const color = useMemo(() => remainingColor(minsLeft), [minsLeft]);
 
-  if (!primaryLabel && !secondaryLabel) {
-    return null;
-  }
-
   return (
-    <Pressable onPress={onPress} style={styles.shadow}>
-      <View style={styles.card}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.container, pressed && styles.pressed]}>
+      <View style={styles.contentRow}>
         <View style={styles.textWrap}>
-          <Text style={styles.name} numberOfLines={1}>
-            {title}
-          </Text>
-
-          {primaryLabel ? <Text style={[styles.duration, { color }]}>{primaryLabel}</Text> : null}
-
-          {!!secondaryLabel && (
-            <Text
-              style={[
-                styles.subLabel,
-                { color }, // Starts in de aynı renk temasını kullanacak
-              ]}
-            >
-              {secondaryLabel}
-            </Text>
+          <Text style={styles.name} numberOfLines={1}>{title}</Text>
+          
+          {label !== 'Pending' && (
+            <View style={styles.timeBadge}>
+               <Ionicons name="time-outline" size={14} color={color} style={{ marginRight: 4 }} />
+               <Text style={[styles.duration, { color }]}>{label}</Text>
+            </View>
           )}
         </View>
 
         <Pressable
           onPress={() => console.log('Camera pressed:', routine.id)}
-          style={styles.cameraTouchable}
+          style={styles.cameraBtn}
           hitSlop={10}
         >
-          <Ionicons name="camera" size={22} color="#1B2A6B" />
+          <Ionicons name="camera" size={20} color={Colors.light.primary} />
         </Pressable>
       </View>
     </Pressable>
@@ -127,44 +109,64 @@ export function RoutineCard({ routine, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  shadow: {
-    marginHorizontal: 14,
-    marginVertical: 9,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
+  container: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    
+    // Premium Soft Shadow
+    shadowColor: "#64748b",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#f8fafc',
   },
-  card: {
-    borderRadius: 16,
-    backgroundColor: 'rgba(245,245,245,0.95)',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+  pressed: {
+    opacity: 0.95,
+    transform: [{ scale: 0.995 }]
+  },
+  contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  textWrap: { flex: 1, paddingRight: 10 },
-  name: {
-    color: '#1B2A6B',
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 6,
+  textWrap: { 
+    flex: 1, 
+    paddingRight: 12 
   },
-  duration: { fontSize: 14, fontWeight: '800' },
-
-  cameraTouchable: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+  name: {
+    color: '#1e293b', // Slate-800
+    fontSize: 18,
+    fontWeight: '500',
+    marginBottom: 8,
+    letterSpacing: -0.4,
+  },
+  timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  duration: { 
+    fontSize: 13, 
+    fontWeight: '400',
+    letterSpacing: 0.2,
+  },
+  
+  cameraBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#f1f5f9', // Slate-100
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  subLabel: {
-    marginTop: 2,
-    fontSize: 13,
-    fontWeight: '700',
   },
 });

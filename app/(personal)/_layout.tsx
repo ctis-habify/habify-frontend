@@ -5,7 +5,7 @@ export default function AppLayout() {
   return (
     <AuthProvider>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="routines" />
+        <Stack.Screen name="(drawer)" />
         <Stack.Screen
           name="create-routine"
           options={{

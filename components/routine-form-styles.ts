@@ -1,8 +1,8 @@
 import { Platform, StyleSheet } from 'react-native';
-import { COLORS } from '../app/theme';
+import { Colors } from '../constants/theme';
 
-const INPUT_BLUE = COLORS.inputBlue;
-const TEXT_DARK = COLORS.textDark;
+const TEXT_DARK = Colors.light.text;
+const INPUT_BG = Colors.light.background; 
 
 export const routineFormStyles = StyleSheet.create({
   // Screen wrapper
@@ -25,7 +25,7 @@ export const routineFormStyles = StyleSheet.create({
   },
   // Form card (white background)
   sheet: {
-    backgroundColor: COLORS.formBackground,
+    backgroundColor: Colors.light.card,
     borderRadius: 36,
   },
   content: {
@@ -78,8 +78,10 @@ export const routineFormStyles = StyleSheet.create({
   // Input styles
   inputContainer: {
     flex: 1,
-    backgroundColor: INPUT_BLUE,
-    borderRadius: 8,
+    backgroundColor: INPUT_BG,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
     justifyContent: 'center',
@@ -87,23 +89,27 @@ export const routineFormStyles = StyleSheet.create({
   },
   pickerWrapper: {
     flex: 1,
-    backgroundColor: INPUT_BLUE,
-    borderRadius: 8,
+    backgroundColor: INPUT_BG,
+    borderRadius: 12,
     height: 50,
     overflow: 'hidden',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.light.border,
   },
   pickerContainer: {
-    backgroundColor: INPUT_BLUE,
-    borderRadius: 8,
+    backgroundColor: INPUT_BG,
+    borderRadius: 12,
     height: 50,
     overflow: 'hidden',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.light.border,
   },
   picker: {
     width: '100%',
     backgroundColor: 'transparent',
-    color: '#ffffff',
+    color: TEXT_DARK,
     ...Platform.select({
       ios: { height: 50 },
       android: { height: 50 },
@@ -111,7 +117,7 @@ export const routineFormStyles = StyleSheet.create({
   },
   textInput: {
     fontSize: 15,
-    color: '#ffffff',
+    color: TEXT_DARK,
     padding: 0,
   },
   // Buttons
@@ -121,14 +127,16 @@ export const routineFormStyles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: INPUT_BLUE,
+    backgroundColor: Colors.light.primary,
     borderWidth: 0,
   },
   // Time inputs
   timeBox: {
     flex: 1,
-    backgroundColor: INPUT_BLUE,
-    borderRadius: 8,
+    backgroundColor: INPUT_BG,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
     alignItems: 'center',
@@ -136,7 +144,7 @@ export const routineFormStyles = StyleSheet.create({
     height: 50,
   },
   timeText: {
-    color: '#ffffff',
+    color: TEXT_DARK,
     fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
@@ -145,14 +153,16 @@ export const routineFormStyles = StyleSheet.create({
   dateInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: INPUT_BLUE,
-    borderRadius: 8,
+    backgroundColor: INPUT_BG,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
     paddingHorizontal: 16,
     height: 50,
     justifyContent: 'space-between',
   },
   dateText: {
-    color: '#ffffff',
+    color: TEXT_DARK,
     fontSize: 15,
     flex: 1,
     padding: 0,
@@ -161,7 +171,7 @@ export const routineFormStyles = StyleSheet.create({
   createBtn: {
     marginTop: 35,
     marginBottom: 10,
-    backgroundColor: '#00163a',
+    backgroundColor: Colors.light.primary,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
@@ -173,6 +183,33 @@ export const routineFormStyles = StyleSheet.create({
   },
   routineInputWrapper: {
     // Additional wrapper for routine input if needed
+  },
+  // iOS Picker Modal Styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  iosPickerContainer: {
+    backgroundColor: '#ffffff',
+    paddingBottom: 40, // Safe area padding
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+    backgroundColor: '#f8f9fa',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  doneButton: {
+    color: Colors.light.primary,
+    fontWeight: '600',
+    fontSize: 17,
   },
 });
 

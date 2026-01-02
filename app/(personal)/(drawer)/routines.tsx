@@ -1,14 +1,19 @@
+import { BACKGROUND_GRADIENT } from '@/app/theme';
 import CreateRoutineInListModal from '@/components/modals/CreateRoutineInListModal';
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
+import { Colors } from '@/constants/theme';
 import { routineService } from '@/services/routine.service';
 import { mapBackendRoutineToRow } from '@/services/routines.mapper';
 import { RoutineList } from '@/types/routine';
+import { Ionicons } from '@expo/vector-icons';
+import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 export default function RoutinesScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
 
   const [lists, setLists] = useState<RoutineList[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,28 +72,37 @@ export default function RoutinesScreen() {
   };
 
   return (
-    <LinearGradient colors={['#031138', '#02162f']} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* tabs */}
-        <View style={styles.tabWrapper}>
-          <View style={styles.tabContainer}>
-            <TouchableOpacity style={[styles.tab, styles.tabActive]}>
-              <Text style={styles.tabTextActive}>Personal</Text>
-            </TouchableOpacity>
+    <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.container}>
+       {/* FIXED HEADER SECTION */}
+       <View style={styles.fixedHeader}>
+          <View style={styles.headerTopRow}>
+             <TouchableOpacity 
+                style={styles.menuBtn} 
+                onPress={() => (navigation as any).dispatch(DrawerActions.toggleDrawer())}
+              >
+                <Ionicons name="menu" size={24} color="#fff" />
+             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.tab}>
-              <Text style={styles.tabText}>Collaborative</Text>
-            </TouchableOpacity>
+             <View style={styles.tabContainer}>
+                <TouchableOpacity style={[styles.tab, styles.tabActive]}>
+                  <Text style={styles.tabTextActive}>Personal</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.tab}>
+                  <Text style={styles.tabText}>Collaborative</Text>
+                </TouchableOpacity>
+             </View>
           </View>
-        </View>
 
-        {/* today link */}
-        <TouchableOpacity
-          style={styles.sectionHeader}
-          onPress={() => router.push('/(personal)/today-routines')}
-        >
-          <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.sectionHeader}
+            onPress={() => router.push('/(personal)/(drawer)/today-routines')}
+          >
+            <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
+          </TouchableOpacity>
+       </View>
+
+       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* lists */}
         {loading ? (
@@ -141,32 +155,63 @@ export default function RoutinesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  fixedHeader: {
+    paddingTop: 60,
+    paddingBottom: 10,
+    zIndex: 10,
+  },
   scroll: {
     paddingHorizontal: 18,
-    paddingTop: 60,
+    paddingTop: 10, 
     paddingBottom: 40,
   },
-  tabWrapper: { alignItems: 'center', marginBottom: 20 },
-  tabContainer: {
+  headerTopRow: {
     flexDirection: 'row',
-    backgroundColor: '#1d3a80',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 15,
+    height: 48,
+  },
+  menuBtn: {
+    width: 44,
+    height: 44,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabWrapper: { 
+    // Removed unused wrapper 
+  },
+  tabContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 44,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 24,
     padding: 4,
+    alignItems: 'center',
   },
   tab: {
-    paddingVertical: 8,
-    paddingHorizontal: 26,
+    flex: 1,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 20,
   },
   tabActive: { backgroundColor: '#ffffff' },
-  tabText: { color: '#cbd5f5', fontWeight: '600' },
-  tabTextActive: { color: '#020617', fontWeight: '600' },
+  tabText: { color: 'rgba(255,255,255,0.7)', fontWeight: '400' },
+  tabTextActive: { color: Colors.light.primary, fontWeight: '400' },
   sectionHeader: {
-    backgroundColor: '#0b2a73',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    marginHorizontal: 18,
   },
   sectionTitle: {
     color: '#ffffff',
@@ -174,11 +219,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   createBtn: {
-    backgroundColor: '#001b4f',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 18,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderStyle: 'dashed',
   },
   createBtnText: {
     color: '#ffffff',

@@ -1,12 +1,14 @@
-import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthHeader } from '@/components/auth/AuthHeader';
-import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthLayout } from '@/components/auth/AuthLayout';
+import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/Button';
+import { TextInput } from '@/components/ui/TextInput';
+import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import Checkbox from 'expo-checkbox';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -24,7 +26,7 @@ export default function LoginScreen() {
 
     try {
       await login(email, password);
-      router.push('/(personal)/routines');
+      router.push('/(personal)/(drawer)/routines');
     } catch (error: any) {
       Alert.alert('Login failed', error.message || 'Something went wrong.');
     }
@@ -35,47 +37,51 @@ export default function LoginScreen() {
       <AuthHeader />
 
       <View style={{ width: '100%' }}>
-        <AuthInput 
+        <TextInput 
           label="Email Address"
           value={email}
           onChangeText={setEmail}
           placeholder="example@gmail.com"
           keyboardType="email-address"
           autoCapitalize="none"
+          icon="mail-outline"
         />
 
-        <AuthInput 
+        <TextInput 
           label="Password"
           value={password}
           onChangeText={setPassword}
           placeholder="***********"
           secureTextEntry
+          icon="lock-closed-outline"
         />
+        
         <View style={styles.rowBetween}>
           <View style={styles.rememberRow}>
             <Checkbox
               value={remember}
               onValueChange={setRemember}
-              color={remember ? '#007AFF' : '#ffffff'}
+              color={remember ? Colors.light.primary : undefined}
               style={styles.checkbox}
             />
-            <Text style={styles.rememberText}>Remember me</Text>
+            <ThemedText style={styles.rememberText}>Remember me</ThemedText>
           </View>
           <TouchableOpacity>
-            <Text style={styles.forgotText}>Forgot?</Text>
+            <ThemedText style={styles.forgotText}>Forgot?</ThemedText>
           </TouchableOpacity>
         </View>
 
-        <AuthButton 
+        <Button 
           title="Log In" 
           onPress={handleLogin} 
           isLoading={loading} 
+          style={{ marginTop: 24 }}
         />
 
         <View style={styles.bottomRow}>
-          <Text style={styles.bottomText}>Don't have an account? </Text>
+          <ThemedText style={styles.bottomText}>Don't have an account? </ThemedText>
           <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.bottomLink}>Register</Text>
+            <ThemedText type="link" style={styles.bottomLink}>Register</ThemedText>
           </TouchableOpacity>
         </View>
       </View>
@@ -99,14 +105,14 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     borderRadius: 4,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: Colors.light.border,
   },
   rememberText: {
-    color: '#E0E0E0',
     fontSize: 14,
+    color: Colors.light.icon,
   },
   forgotText: {
-    color: '#60a5fa', 
+    color: Colors.light.primary, 
     fontSize: 14,
     fontWeight: '600',
   },
@@ -114,13 +120,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 25,
+    alignItems: 'center',
   },
   bottomText: {
-    color: '#9ca3af',
+    color: Colors.light.icon,
     fontSize: 14,
   },
   bottomLink: {
-    color: '#60a5fa',
+    color: Colors.light.primary,
     fontSize: 14,
     fontWeight: 'bold',
   },

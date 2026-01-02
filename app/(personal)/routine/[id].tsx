@@ -1,17 +1,26 @@
+import { BACKGROUND_GRADIENT } from '@/app/theme';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/Button';
+import { TextInput } from '@/components/ui/TextInput';
+import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    TouchableOpacity,
+    View
 } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker'; // Added import
 import { routineService } from '../../../services/routine.service';
 
 export default function EditRoutineScreen() {
@@ -19,6 +28,7 @@ export default function EditRoutineScreen() {
   const router = useRouter();
   const { token } = useAuth(); 
   const [isLoading, setIsLoading] = useState(false);
+  
   // Form State
   const [routine_name, setName] = useState('');
   const [start_time, setStartTime] = useState('');
@@ -27,32 +37,54 @@ export default function EditRoutineScreen() {
   const [frequency_type, setFrequencyType] = useState('');
   const [frequency_detail, setFrequencyDetail] = useState<number>(0);
   const [is_ai_verified, setIsAiVerified] = useState(false);
+  const [is_reminder_enabled, setIsReminderEnabled] = useState(false);
+  const [reminder_time, setReminderTime] = useState('');
   const [start_date, setStartDate] = useState('2025-10-10');
-  console.log('FETCH ROUTINE ID:', id, typeof id);
+  const [streak, setStreak] = useState(0);
+
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showReminderTimePicker, setShowReminderTimePicker] = useState(false);
+  
+  const [freqOpen, setFreqOpen] = useState(false); // Added freqOpen state
+
+  // Time Helpers
+  const parseTime = (timeStr: string) => {
+    const d = new Date();
+    if (!timeStr) return d;
+    const [h, m] = timeStr.split(':');
+    d.setHours(Number(h) || 0, Number(m) || 0, 0, 0);
+    return d;
+  };
+
+  const formatTime = (d: Date) =>
+    `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+
+
   useEffect(() => {
-    if (!id || !token) {
-      return;
-    }
+    if (!id || !token) return;
     const fetchData = async () => {
       try {
-        const data = await routineService.getRoutineById(id, token || '');
-        console.log("ID ROUTINE NAME DATA:", data.routine_name);
-        console.log("DATA: ", data)
-        setName(data?.routine_name || '');
-        setStartTime(data?.start_time || '');
-        setEndTime(data?.end_time || '');
-        setRoutineListId(data?.routineListId || 1);
-        setFrequencyDetail(data?.frequency_detail || 0);
-        setFrequencyType(data?.frequency_type || 'Daily');
+        const data: any = await routineService.getRoutineById(id, token || '');
+        console.log("EditRoutine data:", data); // Debug log
+        setName(data?.routineName || data?.routine_name || '');
+        setStartTime(data?.startTime || data?.start_time || '');
+        setEndTime(data?.endTime || data?.end_time || '');
+        setRoutineListId(data?.routineListId || data?.routine_list_id || 1);
+        setFrequencyDetail(data?.frequencyDetail || data?.frequency_detail || 0);
+        setFrequencyType(data?.frequencyType || data?.frequency_type || 'Daily');
         setIsAiVerified(data?.is_ai_verified || false);
-        setStartDate(data.start_date);
+        setIsReminderEnabled(data?.isReminderEnabled || data?.is_reminder_enabled || false);
+        setReminderTime(data?.reminderTime || data?.reminder_time || '');
+        setStartDate(data?.startDate || data?.start_date || '2025-01-01');
+        setStreak(data?.streak || 0);
       } catch (err) {
         console.error("Failed to fetch routine:", err);
       }
     };
-  
     fetchData();
   }, [id, token]);
+
   const handleSave = async () => {
     setIsLoading(true);
     if (!token) {
@@ -70,6 +102,8 @@ export default function EditRoutineScreen() {
         endTime: end_time,
         isAiVerified: is_ai_verified,
         startDate: start_date,
+        isReminderEnabled: is_reminder_enabled,
+        reminderTime: reminder_time,
       }, token);
       
       Alert.alert('Success', 'Routine updated successfully');
@@ -87,7 +121,6 @@ export default function EditRoutineScreen() {
       router.push('/(auth)');
       return;
     }
-    
     Alert.alert(
       'Delete Routine',
       'Are you sure you want to delete this routine?',
@@ -108,173 +141,393 @@ export default function EditRoutineScreen() {
       ]
     );
   };
+
   return (
-    <View style={styles.container}>
+    <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{routine_name}</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#333" />
+        <ThemedText type="heading2" style={styles.headerTitle}>{routine_name}</ThemedText>
+        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+          <Ionicons name="close" size={24} color={Colors.light.icon} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         
-        {/* 1. Routine Tracker (Calendar Mock) */}
-        <View style={styles.trackerCard}>
-          <Text style={styles.trackerTitle}>Routine Tracker</Text>
-          <Text style={styles.month}>April</Text>
-          
-          {/* Mock Grid */}
-          <View style={styles.calendarGrid}>
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
-              <View key={index} style={styles.dayCol}>
-                <Text style={styles.dayText}>{day}</Text>
-                {[1, 2, 3, 4].map((week) => (
-                  <View key={week} style={[styles.checkBox, Math.random() > 0.5 && styles.checked]}>
-                    {Math.random() > 0.5 && <Ionicons name="checkmark" size={12} color="white" />}
+        {/* 1. Routine Tracker (Chain Design) */}
+        <ThemedView variant="card" style={styles.trackerCard}>
+          <ThemedText type="subtitle" style={styles.trackerTitle}>Current Streak</ThemedText>
+          <View style={styles.chainContainer}>
+             {/* Mock Chain of 7 days */}
+            {Array.from({ length: 7 }).map((_, index) => {
+              // Visualize streak
+              const isCompleted = index < streak;
+              // If streak is larger than 7, show all filled, or maybe we want to show the last 7 days?
+              // For now, let's just show up to 7 "filled" blocks if streak >= index+1
+              const filled = index < Math.min(streak, 7);
+              
+              return (
+                <View key={index} style={styles.chainItem}>
+                   {/* Link Line (except for first item) */}
+                  {index > 0 && <View style={[styles.chainLink, filled && styles.activeLink]} />}
+                  
+                  {/* Node */}
+                  <View style={[
+                    styles.chainNode,
+                    filled && styles.completedNode,
+                  ]}>
+                    {filled ? (
+                      <Ionicons name="checkmark" size={14} color="white" />
+                    ) : (
+                      <ThemedText style={styles.chainText}>{index + 1}</ThemedText>
+                    )}
                   </View>
-                ))}
-              </View>
-            ))}
+                </View>
+              );
+            })}
           </View>
-        </View>
+          <ThemedText style={styles.streakLabel}>You are on a {streak} day streak!</ThemedText>
+        </ThemedView>
 
         {/* 2. Edit Form */}
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Edit Routine</Text>
+        <ThemedView variant="card" style={styles.formCard}>
+          <ThemedText type="subtitle" style={styles.formTitle}>Edit Routine</ThemedText>
 
           {/* Time Row */}
           <View style={styles.row}>
             <View style={styles.halfInput}>
-              <Text style={styles.label}>Routine Start Time</Text>
-              <TextInput
-                style={styles.input}
-                value={start_time}
-                onChangeText={setStartTime}
-                placeholder="00:00"
-              />
+              <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Start Time</ThemedText>
+              <TouchableOpacity
+                style={styles.timeBox}
+                onPress={() => setShowStartTimePicker(true)}
+              >
+                <ThemedText>{start_time || '00:00'}</ThemedText>
+              </TouchableOpacity>
+              
+              {showStartTimePicker && (
+                Platform.OS === 'ios' ? (
+                  <Modal visible={showStartTimePicker} transparent animationType="fade">
+                    <View style={styles.modalOverlay}>
+                      <View style={styles.iosPickerContainer}>
+                        <View style={styles.pickerHeader}>
+                          <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
+                            <ThemedText style={styles.doneButton}>Done</ThemedText>
+                          </TouchableOpacity>
+                        </View>
+                        <DateTimePicker
+                          value={parseTime(start_time)}
+                          mode="time"
+                          is24Hour
+                          display="spinner"
+                          onChange={(e, d) => {
+                            if (d) setStartTime(formatTime(d));
+                          }}
+                          textColor={Colors.light.text}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+                ) : (
+                  <DateTimePicker
+                    value={parseTime(start_time)}
+                    mode="time"
+                    is24Hour
+                    display="default"
+                    onChange={(e, d) => {
+                      setShowStartTimePicker(false);
+                      if (d) setStartTime(formatTime(d));
+                    }}
+                  />
+                )
+              )}
             </View>
+
             <View style={styles.halfInput}>
-              <Text style={styles.label}>Routine End Time</Text>
-              <TextInput
-                style={styles.input}
-                value={end_time}
-                onChangeText={setEndTime}
-                placeholder="00:00"
-              />
+              <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>End Time</ThemedText>
+              <TouchableOpacity
+                style={styles.timeBox}
+                onPress={() => setShowEndTimePicker(true)}
+              >
+                <ThemedText>{end_time || '00:00'}</ThemedText>
+              </TouchableOpacity>
+
+              {showEndTimePicker && (
+                Platform.OS === 'ios' ? (
+                  <Modal visible={showEndTimePicker} transparent animationType="fade">
+                    <View style={styles.modalOverlay}>
+                      <View style={styles.iosPickerContainer}>
+                        <View style={styles.pickerHeader}>
+                          <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
+                            <ThemedText style={styles.doneButton}>Done</ThemedText>
+                          </TouchableOpacity>
+                        </View>
+                        <DateTimePicker
+                          value={parseTime(end_time)}
+                          mode="time"
+                          is24Hour
+                          display="spinner"
+                          onChange={(e, d) => {
+                            if (d) setEndTime(formatTime(d));
+                          }}
+                          textColor={Colors.light.text}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+                ) : (
+                  <DateTimePicker
+                    value={parseTime(end_time)}
+                    mode="time"
+                    is24Hour
+                    display="default"
+                    onChange={(e, d) => {
+                      setShowEndTimePicker(false);
+                      if (d) setEndTime(formatTime(d));
+                    }}
+                  />
+                )
+              )}
             </View>
           </View>
 
+          {/* Reminder Section */}
+          <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }]}>
+              <ThemedText type="defaultSemiBold">Enable Reminder</ThemedText>
+              <Switch
+                value={is_reminder_enabled}
+                onValueChange={setIsReminderEnabled}
+                trackColor={{ false: "#767577", true: Colors.light.primary }}
+                thumbColor={is_reminder_enabled ? "#fff" : "#f4f3f4"}
+              />
+          </View>
+
+          {is_reminder_enabled && (
+             <View style={{ marginBottom: 20 }}>
+               <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Reminder Time</ThemedText>
+               <TouchableOpacity
+                 style={styles.timeBox}
+                 onPress={() => setShowReminderTimePicker(true)}
+               >
+                 <ThemedText>{reminder_time || '09:00'}</ThemedText>
+               </TouchableOpacity>
+
+               {showReminderTimePicker && (
+                 Platform.OS === 'ios' ? (
+                   <Modal visible={showReminderTimePicker} transparent animationType="fade">
+                     <View style={styles.modalOverlay}>
+                       <View style={styles.iosPickerContainer}>
+                         <View style={styles.pickerHeader}>
+                           <TouchableOpacity onPress={() => setShowReminderTimePicker(false)}>
+                             <ThemedText style={styles.doneButton}>Done</ThemedText>
+                           </TouchableOpacity>
+                         </View>
+                         <DateTimePicker
+                           value={parseTime(reminder_time || '09:00')}
+                           mode="time"
+                           is24Hour
+                           display="spinner"
+                           onChange={(e, d) => {
+                             if (d) setReminderTime(formatTime(d));
+                           }}
+                           textColor={Colors.light.text}
+                         />
+                       </View>
+                     </View>
+                   </Modal>
+                 ) : (
+                   <DateTimePicker
+                     value={parseTime(reminder_time || '09:00')}
+                     mode="time"
+                     is24Hour
+                     display="default"
+                     onChange={(e, d) => {
+                       setShowReminderTimePicker(false);
+                       if (d) setReminderTime(formatTime(d));
+                     }}
+                   />
+                 )
+               )}
+             </View>
+          )}
+
+
+
           {/* Name */}
-          <Text style={styles.label}>Name</Text>
           <TextInput
-            style={styles.input}
+            label="Name"
             value={routine_name}
             onChangeText={setName}
             placeholder="Routine Name"
           />
 
-          {/* Save Button */}
-          <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={isLoading}>
-            {isLoading ? (
-              <ActivityIndicator color="#007AFF" />
-            ) : (
-              <Text style={styles.saveBtnText}>Save Routine</Text>
-            )}
-          </TouchableOpacity>
+          {/* Frequency */}
+          <View style={{ zIndex: 3000, marginTop: 20, marginBottom: 20 }}>
+            <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Frequency</ThemedText>
+            <DropDownPicker
+              open={freqOpen}
+              value={frequency_type}
+              items={[
+                { label: 'Daily', value: 'DAILY' },
+                { label: 'Weekly', value: 'WEEKLY' },
+              ]}
+              setOpen={setFreqOpen}
+              setValue={setFrequencyType}
+              placeholder="Select Frequency"
+              style={{
+                backgroundColor: Colors.light.background,
+                borderColor: Colors.light.border,
+                borderRadius: 12,
+              }}
+              dropDownContainerStyle={{
+                backgroundColor: Colors.light.background,
+                borderColor: Colors.light.border,
+              }}
+              listMode="SCROLLVIEW"
+            />
+          </View>
 
-          {/* Divider */}
-          <View style={styles.divider} />
+          {/* Save Button */}
+          <View style={{ marginTop: 24, marginBottom: 16 }}>
+            <Button
+              title="Save Routine"
+              onPress={handleSave}
+              isLoading={isLoading}
+              variant="primary"
+            />
+          </View>
 
           {/* Delete Button */}
-          <TouchableOpacity onPress={handleDelete}>
-            <Text style={styles.deleteText}>Delete Routine</Text>
+          <TouchableOpacity onPress={handleDelete} style={{ alignSelf: 'center', padding: 10 }}>
+            <ThemedText style={styles.deleteText}>Delete Routine</ThemedText>
           </TouchableOpacity>
-        </View>
+        </ThemedView>
 
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    top: 20,
-    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold' },
-  scroll: { padding: 20 },
-  
-  // Tracker Card
-  trackerCard: {
-    backgroundColor: '#fff',
+  headerTitle: { color: '#fff', flex: 1 },
+  closeBtn: {
+    padding: 8,
     borderRadius: 20,
-    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  scroll: { padding: 20, paddingBottom: 50 },
+  
+  // Tracker Card (Chain)
+  trackerCard: {
+    padding: 24,
     marginBottom: 20,
-    marginTop: 10,
     alignItems: 'center',
   },
-  trackerTitle: { fontSize: 16, fontWeight: '600', color: '#666', marginBottom: 10 },
-  month: { fontSize: 14, color: '#999', marginBottom: 15 },
-  calendarGrid: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  dayCol: { alignItems: 'center', gap: 8 },
-  dayText: { fontSize: 12, fontWeight: 'bold', marginBottom: 5 },
-  checkBox: {
-    width: 24,
-    height: 24,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
+  trackerTitle: { marginBottom: 20 },
+  chainContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 16,
+    width: '100%',
   },
-  checked: { backgroundColor: '#333', borderColor: '#333' },
+  chainItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chainLink: {
+    width: 15,
+    height: 3,
+    backgroundColor: Colors.light.border,
+  },
+  activeLink: {
+    backgroundColor: Colors.light.primary,
+  },
+  chainNode: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: Colors.light.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+  },
+  completedNode: {
+    backgroundColor: Colors.light.success,
+    borderColor: Colors.light.success,
+  },
+  currentNode: {
+    borderColor: Colors.light.primary,
+  },
+  chainText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.light.border,
+  },
+  streakLabel: {
+    marginTop: 8,
+    color: Colors.light.text,
+    fontWeight: '600',
+  },
 
   // Form Card
   formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
+    padding: 24,
   },
-  formTitle: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 20, textAlign: 'center' },
+  formTitle: { marginBottom: 20, textAlign: 'center' },
   row: { flexDirection: 'row', gap: 15, marginBottom: 15 },
   halfInput: { flex: 1 },
-  label: { fontSize: 12, color: '#666', marginBottom: 5, marginLeft: 4 },
-  input: {
-    backgroundColor: '#007AFF', // Blue background from prototype
-    borderRadius: 10,
-    padding: 12,
-    color: '#fff',
-    marginBottom: 15,
-  },
-  dropdown: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 25,
-  },
-  dropdownText: { color: '#fff' },
   
-  // Buttons
-  saveBtn: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#007AFF', // Inverted style for visibility in this layout
-    borderRadius: 20,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 20,
-    width: '60%',
-    alignSelf: 'center',
+  deleteText: {
+    color: Colors.light.error, // or error color
+    fontWeight: 'bold',
   },
-  saveBtnText: { color: '#007AFF', fontWeight: 'bold' },
-  divider: { height: 1, backgroundColor: '#eee', marginBottom: 20 },
-  deleteText: { color: '#D9534F', fontWeight: 'bold', textAlign: 'center' },
+  
+  // Time Picker Styles
+  timeBox: {
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  iosPickerContainer: {
+    backgroundColor: '#ffffff',
+    paddingBottom: 40,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+    backgroundColor: '#f8f9fa',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  doneButton: {
+    color: Colors.light.primary,
+    fontWeight: '600',
+    fontSize: 17,
+  },
 });
