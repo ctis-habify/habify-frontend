@@ -1,5 +1,7 @@
 import { Colors } from "@/constants/theme";
-import React, { useMemo } from "react";
+import { userService } from "@/services/user.service";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -19,8 +21,23 @@ type Props = {
 };
 
 export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine }: Props) {
-  // UI values here (can be moved later to backend)
-  const points = 456;
+  const [points, setPoints] = useState(0);
+
+  const fetchUserData = useCallback(async () => {
+    try {
+      const user = await userService.getCurrentUser();
+      // Check if user object has totalXp or total_xp
+      setPoints((user as any).totalXp ?? (user as any).total_xp ?? 0);
+    } catch (error) {
+      console.error("Failed to fetch user XP", error);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserData();
+    }, [fetchUserData])
+  );
   
   const header = useMemo(() => {
     return <TodayHeader loading={loading} points={points} />;

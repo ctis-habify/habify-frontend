@@ -56,16 +56,25 @@ export const RoutineCategoryCard: React.FC<Props> = ({
       <View style={styles.divider} />
 
       {/* RUTINLER */}
-      {routines.map((routine: any, idx) => (
-        <View key={routine.id ?? routine.name ?? `${routine.name}-${idx}`}>
-          <RoutineRow
-            {...routine}
-            onToggle={(val: any) => onRoutineToggle?.(idx, val)}
-            onPress={() => onItemPress?.(routine.id)}
-          />
-          {idx !== routines.length - 1 && <View style={styles.lightDivider} />}
+      {/* RUTINLER */}
+      {routines.length === 0 ? (
+        <View style={styles.emptyListContainer}>
+          <ThemedText type="default" style={styles.emptyListText}>
+            No routines in this list.
+          </ThemedText>
         </View>
-      ))}
+      ) : (
+        routines.map((routine: any, idx) => (
+          <View key={routine.id ?? routine.name ?? `${routine.name}-${idx}`}>
+            <RoutineRow
+              {...routine}
+              onToggle={(val: any) => onRoutineToggle?.(idx, val)}
+              onPress={() => onItemPress?.(routine.id)}
+            />
+            {idx !== routines.length - 1 && <View style={styles.lightDivider} />}
+          </View>
+        ))
+      )}
     </ThemedView>
   );
 };
@@ -138,5 +147,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6', // Ultra light
     marginLeft: 66, 
     marginRight: 20,
+  },
+  emptyListContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyListText: {
+    color: '#9ca3af',
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });

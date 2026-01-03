@@ -3,6 +3,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/Button';
 import { TextInput } from '@/components/ui/TextInput';
+import { Toast } from '@/components/ui/Toast';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,14 +12,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    TouchableOpacity,
-    View
+  Alert,
+  DeviceEventEmitter,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker'; // Added import
 import { routineService } from '../../../services/routine.service';
@@ -37,16 +38,18 @@ export default function EditRoutineScreen() {
   const [frequency_type, setFrequencyType] = useState('');
   const [frequency_detail, setFrequencyDetail] = useState<number>(0);
   const [is_ai_verified, setIsAiVerified] = useState(false);
-  const [is_reminder_enabled, setIsReminderEnabled] = useState(false);
-  const [reminder_time, setReminderTime] = useState('');
   const [start_date, setStartDate] = useState('2025-10-10');
   const [streak, setStreak] = useState(0);
+  const [originalData, setOriginalData] = useState<any>(null);
 
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-  const [showReminderTimePicker, setShowReminderTimePicker] = useState(false);
   
   const [freqOpen, setFreqOpen] = useState(false); // Added freqOpen state
+
+  // Toast State
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   // Time Helpers
   const parseTime = (timeStr: string) => {
@@ -58,24 +61,24 @@ export default function EditRoutineScreen() {
   };
 
   const formatTime = (d: Date) =>
-    `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+    `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:00`;
 
-
+  // ... (useEffect)
   useEffect(() => {
     if (!id || !token) return;
     const fetchData = async () => {
       try {
         const data: any = await routineService.getRoutineById(id, token || '');
-        console.log("EditRoutine data:", data); // Debug log
+        console.log("EditRoutine data:", data);
+        setOriginalData(data);
+        
         setName(data?.routineName || data?.routine_name || '');
         setStartTime(data?.startTime || data?.start_time || '');
         setEndTime(data?.endTime || data?.end_time || '');
         setRoutineListId(data?.routineListId || data?.routine_list_id || 1);
         setFrequencyDetail(data?.frequencyDetail || data?.frequency_detail || 0);
-        setFrequencyType(data?.frequencyType || data?.frequency_type || 'Daily');
+        setFrequencyType(data?.frequencyType || data?.frequency_type || 'DAILY');
         setIsAiVerified(data?.is_ai_verified || false);
-        setIsReminderEnabled(data?.isReminderEnabled || data?.is_reminder_enabled || false);
-        setReminderTime(data?.reminderTime || data?.reminder_time || '');
         setStartDate(data?.startDate || data?.start_date || '2025-01-01');
         setStreak(data?.streak || 0);
       } catch (err) {
@@ -92,22 +95,46 @@ export default function EditRoutineScreen() {
       router.push('/(auth)');
       return;
     }
+    
+    // Construct partial payload
+    const payload: any = {};
+    const origName = originalData?.routineName || originalData?.routine_name;
+    const origStartTime = originalData?.startTime || originalData?.start_time;
+    const origEndTime = originalData?.endTime || originalData?.end_time;
+    const origListId = originalData?.routineListId || originalData?.routine_list_id;
+    const origFreqType = originalData?.frequencyType || originalData?.frequency_type;
+    const origFreqDetail = originalData?.frequencyDetail || originalData?.frequency_detail;
+    const origAi = originalData?.is_ai_verified;
+    const origStartDate = originalData?.startDate || originalData?.start_date;
+
+    if (start_time !== origStartTime || end_time !== origEndTime) {
+        payload.startTime = start_time;
+        payload.endTime = end_time;
+    }
+    // if (start_time !== origStartTime) payload.startTime = start_time;
+    // if (end_time !== origEndTime) payload.endTime = end_time;
+    
+    if (routine_name !== origName) payload.routineName = routine_name;
+    if (routineListId !== origListId) payload.routineListId = routineListId;
+    if (frequency_type !== origFreqType) payload.frequencyType = frequency_type;
+    if (frequency_detail !== origFreqDetail) payload.frequencyDetail = frequency_detail;
+    if (is_ai_verified !== origAi) payload.isAiVerified = is_ai_verified;
+    if (start_date !== origStartDate) payload.startDate = start_date;
+    
+    // Always send at least one field or handle empty? 
+    // If empty, maybe just back?
+    if (Object.keys(payload).length === 0) {
+        router.back();
+        return;
+    }
+
     try {
-      await routineService.updateRoutine(id, {
-        routineListId,
-        routineName: routine_name,
-        frequencyType: frequency_type,
-        frequencyDetail: frequency_detail,
-        startTime: start_time,
-        endTime: end_time,
-        isAiVerified: is_ai_verified,
-        startDate: start_date,
-        isReminderEnabled: is_reminder_enabled,
-        reminderTime: reminder_time,
-      }, token);
+      console.log('handleSave Partial Payload:', payload);
+      await routineService.updateRoutine(id, payload, token);
       
-      Alert.alert('Success', 'Routine updated successfully');
+      DeviceEventEmitter.emit('SHOW_TOAST', 'Routine updated successfully!');
       router.back();
+
     } catch (error: any) {
       Alert.alert('Error', error.message);
     } finally {
@@ -290,65 +317,7 @@ export default function EditRoutineScreen() {
             </View>
           </View>
 
-          {/* Reminder Section */}
-          <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }]}>
-              <ThemedText type="defaultSemiBold">Enable Reminder</ThemedText>
-              <Switch
-                value={is_reminder_enabled}
-                onValueChange={setIsReminderEnabled}
-                trackColor={{ false: "#767577", true: Colors.light.primary }}
-                thumbColor={is_reminder_enabled ? "#fff" : "#f4f3f4"}
-              />
-          </View>
 
-          {is_reminder_enabled && (
-             <View style={{ marginBottom: 20 }}>
-               <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Reminder Time</ThemedText>
-               <TouchableOpacity
-                 style={styles.timeBox}
-                 onPress={() => setShowReminderTimePicker(true)}
-               >
-                 <ThemedText>{reminder_time || '09:00'}</ThemedText>
-               </TouchableOpacity>
-
-               {showReminderTimePicker && (
-                 Platform.OS === 'ios' ? (
-                   <Modal visible={showReminderTimePicker} transparent animationType="fade">
-                     <View style={styles.modalOverlay}>
-                       <View style={styles.iosPickerContainer}>
-                         <View style={styles.pickerHeader}>
-                           <TouchableOpacity onPress={() => setShowReminderTimePicker(false)}>
-                             <ThemedText style={styles.doneButton}>Done</ThemedText>
-                           </TouchableOpacity>
-                         </View>
-                         <DateTimePicker
-                           value={parseTime(reminder_time || '09:00')}
-                           mode="time"
-                           is24Hour
-                           display="spinner"
-                           onChange={(e, d) => {
-                             if (d) setReminderTime(formatTime(d));
-                           }}
-                           textColor={Colors.light.text}
-                         />
-                       </View>
-                     </View>
-                   </Modal>
-                 ) : (
-                   <DateTimePicker
-                     value={parseTime(reminder_time || '09:00')}
-                     mode="time"
-                     is24Hour
-                     display="default"
-                     onChange={(e, d) => {
-                       setShowReminderTimePicker(false);
-                       if (d) setReminderTime(formatTime(d));
-                     }}
-                   />
-                 )
-               )}
-             </View>
-          )}
 
 
 
@@ -403,6 +372,12 @@ export default function EditRoutineScreen() {
         </ThemedView>
 
       </ScrollView>
+
+      <Toast 
+        visible={toastVisible} 
+        message={toastMessage} 
+        onHide={() => setToastVisible(false)} 
+      />
     </LinearGradient>
   );
 }
