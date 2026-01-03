@@ -18,7 +18,7 @@ api.interceptors.request.use(
 
     if (authToken) {
       headers.Authorization = `Bearer ${authToken}`;
-    } else {
+    } else if (!headers.Authorization) {
       delete headers.Authorization;
     }
 

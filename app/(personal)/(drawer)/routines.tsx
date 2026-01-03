@@ -1,6 +1,7 @@
 import { BACKGROUND_GRADIENT } from '@/app/theme';
 import CreateRoutineInListModal from '@/components/modals/CreateRoutineInListModal';
 import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
+import { Toast } from '@/components/ui/Toast';
 import { Colors } from '@/constants/theme';
 import { routineService } from '@/services/routine.service';
 import { mapBackendRoutineToRow } from '@/services/routines.mapper';
@@ -10,25 +11,64 @@ import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+// ... (imports)
+import {
+  DeviceEventEmitter,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+
+// ... existing imports
+
+// ... imports
+import { useAuth } from '@/hooks/useAuth';
+
+// ... imports
+
 export default function RoutinesScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const { token } = useAuth(); // Get token
 
   const [lists, setLists] = useState<RoutineList[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Toast State
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastVisible(true);
+  };
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
+        // Add a small delay to ensure navigation/focus transition settles
+        setTimeout(() => {
+            showToast(message);
+        }, 500);
+    });
+    return () => {
+        subscription.remove();
+    };
+  }, []);
+    
   const loadLists = useCallback(async () => {
-    setLoading(true);
+    if (lists.length === 0) setLoading(true);
     try {
-      const data = await routineService.getGroupedRoutines();
+      const data = await routineService.getGroupedRoutines(token || undefined);
       setLists(data);
     } catch (e) {
       console.error("Failed to load routines", e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
+
   const [showCreateInList, setShowCreateInList] = useState(false);
   const [selectedRoutineListId, setSelectedRoutineListId] = useState<number | null>(null);
 
@@ -45,7 +85,7 @@ export default function RoutinesScreen() {
   const refreshLists = async () => {
     setLoading(true);
     try {
-      const data = await routineService.getGroupedRoutines();
+      const data = await routineService.getGroupedRoutines(token || undefined);
       console.log('getGroupedRoutines:', JSON.stringify(data, null, 2));
       setLists(data);
     } catch (e) {
@@ -56,8 +96,8 @@ export default function RoutinesScreen() {
   };
 
   useEffect(() => {
-    refreshLists();
-  }, []);
+    if (token) refreshLists();
+  }, [token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -131,14 +171,35 @@ export default function RoutinesScreen() {
           })
         )}
 
+        {!loading && lists.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="calendar-outline" size={64} color="rgba(255,255,255,0.5)" />
+            <Text style={styles.emptyText}>You haven't created a routine yet.</Text>
+            <Text style={styles.emptySubText}>
+              You can create a new list by clicking the button below.
+            </Text>
+          </View>
+        )}
+
         {/* Modal */}
         <CreateRoutineInListModal
           visible={showCreateInList}
           routineListId={selectedRoutineListId}
           onClose={closeCreateInList}
           onCreated={async () => {
-            closeCreateInList();
-            await refreshLists();
+             // Close handled inside closeCreateInList which is called by Modal's onClose, 
+             // but here we just want to refresh and show toast.
+             // Wait, the modal calls onClose immediately after onCreated in my previous edit?
+             // Actually, in CreateRoutineInListModal, onCreated is called, then onClose.
+             // Here, onClose is passed as prop. 
+             // In the modal:
+             // onCreated?.();
+             // onClose();
+             
+             // So here:
+             closeCreateInList(); // Ensure state update
+             await refreshLists();
+             showToast("Routine created successfully!");
           }}
         />
 
@@ -149,6 +210,12 @@ export default function RoutinesScreen() {
           <Text style={styles.createBtnText}>Create Routine List</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <Toast 
+        visible={toastVisible} 
+        message={toastMessage} 
+        onHide={() => setToastVisible(false)} 
+      />
     </LinearGradient>
   );
 }
@@ -232,5 +299,23 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  emptySubText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+    maxWidth: '80%',
   },
 });

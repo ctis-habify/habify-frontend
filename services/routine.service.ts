@@ -28,8 +28,9 @@ export const routineService = {
   },
 
   // Get grouped routines
-    async getGroupedRoutines(): Promise<RoutineList[]> {
-      const res = await api.get('/routines/grouped'); 
+    async getGroupedRoutines(token?: string): Promise<RoutineList[]> {
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const res = await api.get('/routines/grouped', config); 
       return res.data;
     },
 
@@ -106,24 +107,15 @@ export const routineService = {
   async updateRoutine(id: string, payload: UpdateRoutinePayload, token: string) {
     console.log("UPDATE PAYLOAD (Input): ", payload);
     
-    // Map to snake_case for backend
-    const snakePayload: any = {};
-    if (payload.routineListId !== undefined) snakePayload.routine_list_id = payload.routineListId;
-    if (payload.routineName !== undefined) snakePayload.routine_name = payload.routineName;
-    if (payload.frequencyType !== undefined) snakePayload.frequency_type = payload.frequencyType;
-    if (payload.frequencyDetail !== undefined) snakePayload.frequency_detail = payload.frequencyDetail;
-    if (payload.startTime !== undefined) snakePayload.start_time = payload.startTime;
-    if (payload.endTime !== undefined) snakePayload.end_time = payload.endTime;
-    if (payload.isAiVerified !== undefined) snakePayload.is_ai_verified = payload.isAiVerified;
-    if (payload.startDate !== undefined) snakePayload.start_date = payload.startDate;
-    if (payload.isReminderEnabled !== undefined) snakePayload.is_reminder_enabled = payload.isReminderEnabled;
-    if (payload.reminderTime !== undefined) snakePayload.reminder_time = payload.reminderTime;
+    // Send payload directly (camelCase) as backend expects
+    console.log("UPDATE SERVICE PAYLOAD (Final):", JSON.stringify(payload, null, 2));
 
-    console.log("UPDATE PAYLOAD (Sent): ", snakePayload);
-
-    const response = await api.patch(`${API_URL}/routines/${id}`, snakePayload, {
+    const response = await api.patch(`/routines/${id}`, payload, {
       headers: { Authorization: `Bearer ${token}` },
     });
+
+    console.log("UPDATE RESPONSE (Status):", response.status);
+    console.log("UPDATE RESPONSE (Data):", JSON.stringify(response.data, null, 2));
 
     if (response.status !== 200) throw new Error('Failed to update routine');
     return response;

@@ -4,16 +4,16 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Platform,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Platform,
+    ScrollView,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 
@@ -120,11 +120,11 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
       };
 
       await routineService.createRoutine(body);
-
-      Alert.alert("Success", "Routine created successfully!");
-      setRoutineName("");
+      
       onCreated?.();
       onClose();
+      // Reset form
+      setRoutineName("");
     } catch (e: any) {
       console.log("CreateRoutineInList failed:", e?.response?.data || e);
       Alert.alert("Error", e?.response?.data?.message ?? "Failed to create routine");

@@ -23,6 +23,7 @@ export function TodayHeader({points, loading, onMenuPress }: Props) {
 
   return (
     <View style={styles.container}>
+      {/* ... header row ... */}
       <View style={styles.headerRow}>
         
         <View>
@@ -33,7 +34,7 @@ export function TodayHeader({points, loading, onMenuPress }: Props) {
         <View style={styles.levelBadge}>
             <Ionicons name={level.icon as any} size={24} color={level.color} style={{ marginRight: 8 }} />
             <Text style={[styles.levelText, { color: level.color }]}>
-                {level.label}
+                {points} Points
             </Text>
         </View>
       </View>
