@@ -1,5 +1,6 @@
 import { AuthHeader } from '@/components/auth/AuthHeader';
 import { AuthLayout } from '@/components/auth/AuthLayout';
+import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/Button';
 import { TextInput } from '@/components/ui/TextInput';
 import { Colors } from '@/constants/theme';
@@ -7,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 import { authService } from '../../services/auth.service';
 
 export default function SignupScreen() {
@@ -16,6 +18,7 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [birthDate, setBirthDate] = useState(''); 
   const [gender, setGender] = useState('');
+  const [genderOpen, setGenderOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,6 +27,7 @@ export default function SignupScreen() {
       Alert.alert('Missing Information', 'Please fill in all fields.');
       return false;
     }
+// ... (rest of validateForm logic)
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
       Alert.alert('Invalid Email', 'Please enter a valid email address.');
@@ -78,7 +82,7 @@ export default function SignupScreen() {
 
       <AuthHeader />
 
-      <View style={{ width: '100%' }}>
+      <View style={{ width: '100%', zIndex: 1000 }}>
         <TextInput 
           label="Name Surname"
           value={name}
@@ -106,13 +110,26 @@ export default function SignupScreen() {
           icon="calendar-outline"
         />
 
-        <TextInput 
-          label="Gender"
-          value={gender}
-          onChangeText={setGender}
-          placeholder="Gender"
-          icon="male-female-outline"
-        />
+        <View style={{ marginBottom: 16, zIndex: 5000 }}>
+          <ThemedText type="label" style={styles.dropdownLabel}>Gender</ThemedText>
+          <DropDownPicker
+            open={genderOpen}
+            value={gender}
+            items={[
+              { label: 'Male', value: 'male' },
+              { label: 'Female', value: 'female' },
+              { label: 'Other', value: 'other' },
+            ]}
+            setOpen={setGenderOpen}
+            setValue={setGender}
+            placeholder="Select Gender"
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+            placeholderStyle={styles.placeholderStyle}
+            textStyle={styles.dropdownText}
+            listMode="SCROLLVIEW"
+          />
+        </View>
 
         <TextInput 
           label="Password"
@@ -146,5 +163,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dropdownLabel: {
+    marginBottom: 8,
+    marginLeft: 4,
+    color: Colors.light.icon,
+  },
+  dropdown: {
+    backgroundColor: Colors.light.surface,
+    borderColor: Colors.light.border,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    height: 52,
+  },
+  dropdownContainer: {
+    backgroundColor: Colors.light.surface,
+    borderColor: Colors.light.border,
+    borderRadius: 12,
+  },
+  placeholderStyle: {
+    color: Colors.light.icon,
+    fontSize: 16,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: Colors.light.text,
   },
 });

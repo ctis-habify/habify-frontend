@@ -38,10 +38,7 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
   const [category, setCategory] = useState<number | null>(null);
 
   // Routine List Title
-  const [routineListTitle, setRoutineListTitle] = useState('');
-
-  // Routine Name
-  const [routineName, setRoutineName] = useState('');
+  const [routineListTitle, setRoutineListTitle] = useState("");
 
   // Yeni kategori oluşturma UI
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);

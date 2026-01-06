@@ -12,14 +12,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  DeviceEventEmitter,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View
+    Alert,
+    DeviceEventEmitter,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker'; // Added import
 import { routineService } from '../../../services/routine.service';
@@ -49,7 +49,7 @@ export default function EditRoutineScreen() {
 
   // Toast State
   const [toastVisible, setToastVisible] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const [toastMessage] = useState("");
 
   // Time Helpers
   const parseTime = (timeStr: string) => {
@@ -186,9 +186,8 @@ export default function EditRoutineScreen() {
           <ThemedText type="subtitle" style={styles.trackerTitle}>Current Streak</ThemedText>
           <View style={styles.chainContainer}>
              {/* Mock Chain of 7 days */}
-            {Array.from({ length: 7 }).map((_, index) => {
-              // Visualize streak
-              const isCompleted = index < streak;
+              {Array.from({ length: 7 }).map((_, index) => {
+                // Visualize streak
               // If streak is larger than 7, show all filled, or maybe we want to show the last 7 days?
               // For now, let's just show up to 7 "filled" blocks if streak >= index+1
               const filled = index < Math.min(streak, 7);
@@ -440,9 +439,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.success,
     borderColor: Colors.light.success,
   },
-  currentNode: {
-    borderColor: Colors.light.primary,
-  },
+
   chainText: {
     fontSize: 12,
     fontWeight: 'bold',

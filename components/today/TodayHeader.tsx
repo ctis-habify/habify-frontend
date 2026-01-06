@@ -3,14 +3,14 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-  // eslint-disable-next-line no-unused-vars
+   
 type Props = {
   points: number;
   loading: boolean;
   onMenuPress?: () => void;
 };
 
-export function TodayHeader({points, loading, onMenuPress }: Props) {
+export function TodayHeader({points, loading}: Props) {
   
   const getLevel = (pts: number) => {
     if (pts >= 100) return { label: "Pro", icon: "trophy-outline", color: "#FFD700" }; 
