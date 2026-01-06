@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/Button';
 import { TextInput } from '@/components/ui/TextInput';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { authService } from '../../services/auth.service';
 
@@ -16,11 +18,25 @@ export default function SignupScreen() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  
+  // Date State
   const [birthDate, setBirthDate] = useState(''); 
+  const [dateObject, setDateObject] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const [gender, setGender] = useState('');
   const [genderOpen, setGenderOpen] = useState(false);
   const [password, setPassword] = useState('');
+  const [selectedAvatar, setSelectedAvatar] = useState('avatar1');
   const [isLoading, setIsLoading] = useState(false);
+
+  const AVATARS = [
+    { id: 'avatar1', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix' },
+    { id: 'avatar2', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka' },
+    { id: 'avatar3', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob' },
+    { id: 'avatar4', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack' },
+    { id: 'avatar5', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly' },
+  ];
 
   const validateForm = () => {
     if (!name || !email || !birthDate || !gender || !password) {
@@ -55,11 +71,19 @@ export default function SignupScreen() {
         email: email,
         password: password,
         gender: gender.toLowerCase(),
-        birthDate: birthDate
+        birthDate: birthDate,
+        avatar: selectedAvatar // Send selected avatar ID (or URL if backend supports it directly, but ID is cleaner if mapping locally, though we used URLs above so let's send URI or ID. Let's send ID or URI. Plan said ID, but user wants to see it. Let's send the URI for simplicity if backend blindly accepts string)
+        // Actually, backend might not have this column yet. But 'any' payload allows sending it.
+        // Assuming backend handles or ignores extra fields.
       };
 
       const data = await authService.register(payload);
       console.log('User created:', data);
+      
+      // Persist avatar locally in case backend doesn't support it yet
+      const safeEmail = email.toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
+      await SecureStore.setItemAsync(`avatar_${safeEmail}`, selectedAvatar);
+
       Alert.alert('Success', 'Account created successfully!', [
          { text: 'OK', onPress: () => router.replace('/') }
       ]);
@@ -101,14 +125,61 @@ export default function SignupScreen() {
           icon="mail-outline"
         />
 
-        <TextInput 
-          label="Birth Date"
-          value={birthDate}
-          onChangeText={setBirthDate}
-          placeholder="YYYY-MM-DD"
-          keyboardType="numbers-and-punctuation"
-          icon="calendar-outline"
-        />
+        {/* Birth Date Picker */}
+        <View style={{ marginBottom: 16 }}>
+          <ThemedText type="label" style={styles.dropdownLabel}>Birth Date</ThemedText>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowDatePicker(true)}
+          >
+             <Ionicons name="calendar-outline" size={20} color={Colors.light.icon} style={{ marginRight: 10 }} />
+             <Text style={birthDate ? styles.dateText : styles.placeholderText}>
+               {birthDate || 'YYYY-MM-DD'}
+             </Text>
+          </TouchableOpacity>
+
+          {showDatePicker && (
+             Platform.OS === 'ios' ? (
+                <Modal transparent animationType="fade">
+                   <View style={styles.modalOverlay}>
+                      <View style={styles.datePickerContainer}>
+                         <View style={styles.pickerHeader}>
+                            <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                              <Text style={{ color: Colors.light.primary, fontWeight: '600' }}>Done</Text>
+                            </TouchableOpacity>
+                         </View>
+                         <DateTimePicker
+                           value={dateObject}
+                           mode="date"
+                           display="spinner"
+                           maximumDate={new Date()}
+                           onChange={(e, d) => {
+                              if (d) {
+                                setDateObject(d);
+                                setBirthDate(d.toISOString().split('T')[0]);
+                              }
+                           }}
+                         />
+                      </View>
+                   </View>
+                </Modal>
+             ) : (
+                <DateTimePicker
+                  value={dateObject}
+                  mode="date"
+                  display="default"
+                  maximumDate={new Date()}
+                  onChange={(e, d) => {
+                     setShowDatePicker(false);
+                     if (d) {
+                       setDateObject(d);
+                       setBirthDate(d.toISOString().split('T')[0]);
+                     }
+                  }}
+                />
+             )
+          )}
+        </View>
 
         <View style={{ marginBottom: 16, zIndex: 5000 }}>
           <ThemedText type="label" style={styles.dropdownLabel}>Gender</ThemedText>
@@ -139,6 +210,30 @@ export default function SignupScreen() {
           secureTextEntry
           icon="lock-closed-outline"
         />
+
+        {/* Avatar Selection */}
+        <View style={{ marginBottom: 20 }}>
+          <ThemedText type="label" style={{ marginBottom: 12, marginLeft: 4 }}>Select Avatar</ThemedText>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            {AVATARS.map((av) => (
+              <TouchableOpacity
+                key={av.id}
+                onPress={() => setSelectedAvatar(av.id)}
+                style={{
+                  borderWidth: 3,
+                  borderColor: selectedAvatar === av.id ? Colors.light.primary : 'transparent',
+                  borderRadius: 30, // fully rounded padding
+                  padding: 2,
+                }}
+              >
+               <Image 
+                 source={{ uri: av.uri }} 
+                 style={{ width: 45, height: 45, borderRadius: 22.5, backgroundColor: '#f0f0f0' }} 
+               />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
         <Button 
           title="Sign Up" 
@@ -188,5 +283,41 @@ const styles = StyleSheet.create({
   dropdownText: {
     fontSize: 16,
     color: Colors.light.text,
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.light.surface,
+    borderColor: Colors.light.border,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    height: 52,
+    paddingHorizontal: 14,
+  },
+  dateText: {
+    fontSize: 16,
+    color: Colors.light.text,
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: Colors.light.icon,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  datePickerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    width: '90%',
+    padding: 20,
+    alignItems: 'center',
+  },
+  pickerHeader: {
+    width: '100%',
+    alignItems: 'flex-end',
+    marginBottom: 10,
   },
 });

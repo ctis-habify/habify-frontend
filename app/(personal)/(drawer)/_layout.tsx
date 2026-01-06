@@ -37,6 +37,7 @@ export default function DrawerLayout() {
       <Drawer.Screen
         name="settings"
         options={{
+          drawerItemStyle: { display: 'none' },
           drawerLabel: "Settings",
           drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
         }}

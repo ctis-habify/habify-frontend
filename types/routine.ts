@@ -11,6 +11,7 @@ export interface Routine {
   endTime: string; // time without time zone (HH:MM:SS)
   startDate: string; // date (YYYY-MM-DD)
   isDone: boolean;
+  isCompleted?: boolean;
   isFailed: boolean;
   user_id: string;
   frequencyType: string;

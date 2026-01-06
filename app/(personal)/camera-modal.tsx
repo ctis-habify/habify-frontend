@@ -78,7 +78,7 @@ export default function CameraModal() {
       console.log('Step 2: Preparing blob...');
       let blob;
       if (photoUri === 'mock-photo') {
-        const asset = require('../../img/true.jpeg');
+        const asset = require('../../img/true.jpg');
         const assetSource = Image.resolveAssetSource(asset);
         console.log('Resolved asset URI:', assetSource.uri);
         const assetResponse = await fetch(assetSource.uri);
@@ -161,14 +161,13 @@ export default function CameraModal() {
     return (
       <View style={styles.container}>
         {isMock ? (
-          <Image source={require('../../img/true.jpeg')} style={styles.previewImage} />
+          <Image source={require('../../img/true.jpg')} style={styles.previewImage} />
         ) : (
           <Image source={{ uri: photoUri }} style={styles.previewImage} />
         )}
         
         {isMock && (
-          <View style={{ position: 'absolute', top: 100, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 10, borderRadius: 10 }}>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>MOCK MODE: Using img/true.jpeg</Text>
+          <View style={{ position: 'absolute', top: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 8, borderRadius: 8, zIndex: 20 }}>
           </View>
         )}
 

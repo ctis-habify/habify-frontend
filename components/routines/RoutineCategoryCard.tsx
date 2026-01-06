@@ -16,16 +16,23 @@ type Props = {
   onPressAddRoutine?: () => void;
   onRoutineToggle?: (index: number, value: boolean) => void;
   onItemPress?: (id: string) => void;
+  onDeleteList?: () => void;
+  onEditList?: () => void;
 };
 
-export const RoutineCategoryCard: React.FC<Props> = ({
+export function RoutineCategoryCard({
   tagLabel,
   title,
   routines,
   onPressAddRoutine,
   onRoutineToggle,
   onItemPress,
-}) => {
+  onDeleteList,
+  onEditList,
+}: Props) {
+
+  const [menuVisible, setMenuVisible] = React.useState(false);
+  const optionsAvailable = !!onEditList || !!onDeleteList;
 
 
   return (
@@ -46,6 +53,42 @@ export const RoutineCategoryCard: React.FC<Props> = ({
             >
               <Ionicons name="add" size={16} color="#ffffff" />
             </TouchableOpacity>
+          )}
+
+          {optionsAvailable && (
+            <View style={{ position: 'relative', zIndex: 100 }}>
+              <TouchableOpacity
+                onPress={() => setMenuVisible(!menuVisible)}
+                style={styles.iconButton}
+                hitSlop={10}
+              >
+                <Ionicons name="ellipsis-vertical" size={20} color={Colors.light.icon} />
+              </TouchableOpacity>
+
+              {menuVisible && (
+                <View style={[styles.menuContainer, { zIndex: 101 }]}>
+                  {!!onEditList && (
+                    <TouchableOpacity 
+                      style={styles.menuItem} 
+                      onPress={() => { setMenuVisible(false); onEditList(); }}
+                    >
+                      <Ionicons name="pencil-outline" size={16} color={Colors.light.text} />
+                      <ThemedText style={styles.menuText}>Edit</ThemedText>
+                    </TouchableOpacity>
+                  )}
+                  {!!onEditList && !!onDeleteList && <View style={styles.menuDivider} />}
+                  {!!onDeleteList && (
+                    <TouchableOpacity 
+                      style={styles.menuItem} 
+                      onPress={() => { setMenuVisible(false); onDeleteList(); }}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={Colors.light.error} />
+                      <ThemedText style={[styles.menuText, { color: Colors.light.error }]}>Delete</ThemedText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
           )}
         </View>
       </View>
@@ -76,7 +119,7 @@ export const RoutineCategoryCard: React.FC<Props> = ({
       )}
     </ThemedView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   card: {
@@ -156,5 +199,40 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  iconButton: {
+    padding: 4,
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 30,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingVertical: 4,
+    width: 120,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  menuText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#f3f4f6',
+    marginHorizontal: 8,
   },
 });

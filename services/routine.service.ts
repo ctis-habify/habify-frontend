@@ -129,4 +129,18 @@ export const routineService = {
     if (response.status !== 200 && response.status !== 204) throw new Error('Failed to delete routine');
     return true; // Success
   },
+
+  async deleteRoutineList(id: number, token: string) {
+    const response = await api.delete(`/routine_lists/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.status !== 200 && response.status !== 204) throw new Error('Failed to delete routine list');
+    return true;
+  },
+
+  async updateRoutineList(id: number, title: string, categoryId: number, token?: string) {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    const res = await api.patch(`/routine_lists/${id}`, { title, categoryId }, config);
+    return res.data;
+  },
 };

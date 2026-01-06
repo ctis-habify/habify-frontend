@@ -13,6 +13,7 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 // ... (imports)
 import {
+    Alert,
     DeviceEventEmitter,
     ScrollView,
     StyleSheet,
@@ -82,8 +83,56 @@ export default function RoutinesScreen() {
     setSelectedRoutineListId(null);
   };
 
+  const handleDeleteList = (id: number, title: string) => {
+    if (!token) return;
+    Alert.alert(
+      "Delete List",
+      `Are you sure you want to delete "${title}" and all its routines?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await routineService.deleteRoutineList(id, token);
+              showToast("List deleted successfully");
+              loadLists(true);
+            } catch (err: any) {
+              console.error("Delete list failed:", err);
+              Alert.alert("Error", "Failed to delete list.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleEditList = (id: number, title: string, categoryId: number) => {
+    router.push({
+      pathname: '/(personal)/create-routine',
+      params: { 
+        id: id,
+        title: title,
+        categoryId: categoryId
+      }
+    });
+  };
+
+
+
   useEffect(() => {
     if (token) loadLists(true);
+
+    // Listen for SHOW_TOAST from modal (create/update list)
+    const toastSub = DeviceEventEmitter.addListener('SHOW_TOAST', (msg) => {
+        showToast(msg);
+        loadLists(true);
+    });
+    
+    return () => {
+        toastSub.remove();
+    };
   }, [token, loadLists]);
 
   useFocusEffect(
@@ -153,6 +202,8 @@ export default function RoutinesScreen() {
                 onItemPress={handleRoutinePress}
                 // + butonu için handler (id yoksa buton görünmez)
                 onPressAddRoutine={canAdd ? () => openCreateInList(routineListId) : undefined}
+                onDeleteList={canAdd ? () => handleDeleteList(routineListId, list.routineListTitle) : undefined}
+                onEditList={canAdd ? () => handleEditList(routineListId, list.routineListTitle, list.categoryId) : undefined}
               />
             );
           })

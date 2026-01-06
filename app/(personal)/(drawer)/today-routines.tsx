@@ -94,8 +94,9 @@ export default function TodayRoutinesScreen() {
             }
         }
 
-        // Show if started AND not failed
-        return now >= start && !isFailed; 
+        // Show if started AND not failed AND not completed
+        // Backend key is isCompleted
+        return now >= start && !isFailed && !r.isCompleted; 
       }));
     } catch (e: any) {
       console.log('Today routines load error:', e);
