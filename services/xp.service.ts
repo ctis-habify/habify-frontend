@@ -1,5 +1,5 @@
-import api from './api';
 import { XpLog, XpLogCreateDto } from '../types/xp';
+import { api } from './api';
 
 export const xpService = {
   // Get XP logs for current user
