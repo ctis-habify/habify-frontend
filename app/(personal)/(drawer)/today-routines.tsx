@@ -39,6 +39,14 @@ export default function TodayRoutinesScreen() {
     },
     [router],
   );
+  
+  const handleCameraPress = useCallback(
+    (id: string) => {
+      // @ts-ignore
+      router.push({ pathname: '/(personal)/camera-modal', params: { routineId: id } });
+    },
+    [router],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,10 +97,14 @@ export default function TodayRoutinesScreen() {
         // Show if started AND not failed
         return now >= start && !isFailed; 
       }));
-    } catch (e) {
+    } catch (e: any) {
       console.log('Today routines load error:', e);
+      if (e.response) {
+        console.log('Error payload:', JSON.stringify(e.response.data, null, 2));
+      }
       setItems([]);
     } finally {
+
       setLoading(false);
     }
   }, []);
@@ -118,6 +130,7 @@ export default function TodayRoutinesScreen() {
           loading={loading}
           onRefresh={load}
           onPressRoutine={goToRoutineDetail}
+          onPressCamera={handleCameraPress}
         />
 
         <BottomReturnButton

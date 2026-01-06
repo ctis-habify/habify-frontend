@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImageManipulator from 'expo-image-manipulator';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { verificationService } from '../../services/verification.service';
 
 export default function CameraModal() {
   const router = useRouter();
@@ -23,6 +23,7 @@ export default function CameraModal() {
   
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [loadingText, setLoadingText] = useState('Verifying with AI...');
   const [facing, setFacing] = useState<CameraType>('back');
 
   // 1. Check Permissions
@@ -63,32 +64,90 @@ export default function CameraModal() {
 
     try {
       setIsUploading(true);
+      setLoadingText('Uploading to cloud...');
 
-      // A. Compress Image (Simulated Heavy Task)
-      const manipulated = await ImageManipulator.manipulateAsync(
-        photoUri,
-        [{ resize: { width: 800 } }], // Resize to max 800px width
-        { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
+      // 1. Get Signed URL
+      console.log('Step 1: Requesting Signed URL...');
+      const { signedUrl, objectPath } = await verificationService.getSignedUrl('jpg', 'image/jpeg');
+      console.log('Signed URL received:', signedUrl);
+
+      console.log('Object path:', objectPath);
+
+      // 2. Prepare file blob
+      console.log('Step 2: Preparing blob...');
+      let blob;
+      if (photoUri === 'mock-photo') {
+        const asset = require('../../img/true.jpeg');
+        const assetSource = Image.resolveAssetSource(asset);
+        console.log('Resolved asset URI:', assetSource.uri);
+        const assetResponse = await fetch(assetSource.uri);
+        blob = await assetResponse.blob();
+      } else {
+        const photoResponse = await fetch(photoUri);
+        blob = await photoResponse.blob();
+      }
+      console.log('Blob prepared, size:', blob.size);
+
+      // 3. Upload to GCS via PUT
+      console.log('Step 3: Uploading to GCS...');
+      await verificationService.uploadToGcs(signedUrl, blob);
+      console.log('Upload successful');
+
+      // 4. Submit verification to Backend
+      setLoadingText('Submitting to AI...');
+      console.log('Step 4: Submitting verification for routineId:', routineId);
+      const { id: verificationId } = await verificationService.submitVerification(
+        routineId,
+        objectPath
       );
+      console.log('Verification submitted, ID:', verificationId);
 
-      // B. Simulate Network Request (Mocking Backend)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // C. Success
-      Alert.alert('Success', 'Routine Verified!', [
-        {
-          text: 'Awesome',
-          onPress: () => {
-             router.back();
-          },
-        },
-      ]);
-    } catch (err) {
-      Alert.alert('Error', 'Upload failed');
-    } finally {
+      // 5. Start Polling for Status
+      setLoadingText('AI is verifying...');
+      console.log('Step 5: Starting polling...');
+      await pollVerificationStatus(verificationId);
+    } catch (err: any) {
+      console.error('Full Verification error object:', err);
+      if (err.response) {
+        console.error('Error Status:', err.response.status);
+        console.error('Error Data:', JSON.stringify(err.response.data, null, 2));
+      }
+      Alert.alert(
+        'Verification Failed',
+        err.response?.data?.message || err.message || 'An unexpected error occurred'
+      );
       setIsUploading(false);
     }
+
   };
+
+  const pollVerificationStatus = async (verificationId: string) => {
+    try {
+      const result = await verificationService.getVerificationStatus(verificationId);
+
+      if (result.status === 'succeeded') {
+        setIsUploading(false);
+        Alert.alert('Success', 'AI verified your routine! Great job!', [
+          { text: 'Awesome', onPress: () => router.back() },
+        ]);
+      } else if (result.status === 'failed') {
+        setIsUploading(false);
+        Alert.alert(
+          'Verification Failed',
+          result.failReason || 'AI could not verify this action. Please try again.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // Still pending
+        setTimeout(() => pollVerificationStatus(verificationId), 2000);
+      }
+    } catch (err) {
+      console.error('Polling error:', err);
+      setIsUploading(false);
+      Alert.alert('Error', 'Failed to get verification status. Please check your internet.');
+    }
+  };
+
 
 
   const toggleCameraFacing = () => {
@@ -97,14 +156,26 @@ export default function CameraModal() {
 
   // --- RENDER: PREVIEW MODE (Photo Taken) ---
   if (photoUri) {
+    const isMock = photoUri === 'mock-photo';
     return (
       <View style={styles.container}>
-        <Image source={{ uri: photoUri }} style={styles.previewImage} />
+        {isMock ? (
+          <Image source={require('../../img/true.jpeg')} style={styles.previewImage} />
+        ) : (
+          <Image source={{ uri: photoUri }} style={styles.previewImage} />
+        )}
+        
+        {isMock && (
+          <View style={{ position: 'absolute', top: 100, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 10, borderRadius: 10 }}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>MOCK MODE: Using img/true.jpeg</Text>
+          </View>
+        )}
+
         
         {isUploading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color="#ffffff" />
-            <Text style={styles.loadingText}>Verifying with AI...</Text>
+            <Text style={styles.loadingText}>{loadingText}</Text>
           </View>
         )}
 
@@ -149,6 +220,14 @@ export default function CameraModal() {
 
         {/* Bottom Bar: Shutter */}
         <View style={styles.bottomBar}>
+          <TouchableOpacity 
+            onPress={() => setPhotoUri('mock-photo')} 
+            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: 'rgba(255,165,0,0.6)' }]}
+          >
+            <Ionicons name="bug" size={24} color="white" />
+            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>MOCK</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
             <View style={styles.shutterInner} />
           </TouchableOpacity>

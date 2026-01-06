@@ -14,6 +14,7 @@ function remainingColor(mins: number) {
 type Props = {
   routine: Routine;
   onPress: () => void;
+  onPressCamera?: (id: string) => void;
 };
 
 // "YYYY-MM-DD" + "HH:mm[:ss]" -> Date
@@ -28,7 +29,7 @@ function dateTimeFrom(dateStr?: string | null, timeStr?: string | null): Date | 
   return base;
 }
 
-export function RoutineCard({ routine, onPress }: Props) {
+export function RoutineCard({ routine, onPress, onPressCamera }: Props) {
   const { title, startTime, endTime, remainingLabel } = routine as any;
 
   // Live update state
@@ -97,7 +98,7 @@ export function RoutineCard({ routine, onPress }: Props) {
         </View>
 
         <Pressable
-          onPress={() => console.log('Camera pressed:', routine.id)}
+          onPress={() => onPressCamera?.(routine.id)}
           style={styles.cameraBtn}
           hitSlop={10}
         >

@@ -1,5 +1,5 @@
-import api from './api';
 import { User, UserUpdateDto } from '../types/user';
+import { api } from './api';
 
 export const userService = {
   // Get current user profile

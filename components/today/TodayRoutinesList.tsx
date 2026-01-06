@@ -3,10 +3,10 @@ import { userService } from "@/services/user.service";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import type { Routine } from "../../types/routine";
 import { ThemedView } from "../themed-view";
@@ -18,9 +18,10 @@ type Props = {
   loading: boolean;
   onRefresh: () => void;
   onPressRoutine: (id: string) => void;
+  onPressCamera?: (id: string) => void;
 };
 
-export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine }: Props) {
+export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, onPressCamera }: Props) {
   const [points, setPoints] = useState(0);
 
   const fetchUserData = useCallback(async () => {
@@ -56,6 +57,7 @@ export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine }:
           <RoutineCard 
             routine={item} 
             onPress={() => onPressRoutine(item.id)} 
+            onPressCamera={onPressCamera}
           />
         )}
         contentContainerStyle={styles.listContent}
