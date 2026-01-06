@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { setAuthToken } from '../services/api';
 import { authService } from '../services/auth.service'; // kendi path'ine göre düzelt
 
@@ -83,10 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await SecureStore.setItemAsync(USER_KEY, JSON.stringify(loggedInUser));
     } catch (error: any) {
       console.error('Login failed:', error);
-      Alert.alert(
-        'Login failed',
-        error?.response?.data?.message || error.message || 'Something went wrong',
-      );
       throw error;
     } finally {
       setLoading(false);
