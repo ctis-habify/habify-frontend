@@ -14,23 +14,14 @@ function remainingColor(mins: number) {
 type Props = {
   routine: Routine;
   onPress: () => void;
-  onPressCamera?: (id: string) => void;
+  onPressCamera?: (_id: string) => void;
 };
 
 // "YYYY-MM-DD" + "HH:mm[:ss]" -> Date
-function dateTimeFrom(dateStr?: string | null, timeStr?: string | null): Date | null {
-  if (!timeStr) return null;
-  const timeParts = timeStr.split(':').map((p) => Number(p));
-  if (timeParts.length < 2) return null;
-  const [h, m, s = 0] = timeParts;
-  const base = dateStr ? new Date(dateStr) : new Date();
-  if (isNaN(base.getTime())) return null;
-  base.setHours(h, m, s, 0);
-  return base;
-}
+
 
 export function RoutineCard({ routine, onPress, onPressCamera }: Props) {
-  const { title, startTime, endTime, remainingLabel } = routine as any;
+  const { title, endTime, remainingLabel } = routine as any;
 
   // Live update state
   const [label, setLabel] = React.useState(remainingLabel === 'Pending' ? 'Pending' : '');

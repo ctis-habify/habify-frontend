@@ -20,6 +20,7 @@ export function CustomDrawerContent(props: any) {
       // 2. Redirect to auth
       router.replace('/(auth)');
     } catch (error) {
+      console.error('Logout failed', error);
       Alert.alert('Error', 'Failed to log out.');
     }
   };
@@ -45,7 +46,7 @@ export function CustomDrawerContent(props: any) {
         {/* Custom Placeholders */}
         <DrawerItem 
             label="Analytics (Soon)" 
-            icon={({color, size}) => <Ionicons name="bar-chart-outline" size={size} color={Colors.light.icon} />}
+            icon={({ size }) => <Ionicons name="bar-chart-outline" size={size} color={Colors.light.icon} />}
             onPress={() => {}} 
             labelStyle={{ marginLeft: 0, color: Colors.light.icon }}
         />
@@ -57,7 +58,7 @@ export function CustomDrawerContent(props: any) {
         <View style={styles.divider} />
         <DrawerItem
           label="Logout"
-          icon={({ color, size }) => <Ionicons name="log-out-outline" size={size} color={Colors.light.error} />}
+          icon={({ size }) => <Ionicons name="log-out-outline" size={size} color={Colors.light.error} />}
           onPress={handleLogout}
           labelStyle={{ color: Colors.light.error, marginLeft: 0, fontWeight: '600' }}
         />

@@ -53,6 +53,7 @@ export default function CameraModal() {
         });
         setPhotoUri(photo?.uri || null);
       } catch (error) {
+        console.error('Failed to take photo', error);
         Alert.alert('Error', 'Failed to take photo');
       }
     }
@@ -239,7 +240,7 @@ export default function CameraModal() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
-  camera: { flex: 1 },
+
   cameraUi: { 
     ...StyleSheet.absoluteFillObject, // Overlay on top
     justifyContent: 'space-between', 

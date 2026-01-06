@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { RoutineRow, RoutineRowProps } from '@/components/routines/RoutineRow';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +6,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
 
-const DOT_COUNT = 7;
+
 
 type Props = {
   tagLabel: string;
@@ -27,7 +26,7 @@ export const RoutineCategoryCard: React.FC<Props> = ({
   onRoutineToggle,
   onItemPress,
 }) => {
-  const allCompleted = routines.length > 0 && routines.every((r) => r.completed);
+
 
   return (
     <ThemedView variant="card" style={styles.card}>

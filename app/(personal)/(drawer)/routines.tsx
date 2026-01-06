@@ -13,12 +13,12 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 // ... (imports)
 import {
-  DeviceEventEmitter,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    DeviceEventEmitter,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 // ... existing imports
@@ -57,8 +57,8 @@ export default function RoutinesScreen() {
     };
   }, []);
     
-  const loadLists = useCallback(async () => {
-    if (lists.length === 0) setLoading(true);
+  const loadLists = useCallback(async (showLoading = false) => {
+    if (showLoading || lists.length === 0) setLoading(true);
     try {
       const data = await routineService.getGroupedRoutines(token || undefined);
       setLists(data);
@@ -67,7 +67,7 @@ export default function RoutinesScreen() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, lists.length]);
 
   const [showCreateInList, setShowCreateInList] = useState(false);
   const [selectedRoutineListId, setSelectedRoutineListId] = useState<number | null>(null);
@@ -82,22 +82,9 @@ export default function RoutinesScreen() {
     setSelectedRoutineListId(null);
   };
 
-  const refreshLists = async () => {
-    setLoading(true);
-    try {
-      const data = await routineService.getGroupedRoutines(token || undefined);
-      console.log('getGroupedRoutines:', JSON.stringify(data, null, 2));
-      setLists(data);
-    } catch (e) {
-      console.error('Failed to load routines', e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (token) refreshLists();
-  }, [token]);
+    if (token) loadLists(true);
+  }, [token, loadLists]);
 
   useFocusEffect(
     useCallback(() => {
@@ -198,7 +185,7 @@ export default function RoutinesScreen() {
              
              // So here:
              closeCreateInList(); // Ensure state update
-             await refreshLists();
+             await loadLists(true);
              showToast("Routine created successfully!");
           }}
         />
@@ -248,9 +235,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  tabWrapper: { 
-    // Removed unused wrapper 
-  },
+
   tabContainer: {
     flex: 1,
     flexDirection: 'row',

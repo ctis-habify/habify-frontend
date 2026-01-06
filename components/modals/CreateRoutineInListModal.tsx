@@ -32,13 +32,13 @@ type Props = {
 export default function CreateRoutineInListModal({ visible, routineListId, onClose, onCreated }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [endDate, setEndDate] = useState(new Date()); // Unused but let's keep it if it was there or just assume it wasn't. Wait, line 37 was setStartDate.
+
   // Actually, I'll just replace the block of state definitions.
 
   const [routineName, setRoutineName] = useState("");
   const [startTime, setStartTime] = useState(new Date(new Date().setHours(9, 0, 0)));
   const [endTime, setEndTime] = useState(new Date(new Date().setHours(10, 0, 0)));
-  const [startDate, setStartDate] = useState(new Date());
+  const [startDate] = useState(new Date());
   const [frequency, setFrequency] = useState<FrequencyType>("DAILY");
   
   // New state for optional time
@@ -46,7 +46,6 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
 
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [freqOpen, setFreqOpen] = useState(false);
   
@@ -61,10 +60,6 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
   const formatTime = (d: Date) =>
     `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   const formatTimeForAPI = (d: Date) => `${formatTime(d)}:00`;
-  const formatDate = (d: Date) =>
-    `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}/${d.getFullYear()}`;
   const formatDateForAPI = (d: Date) => d.toISOString().split("T")[0];
 
   const dropDownStyle = useMemo(

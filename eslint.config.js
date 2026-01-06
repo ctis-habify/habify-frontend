@@ -53,8 +53,18 @@ export default tseslint.config(
       // React Native
       'react-native/no-unused-styles': 'warn',
 
+      // TypeScript Specific
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/no-require-imports': 'off',
       'no-undef': 'off',
+      'no-unused-vars': 'off', // Turn off base rule as TS rule is used
     },
   },
 

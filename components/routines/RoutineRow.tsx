@@ -1,7 +1,7 @@
 import { CircularCheckbox } from '@/components/ui/circular-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export type RoutineRowProps = {
@@ -11,9 +11,7 @@ export type RoutineRowProps = {
   durationLabel: string;  
   showCamera?: boolean;
   frequencyType?: string;
-  // eslint-disable-next-line no-unused-vars
   onToggle?: (newValue: boolean) => void;
-  // eslint-disable-next-line no-unused-vars
   onPress?: (id: string) => void; // changed: accept id
   categoryName?: string;
   failed?: boolean;
@@ -37,7 +35,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   startTime,
   endTime,
 }) => {
-  // eslint-disable-next-line no-unused-vars
+   
   const [isChecked, setIsChecked] = useState(completed);
   const router = useRouter(); // Hook
 
@@ -67,18 +65,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   }
 
   // Update logic
-  React.useEffect(() => {
-     // Initial run
-     updateStatus();
-
-     const intervalId = setInterval(() => {
-        updateStatus();
-     }, 1000); // Check every second for immediate updates
-
-     return () => clearInterval(intervalId);
-  }, [startTime, endTime, failed, initialLabel]);
-
-  const updateStatus = () => {
+  const updateStatus = useCallback(() => {
       // If manually failed prop is true, stick to it
       if (failed) {
           setEffectiveFailed(true);
@@ -143,7 +130,18 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
           setDisplayLabel(initialLabel);
           setEffectiveFailed(failed || initialLabel === 'Failed');
       }
-  };
+  }, [startTime, endTime, failed, initialLabel, isChecked]);
+
+  React.useEffect(() => {
+     // Initial run
+     updateStatus();
+
+     const intervalId = setInterval(() => {
+        updateStatus();
+     }, 1000); // Check every second for immediate updates
+
+     return () => clearInterval(intervalId);
+  }, [updateStatus]);
 
 
   const handleCameraPress = () => {

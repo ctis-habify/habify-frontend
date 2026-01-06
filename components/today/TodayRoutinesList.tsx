@@ -17,8 +17,8 @@ type Props = {
   items: Routine[];
   loading: boolean;
   onRefresh: () => void;
-  onPressRoutine: (id: string) => void;
-  onPressCamera?: (id: string) => void;
+  onPressRoutine: (_id: string) => void;
+  onPressCamera?: (_id: string) => void;
 };
 
 export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, onPressCamera }: Props) {

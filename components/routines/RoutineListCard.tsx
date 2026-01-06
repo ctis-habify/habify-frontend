@@ -7,7 +7,6 @@ type Props = {
   title: string;
   subtitle?: string;
   onPress?: () => void;
-  // eslint-disable-next-line no-unused-vars
   onPressAddRoutine: (listId: number | string) => void;
 };
 

@@ -28,27 +28,21 @@ export function Button({
   icon 
 }: ButtonProps) {
 
-  const isPrimary = variant === 'primary';
   const isOutline = variant === 'outline';
   
-  // Define colors based on variant
-  // Define colors based on variant
   const getColors = (): [string, string] | undefined => {
-    if (disabled) return ['#9CA3AF', '#6B7280']; // Grey disabled state
+    if (disabled) return ['#9CA3AF', '#6B7280'];
     switch (variant) {
       case 'primary':
         return [Colors.light.primary, Colors.light.secondary];
       case 'secondary':
         return [Colors.light.secondary, '#8B5CF6'];
       default:
-        return undefined; // Transparent for outline/ghost
+        return undefined;
     }
   };
 
   const gradientColors = getColors();
-
-  const Container = gradientColors ? LinearGradient : TouchableOpacity;
-  const containerProps = gradientColors ? { colors: gradientColors, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } } : {};
 
   return (
     <TouchableOpacity
