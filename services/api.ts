@@ -1,14 +1,19 @@
 // src/services/api.ts
 import axios from 'axios';
 
+import { Platform } from 'react-native';
+
 let authToken: string | null = null;
 
 export const setAuthToken = (token: string | null) => {
   authToken = token;
 };
 
+// Android emulator typically accesses localhost via 10.0.2.2
+const BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+
 export const api = axios.create({
-  baseURL: 'http://localhost:3000', // backend address
+  baseURL: BASE_URL,
 });
 
 api.interceptors.request.use(

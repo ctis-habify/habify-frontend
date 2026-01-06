@@ -1,6 +1,6 @@
 import { Routine, RoutineList, RoutineLog } from '../types/routine';
 import { api } from './api';
-const API_URL = 'http://localhost:3000';
+
 
 export type UpdateRoutinePayload = Partial<{
   routineListId: number;
@@ -122,12 +122,11 @@ export const routineService = {
   },
 
   async deleteRoutine(id: string, token: string) {
-    const response = await fetch(`${API_URL}/routines/${id}`, {
-      method: 'DELETE',
+    const response = await api.delete(`/routines/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!response.ok) throw new Error('Failed to delete routine');
+    if (response.status !== 200 && response.status !== 204) throw new Error('Failed to delete routine');
     return true; // Success
   },
 };

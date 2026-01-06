@@ -1,7 +1,7 @@
 
 import { Category } from '../types/category';
 import { api } from './api';
-const API_URL = 'http://localhost:3000';
+
 
 
 export const categoryService = {
