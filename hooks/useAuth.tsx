@@ -9,6 +9,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  avatar?: string;
 }
 
 interface AuthContextValue {
@@ -51,6 +52,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (storedUser) {
           const parsedUser: AuthUser = JSON.parse(storedUser);
+          
+          // Restore local avatar if missing
+          if (!parsedUser.avatar && parsedUser.email) {
+             const safeEmail = parsedUser.email.toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
+             const localAvatar = await SecureStore.getItemAsync(`avatar_${safeEmail}`);
+             if (localAvatar) {
+                 parsedUser.avatar = localAvatar;
+             }
+          }
+          
           setUser(parsedUser);
         }
       } catch (error) {
@@ -73,6 +84,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!accessToken || !loggedInUser) {
         throw new Error('Invalid login response from server');
+      }
+
+      // Check for local avatar override/fallback
+      if (!loggedInUser.avatar && email) {
+        const safeEmail = email.toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
+        const localAvatar = await SecureStore.getItemAsync(`avatar_${safeEmail}`);
+        if (localAvatar) {
+            loggedInUser.avatar = localAvatar;
+        }
       }
 
       setToken(accessToken);

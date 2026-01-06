@@ -35,30 +35,39 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
 
   // Actually, I'll just replace the block of state definitions.
 
+  // Helper to create "Fake UTC" date
+  const createUtcTime = (h: number, m: number) => {
+    const d = new Date();
+    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0));
+  };
+
   const [routineName, setRoutineName] = useState("");
-  const [startTime, setStartTime] = useState(new Date(new Date().setHours(9, 0, 0)));
-  const [endTime, setEndTime] = useState(new Date(new Date().setHours(10, 0, 0)));
+  // Initialize with Fake UTC
+  const [startTime, setStartTime] = useState(createUtcTime(9, 0));
+  const [endTime, setEndTime] = useState(createUtcTime(10, 0));
+  
   const [startDate] = useState(new Date());
   const [frequency, setFrequency] = useState<FrequencyType>("DAILY");
   
   // New state for optional time
   const [hasSpecificTime, setHasSpecificTime] = useState(false);
-
+  
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-
+  
   const [freqOpen, setFreqOpen] = useState(false);
   
   // Removed repeatOpen state and handler
   const onFreqOpen = useCallback(() => {}, []);
-
+  
   const frequencyItems = [
     { label: "Daily", value: "DAILY" as FrequencyType },
     { label: "Weekly", value: "WEEKLY" as FrequencyType },
   ];
-
+  
+  // Use UTC methods for display/formatting
   const formatTime = (d: Date) =>
-    `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+    `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")}`;
   const formatTimeForAPI = (d: Date) => `${formatTime(d)}:00`;
   const formatDateForAPI = (d: Date) => d.toISOString().split("T")[0];
 
@@ -216,6 +225,7 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
                                 mode="time"
                                 is24Hour
                                 display="spinner"
+                                timeZoneName="UTC" // Force UTC
                                 onChange={(e, d) => {
                                   if (d) setStartTime(d);
                                 }}
@@ -230,6 +240,7 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
                           mode="time"
                           is24Hour
                           display="default"
+                          timeZoneOffsetInMinutes={0} // Force UTC
                           onChange={(e, d) => {
                             setShowStartTimePicker(false);
                             if (d) setStartTime(d);
@@ -264,6 +275,7 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
                                 mode="time"
                                 is24Hour
                                 display="spinner"
+                                timeZoneName="UTC" // Force UTC
                                 onChange={(e, d) => {
                                   if (d) setEndTime(d);
                                 }}
@@ -278,6 +290,7 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
                           mode="time"
                           is24Hour
                           display="default"
+                          timeZoneOffsetInMinutes={0} // Force UTC
                           onChange={(e, d) => {
                             setShowEndTimePicker(false);
                             if (d) setEndTime(d);

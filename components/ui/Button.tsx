@@ -4,7 +4,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { ThemedText } from '../themed-text';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
 
 interface ButtonProps {
   title: string;
@@ -37,6 +37,8 @@ export function Button({
         return [Colors.light.primary, Colors.light.secondary];
       case 'secondary':
         return [Colors.light.secondary, '#8B5CF6'];
+      case 'destructive':
+        return [Colors.light.error, '#DC2626'];
       default:
         return undefined;
     }

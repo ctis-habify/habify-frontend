@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/hooks/useAuth';
 import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
 import { Category } from '@/types/category';
@@ -10,6 +11,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    DeviceEventEmitter,
     ScrollView,
     Text,
     TextInput,
@@ -22,15 +24,29 @@ import { routineFormStyles } from '.././routine-form-styles';
 
 interface CreateRoutineModalProps {
   onClose?: () => void;
+  initialRoutineListId?: number;
+  initialTitle?: string;
+  initialCategoryId?: number;
 }
 
-export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps) {
+export default function CreateRoutineModal({ 
+  onClose, 
+  initialRoutineListId, 
+  initialTitle, 
+  initialCategoryId 
+}: CreateRoutineModalProps) {
   const router = useRouter();
+  const { token } = useAuth();
+  
+  const isEditMode = !!initialRoutineListId;
+
+  // --- Category dropdown states ---
 
   // --- Category dropdown states ---
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [catOpen, setCatOpen] = useState(false);
 
@@ -53,18 +69,29 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
     const fetchCategories = async () => {
       try {
         const data = await categoryService.getCategories();
+        console.log('Fetched Categories:', JSON.stringify(data, null, 2));
         setCategories(data);
       } catch (e) {
         console.error('Categories fetch failed', e);
       } finally {
         setLoadingCategories(false);
       }
-      const data = await categoryService.getCategories();
-      console.log('CATEGORIES:', data);
-      setCategories(data);
     };
     fetchCategories();
+    fetchCategories();
   }, []);
+
+  // Pre-fill form if editing
+  useEffect(() => {
+    if (initialRoutineListId) {
+      if (initialTitle) setRoutineListTitle(initialTitle);
+      if (initialCategoryId) setCategory(Number(initialCategoryId));
+    }
+  }, [initialRoutineListId, initialTitle, initialCategoryId]);
+
+  useEffect(() => {
+    console.log("Current selected category ID:", category);
+  }, [category]);
 
   const categoryItems = useMemo(() => {
     return (categories ?? [])
@@ -84,8 +111,10 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
 
     try {
       const created = await categoryService.createCategory(newCategoryName.trim());
+      console.log("Created Category Response:", created);
+      const newId = created.categoryId ?? (created as any).id;
       setCategories((prev) => [...prev, created]);
-      setCategory(created.categoryId);
+      setCategory(Number(newId));
       setNewCategoryName('');
       setShowNewCategoryInput(false);
     } catch (e: any) {
@@ -94,10 +123,70 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
     }
   };
 
+  const handleDeleteCategory = async () => {
+    console.log("[DEBUG] Silme butonu basıldı. Kategori ID:", category);
+    
+    if (category === null || category === undefined) {
+      Alert.alert("Error", "Please select a category to delete.");
+      return;
+    }
+    
+    // category hem string hem number olabileceği için Number() ile garantiye alıyoruz
+    const targetId = Number(category);
+    
+    const catToDelete = categories.find(c => {
+      const cid = (c as any).categoryId ?? (c as any).id;
+      return Number(cid) === targetId;
+    });
+
+    if (!catToDelete) {
+      console.log("[DEBUG] Kategori listede bulunamadı. Liste:", categories);
+      Alert.alert("Error", "Selected category not found.");
+      return;
+    }
+
+    Alert.alert(
+      "Delete Category",
+      `Are you sure you want to delete "${catToDelete.name}"? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+             console.log("[DEBUG] Silme işlemi başlatılıyor. ID:", targetId);
+             setIsDeleting(true);
+             try {
+               await categoryService.deleteCategory(targetId, token || '');
+               
+               setCategories(prev => prev.filter(c => {
+                 const cid = (c as any).categoryId ?? (c as any).id;
+                 return Number(cid) !== targetId;
+               }));
+               setCategory(null);
+               
+               Alert.alert("Success", "Category deleted successfully.");
+             } catch (error: any) {
+               console.error("[DEBUG] Silme Hatası Detayı:", error.response?.data || error);
+               const errorMsg = error.response?.data?.message || "Unknown error occurred.";
+               
+               Alert.alert(
+                 "Error", 
+                 `Failed to delete category: ${errorMsg}\n\nNote: You cannot delete a category if it has routine lists.`
+               );
+             } finally {
+               setIsDeleting(false);
+             }
+          }
+        }
+      ]
+    );
+  };
+
   const validateForm = () => {
     const errors: string[] = [];
     if (!category) errors.push('Please select a category.');
-    if (!routineListTitle.trim()) errors.push('Please enter a routine list title.');
+    if (!routineListTitle.trim()) errors.push('Please enter a list title.');
 
     if (errors.length) {
       Alert.alert('Warning', errors.join('\n'));
@@ -106,24 +195,33 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
     return true;
   };
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
-      //routine list oluştur (category + title)
-      const routineList = await routineService.createRoutineList(
-        Number(category),
-        routineListTitle.trim(),
-      );
+        if (initialRoutineListId) {
+          // UPDATE MODE
+          await routineService.updateRoutineList(
+            initialRoutineListId,
+            routineListTitle.trim(),
+            Number(category),
+            token || ''
+          );
+          
+          DeviceEventEmitter.emit('SHOW_TOAST', 'List updated successfully!');
+          handleClose();
+        } else {
+        // CREATE MODE
+        const routineList = await routineService.createRoutineList(
+          Number(category),
+          routineListTitle.trim(),
+        );
+        console.log('CreateRoutineList response:', routineList);
 
-      // routine oluştur (gizli default değerlerle)
-      // Backend DTO'nun zorunlulukları için default atıyoruz
-      console.log('CreateRoutineList response:', routineList);
-
-      Alert.alert('Success', 'Routine list created successfully!', [
-        { text: 'OK', onPress: handleClose },
-      ]);
+        DeviceEventEmitter.emit('SHOW_TOAST', 'Routine list created successfully!');
+        handleClose();
+      }
     } catch (err: any) {
       if (axios.isAxiosError(err)) {
         console.log('Create routine/list failed STATUS:', err.response?.status);
@@ -134,11 +232,11 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
         const msg = err.response?.data?.message;
         Alert.alert(
           'Error',
-          Array.isArray(msg) ? msg.join('\n') : (msg ?? 'Failed to create routine list'),
+          Array.isArray(msg) ? msg.join('\n') : (msg ?? (isEditMode ? 'Failed to update list' : 'Failed to create routine list')),
         );
       } else {
         console.log('Create routine/list failed UNKNOWN:', err);
-        Alert.alert('Error', 'Unexpected error while creating routine list');
+        Alert.alert('Error', 'Unexpected error occurred');
       }
     } finally {
       setIsSubmitting(false);
@@ -163,7 +261,7 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
             scrollEnabled={!catOpen}
           >
             <View style={routineFormStyles.headerRow}>
-              <Text style={routineFormStyles.title}>Create Routine List</Text>
+              <Text style={routineFormStyles.title}>{isEditMode ? 'Edit List' : 'Create Routine List'}</Text>
               <TouchableOpacity onPress={handleClose}>
                 <Ionicons name="close" size={30} color={Colors.light.text} />
               </TouchableOpacity>
@@ -186,27 +284,42 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
                   textStyle={{ color: Colors.light.text, fontSize: 16 }}
                   placeholderStyle={{ color: Colors.light.icon }}
                   listMode="SCROLLVIEW"
-                  dropDownDirection="BOTTOM"
                   dropDownContainerStyle={{
                     backgroundColor: Colors.light.background,
                     borderColor: Colors.light.border,
-                    zIndex: 9999,
                   }}
-                  modalTitle="Select Category"
-                  modalAnimationType="slide"
                   searchPlaceholder="Search..."
                   searchable={true}
                   closeAfterSelecting={true}
                 />
               </View>
 
-              {/* Add Category Button */}
-              <TouchableOpacity
-                style={[routineFormStyles.addIconBtn, { width: 44, height: 44, borderRadius: 22 }]}
-                onPress={() => setShowNewCategoryInput((prev) => !prev)}
-              >
-                <Ionicons name="add" size={24} color="#ffffff" />
-              </TouchableOpacity>
+              {/* Buttons Row */}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {category !== null && (
+                  <TouchableOpacity
+                    style={[routineFormStyles.addIconBtn, { width: 44, height: 44, borderRadius: 22, backgroundColor: '#fee2e2' }]}
+                    onPress={handleDeleteCategory}
+                    disabled={isDeleting}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                  >
+                    {isDeleting ? (
+                      <ActivityIndicator size="small" color="#ef4444" />
+                    ) : (
+                      <Ionicons name="trash-outline" size={24} color="#ef4444" />
+                    )}
+                  </TouchableOpacity>
+                )}
+
+                {/* Add Category Button */}
+                <TouchableOpacity
+                  style={[routineFormStyles.addIconBtn, { width: 44, height: 44, borderRadius: 22 }]}
+                  onPress={() => setShowNewCategoryInput((prev) => !prev)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="add" size={24} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* New Category Input */}
@@ -221,7 +334,7 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
                   <TextInput
                     value={newCategoryName}
                     onChangeText={setNewCategoryName}
-                    placeholder="New category name"
+                    placeholder="New Category Name"
                     placeholderTextColor={Colors.light.icon}
                     style={[routineFormStyles.textInput, { flex: 1 }]}
                   />
@@ -233,12 +346,12 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
             )}
 
             {/* Routine List Title */}
-            <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Routine List</Text>
+            <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>List Title</Text>
             <View style={[routineFormStyles.inputContainer]}>
               <TextInput
                 value={routineListTitle}
                 onChangeText={setRoutineListTitle}
-                placeholder="Enter routine list title"
+                placeholder="e.g. Morning Routine"
                 placeholderTextColor={Colors.light.icon}
                 style={[routineFormStyles.textInput]}
               />
@@ -247,14 +360,14 @@ export default function CreateRoutineModal({ onClose }: CreateRoutineModalProps)
             {/* Create Button */}
             <TouchableOpacity
               style={[routineFormStyles.createBtn, { marginTop: 40 }]}
-              onPress={handleCreate}
+              onPress={handleSave}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
-                  Create Routine List
+                  {isEditMode ? 'Update' : 'Create List'}
                 </Text>
               )}
             </TouchableOpacity>

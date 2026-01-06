@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000';
+import { api } from './api';
 
 type LoginPayload = {
   email: string;
@@ -13,39 +13,29 @@ type AuthResponse = {
 export const authService = {
   async register(payload: any) {
     try {
-      const response = await fetch(`${API_URL}/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
+      const response = await api.post('/auth/signup', payload);
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        const data = error.response.data;
         const message = Array.isArray(data.message) ? data.message[0] : data.message;
         throw new Error(message || 'Something went wrong');
       }
-
-      return data;
-    } catch (error) {
       throw error;
     }
   },
 
   async login(payload: LoginPayload): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      const message = Array.isArray((data as any).message)
-        ? (data as any).message[0]
-        : (data as any).message;
-
-      throw new Error(message || 'Login failed');
+    try {
+      const response = await api.post('/auth/login', payload);
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        const data = error.response.data;
+        const message = Array.isArray(data.message) ? data.message[0] : data.message;
+        throw new Error(message || 'Login failed');
+      }
+      throw error;
     }
-    return data as AuthResponse;
   },
 };

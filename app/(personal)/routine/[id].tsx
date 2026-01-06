@@ -52,16 +52,19 @@ export default function EditRoutineScreen() {
   const [toastMessage] = useState("");
 
   // Time Helpers
+  // Time Helpers (Fake UTC Pattern to avoid timezone shifts)
   const parseTime = (timeStr: string) => {
     const d = new Date();
     if (!timeStr) return d;
-    const [h, m] = timeStr.split(':');
-    d.setHours(Number(h) || 0, Number(m) || 0, 0, 0);
-    return d;
+    const [h, m] = timeStr.split(':').map(Number);
+    // Create a date where UTC time matches the desired clock time
+    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0));
   };
 
-  const formatTime = (d: Date) =>
-    `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:00`;
+  const formatTime = (d: Date) => {
+    // Read UTC components to get back the stable clock time
+    return `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")}:00`;
+  }
 
   // ... (useEffect)
   useEffect(() => {
@@ -91,7 +94,7 @@ export default function EditRoutineScreen() {
   const handleSave = async () => {
     setIsLoading(true);
     if (!token) {
-      Alert.alert('Not authenticated', 'Please login again.');
+      Alert.alert('Giriş Yapılmadı', 'Lütfen tekrar giriş yapın.');
       router.push('/(auth)');
       return;
     }
@@ -144,7 +147,7 @@ export default function EditRoutineScreen() {
 
   const handleDelete = async () => {
     if (!token) {
-      Alert.alert('Not authenticated', 'Please login again.');
+      Alert.alert('Not Authenticated', 'Please login again.');
       router.push('/(auth)');
       return;
     }
@@ -220,101 +223,108 @@ export default function EditRoutineScreen() {
           <ThemedText type="subtitle" style={styles.formTitle}>Edit Routine</ThemedText>
 
           {/* Time Row */}
-          <View style={styles.row}>
-            <View style={styles.halfInput}>
-              <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Start Time</ThemedText>
-              <TouchableOpacity
-                style={styles.timeBox}
-                onPress={() => setShowStartTimePicker(true)}
-              >
-                <ThemedText>{start_time || '00:00'}</ThemedText>
-              </TouchableOpacity>
-              
-              {showStartTimePicker && (
-                Platform.OS === 'ios' ? (
-                  <Modal visible={showStartTimePicker} transparent animationType="fade">
-                    <View style={styles.modalOverlay}>
-                      <View style={styles.iosPickerContainer}>
-                        <View style={styles.pickerHeader}>
-                          <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
-                            <ThemedText style={styles.doneButton}>Done</ThemedText>
-                          </TouchableOpacity>
-                        </View>
-                        <DateTimePicker
-                          value={parseTime(start_time)}
-                          mode="time"
-                          is24Hour
-                          display="spinner"
-                          onChange={(e, d) => {
-                            if (d) setStartTime(formatTime(d));
-                          }}
-                          textColor={Colors.light.text}
-                        />
-                      </View>
-                    </View>
-                  </Modal>
-                ) : (
-                  <DateTimePicker
-                    value={parseTime(start_time)}
-                    mode="time"
-                    is24Hour
-                    display="default"
-                    onChange={(e, d) => {
-                      setShowStartTimePicker(false);
-                      if (d) setStartTime(formatTime(d));
-                    }}
-                  />
-                )
-              )}
-            </View>
+          {frequency_type?.toUpperCase() !== 'WEEKLY' && (
+            <View style={styles.row}>
+              <View style={styles.halfInput}>
+                <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Start Time</ThemedText>
+                <TouchableOpacity
+                  style={styles.timeBox}
+                  onPress={() => setShowStartTimePicker(true)}
+                >
+                  <ThemedText>{start_time || '00:00'}</ThemedText>
+                </TouchableOpacity>
+                
+                {showStartTimePicker && (
+                  Platform.OS === 'ios' ? (
+                    <Modal visible={showStartTimePicker} transparent animationType="fade">
+                      <View style={styles.modalOverlay}>
+                        <View style={styles.iosPickerContainer}>
+                          <View style={styles.pickerHeader}>
+                            <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
+                              <ThemedText style={styles.doneButton}>Done</ThemedText>
+                            </TouchableOpacity>
+                          </View>
+                          <DateTimePicker
+                            value={parseTime(start_time)}
+                            mode="time"
+                            is24Hour
+                            display="spinner"
+                            timeZoneName="UTC" // Force UTC display
+                            onChange={(e, d) => {
+                              if (d) setStartTime(formatTime(d));
 
-            <View style={styles.halfInput}>
-              <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>End Time</ThemedText>
-              <TouchableOpacity
-                style={styles.timeBox}
-                onPress={() => setShowEndTimePicker(true)}
-              >
-                <ThemedText>{end_time || '00:00'}</ThemedText>
-              </TouchableOpacity>
-
-              {showEndTimePicker && (
-                Platform.OS === 'ios' ? (
-                  <Modal visible={showEndTimePicker} transparent animationType="fade">
-                    <View style={styles.modalOverlay}>
-                      <View style={styles.iosPickerContainer}>
-                        <View style={styles.pickerHeader}>
-                          <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
-                            <ThemedText style={styles.doneButton}>Done</ThemedText>
-                          </TouchableOpacity>
+                            }}
+                            textColor={Colors.light.text}
+                          />
                         </View>
-                        <DateTimePicker
-                          value={parseTime(end_time)}
-                          mode="time"
-                          is24Hour
-                          display="spinner"
-                          onChange={(e, d) => {
-                            if (d) setEndTime(formatTime(d));
-                          }}
-                          textColor={Colors.light.text}
-                        />
                       </View>
-                    </View>
-                  </Modal>
-                ) : (
-                  <DateTimePicker
-                    value={parseTime(end_time)}
-                    mode="time"
-                    is24Hour
-                    display="default"
-                    onChange={(e, d) => {
-                      setShowEndTimePicker(false);
-                      if (d) setEndTime(formatTime(d));
-                    }}
-                  />
-                )
-              )}
+                    </Modal>
+                  ) : (
+                    <DateTimePicker
+                      value={parseTime(start_time)}
+                      mode="time"
+                      is24Hour
+                      display="default"
+                      timeZoneOffsetInMinutes={0} // Force UTC display
+                      onChange={(e, d) => {
+                        setShowStartTimePicker(false);
+                        if (d) setStartTime(formatTime(d));
+                      }}
+                    />
+                  )
+                )}
+              </View>
+
+              <View style={styles.halfInput}>
+                <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>End Time</ThemedText>
+                <TouchableOpacity
+                  style={styles.timeBox}
+                  onPress={() => setShowEndTimePicker(true)}
+                >
+                  <ThemedText>{end_time || '00:00'}</ThemedText>
+                </TouchableOpacity>
+
+                {showEndTimePicker && (
+                  Platform.OS === 'ios' ? (
+                    <Modal visible={showEndTimePicker} transparent animationType="fade">
+                      <View style={styles.modalOverlay}>
+                        <View style={styles.iosPickerContainer}>
+                          <View style={styles.pickerHeader}>
+                            <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
+                              <ThemedText style={styles.doneButton}>Done</ThemedText>
+                            </TouchableOpacity>
+                          </View>
+                          <DateTimePicker
+                            value={parseTime(end_time)}
+                            mode="time"
+                            is24Hour
+                            display="spinner"
+                            timeZoneName="UTC" // Force UTC display
+                            onChange={(e, d) => {
+                              if (d) setEndTime(formatTime(d));
+                            }}
+                            textColor={Colors.light.text}
+                          />
+                        </View>
+                      </View>
+                    </Modal>
+                  ) : (
+                    <DateTimePicker
+                      value={parseTime(end_time)}
+                      mode="time"
+                      is24Hour
+                      display="default"
+                      timeZoneOffsetInMinutes={0} // Force UTC display
+                      onChange={(e, d) => {
+                        setShowEndTimePicker(false);
+                        if (d) setEndTime(formatTime(d));
+                      }}
+                    />
+                  )
+                )}
+              </View>
             </View>
-          </View>
+          )}
 
 
 
@@ -355,7 +365,7 @@ export default function EditRoutineScreen() {
           </View>
 
           {/* Save Button */}
-          <View style={{ marginTop: 24, marginBottom: 16 }}>
+          <View style={{ marginTop: 12, marginBottom: 8 }}>
             <Button
               title="Save Routine"
               onPress={handleSave}
@@ -365,9 +375,13 @@ export default function EditRoutineScreen() {
           </View>
 
           {/* Delete Button */}
-          <TouchableOpacity onPress={handleDelete} style={{ alignSelf: 'center', padding: 10 }}>
-            <ThemedText style={styles.deleteText}>Delete Routine</ThemedText>
-          </TouchableOpacity>
+          <Button
+            title="Delete Routine"
+            onPress={handleDelete}
+            variant="destructive"
+            icon={<Ionicons name="trash-outline" size={20} color="#fff" style={{ marginRight: 8 }} />}
+            style={{ marginTop: 0 }}
+          />
         </ThemedView>
 
       </ScrollView>
