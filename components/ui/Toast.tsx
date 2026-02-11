@@ -9,7 +9,7 @@ type Props = {
   duration?: number;
 };
 
-export const Toast: React.FC<Props> = ({ visible, message, onHide, duration = 3000 }) => {
+export function Toast({ visible, message, onHide, duration = 3000 }: Props): React.ReactElement | null {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

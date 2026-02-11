@@ -1,17 +1,18 @@
-import { Colors } from "@/constants/theme";
-import { userService } from "@/services/user.service";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+
+import { Colors } from "@/constants/theme";
+import { userService } from "@/services/user.service";
 import type { Routine } from "../../types/routine";
 import { ThemedView } from "../themed-view";
-import { RoutineCard } from "./RoutineCard";
-import { TodayHeader } from "./TodayHeader";
+import { RoutineCard } from "./routine-card";
+import { TodayHeader } from "./today-header";
 
 type Props = {
   items: Routine[];
@@ -21,29 +22,44 @@ type Props = {
   onPressCamera?: (_id: string) => void;
 };
 
-export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, onPressCamera }: Props) {
+// Helper for keyExtractor
+const keyExtractor = (item: Routine) => item.id;
+
+export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, onPressCamera }: Props): React.ReactElement {
+  // 1. State
   const [points, setPoints] = useState(0);
 
+  // 2. Callbacks
   const fetchUserData = useCallback(async () => {
     try {
       const user = await userService.getCurrentUser();
-      // Check if user object has totalXp or total_xp
-      setPoints((user as any).totalXp ?? (user as any).total_xp ?? 0);
+      setPoints(user.total_xp ?? 0);
     } catch (error) {
       console.error("Failed to fetch user XP", error);
     }
   }, []);
 
+  const renderItem = useCallback(({ item }: { item: Routine }) => (
+    <RoutineCard 
+      routine={item} 
+      onPress={() => onPressRoutine(item.id)} 
+      onPressCamera={onPressCamera}
+    />
+  ), [onPressRoutine, onPressCamera]);
+
+  // 3. Effects
   useFocusEffect(
     useCallback(() => {
       fetchUserData();
     }, [fetchUserData])
   );
   
+  // 4. Memos
   const header = useMemo(() => {
     return <TodayHeader loading={loading} points={points} />;
   }, [loading, points]);
 
+  // 5. Render
   return (
     <ThemedView variant="card" style={styles.panel}>
       {/* Fixed Header */}
@@ -52,16 +68,9 @@ export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, o
       <FlatList
         data={items}
         // ... same props
-        keyExtractor={(it) => it.id}
-        renderItem={({ item }) => (
-          <RoutineCard 
-            routine={item} 
-            onPress={() => onPressRoutine(item.id)} 
-            onPressCamera={onPressCamera}
-          />
-        )}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        // ListHeaderComponent={header} // Removed from here
         ListFooterComponent={<View style={{ height: 90 }} />}
         showsVerticalScrollIndicator={false}
         refreshing={loading}

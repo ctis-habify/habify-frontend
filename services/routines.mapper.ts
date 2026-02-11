@@ -1,4 +1,4 @@
-import { RoutineRowProps } from '@/components/routines/RoutineRow';
+import { RoutineRowProps } from '@/components/routines/routine-row';
 import { Routine } from '@/types/routine';
 
 export const mapBackendRoutineToRow = (

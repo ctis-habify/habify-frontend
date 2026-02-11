@@ -1,10 +1,10 @@
 'use client';
 
-import CreateRoutineModal from '../../components/modals/CreateRoutineModal';
+import { CreateRoutineModal } from "@/components/modals/create-routine-modal";
 
 import { useLocalSearchParams } from 'expo-router';
 
-export default function CreateRoutineScreen() {
+export default function CreateRoutineScreen(): React.ReactElement {
   const params = useLocalSearchParams();
   
   return (

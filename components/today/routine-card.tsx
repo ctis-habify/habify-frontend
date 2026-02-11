@@ -20,8 +20,8 @@ type Props = {
 // "YYYY-MM-DD" + "HH:mm[:ss]" -> Date
 
 
-export function RoutineCard({ routine, onPress, onPressCamera }: Props) {
-  const { title, endTime, remainingLabel } = routine as any;
+export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.ReactElement {
+  const { title, endTime, remainingLabel } = routine;
 
   // Live update state
   const [label, setLabel] = React.useState(remainingLabel === 'Pending' ? 'Pending' : '');

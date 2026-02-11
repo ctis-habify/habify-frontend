@@ -7,7 +7,7 @@ interface AuthButtonProps extends TouchableOpacityProps {
   isLoading?: boolean;
 }
 
-export function AuthButton({ title, isLoading, ...props }: AuthButtonProps) {
+export function AuthButton({ title, isLoading, ...props }: AuthButtonProps): React.ReactElement {
   return (
     <TouchableOpacity activeOpacity={0.8} disabled={isLoading} {...props}>
       <LinearGradient

@@ -1,10 +1,10 @@
-import { CustomDrawerContent } from '@/components/navigation/CustomDrawerContent';
+import { CustomDrawerContent } from '@/components/navigation/custom-drawer-content';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
 import React from 'react';
 
-export default function DrawerLayout() {
+export default function DrawerLayout(): React.ReactElement {
   return (
     <Drawer
       drawerContent={(props) => <CustomDrawerContent {...props} />}

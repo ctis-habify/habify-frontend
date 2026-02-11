@@ -1,9 +1,9 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { ThemedText } from '../themed-text';
-import { Logo } from '../ui/Logo';
+import { Logo } from '../ui/logo';
 
-export function AuthHeader() {
+export function AuthHeader(): React.ReactElement {
   return (
     <View style={styles.header}>
       <Logo width={180} height={90} style={styles.icon} />

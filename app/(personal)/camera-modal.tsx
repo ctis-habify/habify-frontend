@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { verificationService } from '../../services/verification.service';
 
-export default function CameraModal() {
+export default function CameraModal(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams(); 
   const routineId = params.routineId as string; // We will use this later for API
@@ -80,7 +80,13 @@ export default function CameraModal() {
       if (photoUri === 'mock-photo') {
         const asset = require('../../img/true.jpg');
         const assetSource = Image.resolveAssetSource(asset);
-        console.log('Resolved asset URI:', assetSource.uri);
+        console.log('Resolved asset URI (PASS):', assetSource.uri);
+        const assetResponse = await fetch(assetSource.uri);
+        blob = await assetResponse.blob();
+      } else if (photoUri === 'mock-photo-fail') {
+        const asset = require('../../img/false.png');
+        const assetSource = Image.resolveAssetSource(asset);
+        console.log('Resolved asset URI (FAIL):', assetSource.uri);
         const assetResponse = await fetch(assetSource.uri);
         blob = await assetResponse.blob();
       } else {
@@ -107,16 +113,23 @@ export default function CameraModal() {
       setLoadingText('AI is verifying...');
       console.log('Step 5: Starting polling...');
       await pollVerificationStatus(verificationId);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Full Verification error object:', err);
-      if (err.response) {
-        console.error('Error Status:', err.response.status);
-        console.error('Error Data:', JSON.stringify(err.response.data, null, 2));
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const anyErr = err as any;
+        if (anyErr.response) {
+            console.error('Error Status:', anyErr.response.status);
+            console.error('Error Data:', JSON.stringify(anyErr.response.data, null, 2));
+        }
+        Alert.alert(
+            'Verification Failed',
+            anyErr.response?.data?.message || anyErr.message || 'An unexpected error occurred'
+        );
+      } else if (err instanceof Error) {
+        Alert.alert('Verification Failed', err.message);
+      } else {
+        Alert.alert('Verification Failed', 'An unexpected error occurred');
       }
-      Alert.alert(
-        'Verification Failed',
-        err.response?.data?.message || err.message || 'An unexpected error occurred'
-      );
       setIsUploading(false);
     }
 
@@ -157,11 +170,13 @@ export default function CameraModal() {
 
   // --- RENDER: PREVIEW MODE (Photo Taken) ---
   if (photoUri) {
-    const isMock = photoUri === 'mock-photo';
+    const isMock = photoUri.startsWith('mock-photo');
     return (
       <View style={styles.container}>
-        {isMock ? (
+        {(photoUri === 'mock-photo') ? (
           <Image source={require('../../img/true.jpg')} style={styles.previewImage} />
+        ) : (photoUri === 'mock-photo-fail') ? (
+          <Image source={require('../../img/false.png')} style={styles.previewImage} />
         ) : (
           <Image source={{ uri: photoUri }} style={styles.previewImage} />
         )}
@@ -222,10 +237,18 @@ export default function CameraModal() {
         <View style={styles.bottomBar}>
           <TouchableOpacity 
             onPress={() => setPhotoUri('mock-photo')} 
-            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: 'rgba(255,165,0,0.6)' }]}
+            style={[styles.iconBtn, { marginBottom: 10, backgroundColor: 'rgba(255,165,0,0.6)' }]}
           >
             <Ionicons name="bug" size={24} color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>MOCK</Text>
+            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>PASS</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => setPhotoUri('mock-photo-fail')} 
+            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: 'rgba(255,0,0,0.6)' }]}
+          >
+            <Ionicons name="bug" size={24} color="white" />
+            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>FAIL</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>

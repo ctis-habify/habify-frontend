@@ -13,7 +13,7 @@ export function IconSymbol({
   color: string;
   style?: StyleProp<ViewStyle>;
   weight?: SymbolWeight;
-}) {
+}): React.ReactElement {
   return (
     <SymbolView
       weight={weight}

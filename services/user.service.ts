@@ -1,4 +1,5 @@
 import { User, UserUpdateDto } from '../types/user';
+import { XpLog } from '../types/xp';
 import { api } from './api';
 
 export const userService = {
@@ -21,7 +22,7 @@ export const userService = {
   },
 
   // Get user XP logs
-  getUserXpLogs: async (userId?: string): Promise<any[]> => {
+  getUserXpLogs: async (userId?: string): Promise<XpLog[]> => {
     const endpoint = userId ? `/users/${userId}/xp-logs` : '/users/me/xp-logs';
     const res = await api.get(endpoint);
     return res.data;

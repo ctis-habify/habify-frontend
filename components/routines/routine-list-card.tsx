@@ -10,7 +10,7 @@ type Props = {
   onPressAddRoutine: (listId: number | string) => void;
 };
 
-export function RoutineListCard({ listId, title, subtitle, onPress, onPressAddRoutine }: Props) {
+export function RoutineListCard({ listId, title, subtitle, onPress, onPressAddRoutine }: Props): React.ReactElement {
   return (
     <Pressable onPress={onPress} style={styles.card}>
       <View style={styles.textWrap}>

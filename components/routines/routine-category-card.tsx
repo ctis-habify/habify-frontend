@@ -1,4 +1,4 @@
-import { RoutineRow, RoutineRowProps } from '@/components/routines/RoutineRow';
+import { RoutineRow, RoutineRowProps } from '@/components/routines/routine-row';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
@@ -29,7 +29,7 @@ export function RoutineCategoryCard({
   onItemPress,
   onDeleteList,
   onEditList,
-}: Props) {
+}: Props): React.ReactElement {
 
   const [menuVisible, setMenuVisible] = React.useState(false);
   const optionsAvailable = !!onEditList || !!onDeleteList;
@@ -106,11 +106,11 @@ export function RoutineCategoryCard({
           </ThemedText>
         </View>
       ) : (
-        routines.map((routine: any, idx) => (
+        routines.map((routine: RoutineRowProps, idx) => (
           <View key={routine.id ?? routine.name ?? `${routine.name}-${idx}`}>
             <RoutineRow
               {...routine}
-              onToggle={(val: any) => onRoutineToggle?.(idx, val)}
+              onToggle={(val: boolean) => onRoutineToggle?.(idx, val)}
               onPress={() => onItemPress?.(routine.id)}
             />
             {idx !== routines.length - 1 && <View style={styles.lightDivider} />}

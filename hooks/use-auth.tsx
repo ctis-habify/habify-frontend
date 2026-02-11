@@ -2,7 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { setAuthToken } from '../services/api';
-import { authService } from '../services/auth.service'; // kendi path'ine göre düzelt
+import { authService } from '../services/auth.service';
 
 // Backend'in döndürdüğü user tipini burada genişletebilirsin
 export interface AuthUser {
@@ -16,7 +16,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
-  login: (_email: string, _password: string) => Promise<void>;
+  login: (_email: string, _password: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   initialized: boolean;
 }
@@ -26,7 +26,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const TOKEN_KEY = 'habify_access_token';
 const USER_KEY = 'habify_user';
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }): React.ReactElement => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     restoreAuthState();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, remember: boolean = true) => {
     setLoading(true);
     try {
       const data = await authService.login({ email, password });
@@ -99,9 +99,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(loggedInUser);
       setAuthToken(accessToken);
 
-      await SecureStore.setItemAsync(TOKEN_KEY, accessToken);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(loggedInUser));
-    } catch (error: any) {
+      // Save to SecureStore only if remember is true
+      if (remember) {
+        await SecureStore.setItemAsync(TOKEN_KEY, accessToken);
+        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(loggedInUser));
+      } else {
+        // If not remembering, ensure we clear any old persisted session just in case
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+        await SecureStore.deleteItemAsync(USER_KEY);
+      }
+    } catch (error: unknown) {
       console.error('Login failed:', error);
       throw error;
     } finally {

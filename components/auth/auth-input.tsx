@@ -5,7 +5,7 @@ interface AuthInputProps extends TextInputProps {
   label: string;
 }
 
-export function AuthInput({ label, style, ...props }: AuthInputProps) {
+export function AuthInput({ label, style, ...props }: AuthInputProps): React.ReactElement {
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>

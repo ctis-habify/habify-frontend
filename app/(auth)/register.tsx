@@ -1,8 +1,8 @@
-import { AuthHeader } from '@/components/auth/AuthHeader';
-import { AuthLayout } from '@/components/auth/AuthLayout';
+import { AuthHeader } from '@/components/auth/auth-header';
+import { AuthLayout } from '@/components/auth/auth-layout';
 import { ThemedText } from '@/components/themed-text';
-import { Button } from '@/components/ui/Button';
-import { TextInput } from '@/components/ui/TextInput';
+import { Button } from '@/components/ui/button';
+import { TextInput } from '@/components/ui/text-input';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -13,7 +13,7 @@ import { Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View
 import DropDownPicker from 'react-native-dropdown-picker';
 import { authService } from '../../services/auth.service';
 
-export default function SignupScreen() {
+export default function SignupScreen(): React.ReactElement {
   const router = useRouter(); 
 
   const [name, setName] = useState('');
@@ -88,8 +88,14 @@ export default function SignupScreen() {
          { text: 'OK', onPress: () => router.replace('/') }
       ]);
 
-    } catch (error: any) {
-      Alert.alert('Registration Failed', error.message);
+    } catch (error: unknown) {
+       let msg = 'Registration Failed';
+       if (error instanceof Error) {
+           msg = error.message;
+       } else if (typeof error === 'object' && error !== null && 'message' in error) {
+           msg = String((error as any).message);
+       }
+       Alert.alert('Registration Failed', msg);
     } finally {
       setIsLoading(false);
     }

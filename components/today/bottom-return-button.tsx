@@ -6,7 +6,7 @@ type Props = {
   onPress: () => void;
 };
 
-export function BottomReturnButton({ label, onPress }: Props) {
+export function BottomReturnButton({ label, onPress }: Props): React.ReactElement {
   return (
     <Pressable
       onPress={onPress}

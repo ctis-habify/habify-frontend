@@ -112,6 +112,10 @@ npm run format
 ```
 
 Husky automatically checks formatting and lint rules before each commit.
+
+### Coding Standards
+
+All contributors must adhere to the [Coding Standards](CODING_STANDARDS.md) established for this project. This ensures consistency across both frontend and backend repositories.
 ⸻
 
 Commit Rules (Commitlint)

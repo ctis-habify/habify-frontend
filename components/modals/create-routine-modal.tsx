@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/theme';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/use-auth';
 import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
 import { Category } from '@/types/category';
@@ -29,12 +29,12 @@ interface CreateRoutineModalProps {
   initialCategoryId?: number;
 }
 
-export default function CreateRoutineModal({ 
+export function CreateRoutineModal({ 
   onClose, 
   initialRoutineListId, 
   initialTitle, 
   initialCategoryId 
-}: CreateRoutineModalProps) {
+}: CreateRoutineModalProps): React.ReactElement {
   const router = useRouter();
   const { token } = useAuth();
   
@@ -69,7 +69,6 @@ export default function CreateRoutineModal({
     const fetchCategories = async () => {
       try {
         const data = await categoryService.getCategories();
-        console.log('Fetched Categories:', JSON.stringify(data, null, 2));
         setCategories(data);
       } catch (e) {
         console.error('Categories fetch failed', e);
@@ -95,9 +94,9 @@ export default function CreateRoutineModal({
 
   const categoryItems = useMemo(() => {
     return (categories ?? [])
-      .map((c: any) => ({
+      .map((c: Category) => ({
         label: String(c?.name ?? ''),
-        value: Number(c?.categoryId ?? c?.id),
+        value: Number(c?.categoryId),
       }))
       .filter((x) => x.label && Number.isFinite(x.value));
   }, [categories]);
@@ -117,9 +116,13 @@ export default function CreateRoutineModal({
       setCategory(Number(newId));
       setNewCategoryName('');
       setShowNewCategoryInput(false);
-    } catch (e: any) {
-      console.error('Create category failed', e.response?.data || e);
-      Alert.alert('Error', e.response?.data?.message || 'Failed to create category');
+    } catch (e: unknown) {
+      console.error('Create category failed', e);
+      let msg = 'Failed to create category';
+      if (typeof e === 'object' && e !== null && 'response' in e) {
+          msg = (e as any).response?.data?.message || msg;
+      }
+      Alert.alert('Error', msg);
     }
   };
 
@@ -166,14 +169,19 @@ export default function CreateRoutineModal({
                setCategory(null);
                
                Alert.alert("Success", "Category deleted successfully.");
-             } catch (error: any) {
-               console.error("[DEBUG] Silme Hatası Detayı:", error.response?.data || error);
-               const errorMsg = error.response?.data?.message || "Unknown error occurred.";
-               
-               Alert.alert(
-                 "Error", 
-                 `Failed to delete category: ${errorMsg}\n\nNote: You cannot delete a category if it has routine lists.`
-               );
+              } catch (error: unknown) {
+                console.error("[DEBUG] Silme Hatası Detayı:", error);
+                let errorMsg = "Unknown error occurred.";
+                if (typeof error === 'object' && error !== null && 'response' in error) {
+                    errorMsg = (error as any).response?.data?.message || errorMsg;
+                } else if (error instanceof Error) {
+                    errorMsg = error.message;
+                }
+                
+                Alert.alert(
+                  "Error", 
+                  `Failed to delete category: ${errorMsg}\n\nNote: You cannot delete a category if it has routine lists.`
+                );
              } finally {
                setIsDeleting(false);
              }
@@ -222,7 +230,7 @@ export default function CreateRoutineModal({
         DeviceEventEmitter.emit('SHOW_TOAST', 'Routine list created successfully!');
         handleClose();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         console.log('Create routine/list failed STATUS:', err.response?.status);
         console.log(
