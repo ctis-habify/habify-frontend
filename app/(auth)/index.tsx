@@ -25,7 +25,7 @@ export default function LoginScreen() {
     }
 
     try {
-      await login(email, password);
+      await login(email, password, remember);
       router.push('/(personal)/(drawer)/routines');
     } catch (error: any) {
       Alert.alert('Login failed', error.message || 'Something went wrong.');

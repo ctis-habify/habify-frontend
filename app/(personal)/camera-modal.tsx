@@ -80,7 +80,13 @@ export default function CameraModal() {
       if (photoUri === 'mock-photo') {
         const asset = require('../../img/true.jpg');
         const assetSource = Image.resolveAssetSource(asset);
-        console.log('Resolved asset URI:', assetSource.uri);
+        console.log('Resolved asset URI (PASS):', assetSource.uri);
+        const assetResponse = await fetch(assetSource.uri);
+        blob = await assetResponse.blob();
+      } else if (photoUri === 'mock-photo-fail') {
+        const asset = require('../../img/false.png');
+        const assetSource = Image.resolveAssetSource(asset);
+        console.log('Resolved asset URI (FAIL):', assetSource.uri);
         const assetResponse = await fetch(assetSource.uri);
         blob = await assetResponse.blob();
       } else {
@@ -157,11 +163,13 @@ export default function CameraModal() {
 
   // --- RENDER: PREVIEW MODE (Photo Taken) ---
   if (photoUri) {
-    const isMock = photoUri === 'mock-photo';
+    const isMock = photoUri.startsWith('mock-photo');
     return (
       <View style={styles.container}>
-        {isMock ? (
+        {(photoUri === 'mock-photo') ? (
           <Image source={require('../../img/true.jpg')} style={styles.previewImage} />
+        ) : (photoUri === 'mock-photo-fail') ? (
+          <Image source={require('../../img/false.png')} style={styles.previewImage} />
         ) : (
           <Image source={{ uri: photoUri }} style={styles.previewImage} />
         )}
@@ -222,10 +230,18 @@ export default function CameraModal() {
         <View style={styles.bottomBar}>
           <TouchableOpacity 
             onPress={() => setPhotoUri('mock-photo')} 
-            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: 'rgba(255,165,0,0.6)' }]}
+            style={[styles.iconBtn, { marginBottom: 10, backgroundColor: 'rgba(255,165,0,0.6)' }]}
           >
             <Ionicons name="bug" size={24} color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>MOCK</Text>
+            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>PASS</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => setPhotoUri('mock-photo-fail')} 
+            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: 'rgba(255,0,0,0.6)' }]}
+          >
+            <Ionicons name="bug" size={24} color="white" />
+            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>FAIL</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>

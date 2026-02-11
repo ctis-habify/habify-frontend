@@ -16,7 +16,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
-  login: (_email: string, _password: string) => Promise<void>;
+  login: (_email: string, _password: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   initialized: boolean;
 }
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     restoreAuthState();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, remember: boolean = true) => {
     setLoading(true);
     try {
       const data = await authService.login({ email, password });
@@ -99,8 +99,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(loggedInUser);
       setAuthToken(accessToken);
 
-      await SecureStore.setItemAsync(TOKEN_KEY, accessToken);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(loggedInUser));
+      // Save to SecureStore only if remember is true
+      if (remember) {
+        await SecureStore.setItemAsync(TOKEN_KEY, accessToken);
+        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(loggedInUser));
+      } else {
+        // If not remembering, ensure we clear any old persisted session just in case
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+        await SecureStore.deleteItemAsync(USER_KEY);
+      }
     } catch (error: any) {
       console.error('Login failed:', error);
       throw error;
