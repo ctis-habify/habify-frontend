@@ -11,9 +11,10 @@ import type { Routine } from '../../../types/routine';
 
 
 import { BACKGROUND_GRADIENT } from '@/app/theme';
+import { Toast } from '@/components/ui/toast';
 import { setAuthToken } from '@/services/api';
-import { BottomReturnButton } from '../../../components/today/BottomReturnButton';
-import { TodayRoutinesList } from '../../../components/today/TodayRoutinesList';
+import { BottomReturnButton } from '../../../components/today/bottom-return-button';
+import { TodayRoutinesList } from '../../../components/today/today-routines-list';
 
 const TOKEN_KEY = 'habify_access_token';
 
@@ -24,13 +25,15 @@ async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync(TOKEN_KEY);
 }
 
-export default function TodayRoutinesScreen() {
+export default function TodayRoutinesScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Routine[]>([]);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   const goToRoutineDetail = useCallback(
     (id: string) => {
@@ -100,10 +103,9 @@ export default function TodayRoutinesScreen() {
       }));
     } catch (e: any) {
       console.log('Today routines load error:', e);
-      if (e.response) {
-        console.log('Error payload:', JSON.stringify(e.response.data, null, 2));
-      }
       setItems([]);
+      setToastMessage("Failed to load today's routines.");
+      setToastVisible(true);
     } finally {
 
       setLoading(false);
@@ -137,6 +139,12 @@ export default function TodayRoutinesScreen() {
         <BottomReturnButton
           label="Return Routine Lists"
           onPress={() => router.replace('/(personal)/(drawer)/routines')}
+        />
+
+        <Toast 
+          visible={toastVisible} 
+          message={toastMessage} 
+          onHide={() => setToastVisible(false)} 
         />
       </View>
     </View>

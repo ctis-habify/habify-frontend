@@ -23,7 +23,7 @@ export function TextInput({
   onRightIconPress,
   style, 
   ...props 
-}: Props) {
+}: Props): React.ReactElement {
   const [isFocused, setIsFocused] = useState(false);
   const borderColor = isFocused ? Colors.light.primary : Colors.light.border;
   const textColor = useThemeColor({}, 'text');

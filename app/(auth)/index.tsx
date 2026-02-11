@@ -1,16 +1,16 @@
-import { AuthHeader } from '@/components/auth/AuthHeader';
-import { AuthLayout } from '@/components/auth/AuthLayout';
+import { AuthHeader } from '@/components/auth/auth-header';
+import { AuthLayout } from '@/components/auth/auth-layout';
 import { ThemedText } from '@/components/themed-text';
-import { Button } from '@/components/ui/Button';
-import { TextInput } from '@/components/ui/TextInput';
+import { Button } from '@/components/ui/button';
+import { TextInput } from '@/components/ui/text-input';
 import { Colors } from '@/constants/theme';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/use-auth';
 import Checkbox from 'expo-checkbox';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-export default function LoginScreen() {
+export default function LoginScreen(): React.ReactElement {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,8 +27,14 @@ export default function LoginScreen() {
     try {
       await login(email, password, remember);
       router.push('/(personal)/(drawer)/routines');
-    } catch (error: any) {
-      Alert.alert('Login failed', error.message || 'Something went wrong.');
+    } catch (error: unknown) {
+      let msg = 'Something went wrong.';
+      if (error instanceof Error) {
+          msg = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+          msg = String((error as any).message);
+      }
+      Alert.alert('Login failed', msg);
     }
   };
 

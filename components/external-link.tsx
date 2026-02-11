@@ -4,7 +4,9 @@ import { type ComponentProps } from 'react';
 
 type Props = Omit<ComponentProps<typeof Link>, 'href'> & { href: Href & string };
 
-export function ExternalLink({ href, ...rest }: Props) {
+import React from 'react';
+
+export function ExternalLink({ href, ...rest }: Props): React.ReactElement {
   return (
     <Link
       target="_blank"

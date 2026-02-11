@@ -9,7 +9,7 @@ interface LogoProps {
   style?: ViewStyle;
 }
 
-export function Logo({ width = 180, height = 90, style }: LogoProps) {
+export function Logo({ width = 180, height = 90, style }: LogoProps): React.ReactElement {
   // "Rhythm & Run" - A horizontal logo combining Soundwaves (Music) and Heartbeat (Sport)
   return (
     <View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>

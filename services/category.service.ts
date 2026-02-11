@@ -23,9 +23,7 @@ export const categoryService = {
     return res.data;
   },
 
-  // Delete a category
   async deleteCategory(categoryId: number, token?: string): Promise<void> {
-    console.log(`[categoryService] Deleting category ID: ${categoryId}`);
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     await api.delete(`/categories/${categoryId}`, config);
   },

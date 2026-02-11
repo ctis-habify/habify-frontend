@@ -26,7 +26,7 @@ export function Button({
   style, 
   textStyle,
   icon 
-}: ButtonProps) {
+}: ButtonProps): React.ReactElement {
 
   const isOutline = variant === 'outline';
   
@@ -76,7 +76,7 @@ export function Button({
   );
 }
 
-function Content({ title, isLoading, textStyle, variant, icon }: { title: string, isLoading: boolean, textStyle?: TextStyle, variant: ButtonVariant, icon?: React.ReactNode }) {
+function Content({ title, isLoading, textStyle, variant, icon }: { title: string, isLoading: boolean, textStyle?: TextStyle, variant: ButtonVariant, icon?: React.ReactNode }): React.ReactElement {
   const textColor = variant === 'outline' || variant === 'ghost' ? Colors.light.primary : '#FFFFFF';
   
   return (

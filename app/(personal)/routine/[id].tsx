@@ -1,16 +1,17 @@
 import { BACKGROUND_GRADIENT } from '@/app/theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Button } from '@/components/ui/Button';
-import { TextInput } from '@/components/ui/TextInput';
-import { Toast } from '@/components/ui/Toast';
+import { Button } from '@/components/ui/button';
+import { TextInput } from '@/components/ui/text-input';
+import { Toast } from '@/components/ui/toast';
 import { Colors } from '@/constants/theme';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/use-auth';
+import { Routine } from '@/types/routine';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
     DeviceEventEmitter,
@@ -21,10 +22,22 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker'; // Added import
+import DropDownPicker from 'react-native-dropdown-picker';
 import { routineService } from '../../../services/routine.service';
 
-export default function EditRoutineScreen() {
+// Time Helpers (Moved outside)
+const parseTime = (timeStr: string) => {
+  const d = new Date();
+  if (!timeStr) return d;
+  const [h, m] = timeStr.split(':').map(Number);
+  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0));
+};
+
+const formatTime = (d: Date) => {
+  return `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")}:00`;
+};
+
+export default function EditRoutineScreen(): React.ReactElement {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { token } = useAuth(); 
@@ -51,38 +64,26 @@ export default function EditRoutineScreen() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage] = useState("");
 
-  // Time Helpers
   // Time Helpers (Fake UTC Pattern to avoid timezone shifts)
-  const parseTime = (timeStr: string) => {
-    const d = new Date();
-    if (!timeStr) return d;
-    const [h, m] = timeStr.split(':').map(Number);
-    // Create a date where UTC time matches the desired clock time
-    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0));
-  };
-
-  const formatTime = (d: Date) => {
-    // Read UTC components to get back the stable clock time
-    return `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")}:00`;
-  }
+  // Moved outside component for performance
 
   // ... (useEffect)
   useEffect(() => {
     if (!id || !token) return;
     const fetchData = async () => {
       try {
-        const data: any = await routineService.getRoutineById(id, token || '');
+        const data = await routineService.getRoutineById(id, token || '');
         console.log("EditRoutine data:", data);
         setOriginalData(data);
         
-        setName(data?.routineName || data?.routine_name || '');
-        setStartTime(data?.startTime || data?.start_time || '');
-        setEndTime(data?.endTime || data?.end_time || '');
-        setRoutineListId(data?.routineListId || data?.routine_list_id || 1);
-        setFrequencyDetail(data?.frequencyDetail || data?.frequency_detail || 0);
-        setFrequencyType(data?.frequencyType || data?.frequency_type || 'DAILY');
+        setName(data?.routineName || '');
+        setStartTime(data?.startTime || '');
+        setEndTime(data?.endTime || '');
+        setRoutineListId(data?.routineListId || 1);
+        setFrequencyDetail(data?.frequencyDetail || 0);
+        setFrequencyType(data?.frequencyType || 'DAILY');
         setIsAiVerified(data?.is_ai_verified || false);
-        setStartDate(data?.startDate || data?.start_date || '2025-01-01');
+        setStartDate(data?.startDate || '2025-01-01');
         setStreak(data?.streak || 0);
       } catch (err) {
         console.error("Failed to fetch routine:", err);
@@ -91,7 +92,7 @@ export default function EditRoutineScreen() {
     fetchData();
   }, [id, token]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setIsLoading(true);
     if (!token) {
       Alert.alert('Giriş Yapılmadı', 'Lütfen tekrar giriş yapın.');
@@ -100,28 +101,26 @@ export default function EditRoutineScreen() {
     }
     
     // Construct partial payload
-    const payload: any = {};
-    const origName = originalData?.routineName || originalData?.routine_name;
-    const origStartTime = originalData?.startTime || originalData?.start_time;
-    const origEndTime = originalData?.endTime || originalData?.end_time;
-    const origListId = originalData?.routineListId || originalData?.routine_list_id;
-    const origFreqType = originalData?.frequencyType || originalData?.frequency_type;
-    const origFreqDetail = originalData?.frequencyDetail || originalData?.frequency_detail;
+    const payload: Partial<Routine> = {};
+    const origName = originalData?.routineName;
+    const origStartTime = originalData?.startTime;
+    const origEndTime = originalData?.endTime;
+    const origListId = originalData?.routineListId;
+    const origFreqType = originalData?.frequencyType;
+    const origFreqDetail = originalData?.frequencyDetail;
     const origAi = originalData?.is_ai_verified;
-    const origStartDate = originalData?.startDate || originalData?.start_date;
+    const origStartDate = originalData?.startDate;
 
     if (start_time !== origStartTime || end_time !== origEndTime) {
         payload.startTime = start_time;
         payload.endTime = end_time;
     }
-    // if (start_time !== origStartTime) payload.startTime = start_time;
-    // if (end_time !== origEndTime) payload.endTime = end_time;
     
     if (routine_name !== origName) payload.routineName = routine_name;
     if (routineListId !== origListId) payload.routineListId = routineListId;
     if (frequency_type !== origFreqType) payload.frequencyType = frequency_type;
     if (frequency_detail !== origFreqDetail) payload.frequencyDetail = frequency_detail;
-    if (is_ai_verified !== origAi) payload.isAiVerified = is_ai_verified;
+    if (is_ai_verified !== origAi) payload.is_ai_verified = is_ai_verified;
     if (start_date !== origStartDate) payload.startDate = start_date;
     
     // Always send at least one field or handle empty? 
@@ -138,14 +137,21 @@ export default function EditRoutineScreen() {
       DeviceEventEmitter.emit('SHOW_TOAST', 'Routine updated successfully!');
       router.back();
 
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+    } catch (error: unknown) {
+      let msg = 'Failed to update routine';
+      if (error instanceof Error) msg = error.message;
+      else if (typeof error === 'object' && error !== null && 'message' in error) msg = String((error as any).message);
+      Alert.alert('Error', msg);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [
+    token, router, originalData, id, start_time, end_time, 
+    routine_name, routineListId, frequency_type, 
+    frequency_detail, is_ai_verified, start_date
+  ]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!token) {
       Alert.alert('Not Authenticated', 'Please login again.');
       router.push('/(auth)');
@@ -170,7 +176,7 @@ export default function EditRoutineScreen() {
         },
       ]
     );
-  };
+  }, [token, router, id]);
 
   return (
     <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.container}>
@@ -473,10 +479,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 15, marginBottom: 15 },
   halfInput: { flex: 1 },
   
-  deleteText: {
-    color: Colors.light.error, // or error color
-    fontWeight: 'bold',
-  },
   
   // Time Picker Styles
   timeBox: {

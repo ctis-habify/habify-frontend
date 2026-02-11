@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
-import { AuthProvider } from 'hooks/useAuth';
+import { AuthProvider } from 'hooks/use-auth';
 
-export default function AppLayout() {
+export default function AppLayout(): React.ReactElement {
   return (
     <AuthProvider>
       <Stack screenOptions={{ headerShown: false }}>

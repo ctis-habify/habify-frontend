@@ -53,7 +53,7 @@ export const routineService = {
     return res.data;
   },
    // ✅ Create Routine List
-  async createRoutineList(categoryId: number, title: string) {
+  async createRoutineList(categoryId: number, title: string): Promise<RoutineList> {
     const res = await api.post('/routine_lists', {
       title,
       categoryId,         
@@ -71,8 +71,7 @@ export const routineService = {
     endTime: string;
     isAiVerified: boolean;
     startDate: string;
-  }) {
-    // DTO: CreateRoutineDto ile birebir aynı alanlar
+  }): Promise<Routine> {
     const res = await api.post('/routines', body);
     return res.data;
   },
@@ -104,24 +103,16 @@ export const routineService = {
     return res.data;
   },
 
-  async updateRoutine(id: string, payload: UpdateRoutinePayload, token: string) {
-    console.log("UPDATE PAYLOAD (Input): ", payload);
-    
-    // Send payload directly (camelCase) as backend expects
-    console.log("UPDATE SERVICE PAYLOAD (Final):", JSON.stringify(payload, null, 2));
-
+  async updateRoutine(id: string, payload: UpdateRoutinePayload, token: string): Promise<any> {
     const response = await api.patch(`/routines/${id}`, payload, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    console.log("UPDATE RESPONSE (Status):", response.status);
-    console.log("UPDATE RESPONSE (Data):", JSON.stringify(response.data, null, 2));
-
     if (response.status !== 200) throw new Error('Failed to update routine');
-    return response;
+    return response.data;
   },
 
-  async deleteRoutine(id: string, token: string) {
+  async deleteRoutine(id: string, token: string): Promise<boolean> {
     const response = await api.delete(`/routines/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -130,7 +121,7 @@ export const routineService = {
     return true; // Success
   },
 
-  async deleteRoutineList(id: number, token: string) {
+  async deleteRoutineList(id: number, token: string): Promise<boolean> {
     const response = await api.delete(`/routine_lists/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -138,7 +129,7 @@ export const routineService = {
     return true;
   },
 
-  async updateRoutineList(id: number, title: string, categoryId: number, token?: string) {
+  async updateRoutineList(id: number, title: string, categoryId: number, token?: string): Promise<RoutineList> {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     const res = await api.patch(`/routine_lists/${id}`, { title, categoryId }, config);
     return res.data;

@@ -10,7 +10,7 @@ type Props = {
   onMenuPress?: () => void;
 };
 
-export function TodayHeader({points, loading}: Props) {
+export function TodayHeader({points, loading}: Props): React.ReactElement {
   
   const getLevel = (pts: number) => {
     if (pts >= 100) return { label: "Pro", icon: "trophy-outline", color: "#FFD700" }; 

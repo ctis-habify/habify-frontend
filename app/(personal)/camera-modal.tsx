@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { verificationService } from '../../services/verification.service';
 
-export default function CameraModal() {
+export default function CameraModal(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams(); 
   const routineId = params.routineId as string; // We will use this later for API
@@ -113,16 +113,23 @@ export default function CameraModal() {
       setLoadingText('AI is verifying...');
       console.log('Step 5: Starting polling...');
       await pollVerificationStatus(verificationId);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Full Verification error object:', err);
-      if (err.response) {
-        console.error('Error Status:', err.response.status);
-        console.error('Error Data:', JSON.stringify(err.response.data, null, 2));
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const anyErr = err as any;
+        if (anyErr.response) {
+            console.error('Error Status:', anyErr.response.status);
+            console.error('Error Data:', JSON.stringify(anyErr.response.data, null, 2));
+        }
+        Alert.alert(
+            'Verification Failed',
+            anyErr.response?.data?.message || anyErr.message || 'An unexpected error occurred'
+        );
+      } else if (err instanceof Error) {
+        Alert.alert('Verification Failed', err.message);
+      } else {
+        Alert.alert('Verification Failed', 'An unexpected error occurred');
       }
-      Alert.alert(
-        'Verification Failed',
-        err.response?.data?.message || err.message || 'An unexpected error occurred'
-      );
       setIsUploading(false);
     }
 

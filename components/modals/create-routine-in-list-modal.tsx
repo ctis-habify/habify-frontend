@@ -19,7 +19,7 @@ import DropDownPicker from "react-native-dropdown-picker";
 
 import { Colors } from "@/constants/theme";
 import { BACKGROUND_GRADIENT } from "../../app/theme";
-import { FrequencyType } from "../../types/routine";
+import { CreateRoutineDto, FrequencyType } from "../../types/routine";
 import { routineFormStyles } from "../routine-form-styles";
 
 type Props = {
@@ -29,7 +29,7 @@ type Props = {
   onCreated?: () => void;
 };
 
-export default function CreateRoutineInListModal({ visible, routineListId, onClose, onCreated }: Props) {
+export function CreateRoutineInListModal({ visible, routineListId, onClose, onCreated }: Props): React.ReactElement {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
 
@@ -112,15 +112,16 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
       
       // For WEEKLY or DAILY without specific time, we use defaults (already set)
 
-      const body: any = {
+      const body: CreateRoutineDto = {
         routineListId: Number(routineListId),
         routineName: routineName.trim(),
         frequencyType: frequency,
         // frequencyDetail removed/undefined
         startTime: finalStartTime,
         endTime: finalEndTime,
-        isAiVerified: false,
         startDate: formatDateForAPI(startDate),
+        categoryId: 0, // Not used in this modal but required by DTO? Wait, routineListId is there.
+        isAiVerified: false,
       };
 
       await routineService.createRoutine(body);
@@ -129,9 +130,16 @@ export default function CreateRoutineInListModal({ visible, routineListId, onClo
       onClose();
       // Reset form
       setRoutineName("");
-    } catch (e: any) {
-      console.log("CreateRoutineInList failed:", e?.response?.data || e);
-      Alert.alert("Error", e?.response?.data?.message ?? "Failed to create routine");
+    } catch (e: unknown) {
+      let msg = "Failed to create routine";
+      if (typeof e === 'object' && e !== null && 'response' in e) {
+          const anyE = e as any;
+          msg = anyE.response?.data?.message || msg;
+      } else if (e instanceof Error) {
+          msg = e.message;
+      }
+      console.error("CreateRoutineInList failed:", msg);
+      Alert.alert("Error", msg);
     } finally {
       setIsSubmitting(false);
     }

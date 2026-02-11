@@ -3,7 +3,7 @@ export type FrequencyType = 'DAILY' | 'WEEKLY';
 export interface Routine {
   is_ai_verified: boolean;
   routineName?: string;
-  title(arg0: string, title: any, arg2: string, label: string, arg4: string, minsLeft: number): unknown;
+  title: string;
   id: string; // uuid
   routineListId: number;
   frequencyDetail?: number;
@@ -46,12 +46,13 @@ export interface RoutineLog {
 export interface CreateRoutineDto {
   routineListId: number;
   categoryId: number;
-  title: string;
+  routineName: string;
   startTime: string; // HH:MM:SS format
   endTime: string; // HH:MM:SS format
   startDate: string; // YYYY-MM-DD format
   frequencyType: string;
   frequencyDetail?: number;
+  isAiVerified: boolean;
 }
 
 export interface UpdateRoutineDto {

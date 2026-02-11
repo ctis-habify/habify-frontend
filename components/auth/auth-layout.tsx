@@ -8,7 +8,7 @@ interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-export function AuthLayout({ children }: AuthLayoutProps) {
+export function AuthLayout({ children }: AuthLayoutProps): React.ReactElement {
   return (
     <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.background}>
       <StatusBar style="light" />

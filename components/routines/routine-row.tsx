@@ -1,8 +1,9 @@
-import { CircularCheckbox } from '@/components/ui/circular-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+import { CircularCheckbox } from '@/components/ui/circular-checkbox';
 
 export type RoutineRowProps = {
   id: string;
@@ -21,7 +22,43 @@ export type RoutineRowProps = {
   endTime?: string;   // HH:MM:SS
 };
 
-export const RoutineRow: React.FC<RoutineRowProps> = ({
+// Helpers moved outside
+const diffMinutes = (dt2: Date, dt1: Date) => {
+  let diff = (dt2.getTime() - dt1.getTime()) / 1000;
+  diff /= 60;
+  return Math.ceil(diff);
+};
+
+const formatRemaining = (minutes: number) => {
+   if (minutes < 0) return 'Failed';
+   if (minutes === 0) return '1 Min';
+   if (minutes < 60) return `${minutes} Min`;
+   const h = Math.floor(minutes / 60);
+   return `${h} Hours`;
+};
+
+const getHoursFromLabel = (label: string) => {
+  let lower = label.toLowerCase();
+  if (lower.includes('minute') || lower.includes('min')) {
+    const min = parseInt(lower);
+    return min / 60;
+  }
+  if (lower.includes('hour')) {
+    return parseInt(lower);
+  }
+  return 0;
+};
+
+const getBadgeColor = (label: string, hours: number) => {
+  if (label.startsWith('Starts')) return '#3b82f6';
+  if (hours <= 1) return '#ef4444';
+  if (hours <= 7) return '#ff5656';
+  if (hours <= 14) return '#f97316';
+  if (hours <= 20) return '#16a34a';
+  return '#ff93ff';
+};
+
+export const RoutineRow = React.memo(({
   id,
   name,
   completed = false,
@@ -34,37 +71,27 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
   missedCount = 0,
   startTime,
   endTime,
-}) => {
+}: RoutineRowProps): React.ReactElement => {
    
+  // 1. Hooks & State
+  const router = useRouter();
   const [isChecked, setIsChecked] = useState(completed);
-  const router = useRouter(); // Hook
+  const [displayLabel, setDisplayLabel] = useState(initialLabel);
+  const [effectiveFailed, setEffectiveFailed] = useState(failed || initialLabel === 'Failed');
 
-  // Sync isChecked with prop
+  // 2. Effects (Sync Props)
   React.useEffect(() => {
     setIsChecked(completed);
   }, [completed]);
 
-  // Live state
-  const [displayLabel, setDisplayLabel] = useState(initialLabel);
-  const [effectiveFailed, setEffectiveFailed] = useState(failed || initialLabel === 'Failed');
+  // 3. Callbacks
+  const handleCameraPress = useCallback(() => {
+    router.push({
+      pathname: '/(personal)/camera-modal',
+      params: { routineId: id }
+    });
+  }, [router, id]);
 
-  // Helper to calculate minutes between dates
-  const diffMinutes = (dt2: Date, dt1: Date) => {
-    let diff = (dt2.getTime() - dt1.getTime()) / 1000;
-    diff /= 60;
-    return Math.ceil(diff); // Changed to ceil to avoid premature failure display
-  }
-
-  // Helper to format remaining time
-  const formatRemaining = (minutes: number) => {
-     if (minutes < 0) return 'Failed'; // Only if strictly negative, though main logic handles failure
-     if (minutes === 0) return '1 Min'; // Exact match or very close, treat as last minute
-     if (minutes < 60) return `${minutes} Min`;
-     const h = Math.floor(minutes / 60);
-     return `${h} Hours`; // Simplified matching backend style
-  }
-
-  // Update logic
   const updateStatus = useCallback(() => {
       // If manually failed prop is true, stick to it
       if (failed) {
@@ -99,7 +126,6 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
 
       // 1. Check if Upcoming
       if (startObj && now < startObj) {
-          // It is upcoming
           const hStr = startObj.getHours().toString().padStart(2, '0');
           const mStr = startObj.getMinutes().toString().padStart(2, '0');
           setDisplayLabel(`Starts ${hStr}:${mStr}`);
@@ -109,77 +135,42 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
 
       // 2. Check if Ongoing (Passed start, before end)
       if (startObj && endObj && now >= startObj && now <= endObj) {
-          // Calculate remaining to end
           const remainingMins = diffMinutes(endObj, now);
           setDisplayLabel(formatRemaining(remainingMins));
           setEffectiveFailed(false);
           return;
       }
       
-      // 3. Check if Failed (Passed end) - Only if not completed!
-      // Ideally we check 'isChecked' but 'isChecked' is local state initiated from props.completed.
-      // If completed, usually row style changes and badges might differ, but if user is asking about status update:
+      // 3. Check if Failed (Passed end)
       if (endObj && now > endObj && !isChecked) {
            setDisplayLabel('Failed');
            setEffectiveFailed(true);
            return;
       }
       
-      // Fallback to initial label if no time logic applies (e.g. Weekly without specific times)
+      // Fallback
       if (!startTime || !endTime) {
           setDisplayLabel(initialLabel);
           setEffectiveFailed(failed || initialLabel === 'Failed');
       }
   }, [startTime, endTime, failed, initialLabel, isChecked]);
 
+  // 4. Effects (Interval)
   React.useEffect(() => {
-     // Initial run
      updateStatus();
-
-     const intervalId = setInterval(() => {
-        updateStatus();
-     }, 1000); // Check every second for immediate updates
-
+     const intervalId = setInterval(updateStatus, 1000);
      return () => clearInterval(intervalId);
   }, [updateStatus]);
 
+  // 5. Derived Computations
+  const hours = getHoursFromLabel(displayLabel);
+  const badgeColor = getBadgeColor(displayLabel, hours);
 
-  const handleCameraPress = () => {
-    // Navigate to the modal, passing the routine ID
-    router.push({
-      pathname: '/(personal)/camera-modal',
-      params: { routineId: id }
-    });
-  }
-  
-  const parseHours = () => {
-    let lower = displayLabel.toLowerCase();
-
-    if (lower.includes('minute') || lower.includes('min')) {
-      const min = parseInt(lower);
-      return min / 60; // convert to hours
-    }
-    if (lower.includes('hour')) {
-      return parseInt(lower);
-    }
-    return 0;
-  };
-
-  const hours = parseHours();
-
-  const getColor = () => {
-    if (displayLabel.startsWith('Starts')) return '#3b82f6'; // Blue for upcoming
-    if (hours <= 1) return '#ef4444';   // red
-    if (hours <= 7) return '#ff5656';   // pink-red
-    if (hours <= 14) return '#f97316';  // orange
-    if (hours <= 20) return '#16a34a'   // green
-    return '#ff93ff';              // soft pink     
-  };
-
+  // 6. Render
   return (
     <TouchableOpacity
       style={styles.row}
-      onPress={() => onPress?.(id)} // changed: pass id
+      onPress={() => onPress?.(id)}
       activeOpacity={0.7}
     >
       <TouchableOpacity onPress={handleCameraPress}>
@@ -207,18 +198,18 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
 
       {/* DURATION BADGE */}
       {!isChecked && !effectiveFailed && displayLabel !== 'Pending' && (
-        <View style={[styles.badge, { backgroundColor: getColor() }]}>
+        <View style={[styles.badge, { backgroundColor: badgeColor }]}>
           <Text style={styles.badgeText}>{hours > 24 ? frequencyType : displayLabel }</Text>
         </View>
       )}
 
       { effectiveFailed && (
-        <View style={[styles.badge, { backgroundColor: getColor() }]}>
+        <View style={[styles.badge, { backgroundColor: badgeColor }]}>
           <Text style={styles.badgeText}>Failed</Text>
         </View>
       )}
 
-      {/* CAMERA ICON — only if unchecked and started */}
+      {/* CAMERA ICON */}
       {!isChecked && showCamera && !effectiveFailed && !displayLabel.startsWith('Starts') && (
         <TouchableOpacity onPress={handleCameraPress} style={styles.cameraBtn}>
           <Ionicons name="camera" size={18} color="#3b82f6" />
@@ -227,7 +218,7 @@ export const RoutineRow: React.FC<RoutineRowProps> = ({
    
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   row: {

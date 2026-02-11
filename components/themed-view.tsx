@@ -8,7 +8,7 @@ export type ThemedViewProps = ViewProps & {
   variant?: 'default' | 'card' | 'surface';
 };
 
-export function ThemedView({ style, lightColor, darkColor, variant = 'default', ...otherProps }: ThemedViewProps) {
+export function ThemedView({ style, lightColor, darkColor, variant = 'default', ...otherProps }: ThemedViewProps): React.ReactElement {
   const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, variant === 'default' ? 'background' : (variant === 'card' ? 'card' : 'surface'));
   const borderColor = useThemeColor({}, 'border');
   

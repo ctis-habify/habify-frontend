@@ -1,17 +1,8 @@
-import { BACKGROUND_GRADIENT } from '@/app/theme';
-import CreateRoutineInListModal from '@/components/modals/CreateRoutineInListModal';
-import { RoutineCategoryCard } from '@/components/routines/RoutineCategoryCard';
-import { Toast } from '@/components/ui/Toast';
-import { Colors } from '@/constants/theme';
-import { routineService } from '@/services/routine.service';
-import { mapBackendRoutineToRow } from '@/services/routines.mapper';
-import { RoutineList } from '@/types/routine';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-// ... (imports)
 import {
     Alert,
     DeviceEventEmitter,
@@ -22,42 +13,36 @@ import {
     View
 } from 'react-native';
 
-// ... existing imports
+import { BACKGROUND_GRADIENT } from '@/app/theme';
+import { CreateRoutineInListModal } from "@/components/modals/create-routine-in-list-modal";
+import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
+import { Toast } from '@/components/ui/toast';
+import { Colors } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
+import { routineService } from '@/services/routine.service';
+import { mapBackendRoutineToRow } from '@/services/routines.mapper';
+import { RoutineList } from '@/types/routine';
 
-// ... imports
-import { useAuth } from '@/hooks/useAuth';
-
-// ... imports
-
-export default function RoutinesScreen() {
+export default function RoutinesScreen(): React.ReactElement {
+  // 1. Hooks
   const router = useRouter();
   const navigation = useNavigation();
-  const { token } = useAuth(); // Get token
+  const { token } = useAuth();
 
+  // 2. State
   const [lists, setLists] = useState<RoutineList[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Toast State
+  const [showCreateInList, setShowCreateInList] = useState(false);
+  const [selectedRoutineListId, setSelectedRoutineListId] = useState<number | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const showToast = (message: string) => {
+  // 3. Callbacks (Memoized)
+  const showToast = useCallback((message: string) => {
     setToastMessage(message);
     setToastVisible(true);
-  };
-
-  useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
-        // Add a small delay to ensure navigation/focus transition settles
-        setTimeout(() => {
-            showToast(message);
-        }, 500);
-    });
-    return () => {
-        subscription.remove();
-    };
   }, []);
-    
+
   const loadLists = useCallback(async (showLoading = false) => {
     if (showLoading || lists.length === 0) setLoading(true);
     try {
@@ -70,20 +55,35 @@ export default function RoutinesScreen() {
     }
   }, [token, lists.length]);
 
-  const [showCreateInList, setShowCreateInList] = useState(false);
-  const [selectedRoutineListId, setSelectedRoutineListId] = useState<number | null>(null);
-
-  const openCreateInList = (routineListId: number) => {
+  const openCreateInList = useCallback((routineListId: number) => {
     setSelectedRoutineListId(routineListId);
     setShowCreateInList(true);
-  };
+  }, []);
 
-  const closeCreateInList = () => {
+  const closeCreateInList = useCallback(() => {
     setShowCreateInList(false);
     setSelectedRoutineListId(null);
-  };
+  }, []);
 
-  const handleDeleteList = (id: number, title: string) => {
+  const handleRoutinePress = useCallback((id: string) => {
+    router.push({
+      pathname: '/(personal)/routine/[id]',
+      params: { id: id },
+    });
+  }, [router]);
+
+  const handleEditList = useCallback((id: number, title: string, categoryId: number) => {
+    router.push({
+      pathname: '/(personal)/create-routine',
+      params: { 
+        id: id,
+        title: title,
+        categoryId: categoryId
+      }
+    });
+  }, [router]);
+
+  const handleDeleteList = useCallback((id: number, title: string) => {
     if (!token) return;
     Alert.alert(
       "Delete List",
@@ -98,7 +98,7 @@ export default function RoutinesScreen() {
               await routineService.deleteRoutineList(id, token);
               showToast("List deleted successfully");
               loadLists(true);
-            } catch (err: any) {
+            } catch (err: unknown) {
               console.error("Delete list failed:", err);
               Alert.alert("Error", "Failed to delete list.");
             }
@@ -106,25 +106,23 @@ export default function RoutinesScreen() {
         }
       ]
     );
-  };
+  }, [token, loadLists, showToast]);
 
-  const handleEditList = (id: number, title: string, categoryId: number) => {
-    router.push({
-      pathname: '/(personal)/create-routine',
-      params: { 
-        id: id,
-        title: title,
-        categoryId: categoryId
-      }
+  // 4. Effects
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
+        setTimeout(() => {
+            showToast(message);
+        }, 500);
     });
-  };
-
-
+    return () => {
+        subscription.remove();
+    };
+  }, [showToast]);
 
   useEffect(() => {
     if (token) loadLists(true);
 
-    // Listen for SHOW_TOAST from modal (create/update list)
     const toastSub = DeviceEventEmitter.addListener('SHOW_TOAST', (msg) => {
         showToast(msg);
         loadLists(true);
@@ -133,20 +131,15 @@ export default function RoutinesScreen() {
     return () => {
         toastSub.remove();
     };
-  }, [token, loadLists]);
+  }, [token, loadLists, showToast]);
 
   useFocusEffect(
     useCallback(() => {
       loadLists();    
     }, [loadLists])
   );
-  const handleRoutinePress = (id: string) => {
-    router.push({
-      pathname: '/(personal)/routine/[id]',
-      params: { id: id },
-    });
-  };
 
+  // 5. Render
   return (
     <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.container}>
        {/* FIXED HEADER SECTION */}
@@ -185,7 +178,6 @@ export default function RoutinesScreen() {
           <Text style={{ color: '#fff', textAlign: 'center' }}>Loading...</Text>
         ) : (
           lists.map((list, index) => {
-            // routineListId'yi MAP içinde hesapla
             const routineListIdRaw = (list as any).routineListId ?? (list as any).id ?? list.id;
             const routineListId = Number(routineListIdRaw);
             const canAdd = Number.isFinite(routineListId);
@@ -193,14 +185,13 @@ export default function RoutinesScreen() {
             return (
               <RoutineCategoryCard
                 key={`list-${canAdd ? routineListId : index}`}
-                tagLabel={list.categoryName}       // sol üst: sadece kategori adı
-                title={list.routineListTitle}      // sağ üst: liste adı
+                tagLabel={list.categoryName}
+                title={list.routineListTitle}
                 routines={list.routines.map((routine) => ({
                   ...mapBackendRoutineToRow(routine),
-                  onPress: () => handleRoutinePress(routine.id),
+                  // Removed redundant onPress, handled by onItemPress
                 }))}
                 onItemPress={handleRoutinePress}
-                // + butonu için handler (id yoksa buton görünmez)
                 onPressAddRoutine={canAdd ? () => openCreateInList(routineListId) : undefined}
                 onDeleteList={canAdd ? () => handleDeleteList(routineListId, list.routineListTitle) : undefined}
                 onEditList={canAdd ? () => handleEditList(routineListId, list.routineListTitle, list.categoryId) : undefined}
@@ -212,7 +203,7 @@ export default function RoutinesScreen() {
         {!loading && lists.length === 0 && (
           <View style={styles.emptyContainer}>
             <Ionicons name="calendar-outline" size={64} color="rgba(255,255,255,0.5)" />
-            <Text style={styles.emptyText}>You haven't created a routine yet.</Text>
+            <Text style={styles.emptyText}>You haven&#39;t created a routine yet.</Text>
             <Text style={styles.emptySubText}>
               You can create a new list by clicking the button below.
             </Text>
@@ -225,17 +216,7 @@ export default function RoutinesScreen() {
           routineListId={selectedRoutineListId}
           onClose={closeCreateInList}
           onCreated={async () => {
-             // Close handled inside closeCreateInList which is called by Modal's onClose, 
-             // but here we just want to refresh and show toast.
-             // Wait, the modal calls onClose immediately after onCreated in my previous edit?
-             // Actually, in CreateRoutineInListModal, onCreated is called, then onClose.
-             // Here, onClose is passed as prop. 
-             // In the modal:
-             // onCreated?.();
-             // onClose();
-             
-             // So here:
-             closeCreateInList(); // Ensure state update
+             closeCreateInList();
              await loadLists(true);
              showToast("Routine created successfully!");
           }}

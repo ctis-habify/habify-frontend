@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 
 let authToken: string | null = null;
 
-export const setAuthToken = (token: string | null) => {
+export const setAuthToken = (token: string | null): void => {
   authToken = token;
 };
 
