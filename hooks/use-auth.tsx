@@ -10,6 +10,9 @@ export interface AuthUser {
   email: string;
   name?: string;
   avatar?: string;
+  birthDate?: string;
+  total_xp?: number;
+  current_streak?: number;
 }
 
 interface AuthContextValue {
@@ -19,6 +22,7 @@ interface AuthContextValue {
   login: (_email: string, _password: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   initialized: boolean;
+  updateUser: (data: Partial<AuthUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -52,16 +56,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }): React.React
 
         if (storedUser) {
           const parsedUser: AuthUser = JSON.parse(storedUser);
-          
+
           // Restore local avatar if missing
           if (!parsedUser.avatar && parsedUser.email) {
-             const safeEmail = parsedUser.email.toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
-             const localAvatar = await SecureStore.getItemAsync(`avatar_${safeEmail}`);
-             if (localAvatar) {
-                 parsedUser.avatar = localAvatar;
-             }
+            const safeEmail = parsedUser.email.toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
+            const localAvatar = await SecureStore.getItemAsync(`avatar_${safeEmail}`);
+            if (localAvatar) {
+              parsedUser.avatar = localAvatar;
+            }
           }
-          
+
           setUser(parsedUser);
         }
       } catch (error) {
@@ -91,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): React.React
         const safeEmail = email.toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
         const localAvatar = await SecureStore.getItemAsync(`avatar_${safeEmail}`);
         if (localAvatar) {
-            loggedInUser.avatar = localAvatar;
+          loggedInUser.avatar = localAvatar;
         }
       }
 
@@ -128,12 +132,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }): React.React
     }
   };
 
+  const updateUser = async (data: Partial<AuthUser>) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...data };
+    setUser(updatedUser);
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updatedUser));
+  };
+
   const value: AuthContextValue = {
     user,
     token,
     loading,
     login,
     logout,
+    updateUser,
     initialized,
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

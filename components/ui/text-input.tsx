@@ -1,5 +1,4 @@
 import { Colors } from '@/constants/theme';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { TextInput as RNTextInput, StyleSheet, TextInputProps, TouchableOpacity, View } from 'react-native';
@@ -14,19 +13,19 @@ interface Props extends TextInputProps {
   onRightIconPress?: () => void;
 }
 
-export function TextInput({ 
-  label, 
-  error, 
-  icon, 
+export function TextInput({
+  label,
+  error,
+  icon,
   onIconPress,
-  rightIcon, 
+  rightIcon,
   onRightIconPress,
-  style, 
-  ...props 
+  style,
+  ...props
 }: Props): React.ReactElement {
   const [isFocused, setIsFocused] = useState(false);
   const borderColor = isFocused ? Colors.light.primary : Colors.light.border;
-  const textColor = useThemeColor({}, 'text');
+  const textColor = Colors.light.text;
   const placeholderColor = Colors.light.icon;
 
   return (
@@ -36,14 +35,14 @@ export function TextInput({
           {label}
         </ThemedText>
       )}
-      
+
       <View style={[styles.inputContainer, { borderColor }, error ? styles.errorBorder : undefined]}>
         {icon && (
           <TouchableOpacity onPress={onIconPress} disabled={!onIconPress}>
-             <Ionicons name={icon} size={20} color={isFocused ? Colors.light.primary : Colors.light.icon} style={styles.icon} />
+            <Ionicons name={icon} size={20} color={isFocused ? Colors.light.primary : Colors.light.icon} style={styles.icon} />
           </TouchableOpacity>
         )}
-        
+
         <RNTextInput
           style={[styles.input, { color: textColor }, style]}
           placeholderTextColor={placeholderColor}
@@ -53,7 +52,7 @@ export function TextInput({
         />
 
         {rightIcon && (
-           <TouchableOpacity onPress={onRightIconPress} disabled={!onRightIconPress}>
+          <TouchableOpacity onPress={onRightIconPress} disabled={!onRightIconPress}>
             <Ionicons name={rightIcon} size={20} color={Colors.light.icon} style={styles.rightIcon} />
           </TouchableOpacity>
         )}

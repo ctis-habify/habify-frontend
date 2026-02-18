@@ -4,23 +4,24 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    Platform,
-    ScrollView,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Platform,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 
 import { Colors } from "@/constants/theme";
-import { BACKGROUND_GRADIENT } from "../../app/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { getBackgroundGradient } from "../../app/theme";
 import { CreateRoutineDto, FrequencyType } from "../../types/routine";
-import { routineFormStyles } from "../routine-form-styles";
+import { getRoutineFormStyles } from "../routine-form-styles";
 
 type Props = {
   visible: boolean;
@@ -30,42 +31,38 @@ type Props = {
 };
 
 export function CreateRoutineInListModal({ visible, routineListId, onClose, onCreated }: Props): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const styles = useMemo(() => getRoutineFormStyles(theme), [theme]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
-  // Actually, I'll just replace the block of state definitions.
-
-  // Helper to create "Fake UTC" date
   const createUtcTime = (h: number, m: number) => {
     const d = new Date();
     return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0));
   };
 
   const [routineName, setRoutineName] = useState("");
-  // Initialize with Fake UTC
   const [startTime, setStartTime] = useState(createUtcTime(9, 0));
   const [endTime, setEndTime] = useState(createUtcTime(10, 0));
-  
+
   const [startDate] = useState(new Date());
   const [frequency, setFrequency] = useState<FrequencyType>("DAILY");
-  
-  // New state for optional time
+
   const [hasSpecificTime, setHasSpecificTime] = useState(false);
-  
+
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-  
+
   const [freqOpen, setFreqOpen] = useState(false);
-  
-  // Removed repeatOpen state and handler
-  const onFreqOpen = useCallback(() => {}, []);
-  
+
+  const onFreqOpen = useCallback(() => { }, []);
+
   const frequencyItems = [
     { label: "Daily", value: "DAILY" as FrequencyType },
     { label: "Weekly", value: "WEEKLY" as FrequencyType },
   ];
-  
-  // Use UTC methods for display/formatting
+
   const formatTime = (d: Date) =>
     `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")}`;
   const formatTimeForAPI = (d: Date) => `${formatTime(d)}:00`;
@@ -73,23 +70,20 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
 
   const dropDownStyle = useMemo(
     () => ({
-      backgroundColor: Colors.light.background,
-      borderColor: Colors.light.border,
+      backgroundColor: colors.background,
+      borderColor: colors.border,
       borderRadius: 12,
       minHeight: 50,
     }),
-    []
+    [colors]
   );
 
   const validate = () => {
-    // ... validation logic
     const errors: string[] = [];
     if (!routineListId) errors.push("Routine list id missing.");
     if (!routineName.trim()) errors.push("Please enter a routine name.");
     if (frequency === 'DAILY' && hasSpecificTime && startTime >= endTime) errors.push("Routine end time must be after start time.");
     if (!frequency) errors.push("Please select a frequency.");
-    
-    // Removed repeatAt check for WEEKLY
 
     if (errors.length) {
       Alert.alert("Warning", errors.join("\n"));
@@ -99,7 +93,7 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
   };
 
   const handleCreate = async () => {
-     if (!validate()) return;
+    if (!validate()) return;
     setIsSubmitting(true);
     try {
       let finalStartTime = "00:00:00";
@@ -109,34 +103,30 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
         finalStartTime = formatTimeForAPI(startTime);
         finalEndTime = formatTimeForAPI(endTime);
       }
-      
-      // For WEEKLY or DAILY without specific time, we use defaults (already set)
 
       const body: CreateRoutineDto = {
         routineListId: Number(routineListId),
         routineName: routineName.trim(),
         frequencyType: frequency,
-        // frequencyDetail removed/undefined
         startTime: finalStartTime,
         endTime: finalEndTime,
         startDate: formatDateForAPI(startDate),
-        categoryId: 0, // Not used in this modal but required by DTO? Wait, routineListId is there.
+        categoryId: 0,
         isAiVerified: false,
       };
 
       await routineService.createRoutine(body);
-      
+
       onCreated?.();
       onClose();
-      // Reset form
       setRoutineName("");
     } catch (e: unknown) {
       let msg = "Failed to create routine";
       if (typeof e === 'object' && e !== null && 'response' in e) {
-          const anyE = e as any;
-          msg = anyE.response?.data?.message || msg;
+        const anyE = e as any;
+        msg = anyE.response?.data?.message || msg;
       } else if (e instanceof Error) {
-          msg = e.message;
+        msg = e.message;
       }
       console.error("CreateRoutineInList failed:", msg);
       Alert.alert("Error", msg);
@@ -147,33 +137,31 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <LinearGradient colors={BACKGROUND_GRADIENT} style={routineFormStyles.screen}>
-        <View style={routineFormStyles.outerWrapper}>
-          <View style={routineFormStyles.sheet}>
-            <ScrollView contentContainerStyle={[routineFormStyles.content, { paddingBottom: 60 }]}>
+      <LinearGradient colors={getBackgroundGradient(theme)} style={styles.screen}>
+        <View style={styles.outerWrapper}>
+          <View style={styles.sheet}>
+            <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 60 }]}>
 
-              <View style={routineFormStyles.headerRow}>
-                <Text style={routineFormStyles.title}>Create Routine</Text>
+              <View style={styles.headerRow}>
+                <Text style={styles.title}>Create Routine</Text>
                 <TouchableOpacity onPress={onClose}>
-                  <Ionicons name="close" size={30} color={Colors.light.text} />
+                  <Ionicons name="close" size={30} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
-              {/* ✅ Category YOK */}
-
-              <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Routine Name</Text>
-              <View style={[routineFormStyles.inputContainer]}>
+              <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Routine Name</Text>
+              <View style={[styles.inputContainer]}>
                 <TextInput
                   value={routineName}
                   onChangeText={setRoutineName}
                   placeholder="Enter your routine name"
-                  placeholderTextColor={Colors.light.icon}
-                  style={[routineFormStyles.textInput]}
+                  placeholderTextColor={colors.icon}
+                  style={[styles.textInput]}
                 />
               </View>
 
               {/* Frequency */}
-              <Text style={[routineFormStyles.sectionLabel, { marginTop: 20 }]}>Frequency</Text>
+              <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Frequency</Text>
               <View style={{ zIndex: 2000 }}>
                 <DropDownPicker
                   open={freqOpen}
@@ -184,48 +172,47 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
                   onOpen={onFreqOpen}
                   placeholder="Select Frequency"
                   style={dropDownStyle}
-                  textStyle={{ color: Colors.light.text, fontSize: 16 }}
-                  dropDownContainerStyle={{ backgroundColor: Colors.light.background, borderColor: Colors.light.border }}
-                  placeholderStyle={{ color: Colors.light.icon }}
+                  textStyle={{ color: colors.text, fontSize: 16 }}
+                  dropDownContainerStyle={{ backgroundColor: colors.background, borderColor: colors.border }}
+                  placeholderStyle={{ color: colors.icon }}
                   listMode="SCROLLVIEW"
+                  theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
                 />
               </View>
 
               {/* Time Selection Toggle (Only for DAILY) */}
               {frequency === 'DAILY' && (
-                 <View style={[routineFormStyles.rowSpace, { marginTop: 20, alignItems: 'center' }]}>
-                    <Text style={routineFormStyles.sectionLabel}>Set specific time</Text>
-                    <Switch
-                        value={hasSpecificTime}
-                        onValueChange={setHasSpecificTime}
-                        trackColor={{ false: "#767577", true: Colors.light.primary }}
-                        thumbColor={hasSpecificTime ? "#fff" : "#f4f3f4"}
-                    />
-                 </View>
+                <View style={[styles.rowSpace, { marginTop: 20, alignItems: 'center' }]}>
+                  <Text style={styles.sectionLabel}>Set specific time</Text>
+                  <Switch
+                    value={hasSpecificTime}
+                    onValueChange={setHasSpecificTime}
+                    trackColor={{ false: "#767577", true: colors.primary }}
+                    thumbColor={hasSpecificTime ? "#fff" : "#f4f3f4"}
+                  />
+                </View>
               )}
-
 
               {/* Times (Only show if DAILY + hasSpecificTime) */}
               {frequency === 'DAILY' && hasSpecificTime && (
-                <View style={[routineFormStyles.rowSpace, { marginTop: 15 }]}>
+                <View style={[styles.rowSpace, { marginTop: 15 }]}>
                   <View style={{ flex: 1, marginRight: 10 }}>
-                    <Text style={routineFormStyles.smallLabel}>Routine Start Time</Text>
+                    <Text style={styles.smallLabel}>Routine Start Time</Text>
                     <TouchableOpacity
-                      style={[routineFormStyles.timeBox]}
+                      style={[styles.timeBox]}
                       onPress={() => setShowStartTimePicker(true)}
                     >
-                      <Text style={[routineFormStyles.timeText]}>{formatTime(startTime)}</Text>
+                      <Text style={[styles.timeText]}>{formatTime(startTime)}</Text>
                     </TouchableOpacity>
 
-                    {/* Start Time Picker */}
                     {showStartTimePicker && (
                       Platform.OS === 'ios' ? (
                         <Modal visible={showStartTimePicker} transparent animationType="fade">
-                          <View style={routineFormStyles.modalOverlay}>
-                            <View style={routineFormStyles.iosPickerContainer}>
-                              <View style={routineFormStyles.pickerHeader}>
+                          <View style={styles.modalOverlay}>
+                            <View style={styles.iosPickerContainer}>
+                              <View style={styles.pickerHeader}>
                                 <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
-                                  <Text style={routineFormStyles.doneButton}>Done</Text>
+                                  <Text style={styles.doneButton}>Done</Text>
                                 </TouchableOpacity>
                               </View>
                               <DateTimePicker
@@ -233,11 +220,11 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
                                 mode="time"
                                 is24Hour
                                 display="spinner"
-                                timeZoneName="UTC" // Force UTC
+                                timeZoneName="UTC"
                                 onChange={(e, d) => {
                                   if (d) setStartTime(d);
                                 }}
-                                textColor={Colors.light.text}
+                                textColor={colors.text}
                               />
                             </View>
                           </View>
@@ -248,7 +235,7 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
                           mode="time"
                           is24Hour
                           display="default"
-                          timeZoneOffsetInMinutes={0} // Force UTC
+                          timeZoneOffsetInMinutes={0}
                           onChange={(e, d) => {
                             setShowStartTimePicker(false);
                             if (d) setStartTime(d);
@@ -259,23 +246,22 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
                   </View>
 
                   <View style={{ flex: 1 }}>
-                    <Text style={routineFormStyles.smallLabel}>Routine End Time</Text>
+                    <Text style={styles.smallLabel}>Routine End Time</Text>
                     <TouchableOpacity
-                      style={[routineFormStyles.timeBox]}
+                      style={[styles.timeBox]}
                       onPress={() => setShowEndTimePicker(true)}
                     >
-                      <Text style={[routineFormStyles.timeText]}>{formatTime(endTime)}</Text>
+                      <Text style={[styles.timeText]}>{formatTime(endTime)}</Text>
                     </TouchableOpacity>
 
-                    {/* End Time Picker */}
                     {showEndTimePicker && (
                       Platform.OS === 'ios' ? (
                         <Modal visible={showEndTimePicker} transparent animationType="fade">
-                          <View style={routineFormStyles.modalOverlay}>
-                            <View style={routineFormStyles.iosPickerContainer}>
-                               <View style={routineFormStyles.pickerHeader}>
+                          <View style={styles.modalOverlay}>
+                            <View style={styles.iosPickerContainer}>
+                              <View style={styles.pickerHeader}>
                                 <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
-                                  <Text style={routineFormStyles.doneButton}>Done</Text>
+                                  <Text style={styles.doneButton}>Done</Text>
                                 </TouchableOpacity>
                               </View>
                               <DateTimePicker
@@ -283,11 +269,11 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
                                 mode="time"
                                 is24Hour
                                 display="spinner"
-                                timeZoneName="UTC" // Force UTC
+                                timeZoneName="UTC"
                                 onChange={(e, d) => {
                                   if (d) setEndTime(d);
                                 }}
-                                textColor={Colors.light.text}
+                                textColor={colors.text}
                               />
                             </View>
                           </View>
@@ -298,7 +284,7 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
                           mode="time"
                           is24Hour
                           display="default"
-                          timeZoneOffsetInMinutes={0} // Force UTC
+                          timeZoneOffsetInMinutes={0}
                           onChange={(e, d) => {
                             setShowEndTimePicker(false);
                             if (d) setEndTime(d);
@@ -311,7 +297,7 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
               )}
 
               <TouchableOpacity
-                style={[routineFormStyles.createBtn, { marginTop: 40 }]}
+                style={[styles.createBtn, { marginTop: 40 }]}
                 onPress={handleCreate}
                 disabled={isSubmitting || !routineListId}
               >
