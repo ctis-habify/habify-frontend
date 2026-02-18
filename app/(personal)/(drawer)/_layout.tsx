@@ -14,11 +14,18 @@ export default function DrawerLayout(): React.ReactElement {
         drawerInactiveTintColor: Colors.light.text,
         drawerActiveBackgroundColor: 'rgba(124, 58, 237, 0.1)',
         drawerLabelStyle: {
-            marginLeft: 0,
-            fontWeight: '600',
+          marginLeft: 0,
+          fontWeight: '600',
         },
       }}
     >
+      <Drawer.Screen
+        name="profile"
+        options={{
+          drawerLabel: "Profile",
+          drawerIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+        }}
+      />
       <Drawer.Screen
         name="routines"
         options={{

@@ -14,20 +14,20 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  
+
   const displayName = user?.name || 'User';
   const displayEmail = user?.email || 'user@example.com';
   const initial = displayName.charAt(0).toUpperCase();
 
   // Map IDs to URLs (Ensure consistency with Register screen)
   const getAvatarUrl = (id?: string) => {
-    switch(id) {
-        case 'avatar1': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix';
-        case 'avatar2': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka';
-        case 'avatar3': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob';
-        case 'avatar4': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack';
-        case 'avatar5': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly';
-        default: return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(displayName)}`;
+    switch (id) {
+      case 'avatar1': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix';
+      case 'avatar2': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka';
+      case 'avatar3': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob';
+      case 'avatar4': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack';
+      case 'avatar5': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly';
+      default: return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(displayName)}`;
     }
   };
 
@@ -49,18 +49,18 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
   return (
     <View style={{ flex: 1 }}>
       <DrawerContentScrollView {...props} contentContainerStyle={styles.scrollContent}>
-        
+
         {/* Header / Top Section */}
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-            <View style={[styles.avatarPlaceholder, avatarUrl ? { backgroundColor: 'transparent' } : {}]}>
-                {avatarUrl ? (
-                    <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-                ) : (
-                    <Text style={styles.avatarText}>{initial}</Text>
-                )}
-            </View>
-            <Text style={styles.username}>{displayName}</Text>
-            <Text style={styles.email}>{displayEmail}</Text>
+          <View style={[styles.avatarPlaceholder, avatarUrl ? { backgroundColor: 'transparent' } : {}]}>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>{initial}</Text>
+            )}
+          </View>
+          <Text style={styles.username}>{displayName}</Text>
+          <Text style={styles.email}>{displayEmail}</Text>
         </View>
 
         <View style={styles.divider} />
@@ -69,19 +69,18 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
         <DrawerItemList {...props} />
 
         {/* Custom Placeholders */}
-        <DrawerItem 
-            label="Settings" 
-            icon={({ size }) => <Ionicons name="settings-outline" size={size} color={Colors.light.icon} />}
-            onPress={() => {}} 
-            labelStyle={{ marginLeft: 0, color: Colors.light.icon }}
-            style={{ opacity: 0.5 }}
+        <DrawerItem
+          label="Settings"
+          icon={({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />}
+          onPress={() => router.push('/(personal)/(drawer)/settings')}
+          labelStyle={{ marginLeft: 0 }}
         />
 
-        <DrawerItem 
-            label="Analytics (Soon)" 
-            icon={({ size }) => <Ionicons name="bar-chart-outline" size={size} color={Colors.light.icon} />}
-            onPress={() => {}} 
-            labelStyle={{ marginLeft: 0, color: Colors.light.icon }}
+        <DrawerItem
+          label="Analytics (Soon)"
+          icon={({ size }) => <Ionicons name="bar-chart-outline" size={size} color={Colors.light.icon} />}
+          onPress={() => { }}
+          labelStyle={{ marginLeft: 0, color: Colors.light.icon }}
         />
 
       </DrawerContentScrollView>
