@@ -20,6 +20,9 @@ export type RoutineRowProps = {
   missedCount?: number;
   startTime?: string; // HH:MM:SS
   endTime?: string;   // HH:MM:SS
+  collaborativeKey?: string;
+  creatorId?: string;
+  isDark?: boolean;
 };
 
 // Helpers moved outside
@@ -37,7 +40,8 @@ const formatRemaining = (minutes: number) => {
    return `${h} Hours`;
 };
 
-const getHoursFromLabel = (label: string) => {
+const getHoursFromLabel = (label?: string) => {
+  if (!label) return 0;
   let lower = label.toLowerCase();
   if (lower.includes('minute') || lower.includes('min')) {
     const min = parseInt(lower);
@@ -49,7 +53,8 @@ const getHoursFromLabel = (label: string) => {
   return 0;
 };
 
-const getBadgeColor = (label: string, hours: number) => {
+const getBadgeColor = (label?: string, hours?: number) => {
+  if (!label || hours === undefined) return '#94a3b8';
   if (label.startsWith('Starts')) return '#3b82f6';
   if (hours <= 1) return '#ef4444';
   if (hours <= 7) return '#ff5656';
@@ -71,6 +76,8 @@ export const RoutineRow = React.memo(({
   missedCount = 0,
   startTime,
   endTime,
+  collaborativeKey,
+  isDark = false,
 }: RoutineRowProps): React.ReactElement => {
    
   // 1. Hooks & State
@@ -174,12 +181,24 @@ export const RoutineRow = React.memo(({
       activeOpacity={0.7}
     >
       <TouchableOpacity onPress={handleCameraPress}>
-        <CircularCheckbox value={isChecked} />
+        <CircularCheckbox value={isChecked} color={isDark ? '#E879F9' : undefined} />
       </TouchableOpacity>
       
-      <Text style={[styles.name, isChecked && styles.completedText]} numberOfLines={1}>
+      <Text style={[
+          styles.name, 
+          isDark && { color: '#fff' },
+          isChecked && styles.completedText
+      ]} numberOfLines={1}>
         {name}
       </Text>
+
+      {/* COLLABORATIVE BADGE */}
+      {!!collaborativeKey && (
+         <View style={[styles.badge, { backgroundColor: isDark ? 'rgba(232, 121, 249, 0.15)' : '#e0f2fe', flexDirection: 'row', alignItems: 'center', gap: 2 }]}>
+          <Ionicons name="people" size={12} color={isDark ? '#E879F9' : '#0284c7'} />
+          <Text style={[styles.badgeText, { color: isDark ? '#E879F9' : '#0284c7' }]}>Group</Text>
+        </View>
+      )}
 
       {/* STREAK BADGE */}
       {streak > 0 && (
@@ -211,8 +230,11 @@ export const RoutineRow = React.memo(({
 
       {/* CAMERA ICON */}
       {!isChecked && showCamera && !effectiveFailed && !displayLabel.startsWith('Starts') && (
-        <TouchableOpacity onPress={handleCameraPress} style={styles.cameraBtn}>
-          <Ionicons name="camera" size={18} color="#3b82f6" />
+        <TouchableOpacity 
+            onPress={handleCameraPress} 
+            style={[styles.cameraBtn, isDark && { backgroundColor: 'rgba(232, 121, 249, 0.1)' }]}
+        >
+          <Ionicons name="camera" size={18} color={isDark ? '#E879F9' : "#3b82f6"} />
         </TouchableOpacity>
       )}
    

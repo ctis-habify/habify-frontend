@@ -1,14 +1,15 @@
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import { Colors } from "@/constants/theme";
 import { userService } from "@/services/user.service";
+import { useAuth } from "../../hooks/use-auth";
 import type { Routine } from "../../types/routine";
 import { ThemedView } from "../themed-view";
 import { RoutineCard } from "./routine-card";
@@ -27,17 +28,19 @@ const keyExtractor = (item: Routine) => item.id;
 
 export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, onPressCamera }: Props): React.ReactElement {
   // 1. State
+  const { user: authUser } = useAuth();
   const [points, setPoints] = useState(0);
 
   // 2. Callbacks
   const fetchUserData = useCallback(async () => {
     try {
-      const user = await userService.getCurrentUser();
-      setPoints(user.total_xp ?? 0);
+      if (!authUser?.id) return;
+      const user = await userService.getUserById(authUser.id);
+      setPoints(user.total_xp ?? user.totalXp ?? 0);
     } catch (error) {
       console.error("Failed to fetch user XP", error);
     }
-  }, []);
+  }, [authUser?.id]);
 
   const renderItem = useCallback(({ item }: { item: Routine }) => (
     <RoutineCard 

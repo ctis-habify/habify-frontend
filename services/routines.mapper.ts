@@ -4,7 +4,7 @@ import { Routine } from '@/types/routine';
 export const mapBackendRoutineToRow = (
   routine: Routine,
 ): RoutineRowProps => {
-  let label = routine.remainingLabel;
+  let label = routine.remainingLabel ?? '';
   
   if (routine.startTime && label !== 'Pending') {
     const now = new Date();
@@ -30,5 +30,7 @@ export const mapBackendRoutineToRow = (
     missedCount: routine.missedCount,
     startTime: routine.startTime,
     endTime: routine.endTime,
+    collaborativeKey: routine.collaborativeKey,
+    creatorId: routine.creatorId,
   };
 };

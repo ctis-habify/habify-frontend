@@ -21,26 +21,29 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import { BACKGROUND_GRADIENT } from '../../app/theme';
 import { routineFormStyles } from '.././routine-form-styles';
+import { AnimatedToggle } from '../ui/animated-toggle';
 
 interface CreateRoutineModalProps {
   onClose?: () => void;
+  onCreated?: () => void;
   initialRoutineListId?: number;
   initialTitle?: string;
   initialCategoryId?: number;
+  isCollaborativeMode?: boolean;
 }
 
 export function CreateRoutineModal({ 
   onClose, 
+  onCreated,
   initialRoutineListId, 
   initialTitle, 
-  initialCategoryId 
+  initialCategoryId,
+  isCollaborativeMode = false
 }: CreateRoutineModalProps): React.ReactElement {
   const router = useRouter();
   const { token } = useAuth();
   
   const isEditMode = !!initialRoutineListId;
-
-  // --- Category dropdown states ---
 
   // --- Category dropdown states ---
   const [categories, setCategories] = useState<Category[]>([]);
@@ -52,6 +55,13 @@ export function CreateRoutineModal({
 
   // --- Form states ---
   const [category, setCategory] = useState<number | null>(null);
+  
+  // Collaborative State
+  const [isCollaborative, setIsCollaborative] = useState(isCollaborativeMode);
+
+  useEffect(() => {
+      setIsCollaborative(isCollaborativeMode);
+  }, [isCollaborativeMode]);
 
   // Routine List Title
   const [routineListTitle, setRoutineListTitle] = useState("");
@@ -68,7 +78,8 @@ export function CreateRoutineModal({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await categoryService.getCategories();
+        const type = isCollaborativeMode ? 'collaborative' : 'personal';
+        const data = await categoryService.getCategories(type);
         setCategories(data);
       } catch (e) {
         console.error('Categories fetch failed', e);
@@ -77,8 +88,7 @@ export function CreateRoutineModal({
       }
     };
     fetchCategories();
-    fetchCategories();
-  }, []);
+  }, [isCollaborativeMode]);
 
   // Pre-fill form if editing
   useEffect(() => {
@@ -109,7 +119,8 @@ export function CreateRoutineModal({
     }
 
     try {
-      const created = await categoryService.createCategory(newCategoryName.trim());
+      const type = isCollaborativeMode ? 'collaborative' : 'personal';
+      const created = await categoryService.createCategory(newCategoryName.trim(), type);
       console.log("Created Category Response:", created);
       const newId = created.categoryId ?? (created as any).id;
       setCategories((prev) => [...prev, created]);
@@ -218,6 +229,7 @@ export function CreateRoutineModal({
           );
           
           DeviceEventEmitter.emit('SHOW_TOAST', 'List updated successfully!');
+          if (onCreated) onCreated();
           handleClose();
         } else {
         // CREATE MODE
@@ -228,6 +240,11 @@ export function CreateRoutineModal({
         console.log('CreateRoutineList response:', routineList);
 
         DeviceEventEmitter.emit('SHOW_TOAST', 'Routine list created successfully!');
+        
+        if (onCreated) {
+           onCreated();
+        }
+        
         handleClose();
       }
     } catch (err: unknown) {
@@ -363,6 +380,19 @@ export function CreateRoutineModal({
                 placeholderTextColor={Colors.light.icon}
                 style={[routineFormStyles.textInput]}
               />
+            </View>
+
+            {/* Collaborative Toggle */}
+            <View style={{ marginTop: 20 }}>
+                 <AnimatedToggle 
+                    label="Make this a Collaborative Routine"
+                    isEnabled={isCollaborative}
+                    onToggle={() => setIsCollaborative(!isCollaborative)}
+                    activeColor="#06b6d4" // Cyan-500
+                 />
+                 <Text style={{ fontSize: 12, color: Colors.light.icon, marginLeft: 2, marginTop: -5 }}>
+                    Allow others to join this routine and track progress together.
+                 </Text>
             </View>
 
             {/* Create Button */}

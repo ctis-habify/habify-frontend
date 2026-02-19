@@ -22,6 +22,17 @@ export interface Routine {
   missedCount: number;
   isReminderEnabled: boolean;
   reminderTime?: string;
+  collaborativeKey?: string;
+  creatorId?: string;
+  routineType?: 'personal' | 'collaborative';
+  description?: string;
+  lives?: number;
+  isPublic?: boolean;
+  rewardCondition?: string;
+  ageRequirement?: number;
+  genderRequirement?: 'female' | 'male' | 'other' | 'na';
+  xpRequirement?: number;
+  completionXp?: number;
 }
 
 export interface RoutineList {
@@ -53,6 +64,16 @@ export interface CreateRoutineDto {
   frequencyType: string;
   frequencyDetail?: number;
   isAiVerified: boolean;
+  isCollaborative?: boolean;
+  description?: string;
+  lives?: number;
+  isPublic?: boolean;
+  rewardCondition?: string;
+  repetition?: string; // JSON string
+  ageRequirement?: number;
+  genderRequirement?: 'female' | 'male' | 'other' | 'na';
+  xpRequirement?: number;
+  completionXp?: number;
 }
 
 export interface UpdateRoutineDto {

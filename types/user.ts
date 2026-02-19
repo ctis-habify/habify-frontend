@@ -1,4 +1,4 @@
-export type UserGender = 'male' | 'female' | 'na';
+export type UserGender = 'male' | 'female' | 'other' | 'na';
 
 export interface User {
   id: string; // uuid
@@ -6,6 +6,7 @@ export interface User {
   email: string;
   gender?: UserGender;
   total_xp: number;
+  totalXp?: number; // Backend documentation uses this
   current_streak: number;
   birthDate?: string; // date
   fcm_token?: string;

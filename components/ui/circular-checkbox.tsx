@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
-export const CircularCheckbox = ({ value }: { value: boolean}): React.ReactElement => {
+export const CircularCheckbox = ({ value, color = '#2563eb' }: { value: boolean, color?: string }): React.ReactElement => {
   return (
     <TouchableOpacity style={styles.wrapper}>
-      <View style={[styles.circle, value && styles.filled]}>
+      <View style={[styles.circle, { borderColor: color }, value && { backgroundColor: color }]}>
         {value && <Ionicons name="checkmark" size={15} color="#fff" />}
       </View>
     </TouchableOpacity>
