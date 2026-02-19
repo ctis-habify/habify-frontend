@@ -4,18 +4,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    Alert,
-    DeviceEventEmitter,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  DeviceEventEmitter,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 import { BACKGROUND_GRADIENT } from '@/app/theme';
 import { CreateRoutineInListModal } from "@/components/modals/create-routine-in-list-modal";
 import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
+import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
@@ -152,14 +153,17 @@ export default function RoutinesScreen(): React.ReactElement {
                 <Ionicons name="menu" size={24} color="#fff" />
              </TouchableOpacity>
 
-             <View style={styles.tabContainer}>
-                <TouchableOpacity style={[styles.tab, styles.tabActive]}>
-                  <Text style={styles.tabTextActive}>Personal</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.tab}>
-                  <Text style={styles.tabText}>Collaborative</Text>
-                </TouchableOpacity>
+             <View style={{ flex: 1 }}>
+                <AnimatedTabSwitcher 
+                    tabs={['Personal', 'Collaborative']}
+                    activeTab="Personal"
+                    onTabPress={(tab) => {
+                        if (tab === 'Collaborative') {
+                            router.replace('/(collaborative)/(drawer)/routines' as any);
+                        }
+                    }}
+                    activeColor={Colors.light.primary} // Default purple
+                />
              </View>
           </View>
 

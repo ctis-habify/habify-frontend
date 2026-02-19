@@ -81,9 +81,18 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
           <Text style={styles.name} numberOfLines={1}>{title}</Text>
           
           {label !== 'Pending' && (
-            <View style={styles.timeBadge}>
-               <Ionicons name="time-outline" size={14} color={color} style={{ marginRight: 4 }} />
-               <Text style={[styles.duration, { color }]}>{label}</Text>
+            <View style={styles.badgeRow}>
+              <View style={styles.timeBadge}>
+                 <Ionicons name="time-outline" size={14} color={color} style={{ marginRight: 4 }} />
+                 <Text style={[styles.duration, { color }]}>{label}</Text>
+              </View>
+
+              {!!routine.collaborativeKey && (
+                <View style={styles.groupBadge}>
+                  <Ionicons name="people" size={12} color="#0284c7" />
+                  <Text style={styles.groupBadgeText}>Group</Text>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -138,6 +147,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     letterSpacing: -0.4,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   timeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -151,6 +165,20 @@ const styles = StyleSheet.create({
     fontSize: 13, 
     fontWeight: '400',
     letterSpacing: 0.2,
+  },
+  groupBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  groupBadgeText: {
+    color: '#0284c7',
+    fontSize: 11,
+    fontWeight: '600',
   },
   
   cameraBtn: {
