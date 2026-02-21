@@ -18,6 +18,8 @@ type Props = {
   onItemPress?: (id: string) => void;
   onDeleteList?: () => void;
   onEditList?: () => void;
+  accentColor?: string;
+  variant?: 'light' | 'glass';
 };
 
 export function RoutineCategoryCard({
@@ -29,25 +31,34 @@ export function RoutineCategoryCard({
   onItemPress,
   onDeleteList,
   onEditList,
+  accentColor = Colors.light.primary,
+  variant = 'light',
 }: Props): React.ReactElement {
 
+  const isGlass = variant === 'glass';
   const [menuVisible, setMenuVisible] = React.useState(false);
   const optionsAvailable = !!onEditList || !!onDeleteList;
 
 
   return (
-    <ThemedView variant="card" style={styles.card}>
+    <ThemedView 
+      variant="card" 
+      style={[
+        styles.card, 
+        isGlass && styles.cardGlass
+      ]}
+    >
       {/* HEADER */}
       <View style={styles.headerRow}>
-        <ThemedText type="label" style={styles.categoryTitle}>{tagLabel}</ThemedText>
+        <ThemedText type="label" style={[styles.categoryTitle, { backgroundColor: accentColor }]}>{tagLabel}</ThemedText>
 
         <View style={styles.headerRight}>
-          <ThemedText type="default" style={styles.title}>{title}</ThemedText>
+          <ThemedText type="default" style={[styles.title, isGlass && { color: '#fff' }]}>{title}</ThemedText>
 
           {!!onPressAddRoutine && (
             <TouchableOpacity
               onPress={onPressAddRoutine}
-              style={styles.plusBtn}
+              style={[styles.plusBtn, { backgroundColor: accentColor }]}
               hitSlop={10}
               activeOpacity={0.85}
             >
@@ -72,11 +83,11 @@ export function RoutineCategoryCard({
                       style={styles.menuItem} 
                       onPress={() => { setMenuVisible(false); onEditList(); }}
                     >
-                      <Ionicons name="pencil-outline" size={16} color={Colors.light.text} />
-                      <ThemedText style={styles.menuText}>Edit</ThemedText>
+                      <Ionicons name="pencil-outline" size={16} color={isGlass ? '#fff' : Colors.light.text} />
+                      <ThemedText style={[styles.menuText, isGlass && { color: '#fff' }]}>Edit</ThemedText>
                     </TouchableOpacity>
                   )}
-                  {!!onEditList && !!onDeleteList && <View style={styles.menuDivider} />}
+                  {!!onEditList && !!onDeleteList && <View style={[styles.menuDivider, isGlass && { backgroundColor: 'rgba(255,255,255,0.1)' }]} />}
                   {!!onDeleteList && (
                     <TouchableOpacity 
                       style={styles.menuItem} 
@@ -110,10 +121,11 @@ export function RoutineCategoryCard({
           <View key={routine.id ?? routine.name ?? `${routine.name}-${idx}`}>
             <RoutineRow
               {...routine}
+              isDark={isGlass}
               onToggle={(val: boolean) => onRoutineToggle?.(idx, val)}
               onPress={() => onItemPress?.(routine.id)}
             />
-            {idx !== routines.length - 1 && <View style={styles.lightDivider} />}
+            {idx !== routines.length - 1 && <View style={[styles.lightDivider, isGlass && { backgroundColor: 'rgba(255,255,255,0.05)' }]} />}
           </View>
         ))
       )}
@@ -135,6 +147,11 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.03)',
+  },
+  cardGlass: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    shadowOpacity: 0, // Glow handles it if needed
   },
 
   headerRow: {

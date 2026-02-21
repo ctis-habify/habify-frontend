@@ -22,20 +22,21 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getBackgroundGradient } from "../../app/theme";
 import { CreateRoutineDto, FrequencyType } from "../../types/routine";
 import { getRoutineFormStyles } from "../routine-form-styles";
+import { AnimatedToggle } from "../ui/animated-toggle";
 
 type Props = {
   visible: boolean;
   routineListId: number | null;
   onClose: () => void;
   onCreated?: () => void;
+  isCollaborativeMode?: boolean;
 };
-
-export function CreateRoutineInListModal({ visible, routineListId, onClose, onCreated }: Props): React.ReactElement {
+  
+export function CreateRoutineInListModal({ visible, routineListId, onClose, onCreated, isCollaborativeMode = false }: Props): React.ReactElement {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const styles = useMemo(() => getRoutineFormStyles(theme), [theme]);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createUtcTime = (h: number, m: number) => {
     const d = new Date();
@@ -54,6 +55,9 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
+  // Collaborative State
+  const [isCollaborative, setIsCollaborative] = useState(isCollaborativeMode);
+  
   const [freqOpen, setFreqOpen] = useState(false);
 
   const onFreqOpen = useCallback(() => { }, []);
@@ -104,7 +108,7 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
         finalEndTime = formatTimeForAPI(endTime);
       }
 
-      const body: CreateRoutineDto = {
+      const body = {
         routineListId: Number(routineListId),
         routineName: routineName.trim(),
         frequencyType: frequency,
@@ -115,8 +119,12 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
         isAiVerified: false,
       };
 
-      await routineService.createRoutine(body);
-
+      if (isCollaborative) {
+          await routineService.createCollaborativeRoutine(body);
+      } else {
+          await routineService.createRoutine(body);
+      }
+      
       onCreated?.();
       onClose();
       setRoutineName("");
@@ -192,6 +200,19 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
                   />
                 </View>
               )}
+
+              {/* Collaborative Toggle */}
+               <View style={{ marginTop: 20 }}>
+                     <AnimatedToggle 
+                        label="Make this a Collaborative Routine"
+                        isEnabled={isCollaborative}
+                        onToggle={() => setIsCollaborative(!isCollaborative)}
+                        activeColor="#06b6d4" // Cyan-500
+                     />
+                     <Text style={{ fontSize: 12, color: Colors.light.icon, marginLeft: 2, marginTop: -5 }}>
+                        Allow others to join this routine and track progress together.
+                     </Text>
+                </View>
 
               {/* Times (Only show if DAILY + hasSpecificTime) */}
               {frequency === 'DAILY' && hasSpecificTime && (

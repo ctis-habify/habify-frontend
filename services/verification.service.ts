@@ -34,12 +34,12 @@ export const verificationService = {
   },
 
   /**
-   * 3. Submit verification to backend queue
+   * 3. Submit verification to backend queue (Unified endpoint)
    */
-  async submitVerification(routineId: string, gcsObjectPath: string): Promise<{ id: string }> {
-    const res = await api.post('/verify/submit', {
+  async submitVerification(routineId: string, objectPath: string): Promise<{ id: string }> {
+    const res = await api.post('/routines/verify', {
       routineId,
-      gcsObjectPath,
+      objectPath,
     });
     return res.data;
   },

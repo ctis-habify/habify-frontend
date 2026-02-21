@@ -76,7 +76,67 @@ export const routineService = {
     return res.data;
   },
 
-  // Create routine log (mark routine as completed)
+  // ✅ Create Collaborative Routine
+  async createCollaborativeRoutine(body: {
+    routineListId?: number;
+    categoryId?: number;
+    routineName: string;
+    frequencyType: string;
+    frequencyDetail?: number;
+    startTime: string;
+    endTime: string;
+    startDate: string;
+    isAiVerified?: boolean;
+    routineType?: string;
+    description?: string;
+    lives?: number;
+    isPublic?: boolean;
+    entranceCondition?: string;
+    rewardCondition?: string;
+    repetition?: string;
+    ageRequirement?: number;
+    genderRequirement?: string;
+    xpRequirement?: number;
+  }): Promise<Routine> {
+    const res = await api.post('/routines/collaborative', body);
+    return res.data;
+  },
+
+  // ✅ Get Collaborative Routines
+  async getCollaborativeRoutines(): Promise<Routine[]> {
+    const res = await api.get('/routines/collaborative');
+    return res.data;
+  },
+
+  // ✅ Join a Group
+  async joinGroup(key: string): Promise<any> {
+    try {
+      const res = await api.post('/routines/join', { key });
+      return res.data;
+    } catch (err: any) {
+      if (err.response && err.response.status === 400 && err.response.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      throw err;
+    }
+  },
+
+  // ✅ Group Detail (Profile View)
+  async getGroupDetail(id: string): Promise<Routine & { participants: any[] }> {
+    const res = await api.get(`/routines/group/${id}`);
+    return res.data;
+  },
+
+  // ✅ Unified Verification Flow
+  async verifyRoutine(body: { 
+    routineId: string; 
+    objectPath: string; 
+  }): Promise<any> {
+    const res = await api.post('/routines/verify', body);
+    return res.data;
+  },
+
+  // Create routine log (mark routine as completed) - LEGACY (Consider using verifyRoutine)
   async createRoutineLog(
     routineId: string,
     logDate: string,
