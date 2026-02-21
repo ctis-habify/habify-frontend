@@ -27,5 +27,10 @@ export const userService = {
     const res = await api.get(endpoint);
     return res.data;
   },
+
+  // Delete user account
+  deleteAccount: async (): Promise<void> => {
+    await api.delete('/users/me');
+  },
 };
 
