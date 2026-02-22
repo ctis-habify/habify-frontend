@@ -49,10 +49,14 @@ const unwrapSingleCategory = (payload: unknown): unknown => {
 
 export const categoryService = {
   // Get all categories (optional type filter)
-  async getCategories(type?: 'personal' | 'collaborative'): Promise<Category[]> {
+  async getCategories(type?: 'personal' | 'collaborative', token?: string): Promise<Category[]> {
     const params = type ? { type } : {};
-    const res = await api.get('/categories', { params });
-    return unwrapCategoryList(res.data).map(toCategory).filter((c): c is Category => c !== null);
+    const config = {
+      params,
+      ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {})
+    };
+    const res = await api.get('/categories', config);
+    return res.data;
   },
 
   // Get category by ID
@@ -66,13 +70,14 @@ export const categoryService = {
   },
 
   // Create a new category
-  async createCategory(name: string, type: 'personal' | 'collaborative' = 'personal'): Promise<Category> {
-    const res = await api.post('/categories', { name, type });
-    const category = toCategory(unwrapSingleCategory(res.data));
-    if (!category) {
-      throw new Error('Invalid created category response');
-    }
-    return category;
+  async createCategory(
+    name: string,
+    type: 'personal' | 'collaborative' = 'personal',
+    token?: string
+  ): Promise<Category> {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    const res = await api.post('/categories', { name, type }, config);
+    return res.data;
   },
 
   async deleteCategory(categoryId: number, token?: string): Promise<void> {

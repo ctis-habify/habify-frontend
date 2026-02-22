@@ -23,7 +23,6 @@ import {
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getBackgroundGradient } from '../../app/theme';
 import { getRoutineFormStyles } from '.././routine-form-styles';
-import { AnimatedToggle } from '../ui/animated-toggle';
 
 interface CreateRoutineModalProps {
   onClose?: () => void;
@@ -94,7 +93,7 @@ export function CreateRoutineModal({
     const fetchCategories = async () => {
       try {
         const type = isCollaborativeMode ? 'collaborative' : 'personal';
-        const data = await categoryService.getCategories(type);
+        const data = await categoryService.getCategories(type, token || undefined);
         setCategories(data);
       } catch (e) {
         console.error('Categories fetch failed', e);
@@ -120,7 +119,7 @@ export function CreateRoutineModal({
     return (categories ?? [])
       .map((c: Category) => ({
         label: String(c?.name ?? ''),
-        value: Number(c?.categoryId),
+        value: Number((c as any).categoryId ?? (c as any).id),
       }))
       .filter((x) => x.label && Number.isFinite(x.value));
   }, [categories]);
@@ -133,8 +132,8 @@ export function CreateRoutineModal({
 
     try {
       const type = isCollaborativeMode ? 'collaborative' : 'personal';
-      const created = await categoryService.createCategory(newCategoryName.trim(), type);
-      console.log('Created Category Response:', created);
+      const created = await categoryService.createCategory(newCategoryName.trim(), type, token || undefined);
+      console.log("Created Category Response:", created);
       const newId = created.categoryId ?? (created as any).id;
       setCategories((prev) => [...prev, created]);
       setCategory(Number(newId));

@@ -44,7 +44,7 @@ export const routineService = {
   
   // Get routine lists (routine groups)
   async getRoutineLists(): Promise<RoutineList[]> {
-    const res = await api.get('/routine_lists');
+    const res = await api.get('/routine-lists');
     return res.data;
   },
   async getRoutineLogs(routineId?: string): Promise<RoutineLog[]> {
@@ -52,31 +52,12 @@ export const routineService = {
     const res = await api.get(endpoint);
     return res.data;
   },
-   // ✅ Create Routine List
   async createRoutineList(categoryId: number, title: string): Promise<RoutineList> {
-    const payload = { title, categoryId };
-
-    try {
-      const res = await api.post('/routine_lists', payload);
-      return res.data;
-    } catch (error: unknown) {
-      // Backend variants sometimes expose this route as `/routine-lists`.
-      const maybeResponse = (error as { response?: { status?: number; data?: unknown } })?.response;
-      const status = maybeResponse?.status;
-      const rawMessage =
-        typeof maybeResponse?.data === 'string'
-          ? maybeResponse.data
-          : (maybeResponse?.data as { message?: unknown })?.message;
-      const message = typeof rawMessage === 'string' ? rawMessage : '';
-
-      const shouldRetryWithKebabCase = status === 404 || message.includes('Cannot POST /routine_lists');
-      if (!shouldRetryWithKebabCase) {
-        throw error;
-      }
-
-      const fallbackRes = await api.post('/routine-lists', payload);
-      return fallbackRes.data;
-    }
+    const res = await api.post('/routine-lists', {
+      title,
+      categoryId,         
+    });
+    return res.data;        
   },
 
   // ✅ Create Routine
@@ -200,7 +181,7 @@ export const routineService = {
   },
 
   async deleteRoutineList(id: number, token: string): Promise<boolean> {
-    const response = await api.delete(`/routine_lists/${id}`, {
+    const response = await api.delete(`/routine-lists/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (response.status !== 200 && response.status !== 204) throw new Error('Failed to delete routine list');
@@ -209,7 +190,7 @@ export const routineService = {
 
   async updateRoutineList(id: number, title: string, categoryId: number, token?: string): Promise<RoutineList> {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    const res = await api.patch(`/routine_lists/${id}`, { title, categoryId }, config);
+    const res = await api.patch(`/routine-lists/${id}`, { title, categoryId }, config);
     return res.data;
   },
 };
