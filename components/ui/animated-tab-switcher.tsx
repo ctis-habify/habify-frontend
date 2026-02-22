@@ -1,8 +1,13 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { LayoutChangeEvent, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
-    useAnimatedStyle,
-    withSpring
+  Easing,
+  SharedValue,
+  interpolate,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 
 interface AnimatedTabSwitcherProps {
@@ -13,6 +18,34 @@ interface AnimatedTabSwitcherProps {
   inactiveColor?: string;
 }
 
+interface TabLabelProps {
+  text: string;
+  index: number;
+  activeIndexSV: SharedValue<number>;
+  activeColor: string;
+  inactiveColor: string;
+}
+
+function TabLabel({
+  text,
+  index,
+  activeIndexSV,
+  activeColor,
+  inactiveColor,
+}: TabLabelProps) {
+  const tabTextStyle = useAnimatedStyle(() => {
+    const distance = Math.abs(activeIndexSV.value - index);
+    const opacity = interpolate(distance, [0, 1], [1, 0.65]);
+
+    return {
+      opacity,
+      color: interpolateColor(distance, [0, 1], [activeColor, inactiveColor]),
+    };
+  });
+
+  return <Animated.Text style={[styles.tabText, tabTextStyle]}>{text}</Animated.Text>;
+}
+
 export function AnimatedTabSwitcher({
   tabs,
   activeTab,
@@ -20,47 +53,58 @@ export function AnimatedTabSwitcher({
   activeColor = '#06b6d4',
   inactiveColor = 'rgba(255,255,255,0.7)',
 }: AnimatedTabSwitcherProps) {
-  
-  const activeIndex = tabs.indexOf(activeTab);
-  
-  // We assume 2 tabs for simplicity in calculation, but can be dynamic using onLayout
+  const activeIndex = Math.max(0, tabs.indexOf(activeTab));
+  const activeIndexSV = useSharedValue(activeIndex);
+  const containerWidthSV = useSharedValue(0);
+
+  useEffect(() => {
+    activeIndexSV.value = withTiming(activeIndex, {
+      duration: 220,
+      easing: Easing.out(Easing.exp),
+    });
+  }, [activeIndex, activeIndexSV]);
+
+  const onContainerLayout = (event: LayoutChangeEvent) => {
+    containerWidthSV.value = event.nativeEvent.layout.width;
+  };
+
+  const tabWidth = tabs.length > 0 ? 1 / tabs.length : 1;
+
   const indicatorStyle = useAnimatedStyle(() => {
+    const tabPixelWidth = containerWidthSV.value * tabWidth;
+
     return {
-      left: withSpring(`${activeIndex * (100 / tabs.length)}%`, {
-          mass: 0.8,
-          damping: 15,
-          stiffness: 150,
-      }),
+      width: tabPixelWidth,
+      transform: [{ translateX: activeIndexSV.value * tabPixelWidth }],
     };
   });
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onContainerLayout}>
         {/* Animated Background Indicator */}
         <Animated.View 
             style={[
                 styles.indicator, 
-                { width: `${100 / tabs.length}%` },
                 indicatorStyle
             ]} 
         />
 
         {/* Tab Buttons */}
-        {tabs.map((tab) => {
-            const isActive = activeTab === tab;
+        {tabs.map((tab, index) => {
             return (
                 <TouchableOpacity
                     key={tab}
                     style={styles.tab}
                     onPress={() => onTabPress(tab)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.9}
                 >
-                    <Text style={[
-                        styles.tabText, 
-                        { color: isActive ? activeColor : inactiveColor, fontWeight: isActive ? '700' : '400' }
-                    ]}>
-                        {tab}
-                    </Text>
+                    <TabLabel
+                      text={tab}
+                      index={index}
+                      activeIndexSV={activeIndexSV}
+                      activeColor={activeColor}
+                      inactiveColor={inactiveColor}
+                    />
                 </TouchableOpacity>
             );
         })}
@@ -81,6 +125,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     bottom: 4,
+    left: 4,
     backgroundColor: 'white',
     borderRadius: 20,
     shadowColor: '#000',
@@ -97,5 +142,6 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 15,
+    fontWeight: '600',
   },
 });

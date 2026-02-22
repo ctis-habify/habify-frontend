@@ -8,6 +8,7 @@ import {
 } from "react-native";
 
 import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { userService } from "@/services/user.service";
 import { useAuth } from "../../hooks/use-auth";
 import type { Routine } from "../../types/routine";
@@ -29,6 +30,8 @@ const keyExtractor = (item: Routine) => item.id;
 export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, onPressCamera }: Props): React.ReactElement {
   // 1. State
   const { user: authUser } = useAuth();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
   const [points, setPoints] = useState(0);
 
   // 2. Callbacks
@@ -81,7 +84,7 @@ export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, o
         ListEmptyComponent={
           !loading ? (
             <View style={styles.emptyWrap}>
-              <Text style={styles.emptyText}>No routines for today.</Text>
+              <Text style={[styles.emptyText, { color: colors.text }]}>No routines for today.</Text>
             </View>
           ) : null
         }
@@ -101,5 +104,5 @@ const styles = StyleSheet.create({
   },
   listContent: { paddingBottom: 10, paddingHorizontal: 8 },
   emptyWrap: { paddingVertical: 30, alignItems: "center" },
-  emptyText: { color: Colors.light.text, fontWeight: "700" },
+  emptyText: { fontWeight: "700" },
 });

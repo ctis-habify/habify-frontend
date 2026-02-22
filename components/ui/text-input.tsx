@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { TextInput as RNTextInput, StyleSheet, TextInputProps, TouchableOpacity, View } from 'react-native';
@@ -23,23 +24,31 @@ export function TextInput({
   style,
   ...props
 }: Props): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
   const [isFocused, setIsFocused] = useState(false);
-  const borderColor = isFocused ? Colors.light.primary : Colors.light.border;
-  const textColor = Colors.light.text;
-  const placeholderColor = Colors.light.icon;
+  const borderColor = isFocused ? colors.primary : colors.border;
+  const textColor = colors.text;
+  const placeholderColor = colors.icon;
 
   return (
     <View style={styles.container}>
       {label && (
-        <ThemedText type="label" style={styles.label}>
+        <ThemedText type="label" style={[styles.label, { color: colors.icon }]}>
           {label}
         </ThemedText>
       )}
 
-      <View style={[styles.inputContainer, { borderColor }, error ? styles.errorBorder : undefined]}>
+      <View
+        style={[
+          styles.inputContainer,
+          { borderColor, backgroundColor: colors.surface },
+          error ? { borderColor: colors.error } : undefined,
+        ]}
+      >
         {icon && (
           <TouchableOpacity onPress={onIconPress} disabled={!onIconPress}>
-            <Ionicons name={icon} size={20} color={isFocused ? Colors.light.primary : Colors.light.icon} style={styles.icon} />
+            <Ionicons name={icon} size={20} color={isFocused ? colors.primary : colors.icon} style={styles.icon} />
           </TouchableOpacity>
         )}
 
@@ -53,13 +62,13 @@ export function TextInput({
 
         {rightIcon && (
           <TouchableOpacity onPress={onRightIconPress} disabled={!onRightIconPress}>
-            <Ionicons name={rightIcon} size={20} color={Colors.light.icon} style={styles.rightIcon} />
+            <Ionicons name={rightIcon} size={20} color={colors.icon} style={styles.rightIcon} />
           </TouchableOpacity>
         )}
       </View>
 
       {error && (
-        <ThemedText style={styles.errorText}>{error}</ThemedText>
+        <ThemedText style={[styles.errorText, { color: colors.error }]}>{error}</ThemedText>
       )}
     </View>
   );
@@ -73,7 +82,6 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 8,
     marginLeft: 4,
-    color: Colors.light.icon,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -96,11 +104,7 @@ const styles = StyleSheet.create({
   rightIcon: {
     marginLeft: 10,
   },
-  errorBorder: {
-    borderColor: Colors.light.error,
-  },
   errorText: {
-    color: Colors.light.error,
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,

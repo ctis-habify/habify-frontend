@@ -1,4 +1,6 @@
-import { BACKGROUND_GRADIENT, COLORS } from '@/app/theme';
+import { getBackgroundGradient } from '@/app/theme';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
@@ -9,8 +11,12 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children }: AuthLayoutProps): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+
   return (
-    <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.background}>
+    <LinearGradient colors={getBackgroundGradient(theme)} style={styles.background}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView 
@@ -21,7 +27,17 @@ export function AuthLayout({ children }: AuthLayoutProps): React.ReactElement {
             contentContainerStyle={styles.scrollContainer} 
             showsVerticalScrollIndicator={false}
           >
-            <LinearGradient colors={[COLORS.formBackground, COLORS.formBackground]} style={styles.card}>
+            <LinearGradient
+              colors={[colors.card, colors.card]}
+              style={[
+                styles.card,
+                {
+                  borderColor: isDark ? colors.border : 'transparent',
+                  borderWidth: isDark ? 1 : 0,
+                  shadowOpacity: isDark ? 0.25 : 0.5,
+                },
+              ]}
+            >
               {children}
             </LinearGradient>
           </ScrollView>

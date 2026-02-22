@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { TextInput } from '@/components/ui/text-input';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import Checkbox from 'expo-checkbox';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -12,6 +13,8 @@ import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen(): React.ReactElement {
   const router = useRouter();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
@@ -67,13 +70,13 @@ export default function LoginScreen(): React.ReactElement {
             <Checkbox
               value={remember}
               onValueChange={setRemember}
-              color={remember ? Colors.light.primary : undefined}
-              style={styles.checkbox}
+              color={remember ? colors.primary : undefined}
+              style={[styles.checkbox, { borderColor: colors.border }]}
             />
-            <ThemedText style={styles.rememberText}>Remember me</ThemedText>
+            <ThemedText style={[styles.rememberText, { color: colors.icon }]}>Remember me</ThemedText>
           </View>
           <TouchableOpacity>
-            <ThemedText style={styles.forgotText}>Forgot?</ThemedText>
+            <ThemedText style={[styles.forgotText, { color: colors.primary }]}>Forgot?</ThemedText>
           </TouchableOpacity>
         </View>
 
@@ -85,9 +88,9 @@ export default function LoginScreen(): React.ReactElement {
         />
 
         <View style={styles.bottomRow}>
-          <ThemedText style={styles.bottomText}>Don't have an account? </ThemedText>
+          <ThemedText style={[styles.bottomText, { color: colors.icon }]}>Don't have an account? </ThemedText>
           <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <ThemedText type="link" style={styles.bottomLink}>Register</ThemedText>
+            <ThemedText type="link" style={[styles.bottomLink, { color: colors.primary }]}>Register</ThemedText>
           </TouchableOpacity>
         </View>
       </View>
@@ -115,10 +118,8 @@ const styles = StyleSheet.create({
   },
   rememberText: {
     fontSize: 14,
-    color: Colors.light.icon,
   },
   forgotText: {
-    color: Colors.light.primary, 
     fontSize: 14,
     fontWeight: '600',
   },
@@ -129,11 +130,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bottomText: {
-    color: Colors.light.icon,
     fontSize: 14,
   },
   bottomLink: {
-    color: Colors.light.primary,
     fontSize: 14,
     fontWeight: 'bold',
   },

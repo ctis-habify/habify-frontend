@@ -54,11 +54,29 @@ export const routineService = {
   },
    // ✅ Create Routine List
   async createRoutineList(categoryId: number, title: string): Promise<RoutineList> {
-    const res = await api.post('/routine_lists', {
-      title,
-      categoryId,         
-    });
-    return res.data;        
+    const payload = { title, categoryId };
+
+    try {
+      const res = await api.post('/routine_lists', payload);
+      return res.data;
+    } catch (error: unknown) {
+      // Backend variants sometimes expose this route as `/routine-lists`.
+      const maybeResponse = (error as { response?: { status?: number; data?: unknown } })?.response;
+      const status = maybeResponse?.status;
+      const rawMessage =
+        typeof maybeResponse?.data === 'string'
+          ? maybeResponse.data
+          : (maybeResponse?.data as { message?: unknown })?.message;
+      const message = typeof rawMessage === 'string' ? rawMessage : '';
+
+      const shouldRetryWithKebabCase = status === 404 || message.includes('Cannot POST /routine_lists');
+      if (!shouldRetryWithKebabCase) {
+        throw error;
+      }
+
+      const fallbackRes = await api.post('/routine-lists', payload);
+      return fallbackRes.data;
+    }
   },
 
   // ✅ Create Routine

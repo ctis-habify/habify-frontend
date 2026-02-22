@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
@@ -27,6 +28,8 @@ export function Button({
   textStyle,
   icon 
 }: ButtonProps): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
 
   const isOutline = variant === 'outline';
   
@@ -34,11 +37,11 @@ export function Button({
     if (disabled) return ['#9CA3AF', '#6B7280'];
     switch (variant) {
       case 'primary':
-        return [Colors.light.primary, Colors.light.secondary];
+        return [colors.primary, colors.secondary];
       case 'secondary':
-        return [Colors.light.secondary, '#8B5CF6'];
+        return [colors.secondary, colors.primary];
       case 'destructive':
-        return [Colors.light.error, '#DC2626'];
+        return [colors.error, '#DC2626'];
       default:
         return undefined;
     }
@@ -53,7 +56,7 @@ export function Button({
       activeOpacity={0.8}
       style={[
         styles.touchableBase,
-        isOutline && styles.outlineButton,
+        isOutline && [styles.outlineButton, { borderColor: colors.primary }],
         disabled && styles.disabledButton,
         style
       ]}
@@ -65,19 +68,34 @@ export function Button({
           end={{ x: 1, y: 1 }}
           style={styles.contentContainer}
         >
-          <Content title={title} isLoading={isLoading} textStyle={textStyle} variant={variant} icon={icon} />
+          <Content title={title} isLoading={isLoading} textStyle={textStyle} variant={variant} icon={icon} theme={theme} />
         </LinearGradient>
       ) : (
         <View style={styles.contentContainer}>
-          <Content title={title} isLoading={isLoading} textStyle={textStyle} variant={variant} icon={icon} />
+          <Content title={title} isLoading={isLoading} textStyle={textStyle} variant={variant} icon={icon} theme={theme} />
         </View>
       )}
     </TouchableOpacity>
   );
 }
 
-function Content({ title, isLoading, textStyle, variant, icon }: { title: string, isLoading: boolean, textStyle?: TextStyle, variant: ButtonVariant, icon?: React.ReactNode }): React.ReactElement {
-  const textColor = variant === 'outline' || variant === 'ghost' ? Colors.light.primary : '#FFFFFF';
+function Content({
+  title,
+  isLoading,
+  textStyle,
+  variant,
+  icon,
+  theme,
+}: {
+  title: string,
+  isLoading: boolean,
+  textStyle?: TextStyle,
+  variant: ButtonVariant,
+  icon?: React.ReactNode,
+  theme: 'light' | 'dark',
+}): React.ReactElement {
+  const colors = Colors[theme];
+  const textColor = variant === 'outline' || variant === 'ghost' ? colors.primary : '#FFFFFF';
   
   return (
     <>

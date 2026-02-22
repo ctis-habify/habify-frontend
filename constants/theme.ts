@@ -26,7 +26,7 @@ export const Colors = {
   },
   dark: {
     text: '#F9FAFB',
-    background: '#111827', // Gray-900
+    background: '#0F172A', // Matches routines dark gradient bottom
     tint: '#A78BFA', // Violet-400
     icon: '#9CA3AF',
     tabIconDefault: '#9CA3AF',
@@ -35,9 +35,9 @@ export const Colors = {
     secondary: '#A78BFA',
     success: '#34D399',
     error: '#F87171',
-    border: '#374151',
-    card: '#1F2937', // Gray-800
-    surface: '#1F2937',
+    border: 'rgba(167, 139, 250, 0.25)',
+    card: '#1E1B4B', // Matches routines dark gradient top
+    surface: '#1E1B4B',
   },
 };
 

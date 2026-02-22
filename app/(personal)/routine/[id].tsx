@@ -1,4 +1,4 @@
-import { BACKGROUND_GRADIENT } from '@/app/theme';
+import { getBackgroundGradient } from '@/app/theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { TextInput } from '@/components/ui/text-input';
 import { Toast } from '@/components/ui/toast';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Routine } from '@/types/routine';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -41,6 +42,7 @@ export default function EditRoutineScreen(): React.ReactElement {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { token } = useAuth(); 
+  const theme = useColorScheme() ?? 'light';
   const [isLoading, setIsLoading] = useState(false);
   
   // Form State
@@ -179,7 +181,7 @@ export default function EditRoutineScreen(): React.ReactElement {
   }, [token, router, id]);
 
   return (
-    <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.container}>
+    <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <ThemedText type="heading2" style={styles.headerTitle}>{routine_name}</ThemedText>

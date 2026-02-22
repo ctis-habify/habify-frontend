@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -21,6 +22,9 @@ type Props = {
 
 
 export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
   const { title, endTime, remainingLabel } = routine;
 
   // Live update state
@@ -75,20 +79,42 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
   const color = useMemo(() => remainingColor(minsLeft), [minsLeft]);
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.container, pressed && styles.pressed]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.card : '#fff',
+          borderColor: isDark ? colors.border : '#f8fafc',
+          shadowOpacity: isDark ? 0 : 0.08,
+          elevation: isDark ? 0 : 4,
+        },
+        pressed && styles.pressed,
+      ]}
+    >
       <View style={styles.contentRow}>
         <View style={styles.textWrap}>
-          <Text style={styles.name} numberOfLines={1}>{title}</Text>
+          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{title}</Text>
           
           {label !== 'Pending' && (
             <View style={styles.badgeRow}>
-              <View style={styles.timeBadge}>
+              <View
+                style={[
+                  styles.timeBadge,
+                  { backgroundColor: isDark ? colors.background : '#f8fafc' },
+                ]}
+              >
                  <Ionicons name="time-outline" size={14} color={color} style={{ marginRight: 4 }} />
                  <Text style={[styles.duration, { color }]}>{label}</Text>
               </View>
 
               {!!routine.collaborativeKey && (
-                <View style={styles.groupBadge}>
+                <View
+                  style={[
+                    styles.groupBadge,
+                    { backgroundColor: isDark ? 'rgba(2,132,199,0.2)' : '#e0f2fe' },
+                  ]}
+                >
                   <Ionicons name="people" size={12} color="#0284c7" />
                   <Text style={styles.groupBadgeText}>Group</Text>
                 </View>
@@ -99,10 +125,10 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
 
         <Pressable
           onPress={() => onPressCamera?.(routine.id)}
-          style={styles.cameraBtn}
+          style={[styles.cameraBtn, { backgroundColor: isDark ? colors.background : '#f1f5f9' }]}
           hitSlop={10}
         >
-          <Ionicons name="camera" size={20} color={Colors.light.primary} />
+          <Ionicons name="camera" size={20} color={colors.primary} />
         </Pressable>
       </View>
     </Pressable>

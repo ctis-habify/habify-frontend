@@ -1,5 +1,6 @@
 import { CustomDrawerContent } from '@/components/navigation/custom-drawer-content';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
 import React from 'react';
@@ -8,14 +9,25 @@ import React from 'react';
 const COLLABORATIVE_PRIMARY = '#E879F9';
 
 export default function DrawerLayout(): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+
   return (
     <Drawer
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
-        drawerActiveTintColor: COLLABORATIVE_PRIMARY,
-        drawerInactiveTintColor: Colors.light.text,
-        drawerActiveBackgroundColor: 'rgba(232, 121, 249, 0.1)', // Fuchsia with opacity
+        drawerType: 'front',
+        drawerStyle: {
+          width: '100%',
+          backgroundColor: colors.background,
+        },
+        sceneStyle: {
+          backgroundColor: theme === 'dark' ? '#0F172A' : '#2e1065',
+        },
+        drawerActiveTintColor: theme === 'dark' ? colors.secondary : COLLABORATIVE_PRIMARY,
+        drawerInactiveTintColor: theme === 'dark' ? '#E5E7EB' : colors.text,
+        drawerActiveBackgroundColor: theme === 'dark' ? 'rgba(167, 139, 250, 0.2)' : 'rgba(232, 121, 249, 0.1)',
         drawerLabelStyle: {
             marginLeft: 0,
             fontWeight: '600',
@@ -25,6 +37,7 @@ export default function DrawerLayout(): React.ReactElement {
       <Drawer.Screen
         name="routines"
         options={{
+          drawerItemStyle: { display: 'none' },
           drawerLabel: "Collaborative Routines",
           drawerIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
         }}

@@ -1,19 +1,33 @@
 import { Colors } from '@/constants/theme';
 import { setAuthToken } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem, DrawerItemList } from '@react-navigation/drawer';
-import { useRouter } from 'expo-router';
+import {
+  DrawerContentComponentProps,
+  DrawerContentScrollView,
+  DrawerItem,
+} from '@react-navigation/drawer';
+import { usePathname, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React from 'react';
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function CustomDrawerContent(props: DrawerContentComponentProps): React.ReactElement {
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isCollaborativeDrawer = !props.state.routeNames.includes('profile');
+  const activeTint = theme === 'dark' ? colors.secondary : colors.primary;
+  const inactiveTint = theme === 'dark' ? '#E5E7EB' : colors.text;
+  const activeBackgroundColor =
+    theme === 'dark' ? 'rgba(167, 139, 250, 0.2)' : 'rgba(124, 58, 237, 0.1)';
+  const handleComingSoon = (title: string) => Alert.alert(title, 'Coming soon');
 
   const displayName = user?.name || 'User';
   const displayEmail = user?.email || 'user@example.com';
@@ -22,12 +36,18 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
   // Map IDs to URLs (Ensure consistency with Register screen)
   const getAvatarUrl = (id?: string) => {
     switch (id) {
-      case 'avatar1': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix';
-      case 'avatar2': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka';
-      case 'avatar3': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob';
-      case 'avatar4': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack';
-      case 'avatar5': return 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly';
-      default: return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(displayName)}`;
+      case 'avatar1':
+        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix';
+      case 'avatar2':
+        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka';
+      case 'avatar3':
+        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob';
+      case 'avatar4':
+        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack';
+      case 'avatar5':
+        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly';
+      default:
+        return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(displayName)}`;
     }
   };
 
@@ -47,52 +67,146 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <DrawerContentScrollView {...props} contentContainerStyle={styles.scrollContent}>
-
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <DrawerContentScrollView
+        {...props}
+        style={{ backgroundColor: colors.background }}
+        contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.background }]}
+      >
         {/* Header / Top Section */}
-        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-          <View style={[styles.avatarPlaceholder, avatarUrl ? { backgroundColor: 'transparent' } : {}]}>
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-            ) : (
-              <Text style={styles.avatarText}>{initial}</Text>
-            )}
+        <View
+          style={[
+            styles.header,
+            {
+              paddingTop: insets.top + 20,
+              backgroundColor: colors.background,
+            },
+          ]}
+        >
+          <View style={styles.headerTopRow}>
+            <View
+              style={[
+                styles.avatarPlaceholder,
+                avatarUrl ? { backgroundColor: 'transparent' } : {},
+              ]}
+            >
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.avatarText}>{initial}</Text>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.menuBtn,
+                // {
+                //   backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : '',
+                // },
+              ]}
+              onPress={() => props.navigation.closeDrawer()}
+            >
+              <Ionicons name="close" size={30} color={theme === 'dark' ? '#FFFFFF' : '#111111'} />
+            </TouchableOpacity>
           </View>
-          <Text style={styles.username}>{displayName}</Text>
-          <Text style={styles.email}>{displayEmail}</Text>
+          <Text style={[styles.username, { color: colors.text }]}>{displayName}</Text>
+          <Text style={[styles.email, { color: colors.icon }]}>{displayEmail}</Text>
         </View>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        {/* Standard Drawer Items */}
-        <DrawerItemList {...props} />
-
-        {/* Custom Placeholders */}
+        {/* Main Menu */}
         <DrawerItem
-          label="Settings"
-          icon={({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />}
-          onPress={() => router.push('/(personal)/(drawer)/settings')}
-          labelStyle={{ marginLeft: 0 }}
+          label="Profile"
+          icon={({ size, color }) => <Ionicons name="person-outline" size={size} color={color} />}
+          onPress={() => router.push('/(personal)/(drawer)/profile')}
+          focused={pathname.includes('/(personal)/(drawer)/profile')}
+          activeTintColor={activeTint}
+          inactiveTintColor={inactiveTint}
+          activeBackgroundColor={activeBackgroundColor}
+          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
         />
-
+        <DrawerItem
+          label="My Routines"
+          icon={({ size, color }) => <Ionicons name="list-outline" size={size} color={color} />}
+          onPress={() =>
+            router.push(
+              (isCollaborativeDrawer
+                ? '/(collaborative)/routines'
+                : '/(personal)/(drawer)/routines') as any,
+            )
+          }
+          focused={
+            pathname.includes('/(personal)/(drawer)/routines') ||
+            pathname.includes('/(collaborative)/routines')
+          }
+          activeTintColor={activeTint}
+          inactiveTintColor={inactiveTint}
+          activeBackgroundColor={activeBackgroundColor}
+          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+        />
+        <DrawerItem
+          label="Leaderboard"
+          icon={({ size, color }) => <Ionicons name="trophy-outline" size={size} color={color} />}
+          onPress={() => handleComingSoon('Leaderboard')}
+          activeTintColor={activeTint}
+          inactiveTintColor={inactiveTint}
+          activeBackgroundColor={activeBackgroundColor}
+          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+        />
+        <DrawerItem
+          label="Friend Invitations"
+          icon={({ size, color }) => <Ionicons name="person-add-outline" size={size} color={color} />}
+          onPress={() => handleComingSoon('Friend Invitations')}
+          activeTintColor={activeTint}
+          inactiveTintColor={inactiveTint}
+          activeBackgroundColor={activeBackgroundColor}
+          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+        />
+        <DrawerItem
+          label="Notifications"
+          icon={({ size, color }) => <Ionicons name="notifications-outline" size={size} color={color} />}
+          onPress={() => router.push('/(personal)/(drawer)/notifications')}
+          focused={pathname.includes('/(personal)/(drawer)/notifications')}
+          activeTintColor={activeTint}
+          inactiveTintColor={inactiveTint}
+          activeBackgroundColor={activeBackgroundColor}
+          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+        />
         <DrawerItem
           label="Analytics (Soon)"
-          icon={({ size }) => <Ionicons name="bar-chart-outline" size={size} color={Colors.light.icon} />}
-          onPress={() => { }}
-          labelStyle={{ marginLeft: 0, color: Colors.light.icon }}
+          icon={({ size, color }) => <Ionicons name="bar-chart-outline" size={size} color={color} />}
+          onPress={() => handleComingSoon('Analytics')}
+          activeTintColor={activeTint}
+          inactiveTintColor={inactiveTint}
+          activeBackgroundColor={activeBackgroundColor}
+          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
         />
-
+        <DrawerItem
+          label="Settings"
+          icon={({ size, color }) => <Ionicons name="settings-outline" size={size} color={color} />}
+          onPress={() => router.push('/(personal)/(drawer)/settings')}
+          focused={pathname.includes('/(personal)/(drawer)/settings')}
+          activeTintColor={activeTint}
+          inactiveTintColor={inactiveTint}
+          activeBackgroundColor={activeBackgroundColor}
+          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+        />
       </DrawerContentScrollView>
 
       {/* Footer / Logout */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-        <View style={styles.divider} />
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: insets.bottom + 20, backgroundColor: colors.background },
+        ]}
+      >
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <DrawerItem
           label="Logout"
-          icon={({ size }) => <Ionicons name="log-out-outline" size={size} color={Colors.light.error} />}
+          icon={({ size }) => <Ionicons name="log-out-outline" size={size} color={colors.error} />}
           onPress={handleLogout}
-          labelStyle={{ color: Colors.light.error, marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ color: colors.error, marginLeft: 0, fontWeight: '600' }}
         />
       </View>
     </View>
@@ -102,23 +216,38 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
 const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 0,
+    flexGrow: 1,
   },
   header: {
     padding: 20,
-    backgroundColor: Colors.light.background,
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     justifyContent: 'center',
     marginBottom: 10,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   avatarPlaceholder: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#7C3AED',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 0,
     overflow: 'hidden', // Ensure image stays round
+  },
+  menuBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    // backgroundColor: 'rgba(120, 64, 217, 0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -4,
   },
   avatarImage: {
     width: 60,
@@ -133,20 +262,17 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   email: {
     fontSize: 14,
-    color: Colors.light.icon,
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.light.border,
     marginVertical: 10,
     marginHorizontal: 20,
   },
   footer: {
-    // backgroundColor: Colors.light.background,
+    marginTop: 'auto',
   },
 });

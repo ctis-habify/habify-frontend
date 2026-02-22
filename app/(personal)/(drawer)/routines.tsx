@@ -1,245 +1,112 @@
+import { getBackgroundGradient } from '@/app/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  DeviceEventEmitter,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from 'react-native';
+import { useNavigation, useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { BACKGROUND_GRADIENT } from '@/app/theme';
-import { CreateRoutineInListModal } from "@/components/modals/create-routine-in-list-modal";
-import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
+// UI
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
-import { Toast } from '@/components/ui/toast';
-import { Colors } from '@/constants/theme';
-import { useAuth } from '@/hooks/use-auth';
-import { routineService } from '@/services/routine.service';
-import { mapBackendRoutineToRow } from '@/services/routines.mapper';
-import { RoutineList } from '@/types/routine';
 
-export default function RoutinesScreen(): React.ReactElement {
-  // 1. Hooks
+const PERSONAL_GRADIENT = ['#4c1d95', '#7c3aed'] as const;
+const PERSONAL_PRIMARY = '#f9a8ff';
+
+export default function PersonalRoutinesScreen(): React.ReactElement {
   const router = useRouter();
   const navigation = useNavigation();
-  const { token } = useAuth();
+  const theme = useColorScheme() ?? 'light';
+  const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : PERSONAL_GRADIENT;
+  const [activeTab, setActiveTab] = useState('Personal');
+  const isSwitchingRef = useRef(false);
 
-  // 2. State
-  const [lists, setLists] = useState<RoutineList[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreateInList, setShowCreateInList] = useState(false);
-  const [selectedRoutineListId, setSelectedRoutineListId] = useState<number | null>(null);
-  const [toastVisible, setToastVisible] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-
-  // 3. Callbacks (Memoized)
-  const showToast = useCallback((message: string) => {
-    setToastMessage(message);
-    setToastVisible(true);
-  }, []);
-
-  const loadLists = useCallback(async (showLoading = false) => {
-    if (showLoading || lists.length === 0) setLoading(true);
-    try {
-      const data = await routineService.getGroupedRoutines(token || undefined);
-      setLists(data);
-    } catch (e) {
-      console.error("Failed to load routines", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, lists.length]);
-
-  const openCreateInList = useCallback((routineListId: number) => {
-    setSelectedRoutineListId(routineListId);
-    setShowCreateInList(true);
-  }, []);
-
-  const closeCreateInList = useCallback(() => {
-    setShowCreateInList(false);
-    setSelectedRoutineListId(null);
-  }, []);
-
-  const handleRoutinePress = useCallback((id: string) => {
-    router.push({
-      pathname: '/(personal)/routine/[id]',
-      params: { id: id },
-    });
-  }, [router]);
-
-  const handleEditList = useCallback((id: number, title: string, categoryId: number) => {
-    router.push({
-      pathname: '/(personal)/create-routine',
-      params: { 
-        id: id,
-        title: title,
-        categoryId: categoryId
-      }
-    });
-  }, [router]);
-
-  const handleDeleteList = useCallback((id: number, title: string) => {
-    if (!token) return;
-    Alert.alert(
-      "Delete List",
-      `Are you sure you want to delete "${title}" and all its routines?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await routineService.deleteRoutineList(id, token);
-              showToast("List deleted successfully");
-              loadLists(true);
-            } catch (err: unknown) {
-              console.error("Delete list failed:", err);
-              Alert.alert("Error", "Failed to delete list.");
-            }
-          }
-        }
-      ]
-    );
-  }, [token, loadLists, showToast]);
-
-  // 4. Effects
-  useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
-        setTimeout(() => {
-            showToast(message);
-        }, 500);
-    });
-    return () => {
-        subscription.remove();
-    };
-  }, [showToast]);
+  // Fade animasyonu: 0 -> 1 (ekran açılırken)
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (token) loadLists(true);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
 
-    const toastSub = DeviceEventEmitter.addListener('SHOW_TOAST', (msg) => {
-        showToast(msg);
-        loadLists(true);
+  // Tab değişimi: önce fade-out, sonra diğer route
+  const handleTabSwitch = (tab: string) => {
+    if (tab === activeTab || isSwitchingRef.current) return;
+
+    isSwitchingRef.current = true;
+    setActiveTab(tab);
+    Animated.sequence([
+      Animated.delay(80),
+      Animated.timing(fadeAnim, {
+        toValue: 0.08,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      if (tab === 'Collaborative') router.replace('/(collaborative)/routines' as any);
+      if (tab === 'Personal') router.replace('/(personal)/(drawer)/routines' as any);
+      isSwitchingRef.current = false;
     });
-    
-    return () => {
-        toastSub.remove();
-    };
-  }, [token, loadLists, showToast]);
+  };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadLists();    
-    }, [loadLists])
-  );
-
-  // 5. Render
   return (
-    <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.container}>
-       {/* FIXED HEADER SECTION */}
-       <View style={styles.fixedHeader}>
+    <Animated.View style={{ flex: 1, opacity: fadeAnim, backgroundColor: screenGradient[0] }}>
+      <LinearGradient colors={screenGradient} style={styles.container}>
+        {/* HEADER */}
+        <View style={styles.fixedHeader}>
           <View style={styles.headerTopRow}>
-             <TouchableOpacity 
-                style={styles.menuBtn} 
-                onPress={() => (navigation as any).dispatch(DrawerActions.toggleDrawer())}
-              >
-                <Ionicons name="menu" size={24} color="#fff" />
-             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuBtn}
+              onPress={() => (navigation as any).dispatch(DrawerActions.toggleDrawer())}
+            >
+              <Ionicons name="menu" size={24} color="#fff" />
+            </TouchableOpacity>
 
-             <View style={{ flex: 1 }}>
-                <AnimatedTabSwitcher 
-                    tabs={['Personal', 'Collaborative']}
-                    activeTab="Personal"
-                    onTabPress={(tab) => {
-                        if (tab === 'Collaborative') {
-                            router.replace('/(collaborative)/(drawer)/routines' as any);
-                        }
-                    }}
-                    activeColor={Colors.light.primary} // Default purple
-                />
-             </View>
+            <View style={{ flex: 1 }}>
+              <AnimatedTabSwitcher
+                tabs={['Personal', 'Collaborative']}
+                activeTab={activeTab}
+                onTabPress={handleTabSwitch}
+                activeColor={PERSONAL_PRIMARY}
+              />
+            </View>
           </View>
+        </View>
 
+        {/* CONTENT */}
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {/* Bugünün rutinleri header’ı */}
           <TouchableOpacity
             style={styles.sectionHeader}
-            onPress={() => router.push('/(personal)/(drawer)/today-routines')}
+            activeOpacity={0.85}
+            onPress={() => router.push('/(personal)/(drawer)/today-routines' as any)}
           >
             <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
           </TouchableOpacity>
-       </View>
 
-       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* lists */}
-        {loading ? (
-          <Text style={{ color: '#fff', textAlign: 'center' }}>Loading...</Text>
-        ) : (
-          lists.map((list, index) => {
-            const routineListIdRaw = (list as any).routineListId ?? (list as any).id ?? list.id;
-            const routineListId = Number(routineListIdRaw);
-            const canAdd = Number.isFinite(routineListId);
-
-            return (
-              <RoutineCategoryCard
-                key={`list-${canAdd ? routineListId : index}`}
-                tagLabel={list.categoryName}
-                title={list.routineListTitle}
-                routines={list.routines.map((routine) => ({
-                  ...mapBackendRoutineToRow(routine),
-                  // Removed redundant onPress, handled by onItemPress
-                }))}
-                onItemPress={handleRoutinePress}
-                onPressAddRoutine={canAdd ? () => openCreateInList(routineListId) : undefined}
-                onDeleteList={canAdd ? () => handleDeleteList(routineListId, list.routineListTitle) : undefined}
-                onEditList={canAdd ? () => handleEditList(routineListId, list.routineListTitle, list.categoryId) : undefined}
-              />
-            );
-          })
-        )}
-
-        {!loading && lists.length === 0 && (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={64} color="rgba(255,255,255,0.5)" />
-            <Text style={styles.emptyText}>You haven&#39;t created a routine yet.</Text>
-            <Text style={styles.emptySubText}>
+          {/* Empty-state kartı (ekrandaki ilk ss) */}
+          <View style={styles.emptyOuter}>
+            <View style={styles.emptyIconWrapper}>
+              <Ionicons name="calendar-outline" size={64} color={PERSONAL_PRIMARY} />
+            </View>
+            <Text style={styles.emptyTitle}>You haven&apos;t created a routine yet.</Text>
+            <Text style={styles.emptySub}>
               You can create a new list by clicking the button below.
             </Text>
+
+            <TouchableOpacity
+              style={styles.createBtn}
+              onPress={() => router.push('/(personal)/create-routine' as any)}
+            >
+              <Text style={styles.createBtnText}>Create Routine List</Text>
+            </TouchableOpacity>
           </View>
-        )}
-
-        {/* Modal */}
-        <CreateRoutineInListModal
-          visible={showCreateInList}
-          routineListId={selectedRoutineListId}
-          onClose={closeCreateInList}
-          onCreated={async () => {
-             closeCreateInList();
-             await loadLists(true);
-             showToast("Routine created successfully!");
-          }}
-        />
-
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() => router.push('/(personal)/create-routine')}
-        >
-          <Text style={styles.createBtnText}>Create Routine List</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      <Toast 
-        visible={toastVisible} 
-        message={toastMessage} 
-        onHide={() => setToastVisible(false)} 
-      />
-    </LinearGradient>
+        </ScrollView>
+      </LinearGradient>
+    </Animated.View>
   );
 }
 
@@ -249,11 +116,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 10,
     zIndex: 10,
-  },
-  scroll: {
-    paddingHorizontal: 18,
-    paddingTop: 10, 
-    paddingBottom: 40,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -271,72 +133,63 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  tabContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 24,
-    padding: 4,
-    alignItems: 'center',
+  scroll: {
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 40,
   },
-  tab: {
-    flex: 1,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-  },
-  tabActive: { backgroundColor: '#ffffff' },
-  tabText: { color: 'rgba(255,255,255,0.7)', fontWeight: '400' },
-  tabTextActive: { color: Colors.light.primary, fontWeight: '400' },
   sectionHeader: {
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
     paddingVertical: 12,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
-    marginHorizontal: 18,
   },
   sectionTitle: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
   },
+  emptyOuter: {
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingTop: 10,
+  },
+  emptyIconWrapper: {
+    backgroundColor: 'rgba(249,168,255,0.12)',
+    padding: 30,
+    borderRadius: 100,
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySub: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+    maxWidth: '85%',
+  },
   createBtn: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 18,
+    width: '100%',
+    borderRadius: 20,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.35)',
     borderStyle: 'dashed',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   createBtnText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  emptyContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 16,
-  },
-  emptySubText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-    maxWidth: '80%',
   },
 });

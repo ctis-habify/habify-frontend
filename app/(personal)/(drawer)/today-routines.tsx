@@ -10,9 +10,11 @@ import { routineService } from '../../../services/routine.service';
 import type { Routine } from '../../../types/routine';
 
 
-import { BACKGROUND_GRADIENT } from '@/app/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getBackgroundGradient } from '@/app/theme';
 import { Toast } from '@/components/ui/toast';
 import { setAuthToken } from '@/services/api';
+import { notificationService } from '@/services/notification.service';
 import { BottomReturnButton } from '../../../components/today/bottom-return-button';
 import { TodayRoutinesList } from '../../../components/today/today-routines-list';
 
@@ -29,6 +31,8 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
+  const theme = useColorScheme() ?? 'light';
+  const screenColors = getBackgroundGradient(theme);
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Routine[]>([]);
@@ -78,7 +82,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
               ? (res as any).routines
               : [];
 
-      setItems(normalized.filter(r => {
+      const visibleUnfinished = normalized.filter(r => {
         if (!r.startTime) return true; 
 
         const now = new Date();
@@ -100,7 +104,14 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         // Show if started AND not failed AND not completed
         // Backend key is isCompleted
         return now >= start && !isFailed && !r.isCompleted; 
-      }));
+      });
+      setItems(visibleUnfinished);
+
+      const reminder = notificationService.getUnfinishedTaskReminder(visibleUnfinished.length);
+      if (reminder) {
+        setToastMessage(reminder);
+        setToastVisible(true);
+      }
     } catch (e: any) {
       console.log('Today routines load error:', e);
       setItems([]);
@@ -123,7 +134,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
       <StatusBar barStyle="light-content" />
 
       <LinearGradient
-        colors={BACKGROUND_GRADIENT}
+        colors={screenColors}
         style={StyleSheet.absoluteFill}
       />
 

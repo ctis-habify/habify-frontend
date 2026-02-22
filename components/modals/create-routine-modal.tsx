@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Alert,
   DeviceEventEmitter,
+  Keyboard,
   ScrollView,
   Text,
   TextInput,
@@ -33,19 +34,26 @@ interface CreateRoutineModalProps {
   isCollaborativeMode?: boolean;
 }
 
-export function CreateRoutineModal({ 
-  onClose, 
+export function CreateRoutineModal({
+  onClose,
   onCreated,
-  initialRoutineListId, 
-  initialTitle, 
+  initialRoutineListId,
+  initialTitle,
   initialCategoryId,
-  isCollaborativeMode = false
+  isCollaborativeMode = false,
 }: CreateRoutineModalProps): React.ReactElement {
   const router = useRouter();
   const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const styles = useMemo(() => getRoutineFormStyles(theme), [theme]);
+  const actionColor = colors.primary;
+  const screenColors =
+    theme === 'dark'
+      ? (['#1E1B4B', '#0F172A'] as const)
+      : isCollaborativeMode
+        ? (['#2e1065', '#581c87'] as const)
+        : getBackgroundGradient(theme);
 
   const isEditMode = !!initialRoutineListId;
 
@@ -59,21 +67,28 @@ export function CreateRoutineModal({
 
   // --- Form states ---
   const [category, setCategory] = useState<number | null>(null);
-  
+
   // Collaborative State
   const [isCollaborative, setIsCollaborative] = useState(isCollaborativeMode);
 
   useEffect(() => {
-      setIsCollaborative(isCollaborativeMode);
+    setIsCollaborative(isCollaborativeMode);
   }, [isCollaborativeMode]);
 
   // Routine List Title
-  const [routineListTitle, setRoutineListTitle] = useState("");
+  const [routineListTitle, setRoutineListTitle] = useState('');
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [titleFocused, setTitleFocused] = useState(false);
+
+  const clearInteractiveFocus = () => {
+    setTitleFocused(false);
+    setCatOpen(false);
+    Keyboard.dismiss();
+  };
 
   const handleClose = () => (onClose ? onClose() : router.back());
-  const onCatOpen = useCallback(() => { }, []);
+  const onCatOpen = useCallback(() => {}, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -98,7 +113,7 @@ export function CreateRoutineModal({
   }, [initialRoutineListId, initialTitle, initialCategoryId]);
 
   useEffect(() => {
-    console.log("Current selected category ID:", category);
+    console.log('Current selected category ID:', category);
   }, [category]);
 
   const categoryItems = useMemo(() => {
@@ -119,7 +134,7 @@ export function CreateRoutineModal({
     try {
       const type = isCollaborativeMode ? 'collaborative' : 'personal';
       const created = await categoryService.createCategory(newCategoryName.trim(), type);
-      console.log("Created Category Response:", created);
+      console.log('Created Category Response:', created);
       const newId = created.categoryId ?? (created as any).id;
       setCategories((prev) => [...prev, created]);
       setCategory(Number(newId));
@@ -136,50 +151,52 @@ export function CreateRoutineModal({
   };
 
   const handleDeleteCategory = async () => {
-    console.log("[DEBUG] Silme butonu basıldı. Kategori ID:", category);
+    console.log('[DEBUG] Silme butonu basıldı. Kategori ID:', category);
 
     if (category === null || category === undefined) {
-      Alert.alert("Error", "Please select a category to delete.");
+      Alert.alert('Error', 'Please select a category to delete.');
       return;
     }
 
     const targetId = Number(category);
 
-    const catToDelete = categories.find(c => {
+    const catToDelete = categories.find((c) => {
       const cid = (c as any).categoryId ?? (c as any).id;
       return Number(cid) === targetId;
     });
 
     if (!catToDelete) {
-      console.log("[DEBUG] Kategori listede bulunamadı. Liste:", categories);
-      Alert.alert("Error", "Selected category not found.");
+      console.log('[DEBUG] Kategori listede bulunamadı. Liste:', categories);
+      Alert.alert('Error', 'Selected category not found.');
       return;
     }
 
     Alert.alert(
-      "Delete Category",
+      'Delete Category',
       `Are you sure you want to delete "${catToDelete.name}"? This action cannot be undone.`,
       [
-        { text: "Cancel", style: "cancel" },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: "Delete",
-          style: "destructive",
+          text: 'Delete',
+          style: 'destructive',
           onPress: async () => {
-            console.log("[DEBUG] Silme işlemi başlatılıyor. ID:", targetId);
+            console.log('[DEBUG] Silme işlemi başlatılıyor. ID:', targetId);
             setIsDeleting(true);
             try {
               await categoryService.deleteCategory(targetId, token || '');
 
-              setCategories(prev => prev.filter(c => {
-                const cid = (c as any).categoryId ?? (c as any).id;
-                return Number(cid) !== targetId;
-              }));
+              setCategories((prev) =>
+                prev.filter((c) => {
+                  const cid = (c as any).categoryId ?? (c as any).id;
+                  return Number(cid) !== targetId;
+                }),
+              );
               setCategory(null);
 
-              Alert.alert("Success", "Category deleted successfully.");
+              Alert.alert('Success', 'Category deleted successfully.');
             } catch (error: unknown) {
-              console.error("[DEBUG] Silme Hatası Detayı:", error);
-              let errorMsg = "Unknown error occurred.";
+              console.error('[DEBUG] Silme Hatası Detayı:', error);
+              let errorMsg = 'Unknown error occurred.';
               if (typeof error === 'object' && error !== null && 'response' in error) {
                 errorMsg = (error as any).response?.data?.message || errorMsg;
               } else if (error instanceof Error) {
@@ -187,15 +204,15 @@ export function CreateRoutineModal({
               }
 
               Alert.alert(
-                "Error",
-                `Failed to delete category: ${errorMsg}\n\nNote: You cannot delete a category if it has routine lists.`
+                'Error',
+                `Failed to delete category: ${errorMsg}\n\nNote: You cannot delete a category if it has routine lists.`,
               );
             } finally {
               setIsDeleting(false);
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
 
@@ -216,19 +233,19 @@ export function CreateRoutineModal({
 
     setIsSubmitting(true);
     try {
-        if (initialRoutineListId) {
-          // UPDATE MODE
-          await routineService.updateRoutineList(
-            initialRoutineListId,
-            routineListTitle.trim(),
-            Number(category),
-            token || ''
-          );
-          
-          DeviceEventEmitter.emit('SHOW_TOAST', 'List updated successfully!');
-          if (onCreated) onCreated();
-          handleClose();
-        } else {
+      if (initialRoutineListId) {
+        // UPDATE MODE
+        await routineService.updateRoutineList(
+          initialRoutineListId,
+          routineListTitle.trim(),
+          Number(category),
+          token || '',
+        );
+
+        DeviceEventEmitter.emit('SHOW_TOAST', 'List updated successfully!');
+        if (onCreated) onCreated();
+        handleClose();
+      } else {
         // CREATE MODE
         const routineList = await routineService.createRoutineList(
           Number(category),
@@ -237,11 +254,11 @@ export function CreateRoutineModal({
         console.log('CreateRoutineList response:', routineList);
 
         DeviceEventEmitter.emit('SHOW_TOAST', 'Routine list created successfully!');
-        
+
         if (onCreated) {
-           onCreated();
+          onCreated();
         }
-        
+
         handleClose();
       }
     } catch (err: unknown) {
@@ -254,7 +271,9 @@ export function CreateRoutineModal({
         const msg = err.response?.data?.message;
         Alert.alert(
           'Error',
-          Array.isArray(msg) ? msg.join('\n') : (msg ?? (isEditMode ? 'Failed to update list' : 'Failed to create routine list')),
+          Array.isArray(msg)
+            ? msg.join('\n')
+            : (msg ?? (isEditMode ? 'Failed to update list' : 'Failed to create routine list')),
         );
       } else {
         console.log('Create routine/list failed UNKNOWN:', err);
@@ -266,21 +285,22 @@ export function CreateRoutineModal({
   };
 
   const dropDownStyle = {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
+    backgroundColor: colors.card,
+    borderColor: catOpen ? colors.primary : 'transparent',
     borderRadius: 12,
     minHeight: 50,
   };
 
   return (
-    <LinearGradient colors={getBackgroundGradient(theme)} style={styles.screen}>
+    <LinearGradient colors={screenColors} style={styles.screen}>
       <View style={styles.outerWrapper}>
         <View style={[styles.sheet, { overflow: 'visible' }]}>
           <ScrollView
             contentContainerStyle={[styles.content, { paddingBottom: 60 }]}
             nestedScrollEnabled
-            keyboardShouldPersistTaps="handled"
+            keyboardShouldPersistTaps="never"
             scrollEnabled={!catOpen}
+            onTouchStart={clearInteractiveFocus}
           >
             <View style={styles.headerRow}>
               <Text style={styles.title}>{isEditMode ? 'Edit List' : 'Create Routine List'}</Text>
@@ -307,7 +327,7 @@ export function CreateRoutineModal({
                   placeholderStyle={{ color: colors.icon }}
                   listMode="SCROLLVIEW"
                   dropDownContainerStyle={{
-                    backgroundColor: colors.background,
+                    backgroundColor: colors.card,
                     borderColor: colors.border,
                   }}
                   searchPlaceholder="Search..."
@@ -321,7 +341,15 @@ export function CreateRoutineModal({
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 {category !== null && (
                   <TouchableOpacity
-                    style={[styles.addIconBtn, { width: 44, height: 44, borderRadius: 22, backgroundColor: theme === 'dark' ? '#7f1d1d' : '#fee2e2' }]}
+                    style={[
+                      styles.addIconBtn,
+                      {
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        backgroundColor: theme === 'dark' ? '#7f1d1d' : '#fee2e2',
+                      },
+                    ]}
                     onPress={handleDeleteCategory}
                     disabled={isDeleting}
                     hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
@@ -335,7 +363,15 @@ export function CreateRoutineModal({
                 )}
 
                 <TouchableOpacity
-                  style={[styles.addIconBtn, { width: 44, height: 44, borderRadius: 22 }]}
+                  style={[
+                    styles.addIconBtn,
+                    {
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      backgroundColor: actionColor,
+                    },
+                  ]}
                   onPress={() => setShowNewCategoryInput((prev) => !prev)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
@@ -348,10 +384,7 @@ export function CreateRoutineModal({
             {showNewCategoryInput && (
               <View style={{ marginTop: 10 }}>
                 <View
-                  style={[
-                    styles.inputContainer,
-                    { flexDirection: 'row', alignItems: 'center' },
-                  ]}
+                  style={[styles.inputContainer, { flexDirection: 'row', alignItems: 'center' }]}
                 >
                   <TextInput
                     value={newCategoryName}
@@ -369,32 +402,48 @@ export function CreateRoutineModal({
 
             {/* Routine List Title */}
             <Text style={[styles.sectionLabel, { marginTop: 20 }]}>List Title</Text>
-            <View style={[styles.inputContainer]}>
+            <View
+              style={[
+                styles.inputContainer,
+                { borderColor: titleFocused ? colors.primary : 'transparent' },
+              ]}
+            >
               <TextInput
                 value={routineListTitle}
                 onChangeText={setRoutineListTitle}
                 placeholder="e.g. Morning Routine"
                 placeholderTextColor={colors.icon}
                 style={[styles.textInput]}
+                onFocus={() => setTitleFocused(true)}
+                onBlur={() => setTitleFocused(false)}
               />
             </View>
 
             {/* Collaborative Toggle */}
             <View style={{ marginTop: 20 }}>
-                 <AnimatedToggle 
-                    label="Make this a Collaborative Routine"
-                    isEnabled={isCollaborative}
-                    onToggle={() => setIsCollaborative(!isCollaborative)}
-                    activeColor="#06b6d4" // Cyan-500
-                 />
-                 <Text style={{ fontSize: 12, color: Colors.light.icon, marginLeft: 2, marginTop: -5 }}>
-                    Allow others to join this routine and track progress together.
-                 </Text>
+              <AnimatedToggle
+                label="Make this as Collaborative Routine"
+                isEnabled={isCollaborative}
+                onToggle={() => setIsCollaborative(!isCollaborative)}
+                activeColor={actionColor}
+                labelColor={theme === 'dark' ? '#ffffff' : colors.text}
+              />
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme === 'dark' ? '#ffffff' : colors.icon,
+                  marginLeft: 2,
+                  marginTop: -5,
+                  opacity: 0.9,
+                }}
+              >
+                Allow others to join this routine and track progress together.
+              </Text>
             </View>
 
             {/* Create Button */}
             <TouchableOpacity
-              style={[styles.createBtn, { marginTop: 40 }]}
+              style={[styles.createBtn, { marginTop: 40, backgroundColor: actionColor }]}
               onPress={handleSave}
               disabled={isSubmitting}
             >
