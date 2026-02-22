@@ -36,6 +36,13 @@ export default function DrawerLayout(): React.ReactElement {
           drawerIcon: ({ color, size }) => <Ionicons name="person-add-outline" size={size} color={color} />,
         }}
       />
+      <Drawer.Screen
+        name="friends"
+        options={{
+          drawerLabel: "Friends",
+          drawerIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
+        }}
+      />
     </Drawer>
   );
 }
