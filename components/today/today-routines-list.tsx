@@ -35,7 +35,7 @@ export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, o
   const fetchUserData = useCallback(async () => {
     try {
       if (!authUser?.id) return;
-      const user = await userService.getUserById(authUser.id);
+      const user = await userService.getCurrentUser();
       setPoints(user.total_xp ?? user.totalXp ?? 0);
     } catch (error) {
       console.error("Failed to fetch user XP", error);

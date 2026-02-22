@@ -40,7 +40,7 @@ export function useCreateRoutine(initialCategoryId?: string) {
   const loadCategories = useCallback(async () => {
     try {
       setLoadingCategories(true);
-      const data = await categoryService.getCategories('collaborative');
+      const data = await categoryService.getCategories('collaborative', token || undefined);
       setCategories(data);
     } catch (e) {
       console.error(e);

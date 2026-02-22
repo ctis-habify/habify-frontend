@@ -4,25 +4,24 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Platform,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Platform,
+    ScrollView,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getBackgroundGradient } from "../../app/theme";
-import { CreateRoutineDto, FrequencyType } from "../../types/routine";
+import { FrequencyType } from "../../types/routine";
 import { getRoutineFormStyles } from "../routine-form-styles";
-import { AnimatedToggle } from "../ui/animated-toggle";
 
 type Props = {
   visible: boolean;
@@ -201,18 +200,6 @@ export function CreateRoutineInListModal({ visible, routineListId, onClose, onCr
                 </View>
               )}
 
-              {/* Collaborative Toggle */}
-               <View style={{ marginTop: 20 }}>
-                     <AnimatedToggle 
-                        label="Make this a Collaborative Routine"
-                        isEnabled={isCollaborative}
-                        onToggle={() => setIsCollaborative(!isCollaborative)}
-                        activeColor="#06b6d4" // Cyan-500
-                     />
-                     <Text style={{ fontSize: 12, color: Colors.light.icon, marginLeft: 2, marginTop: -5 }}>
-                        Allow others to join this routine and track progress together.
-                     </Text>
-                </View>
 
               {/* Times (Only show if DAILY + hasSpecificTime) */}
               {frequency === 'DAILY' && hasSpecificTime && (

@@ -59,7 +59,7 @@ export default function ProfileScreen() {
                     <Ionicons name="menu" size={24} color="#fff" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Profile</Text>
-                <View style={{ width: 44 }} /> {/* Spacer matching menu button size */}
+                <View style={{ width: 44 }} />
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
