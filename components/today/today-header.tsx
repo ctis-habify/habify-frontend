@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
@@ -11,6 +12,9 @@ type Props = {
 };
 
 export function TodayHeader({points, loading}: Props): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
   
   const getLevel = (pts: number) => {
     if (pts >= 100) return { label: "Pro", icon: "trophy-outline", color: "#FFD700" }; 
@@ -22,16 +26,24 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card }]}>
       {/* ... header row ... */}
       <View style={styles.headerRow}>
         
         <View>
-          <Text style={styles.dateText}>{today}</Text>
-          <Text style={styles.title}>Today's Routine</Text>
+          <Text style={[styles.dateText, { color: colors.icon }]}>{today}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Today's Routine</Text>
         </View>
         
-        <View style={styles.levelBadge}>
+        <View
+          style={[
+            styles.levelBadge,
+            {
+              backgroundColor: isDark ? colors.surface : '#fff',
+              borderColor: isDark ? colors.border : 'rgba(0,0,0,0.05)',
+            },
+          ]}
+        >
             <Ionicons name={level.icon as any} size={24} color={level.color} style={{ marginRight: 8 }} />
             <Text style={[styles.levelText, { color: level.color }]}>
                 {points} Points
@@ -39,11 +51,11 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
         </View>
       </View>
 
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={Colors.light.primary} />
+          <ActivityIndicator color={colors.primary} />
         </View>
       ) : null}
     </View>
@@ -55,7 +67,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
-    backgroundColor: Colors.light.background,
   },
   headerRow: {
     flexDirection: 'row',
@@ -67,7 +78,6 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 13,
     fontWeight: "400",
-    color: Colors.light.icon,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -75,7 +85,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "400",
-    color: Colors.light.text,
     letterSpacing: -0.5,
   },
   levelBadge: {
@@ -99,7 +108,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.light.border,
     marginBottom: 10,
   },
   loadingWrap: { paddingVertical: 10 },

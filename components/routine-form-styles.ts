@@ -6,7 +6,7 @@ type ThemeKey = 'light' | 'dark';
 export function getRoutineFormStyles(theme: ThemeKey = 'light') {
   const colors = Colors[theme];
   const TEXT_COLOR = colors.text;
-  const INPUT_BG = colors.background;
+  const INPUT_BG = colors.card;
 
   return StyleSheet.create({
     screen: {

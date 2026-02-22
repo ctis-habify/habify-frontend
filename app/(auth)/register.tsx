@@ -4,6 +4,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { TextInput } from '@/components/ui/text-input';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
@@ -15,6 +16,8 @@ import { authService } from '../../services/auth.service';
 
 export default function SignupScreen(): React.ReactElement {
   const router = useRouter(); 
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -104,10 +107,10 @@ export default function SignupScreen(): React.ReactElement {
   return (
     <AuthLayout>
       <TouchableOpacity 
-        style={styles.backButton} 
+        style={[styles.backButton, { backgroundColor: colors.surface }]} 
         onPress={() => router.back()}
       >
-        <Ionicons name="chevron-back" size={24} color={Colors.light.text} />
+        <Ionicons name="chevron-back" size={24} color={colors.text} />
       </TouchableOpacity>
 
       <AuthHeader />
@@ -133,13 +136,16 @@ export default function SignupScreen(): React.ReactElement {
 
         {/* Birth Date Picker */}
         <View style={{ marginBottom: 16 }}>
-          <ThemedText type="label" style={styles.dropdownLabel}>Birth Date</ThemedText>
+          <ThemedText type="label" style={[styles.dropdownLabel, { color: colors.icon }]}>Birth Date</ThemedText>
           <TouchableOpacity
-            style={styles.dateButton}
+            style={[
+              styles.dateButton,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
             onPress={() => setShowDatePicker(true)}
           >
-             <Ionicons name="calendar-outline" size={20} color={Colors.light.icon} style={{ marginRight: 10 }} />
-             <Text style={birthDate ? styles.dateText : styles.placeholderText}>
+             <Ionicons name="calendar-outline" size={20} color={colors.icon} style={{ marginRight: 10 }} />
+             <Text style={birthDate ? [styles.dateText, { color: colors.text }] : [styles.placeholderText, { color: colors.icon }]}>
                {birthDate || 'YYYY-MM-DD'}
              </Text>
           </TouchableOpacity>
@@ -148,10 +154,10 @@ export default function SignupScreen(): React.ReactElement {
              Platform.OS === 'ios' ? (
                 <Modal transparent animationType="fade">
                    <View style={styles.modalOverlay}>
-                      <View style={styles.datePickerContainer}>
-                         <View style={styles.pickerHeader}>
+                      <View style={[styles.datePickerContainer, { backgroundColor: colors.card }]}>
+                         <View style={[styles.pickerHeader, { borderBottomColor: colors.border }]}>
                             <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                              <Text style={{ color: Colors.light.primary, fontWeight: '600' }}>Done</Text>
+                              <Text style={{ color: colors.primary, fontWeight: '600' }}>Done</Text>
                             </TouchableOpacity>
                          </View>
                          <DateTimePicker
@@ -188,7 +194,7 @@ export default function SignupScreen(): React.ReactElement {
         </View>
 
         <View style={{ marginBottom: 16, zIndex: 5000 }}>
-          <ThemedText type="label" style={styles.dropdownLabel}>Gender</ThemedText>
+          <ThemedText type="label" style={[styles.dropdownLabel, { color: colors.icon }]}>Gender</ThemedText>
           <DropDownPicker
             open={genderOpen}
             value={gender}
@@ -200,11 +206,18 @@ export default function SignupScreen(): React.ReactElement {
             setOpen={setGenderOpen}
             setValue={setGender}
             placeholder="Select Gender"
-            style={styles.dropdown}
-            dropDownContainerStyle={styles.dropdownContainer}
-            placeholderStyle={styles.placeholderStyle}
-            textStyle={styles.dropdownText}
+            style={[
+              styles.dropdown,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+            dropDownContainerStyle={[
+              styles.dropdownContainer,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+            placeholderStyle={[styles.placeholderStyle, { color: colors.icon }]}
+            textStyle={[styles.dropdownText, { color: colors.text }]}
             listMode="SCROLLVIEW"
+            theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
           />
         </View>
 
@@ -219,7 +232,9 @@ export default function SignupScreen(): React.ReactElement {
 
         {/* Avatar Selection */}
         <View style={{ marginBottom: 20 }}>
-          <ThemedText type="label" style={{ marginBottom: 12, marginLeft: 4 }}>Select Avatar</ThemedText>
+          <ThemedText type="label" style={{ marginBottom: 12, marginLeft: 4, color: colors.icon }}>
+            Select Avatar
+          </ThemedText>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             {AVATARS.map((av) => (
               <TouchableOpacity
@@ -227,14 +242,19 @@ export default function SignupScreen(): React.ReactElement {
                 onPress={() => setSelectedAvatar(av.id)}
                 style={{
                   borderWidth: 3,
-                  borderColor: selectedAvatar === av.id ? Colors.light.primary : 'transparent',
+                  borderColor: selectedAvatar === av.id ? colors.primary : 'transparent',
                   borderRadius: 30, // fully rounded padding
                   padding: 2,
                 }}
               >
                <Image 
                  source={{ uri: av.uri }} 
-                 style={{ width: 45, height: 45, borderRadius: 22.5, backgroundColor: '#f0f0f0' }} 
+                 style={{
+                   width: 45,
+                   height: 45,
+                   borderRadius: 22.5,
+                   backgroundColor: colors.surface,
+                 }} 
                />
               </TouchableOpacity>
             ))}
@@ -268,7 +288,6 @@ const styles = StyleSheet.create({
   dropdownLabel: {
     marginBottom: 8,
     marginLeft: 4,
-    color: Colors.light.icon,
   },
   dropdown: {
     backgroundColor: Colors.light.surface,
@@ -315,7 +334,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   datePickerContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.light.card,
     borderRadius: 12,
     width: '90%',
     padding: 20,

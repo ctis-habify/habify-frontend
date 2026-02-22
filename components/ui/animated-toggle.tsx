@@ -13,6 +13,7 @@ interface AnimatedToggleProps {
   onToggle: () => void;
   activeColor?: string;
   inactiveColor?: string;
+  labelColor?: string;
 }
 
 const TOGGLE_WIDTH = 50;
@@ -26,6 +27,7 @@ export function AnimatedToggle({
   onToggle,
   activeColor = '#06b6d4', // Cyan as default active
   inactiveColor = '#e5e7eb',
+  labelColor = '#374151',
 }: AnimatedToggleProps) {
   const progress = useSharedValue(isEnabled ? 1 : 0);
 
@@ -63,7 +65,7 @@ export function AnimatedToggle({
   return (
     <TouchableWithoutFeedback onPress={onToggle}>
       <View style={styles.container}>
-        {label && <Text style={styles.label}>{label}</Text>}
+        {label && <Text style={[styles.label, { color: labelColor }]}>{label}</Text>}
         <Animated.View style={[styles.track, trackStyle]}>
           <Animated.View style={[styles.circle, circleStyle]} />
         </Animated.View>

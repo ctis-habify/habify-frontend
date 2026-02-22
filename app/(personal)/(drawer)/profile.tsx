@@ -1,6 +1,7 @@
-import { BACKGROUND_GRADIENT } from '@/app/theme';
+import { getBackgroundGradient } from '@/app/theme';
 import { FriendList } from '@/components/profile/FriendList';
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,6 +15,7 @@ export default function ProfileScreen() {
     const { user } = useAuth();
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
+    const theme = useColorScheme() ?? 'light';
 
     const displayName = user?.name || 'User';
     const displayEmail = user?.email || 'user@example.com';
@@ -49,7 +51,7 @@ export default function ProfileScreen() {
     const avatarUrl = getAvatarUrl(user?.avatar);
 
     return (
-        <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.container}>
+        <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
             {/* Header with Menu Button */}
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <TouchableOpacity
@@ -222,5 +224,4 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.7)',
     },
 });
-
 

@@ -1,9 +1,10 @@
-import { BACKGROUND_GRADIENT } from '@/app/theme';
+import { getBackgroundGradient } from '@/app/theme';
 import { EditProfileModal } from '@/components/settings/edit-profile-modal';
 import { SettingsItem } from '@/components/settings/settings-item';
 import { SettingsSection } from '@/components/settings/settings-section';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeControl } from '@/hooks/use-color-scheme';
 import { userService } from '@/services/user.service';
 import { User, UserUpdateDto } from '@/types/user';
@@ -21,6 +22,7 @@ export default function SettingsScreen(): React.ReactElement {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { user, logout, updateUser } = useAuth();
+  const colorScheme = useColorScheme() ?? 'light';
   const { theme, toggleTheme } = useThemeControl();
   const [modalVisible, setModalVisible] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -85,7 +87,7 @@ export default function SettingsScreen(): React.ReactElement {
   const handleCloseModal = useCallback(() => setModalVisible(false), []);
 
   return (
-    <LinearGradient colors={BACKGROUND_GRADIENT} style={styles.container}>
+    <LinearGradient colors={getBackgroundGradient(colorScheme)} style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity

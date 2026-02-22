@@ -1,5 +1,6 @@
-import React from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import React from 'react';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 type Props = {
   label: string;
@@ -7,10 +8,17 @@ type Props = {
 };
 
 export function BottomReturnButton({ label, onPress }: Props): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const buttonBg = theme === 'dark' ? '#1E1B4B' : '#7C3AED';
+
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.btn, pressed && { opacity: 0.85 }]}
+      style={({ pressed }) => [
+        styles.btn,
+        { backgroundColor: buttonBg },
+        pressed && { opacity: 0.85 },
+      ]}
     >
       <Text style={styles.text}>{label}</Text>
     </Pressable>
@@ -19,23 +27,22 @@ export function BottomReturnButton({ label, onPress }: Props): React.ReactElemen
 
 const styles = StyleSheet.create({
   btn: {
-    position: "absolute",
+    position: 'absolute',
     left: 24,
     right: 24,
     bottom: 18,
     height: 54,
     borderRadius: 18, // Matched from routines.tsx
-    backgroundColor: 'rgba(255,255,255,0.1)', // Matched
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)', // Matched
     borderStyle: 'dashed', // Matched
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     // Removed Shadows to match the flat/dashed look
   },
-  text: { 
-    color: "#ffffff", 
-    fontSize: 16, 
-    fontWeight: "400" 
+  text: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '400',
   },
 });

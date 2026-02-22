@@ -1,18 +1,30 @@
 import { CustomDrawerContent } from '@/components/navigation/custom-drawer-content';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
 import React from 'react';
 
 export default function DrawerLayout(): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+
   return (
     <Drawer
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
-        drawerActiveTintColor: Colors.light.primary,
-        drawerInactiveTintColor: Colors.light.text,
-        drawerActiveBackgroundColor: 'rgba(124, 58, 237, 0.1)',
+        drawerType: 'front',
+        drawerStyle: {
+          width: '100%',
+          backgroundColor: colors.background,
+        },
+        sceneStyle: {
+          backgroundColor: theme === 'dark' ? '#1E1B4B' : '#4c1d95',
+        },
+        drawerActiveTintColor: colors.primary,
+        drawerInactiveTintColor: theme === 'dark' ? '#E5E7EB' : colors.text,
+        drawerActiveBackgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(124, 58, 237, 0.1)',
         drawerLabelStyle: {
           marginLeft: 0,
           fontWeight: '600',
@@ -44,9 +56,16 @@ export default function DrawerLayout(): React.ReactElement {
       <Drawer.Screen
         name="settings"
         options={{
-          drawerItemStyle: { display: 'none' },
           drawerLabel: "Settings",
           drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} />,
+        }}
+      />
+      <Drawer.Screen
+        name="notifications"
+        options={{
+          drawerItemStyle: { display: 'none' },
+          drawerLabel: "Notifications",
+          drawerIcon: ({ color, size }) => <Ionicons name="notifications-outline" size={size} color={color} />,
         }}
       />
     </Drawer>
