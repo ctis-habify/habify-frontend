@@ -6,12 +6,14 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DeviceEventEmitter,
+  Animated as RNAnimated,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Themes & Components
 import { getBackgroundGradient } from '@/app/theme';
@@ -41,6 +43,32 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [toastMessage, setToastMessage] = useState('');
   const [activeTab, setActiveTab] = useState('Collaborative');
   const isSwitchingRef = useRef(false);
+
+  const fadeAnim = useRef(new RNAnimated.Value(0)).current;
+  const translateXAnim = useRef(new RNAnimated.Value(-14)).current;
+  const scaleAnim = useRef(new RNAnimated.Value(0.985)).current;
+
+  useEffect(() => {
+    RNAnimated.parallel([
+      RNAnimated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+      RNAnimated.timing(translateXAnim, {
+        toValue: 0,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+      RNAnimated.spring(scaleAnim, {
+        toValue: 1,
+        stiffness: 160,
+        damping: 18,
+        mass: 1,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, scaleAnim, translateXAnim]);
 
   // 3. Callbacks (Memoized)
   const showToast = useCallback((message: string) => {
@@ -101,7 +129,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
   // 5. Render
   return (
-    <View style={{ flex: 1, backgroundColor: screenGradient[0] }}>
+    <RNAnimated.View
+      style={{
+        flex: 1,
+        opacity: fadeAnim,
+        backgroundColor: screenGradient[0],
+        transform: [{ translateX: translateXAnim }, { scale: scaleAnim }],
+      }}
+    >
       <LinearGradient colors={screenGradient} style={styles.container}>
         {/* FIXED HEADER SECTION */}
         <View style={styles.fixedHeader}>
@@ -129,13 +164,16 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           {loading ? (
             <Text style={{ color: '#fff', textAlign: 'center', marginTop: 20 }}>Loading...</Text>
           ) : (
-            routines.map((routine) => (
-              <CollaborativeGroupCard
-                key={routine.id}
-                routine={routine}
-                accentColor={COLLABORATIVE_PRIMARY}
-              />
-            ))
+            routines.map((routine, index) => {
+              return (
+                <Animated.View
+                  key={routine.id}
+                  entering={FadeInDown.delay(index * 100).springify()}
+                >
+                  <CollaborativeGroupCard routine={routine} accentColor={COLLABORATIVE_PRIMARY} />
+                </Animated.View>
+              );
+            })
           )}
 
           {!loading && routines.length === 0 && (
@@ -173,7 +211,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           onHide={() => setToastVisible(false)}
         />
       </LinearGradient>
-    </View>
+    </RNAnimated.View>
   );
 }
 
