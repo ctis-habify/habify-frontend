@@ -2,10 +2,11 @@ import { getBackgroundGradient } from '@/app/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // UI
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
@@ -21,39 +22,22 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const [activeTab, setActiveTab] = useState('Personal');
   const isSwitchingRef = useRef(false);
 
-  // Fade animasyonu: 0 -> 1 (ekran açılırken)
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
-
-  // Tab değişimi: önce fade-out, sonra diğer route
   const handleTabSwitch = (tab: string) => {
     if (tab === activeTab || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
     setActiveTab(tab);
-    Animated.sequence([
-      Animated.delay(80),
-      Animated.timing(fadeAnim, {
-        toValue: 0.08,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+
+    Haptics.selectionAsync().catch(() => undefined);
+    setTimeout(() => {
       if (tab === 'Collaborative') router.replace('/(collaborative)/routines' as any);
       if (tab === 'Personal') router.replace('/(personal)/(drawer)/routines' as any);
       isSwitchingRef.current = false;
-    });
+    }, 90);
   };
 
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim, backgroundColor: screenGradient[0] }}>
+    <View style={{ flex: 1, backgroundColor: screenGradient[0] }}>
       <LinearGradient colors={screenGradient} style={styles.container}>
         {/* HEADER */}
         <View style={styles.fixedHeader}>
@@ -106,7 +90,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           </View>
         </ScrollView>
       </LinearGradient>
-    </Animated.View>
+    </View>
   );
 }
 

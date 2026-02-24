@@ -1,30 +1,65 @@
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { User, UserUpdateDto } from '@/types/user';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 
 export interface EditProfileModalProps {
     visible: boolean;
     onClose: () => void;
     user: User;
+    field: 'name' | 'birthDate';
     onSave: (data: UserUpdateDto) => Promise<void>;
 }
 
-export function EditProfileModal({ visible, onClose, user, onSave }: EditProfileModalProps): React.ReactElement {
-    const [name, setName] = useState(user.name);
+export function EditProfileModal({
+  visible,
+  onClose,
+  user,
+  field,
+  onSave,
+}: EditProfileModalProps): React.ReactElement {
+    const [name, setName] = useState(user.name ?? '');
+    const [birthDate, setBirthDate] = useState<Date>(
+      user.birthDate ? new Date(user.birthDate) : new Date(2000, 0, 1),
+    );
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const theme = useColorScheme() ?? 'light';
     const isDark = theme === 'dark';
+    const isEditingName = field === 'name';
+    const modalTitle = isEditingName ? 'Edit Profile' : 'Edit Birth Date';
+    const dateText = useMemo(() => birthDate.toLocaleDateString(), [birthDate]);
+
+    useEffect(() => {
+      if (!visible) return;
+      setName(user.name ?? '');
+      setBirthDate(user.birthDate ? new Date(user.birthDate) : new Date(2000, 0, 1));
+      setShowDatePicker(!isEditingName && Platform.OS === 'ios');
+    }, [visible, user.name, user.birthDate, isEditingName]);
 
     const handleSave = async () => {
-        if (!name.trim()) return;
+        if (isEditingName && !name.trim()) return;
 
         setLoading(true);
         try {
-            await onSave({ name });
+            if (isEditingName) {
+              await onSave({ name: name.trim() });
+            } else {
+              await onSave({ birthDate: birthDate.toISOString().split('T')[0] });
+            }
             onClose();
         } catch (error) {
             console.error('Failed to update profile', error);
@@ -32,6 +67,11 @@ export function EditProfileModal({ visible, onClose, user, onSave }: EditProfile
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleBirthDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+      if (selectedDate) setBirthDate(selectedDate);
+      if (Platform.OS === 'android') setShowDatePicker(false);
     };
 
     return (
@@ -57,28 +97,65 @@ export function EditProfileModal({ visible, onClose, user, onSave }: EditProfile
                     ]}
                 >
                     <View style={styles.header}>
-                        <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>Edit Profile</Text>
+                        <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>{modalTitle}</Text>
                         <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                             <Ionicons name="close" size={24} color={isDark ? "#fff" : "#000"} />
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.form}>
-                        <Text style={[styles.label, { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }]}>Full Name</Text>
-                        <TextInput
-                            style={[
+                        {isEditingName ? (
+                          <>
+                            <Text style={[styles.label, { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }]}>Full Name</Text>
+                            <TextInput
+                                style={[
+                                    styles.input,
+                                    {
+                                        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                        color: isDark ? '#fff' : '#000',
+                                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                                    }
+                                ]}
+                                value={name}
+                                onChangeText={setName}
+                                placeholder="Enter your name"
+                                placeholderTextColor={isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)"}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <Text style={[styles.label, { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }]}>Birth Date</Text>
+                            <TouchableOpacity
+                              style={[
                                 styles.input,
+                                styles.dateField,
                                 {
-                                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                    color: isDark ? '#fff' : '#000',
-                                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                                }
-                            ]}
-                            value={name}
-                            onChangeText={setName}
-                            placeholder="Enter your name"
-                            placeholderTextColor={isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)"}
-                        />
+                                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                },
+                              ]}
+                              onPress={() => setShowDatePicker(true)}
+                              activeOpacity={0.8}
+                            >
+                              <Text style={[styles.dateText, { color: isDark ? '#fff' : '#000' }]}>{dateText}</Text>
+                              <Ionicons
+                                name="calendar-outline"
+                                size={18}
+                                color={isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.55)'}
+                              />
+                            </TouchableOpacity>
+                            {showDatePicker && (
+                              <DateTimePicker
+                                value={birthDate}
+                                mode="date"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                maximumDate={new Date()}
+                                onChange={handleBirthDateChange}
+                                themeVariant={isDark ? 'dark' : 'light'}
+                              />
+                            )}
+                          </>
+                        )}
 
                         <TouchableOpacity
                             style={[styles.saveButton, loading && styles.disabledButton]}
@@ -154,6 +231,15 @@ const styles = StyleSheet.create({
         padding: 16,
         fontSize: 16,
         borderWidth: 1,
+    },
+    dateField: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    dateText: {
+      fontSize: 16,
+      fontWeight: '500',
     },
     saveButton: {
         backgroundColor: Colors.light.primary,

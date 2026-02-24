@@ -1,25 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DeviceEventEmitter,
-  Animated as RNAnimated,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Themes & Components
 import { getBackgroundGradient } from '@/app/theme';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
-import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { notificationService } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
@@ -35,7 +33,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
-  const { token } = useAuth();
 
   // 2. State
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -44,17 +41,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [toastMessage, setToastMessage] = useState('');
   const [activeTab, setActiveTab] = useState('Collaborative');
   const isSwitchingRef = useRef(false);
-
-  // Fade animasyonu
-  const fadeAnim = useRef(new RNAnimated.Value(0)).current;
-
-  useEffect(() => {
-    RNAnimated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
 
   // 3. Callbacks (Memoized)
   const showToast = useCallback((message: string) => {
@@ -78,27 +64,21 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         setLoading(false);
       }
     },
-    [token, routines.length, showToast],
+    [routines.length, showToast],
   );
 
-  // Tab Switch Handler (önce fade-out sonra diğer route)
   const handleTabSwitch = (tab: string) => {
     if (tab === activeTab || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
     setActiveTab(tab);
-    RNAnimated.sequence([
-      RNAnimated.delay(80),
-      RNAnimated.timing(fadeAnim, {
-        toValue: 0.08,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+
+    Haptics.selectionAsync().catch(() => undefined);
+    setTimeout(() => {
       if (tab === 'Personal') router.replace('/(personal)/(drawer)/routines');
       if (tab === 'Collaborative') router.replace('/(collaborative)/routines' as any);
       isSwitchingRef.current = false;
-    });
+    }, 90);
   };
 
   // 4. Effects
@@ -121,9 +101,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
   // 5. Render
   return (
-    <RNAnimated.View
-      style={{ flex: 1, opacity: fadeAnim, backgroundColor: screenGradient[0] }}
-    >
+    <View style={{ flex: 1, backgroundColor: screenGradient[0] }}>
       <LinearGradient colors={screenGradient} style={styles.container}>
         {/* FIXED HEADER SECTION */}
         <View style={styles.fixedHeader}>
@@ -151,16 +129,13 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           {loading ? (
             <Text style={{ color: '#fff', textAlign: 'center', marginTop: 20 }}>Loading...</Text>
           ) : (
-            routines.map((routine, index) => {
-              return (
-                <Animated.View
-                  key={routine.id}
-                  entering={FadeInDown.delay(index * 100).springify()}
-                >
-                  <CollaborativeGroupCard routine={routine} accentColor={COLLABORATIVE_PRIMARY} />
-                </Animated.View>
-              );
-            })
+            routines.map((routine) => (
+              <CollaborativeGroupCard
+                key={routine.id}
+                routine={routine}
+                accentColor={COLLABORATIVE_PRIMARY}
+              />
+            ))
           )}
 
           {!loading && routines.length === 0 && (
@@ -198,7 +173,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           onHide={() => setToastVisible(false)}
         />
       </LinearGradient>
-    </RNAnimated.View>
+    </View>
   );
 }
 
@@ -229,21 +204,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  sectionHeader: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    marginHorizontal: 18,
-  },
-  sectionTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
   },
   createBtn: {
     backgroundColor: 'rgba(255,255,255,0.1)',

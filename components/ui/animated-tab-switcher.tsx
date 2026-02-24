@@ -26,6 +26,27 @@ interface TabLabelProps {
   inactiveColor: string;
 }
 
+interface TabButtonProps {
+  tab: string;
+  onPress: () => void;
+  children: React.ReactNode;
+}
+
+function TabButton({ tab, onPress, children }: TabButtonProps) {
+  return (
+    <TouchableOpacity
+      key={tab}
+      style={styles.tab}
+      onPress={onPress}
+      activeOpacity={0.92}
+      accessibilityRole="button"
+      accessibilityLabel={`${tab} mode`}
+    >
+      {children}
+    </TouchableOpacity>
+  );
+}
+
 function TabLabel({
   text,
   index,
@@ -59,8 +80,8 @@ export function AnimatedTabSwitcher({
 
   useEffect(() => {
     activeIndexSV.value = withTiming(activeIndex, {
-      duration: 220,
-      easing: Easing.out(Easing.exp),
+      duration: 280,
+      easing: Easing.out(Easing.cubic),
     });
   }, [activeIndex, activeIndexSV]);
 
@@ -72,10 +93,12 @@ export function AnimatedTabSwitcher({
 
   const indicatorStyle = useAnimatedStyle(() => {
     const tabPixelWidth = containerWidthSV.value * tabWidth;
+    const maxShift = Math.max(0, tabPixelWidth - 8);
+    const translateX = Math.min(activeIndexSV.value * tabPixelWidth, maxShift);
 
     return {
-      width: tabPixelWidth,
-      transform: [{ translateX: activeIndexSV.value * tabPixelWidth }],
+      width: Math.max(0, tabPixelWidth - 8),
+      transform: [{ translateX }],
     };
   });
 
@@ -90,24 +113,17 @@ export function AnimatedTabSwitcher({
         />
 
         {/* Tab Buttons */}
-        {tabs.map((tab, index) => {
-            return (
-                <TouchableOpacity
-                    key={tab}
-                    style={styles.tab}
-                    onPress={() => onTabPress(tab)}
-                    activeOpacity={0.9}
-                >
-                    <TabLabel
-                      text={tab}
-                      index={index}
-                      activeIndexSV={activeIndexSV}
-                      activeColor={activeColor}
-                      inactiveColor={inactiveColor}
-                    />
-                </TouchableOpacity>
-            );
-        })}
+        {tabs.map((tab, index) => (
+          <TabButton key={tab} tab={tab} onPress={() => onTabPress(tab)}>
+            <TabLabel
+              text={tab}
+              index={index}
+              activeIndexSV={activeIndexSV}
+              activeColor={activeColor}
+              inactiveColor={inactiveColor}
+            />
+          </TabButton>
+        ))}
     </View>
   );
 }
@@ -116,29 +132,31 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: 48,
-    backgroundColor: 'rgba(255,255,255,0.1)', // Glassmorphism container
+    backgroundColor: 'rgba(255,255,255,0.14)',
     borderRadius: 24,
     padding: 4,
     position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   indicator: {
     position: 'absolute',
     top: 4,
     bottom: 4,
     left: 4,
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    elevation: 4,
   },
   tab: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1, // Ensure text is above indicator
+    zIndex: 1,
   },
   tabText: {
     fontSize: 15,
