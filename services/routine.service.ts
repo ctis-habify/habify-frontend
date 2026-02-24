@@ -21,18 +21,18 @@ export const routineService = {
     const res = await api.get('/routines');
     return res.data;
   },
-// Today's routines
+  // Today's routines
   async getTodayRoutines(): Promise<Routine[]> {
     const res = await api.get('/routines/today');
     return res.data; // backend 'data' içinde döndürüyorsa: res.data.data
   },
 
   // Get grouped routines
-    async getGroupedRoutines(token?: string): Promise<RoutineList[]> {
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      const res = await api.get('/routines/grouped', config); 
-      return res.data;
-    },
+  async getGroupedRoutines(token?: string): Promise<RoutineList[]> {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    const res = await api.get('/routines/grouped', config);
+    return res.data;
+  },
 
   // Get routine by ID
   async getRoutineById(routineId: string, token: string): Promise<Routine> {
@@ -41,7 +41,7 @@ export const routineService = {
     });
     return res.data;
   },
-  
+
   // Get routine lists (routine groups)
   async getRoutineLists(): Promise<RoutineList[]> {
     const res = await api.get('/routine-lists');
@@ -55,9 +55,9 @@ export const routineService = {
   async createRoutineList(categoryId: number, title: string): Promise<RoutineList> {
     const res = await api.post('/routine-lists', {
       title,
-      categoryId,         
+      categoryId,
     });
-    return res.data;        
+    return res.data;
   },
 
   // ✅ Create Routine
@@ -127,11 +127,41 @@ export const routineService = {
   },
 
   // ✅ Unified Verification Flow
-  async verifyRoutine(body: { 
-    routineId: string; 
-    objectPath: string; 
+  async verifyRoutine(body: {
+    routineId: string;
+    objectPath: string;
   }): Promise<any> {
     const res = await api.post('/routines/verify', body);
+    return res.data;
+  },
+
+  // ✅ Send Routine Invitation
+  async sendRoutineInvite(routineId: string, toUserId: string): Promise<any> {
+    const res = await api.post('/routine-invitations', { routineId, toUserId });
+    return res.data;
+  },
+
+  // ✅ Remove Member from Collaborative Routine
+  async removeMemberFromRoutine(routineId: string, userId: string): Promise<any> {
+    const res = await api.delete(`/routines/collaborative/${routineId}/members/${userId}`);
+    return res.data;
+  },
+
+  // ✅ Get Pending Routine Invitations
+  async getPendingRoutineInvites(): Promise<any[]> {
+    const res = await api.get('/routine-invitations/received');
+    return res.data;
+  },
+
+  // ✅ Accept Routine Invitation
+  async acceptRoutineInvite(invitationId: string): Promise<any> {
+    const res = await api.patch(`/routine-invitations/${invitationId}/accept`);
+    return res.data;
+  },
+
+  // ✅ Decline Routine Invitation
+  async declineRoutineInvite(invitationId: string): Promise<any> {
+    const res = await api.patch(`/routine-invitations/${invitationId}/decline`);
     return res.data;
   },
 
