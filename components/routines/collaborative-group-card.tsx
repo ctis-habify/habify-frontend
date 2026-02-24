@@ -2,14 +2,16 @@ import { Routine } from '@/types/routine';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    Alert,
     Platform,
     Share,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
+
+import { useAuth } from '@/hooks/use-auth';
+import { ManageRoutineUsersModal } from '../modals/manage-routine-users-modal';
 
 interface CollaborativeGroupCardProps {
     routine: Routine;
@@ -17,10 +19,10 @@ interface CollaborativeGroupCardProps {
     accentColor?: string;
 }
 
-export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({ 
-    routine, 
+export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
+    routine,
     onPress,
-    accentColor = '#E879F9' 
+    accentColor = '#E879F9'
 }) => {
     const {
         id,
@@ -36,7 +38,12 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
         ageRequirement,
         genderRequirement,
         xpRequirement,
+        creatorId,
     } = routine;
+
+    const { user } = useAuth();
+
+    const [isManageModalVisible, setIsManageModalVisible] = React.useState(false);
 
     const formatTime = (time?: string) => {
         if (!time) return '--:--';
@@ -55,12 +62,12 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     };
 
     const handleManageUsers = () => {
-        Alert.alert("Manage Users", "Member management feature coming soon!");
+        setIsManageModalVisible(true);
     };
 
     return (
-        <TouchableOpacity 
-            style={styles.card} 
+        <TouchableOpacity
+            style={styles.card}
             activeOpacity={onPress ? 0.8 : 1}
             onPress={onPress ? () => onPress(id) : undefined}
             disabled={!onPress}
@@ -73,19 +80,19 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                 {(!!routine.categoryName || !!(routine as any).category) && (
                     <View style={{ marginRight: 8 }}>
                         <Text style={[styles.categoryText, { color: accentColor, opacity: 0.8 }]}>
-                            {(typeof (routine as any).category === 'string' 
-                                ? (routine as any).category 
+                            {(typeof (routine as any).category === 'string'
+                                ? (routine as any).category
                                 : (routine as any).category?.name || routine.categoryName || ''
                             ).toUpperCase()}
                         </Text>
                     </View>
                 )}
-                    <View style={styles.keyPill}>
-                        <Ionicons name={isPublic ? "lock-open" : "lock-closed"} size={12} color="#fff" style={{ marginRight: 4 }} />
-                        <Text style={[styles.categoryText, { color: isPublic ? accentColor : '#e2e8f0' }]}>
-                            {isPublic ? 'PUBLIC' : 'PRIVATE'}
-                        </Text>
-                    </View>
+                <View style={styles.keyPill}>
+                    <Ionicons name={isPublic ? "lock-open" : "lock-closed"} size={12} color="#fff" style={{ marginRight: 4 }} />
+                    <Text style={[styles.categoryText, { color: isPublic ? accentColor : '#e2e8f0' }]}>
+                        {isPublic ? 'PUBLIC' : 'PRIVATE'}
+                    </Text>
+                </View>
             </View>
 
             {/* Description */}
@@ -147,8 +154,8 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
 
             {/* Actions */}
             <View style={styles.actionRow}>
-                <TouchableOpacity 
-                    style={[styles.actionBtn, { backgroundColor: 'rgba(232, 121, 249, 0.15)' }]} 
+                <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: 'rgba(232, 121, 249, 0.15)' }]}
                     onPress={handleInvite}
                     activeOpacity={0.7}
                 >
@@ -156,16 +163,24 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                     <Text style={[styles.actionBtnText, { color: '#E879F9' }]}>Invite</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
-                    style={[styles.actionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]} 
-                    onPress={handleManageUsers}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons name="people" size={18} color="#38bdf8" />
-                    <Text style={[styles.actionBtnText, { color: '#38bdf8' }]}>Manage</Text>
-                </TouchableOpacity>
+                {user?.id === creatorId && (
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}
+                        onPress={handleManageUsers}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="people" size={18} color="#38bdf8" />
+                        <Text style={[styles.actionBtnText, { color: '#38bdf8' }]}>Manage</Text>
+                    </TouchableOpacity>
+                )}
             </View>
-        </TouchableOpacity>
+
+            <ManageRoutineUsersModal
+                visible={isManageModalVisible}
+                onClose={() => setIsManageModalVisible(false)}
+                routineId={id.toString()}
+            />
+        </TouchableOpacity >
     );
 };
 

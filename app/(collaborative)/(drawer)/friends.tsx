@@ -1,10 +1,12 @@
 import { Colors } from '@/constants/theme';
 import {
-  friendService,
   FriendRequestReceivedItem,
   FriendRequestSentItem,
+  friendService,
   UserSearchResult,
 } from '@/services/friend.service';
+import { routineService } from '@/services/routine.service';
+import { RoutineInvitationItem } from '@/types/routine-invitation';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -21,12 +23,13 @@ import {
 
 const COLLABORATIVE_PRIMARY = '#E879F9';
 
-type SegmentTab = 'invitations' | 'sent' | 'list';
+type SegmentTab = 'invitations' | 'routine-invitations' | 'sent' | 'list';
 
 export default function FriendsScreen(): React.ReactElement {
   const router = useRouter();
   const [segment, setSegment] = useState<SegmentTab>('invitations');
   const [pendingRequests, setPendingRequests] = useState<FriendRequestReceivedItem[]>([]);
+  const [routineInvitations, setRoutineInvitations] = useState<RoutineInvitationItem[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendRequestSentItem[]>([]);
   const [friendsList, setFriendsList] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,6 +42,18 @@ export default function FriendsScreen(): React.ReactElement {
       setPendingRequests(list);
     } catch {
       setPendingRequests([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchRoutineInvitations = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await routineService.getPendingRoutineInvites();
+      setRoutineInvitations(list);
+    } catch {
+      setRoutineInvitations([]);
     } finally {
       setLoading(false);
     }
@@ -71,9 +86,10 @@ export default function FriendsScreen(): React.ReactElement {
   useFocusEffect(
     useCallback(() => {
       if (segment === 'invitations') fetchInvitations();
+      if (segment === 'routine-invitations') fetchRoutineInvitations();
       if (segment === 'sent') fetchSent();
       if (segment === 'list') fetchFriends();
-    }, [segment, fetchInvitations, fetchSent, fetchFriends]),
+    }, [segment, fetchInvitations, fetchRoutineInvitations, fetchSent, fetchFriends]),
   );
 
   const handleAccept = useCallback(
@@ -116,6 +132,37 @@ export default function FriendsScreen(): React.ReactElement {
     [],
   );
 
+  const handleAcceptRoutine = useCallback(
+    async (item: RoutineInvitationItem) => {
+      setActioningId(item.id);
+      try {
+        await routineService.acceptRoutineInvite(item.id);
+        setRoutineInvitations((prev) => prev.filter((r) => r.id !== item.id));
+        Alert.alert('Success', `You have joined the collaborative routine: ${item.routineName}`);
+      } catch {
+        Alert.alert('Error', 'Could not accept routine invitation.');
+      } finally {
+        setActioningId(null);
+      }
+    },
+    [],
+  );
+
+  const handleDeclineRoutine = useCallback(
+    async (item: RoutineInvitationItem) => {
+      setActioningId(item.id);
+      try {
+        await routineService.declineRoutineInvite(item.id);
+        setRoutineInvitations((prev) => prev.filter((r) => r.id !== item.id));
+      } catch {
+        Alert.alert('Error', 'Could not decline routine invitation.');
+      } finally {
+        setActioningId(null);
+      }
+    },
+    [],
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -132,19 +179,20 @@ export default function FriendsScreen(): React.ReactElement {
           onPress={() => setSegment('invitations')}
         >
           <Ionicons
-            name="mail-outline"
+            name="person-add-outline"
             size={16}
             color={segment === 'invitations' ? '#fff' : Colors.light.icon}
           />
-          <Text
-            style={[
-              styles.segmentTabText,
-              segment === 'invitations' && styles.segmentTabTextActive,
-            ]}
-            numberOfLines={1}
-          >
-            Invitations
-          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.segmentTab, segment === 'routine-invitations' && styles.segmentTabActive]}
+          onPress={() => setSegment('routine-invitations')}
+        >
+          <Ionicons
+            name="mail-outline"
+            size={16}
+            color={segment === 'routine-invitations' ? '#fff' : Colors.light.icon}
+          />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.segmentTab, segment === 'sent' && styles.segmentTabActive]}
@@ -155,12 +203,6 @@ export default function FriendsScreen(): React.ReactElement {
             size={16}
             color={segment === 'sent' ? '#fff' : Colors.light.icon}
           />
-          <Text
-            style={[styles.segmentTabText, segment === 'sent' && styles.segmentTabTextActive]}
-            numberOfLines={1}
-          >
-            Sent
-          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.segmentTab, segment === 'list' && styles.segmentTabActive]}
@@ -171,14 +213,75 @@ export default function FriendsScreen(): React.ReactElement {
             size={16}
             color={segment === 'list' ? '#fff' : Colors.light.icon}
           />
-          <Text
-            style={[styles.segmentTabText, segment === 'list' && styles.segmentTabTextActive]}
-            numberOfLines={1}
-          >
-            Friend List
-          </Text>
         </TouchableOpacity>
       </View>
+
+      {segment === 'routine-invitations' && (
+        <>
+          {loading ? (
+            <View style={styles.centered}>
+              <ActivityIndicator size="large" color={COLLABORATIVE_PRIMARY} />
+            </View>
+          ) : routineInvitations.length === 0 ? (
+            <View style={styles.centered}>
+              <Ionicons name="mail-open-outline" size={48} color={Colors.light.icon} />
+              <Text style={styles.emptyTitle}>No routine invitations</Text>
+              <Text style={styles.emptySubtitle}>
+                When someone invites you to a routine, it appears here.
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={routineInvitations}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContent}
+              renderItem={({ item }) => (
+                <View style={styles.row}>
+                  <View style={styles.avatarWrap}>
+                    {item.fromUserAvatarUrl ? (
+                      <Image source={{ uri: item.fromUserAvatarUrl }} style={styles.avatar} />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarLetter}>
+                          {item.fromUserName ? item.fromUserName.charAt(0).toUpperCase() : '?'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.info}>
+                    <Text style={styles.name} numberOfLines={1}>
+                      {item.routineName || 'Unnamed Routine'}
+                    </Text>
+                    <Text style={styles.meta} numberOfLines={1}>
+                      from {item.fromUserName || 'Unknown'}
+                    </Text>
+                  </View>
+                  <View style={styles.actions}>
+                    <TouchableOpacity
+                      style={[styles.iconBtn, styles.acceptBtn, actioningId === item.id && styles.btnDisabled]}
+                      onPress={() => handleAcceptRoutine(item)}
+                      disabled={actioningId !== null}
+                    >
+                      {actioningId === item.id ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Ionicons name="checkmark" size={22} color="#fff" />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.iconBtn, styles.declineBtn, actioningId === item.id && styles.btnDisabled]}
+                      onPress={() => handleDeclineRoutine(item)}
+                      disabled={actioningId !== null}
+                    >
+                      <Ionicons name="close" size={22} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            />
+          )}
+        </>
+      )}
 
       {segment === 'invitations' && (
         <>
