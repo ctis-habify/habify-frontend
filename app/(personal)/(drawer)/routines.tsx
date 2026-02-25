@@ -2,6 +2,7 @@ import { getBackgroundGradient } from '@/app/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -21,39 +22,55 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const [activeTab, setActiveTab] = useState('Personal');
   const isSwitchingRef = useRef(false);
 
-  // Fade animasyonu: 0 -> 1 (ekran açılırken)
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateXAnim = useRef(new Animated.Value(14)).current;
+  const scaleAnim = useRef(new Animated.Value(0.985)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateXAnim, {
+        toValue: 0,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        stiffness: 160,
+        damping: 18,
+        mass: 1,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, scaleAnim, translateXAnim]);
 
-  // Tab değişimi: önce fade-out, sonra diğer route
   const handleTabSwitch = (tab: string) => {
     if (tab === activeTab || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
     setActiveTab(tab);
-    Animated.sequence([
-      Animated.delay(80),
-      Animated.timing(fadeAnim, {
-        toValue: 0.08,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+
+    Haptics.selectionAsync().catch(() => undefined);
+    setTimeout(() => {
       if (tab === 'Collaborative') router.replace('/(collaborative)/routines' as any);
       if (tab === 'Personal') router.replace('/(personal)/(drawer)/routines' as any);
       isSwitchingRef.current = false;
-    });
+    }, 90);
   };
 
   return (
-    <Animated.View style={{ flex: 1, opacity: fadeAnim, backgroundColor: screenGradient[0] }}>
+    <Animated.View
+      style={{
+        flex: 1,
+        opacity: fadeAnim,
+        backgroundColor: screenGradient[0],
+        transform: [{ translateX: translateXAnim }, { scale: scaleAnim }],
+      }}
+    >
       <LinearGradient colors={screenGradient} style={styles.container}>
         {/* HEADER */}
         <View style={styles.fixedHeader}>

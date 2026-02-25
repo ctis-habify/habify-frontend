@@ -25,6 +25,7 @@ export default function SettingsScreen(): React.ReactElement {
   const colorScheme = useColorScheme() ?? 'light';
   const { theme, toggleTheme } = useThemeControl();
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingField, setEditingField] = useState<'name' | 'birthDate'>('name');
   const [notifications, setNotifications] = useState(true);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
 
@@ -83,7 +84,14 @@ export default function SettingsScreen(): React.ReactElement {
 
   const handleOpenPrivacy = useCallback(() => setPrivacyModalVisible(true), []);
   const handleClosePrivacy = useCallback(() => setPrivacyModalVisible(false), []);
-  const handleOpenModal = useCallback(() => setModalVisible(true), []);
+  const handleOpenNameModal = useCallback(() => {
+    setEditingField('name');
+    setModalVisible(true);
+  }, []);
+  const handleOpenBirthDateModal = useCallback(() => {
+    setEditingField('birthDate');
+    setModalVisible(true);
+  }, []);
   const handleCloseModal = useCallback(() => setModalVisible(false), []);
 
   return (
@@ -108,7 +116,7 @@ export default function SettingsScreen(): React.ReactElement {
             icon="person-outline"
             label="Name"
             value={user?.name || 'User'}
-            onPress={handleOpenModal}
+            onPress={handleOpenNameModal}
           />
           <SettingsItem
             icon="mail-outline"
@@ -120,7 +128,7 @@ export default function SettingsScreen(): React.ReactElement {
             icon="calendar-outline"
             label="Birth Date"
             value={user?.birthDate ? new Date(user.birthDate).toLocaleDateString() : 'Not set'}
-            onPress={handleOpenModal}
+            onPress={handleOpenBirthDateModal}
           />
         </SettingsSection>
 
@@ -180,6 +188,7 @@ export default function SettingsScreen(): React.ReactElement {
           visible={modalVisible}
           onClose={handleCloseModal}
           user={user as unknown as User}
+          field={editingField}
           onSave={handleSaveProfile}
         />
       )}
