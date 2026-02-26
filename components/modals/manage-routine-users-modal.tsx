@@ -377,17 +377,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         fontSize: 14,
     },
-    badge: {
-        backgroundColor: 'rgba(232, 121, 249, 0.15)',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 8,
-    },
-    badgeText: {
-        color: COLLABORATIVE_PRIMARY,
-        fontSize: 12,
-        fontWeight: '700',
-    },
     iconBtn: {
         width: 36,
         height: 36,

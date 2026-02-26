@@ -76,8 +76,4 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         color: '#fff',
     },
-    status: {
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.6)',
-    },
 });

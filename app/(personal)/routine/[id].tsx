@@ -14,19 +14,23 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    Alert,
-    DeviceEventEmitter,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  Alert,
+  DeviceEventEmitter,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { routineService } from '../../../services/routine.service';
 
-// Time Helpers (Moved outside)
+const FREQUENCY_ITEMS = [
+  { label: 'Daily', value: 'DAILY' },
+  { label: 'Weekly', value: 'WEEKLY' },
+];
+
 const parseTime = (timeStr: string) => {
   const d = new Date();
   if (!timeStr) return d;
@@ -184,7 +188,6 @@ export default function EditRoutineScreen(): React.ReactElement {
     <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <ThemedText type="heading2" style={styles.headerTitle}>{routine_name}</ThemedText>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
           <Ionicons name="close" size={24} color={Colors.light.icon} />
         </TouchableOpacity>
@@ -352,10 +355,7 @@ export default function EditRoutineScreen(): React.ReactElement {
             <DropDownPicker
               open={freqOpen}
               value={frequency_type}
-              items={[
-                { label: 'Daily', value: 'DAILY' },
-                { label: 'Weekly', value: 'WEEKLY' },
-              ]}
+              items={FREQUENCY_ITEMS}
               setOpen={setFreqOpen}
               setValue={setFrequencyType}
               placeholder="Select Frequency"
@@ -368,7 +368,7 @@ export default function EditRoutineScreen(): React.ReactElement {
                 backgroundColor: Colors.light.background,
                 borderColor: Colors.light.border,
               }}
-              listMode="SCROLLVIEW"
+              listMode="MODAL"
             />
           </View>
 
@@ -413,7 +413,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
   },
-  headerTitle: { color: '#fff', flex: 1 },
   closeBtn: {
     padding: 8,
     borderRadius: 20,

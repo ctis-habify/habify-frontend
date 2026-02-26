@@ -23,7 +23,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filled: {
-    backgroundColor: '#2563eb',
-  },
 });

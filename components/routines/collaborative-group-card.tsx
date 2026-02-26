@@ -2,7 +2,6 @@ import { Routine } from '@/types/routine';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    Platform,
     Share,
     StyleSheet,
     Text,
@@ -209,12 +208,6 @@ const styles = StyleSheet.create({
         color: '#fff',
         letterSpacing: -0.5,
     },
-    categoryTag: {
-        alignSelf: 'flex-start',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
     categoryText: {
         fontSize: 11,
         fontWeight: '700',
@@ -228,12 +221,6 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: 12,
         marginLeft: 12,
-    },
-    keyText: {
-        color: '#fff',
-        fontSize: 13,
-        fontWeight: '700',
-        fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
     },
     description: {
         color: 'rgba(255,255,255,0.6)',

@@ -13,12 +13,11 @@ import {
   ActivityIndicator,
   Alert,
   DeviceEventEmitter,
-  Keyboard,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getBackgroundGradient } from '../../app/theme';
@@ -67,24 +66,11 @@ export function CreateRoutineModal({
   // --- Form states ---
   const [category, setCategory] = useState<number | null>(null);
 
-  // Collaborative State
-  const [isCollaborative, setIsCollaborative] = useState(isCollaborativeMode);
-
-  useEffect(() => {
-    setIsCollaborative(isCollaborativeMode);
-  }, [isCollaborativeMode]);
-
   // Routine List Title
   const [routineListTitle, setRoutineListTitle] = useState('');
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [titleFocused, setTitleFocused] = useState(false);
-
-  const clearInteractiveFocus = () => {
-    setTitleFocused(false);
-    setCatOpen(false);
-    Keyboard.dismiss();
-  };
 
   const handleClose = () => (onClose ? onClose() : router.back());
   const onCatOpen = useCallback(() => {}, []);
@@ -102,7 +88,7 @@ export function CreateRoutineModal({
       }
     };
     fetchCategories();
-  }, [isCollaborativeMode]);
+  }, [isCollaborativeMode, token]);
 
   useEffect(() => {
     if (initialRoutineListId) {
@@ -297,9 +283,8 @@ export function CreateRoutineModal({
           <ScrollView
             contentContainerStyle={[styles.content, { paddingBottom: 60 }]}
             nestedScrollEnabled
-            keyboardShouldPersistTaps="never"
+            keyboardShouldPersistTaps="handled"
             scrollEnabled={!catOpen}
-            onTouchStart={clearInteractiveFocus}
           >
             <View style={styles.headerRow}>
               <Text style={styles.title}>{isEditMode ? 'Edit List' : 'Create Routine List'}</Text>
@@ -324,7 +309,7 @@ export function CreateRoutineModal({
                   style={dropDownStyle}
                   textStyle={{ color: colors.text, fontSize: 16 }}
                   placeholderStyle={{ color: colors.icon }}
-                  listMode="SCROLLVIEW"
+                  listMode="MODAL"
                   dropDownContainerStyle={{
                     backgroundColor: colors.card,
                     borderColor: colors.border,
@@ -418,27 +403,7 @@ export function CreateRoutineModal({
               />
             </View>
 
-            {/* Collaborative Toggle */}
-            <View style={{ marginTop: 20 }}>
-              <AnimatedToggle
-                label="Make this as Collaborative Routine"
-                isEnabled={isCollaborative}
-                onToggle={() => setIsCollaborative(!isCollaborative)}
-                activeColor={actionColor}
-                labelColor={theme === 'dark' ? '#ffffff' : colors.text}
-              />
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: theme === 'dark' ? '#ffffff' : colors.icon,
-                  marginLeft: 2,
-                  marginTop: -5,
-                  opacity: 0.9,
-                }}
-              >
-                Allow others to join this routine and track progress together.
-              </Text>
-            </View>
+
 
             {/* Create Button */}
             <TouchableOpacity

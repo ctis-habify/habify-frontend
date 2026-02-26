@@ -30,3 +30,6 @@ export const BACKGROUND_GRADIENT_DARK = [
 export function getBackgroundGradient(theme: 'light' | 'dark'): readonly [string, string] {
   return theme === 'dark' ? BACKGROUND_GRADIENT_DARK : BACKGROUND_GRADIENT;
 }
+
+// Added to satisfy Expo Router (every file in `app` needs a default component in typical setups)
+export default function ThemeRoute() { return null; }

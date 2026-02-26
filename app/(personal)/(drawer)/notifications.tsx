@@ -3,9 +3,9 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FriendRequestReceivedItem, friendService } from '@/services/friend.service';
 import {
-  NotificationCategory,
-  NotificationItem,
-  notificationService,
+    NotificationCategory,
+    NotificationItem,
+    notificationService,
 } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
 import { RoutineInvitationItem } from '@/types/routine-invitation';
@@ -40,7 +40,7 @@ export default function NotificationsScreen(): React.ReactElement {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [pendingRequests, setPendingRequests] = useState<FriendRequestReceivedItem[]>([]);
   const [routineInvitations, setRoutineInvitations] = useState<RoutineInvitationItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [actioningId, setActioningId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {

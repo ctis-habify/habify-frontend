@@ -48,7 +48,7 @@ export function useCreateRoutine(initialCategoryId?: string) {
     } finally {
       setLoadingCategories(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     loadCategories();
