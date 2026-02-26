@@ -2,7 +2,7 @@ import { Colors } from '@/constants/theme';
 import { friendService, UserSearchResult } from '@/services/friend.service';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 
 const COLLABORATIVE_PRIMARY = '#E879F9';
+const SEARCH_DEBOUNCE_MS = 400;
 
 export default function AddFriendScreen(): React.ReactElement {
   const router = useRouter();
@@ -46,6 +47,16 @@ export default function AddFriendScreen(): React.ReactElement {
       setLoading(false);
     }
   }, [query]);
+
+  // Yazarken otomatik arama
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
+    const t = setTimeout(() => search(), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [query, search]);
 
   const sendRequest = useCallback(async (user: UserSearchResult) => {
     setSendingId(user.id);

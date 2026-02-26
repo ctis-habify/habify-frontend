@@ -155,10 +155,10 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           labelStyle={{ marginLeft: 0, fontWeight: '600' }}
         />
         <DrawerItem
-          label="Friend Invitations"
-          icon={({ size, color }) => <Ionicons name="person-add-outline" size={size} color={color} />}
-          onPress={() => router.push('/(collaborative)/(drawer)/add-friend')}
-          focused={pathname.includes('/(collaborative)/(drawer)/add-friend')}
+          label="Friends"
+          icon={({ size, color }) => <Ionicons name="people-outline" size={size} color={color} />}
+          onPress={() => router.push('/(collaborative)/(drawer)/friends')}
+          focused={pathname.includes('/(collaborative)/(drawer)/friends')}
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}
