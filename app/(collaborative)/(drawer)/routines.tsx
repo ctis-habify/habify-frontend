@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -41,7 +40,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('Collaborative');
+  const activeTab = 'Collaborative';
   const isSwitchingRef = useRef(false);
 
   const fadeAnim = useRef(new RNAnimated.Value(0)).current;
@@ -96,17 +95,13 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   );
 
   const handleTabSwitch = (tab: string) => {
-    if (tab === activeTab || isSwitchingRef.current) return;
+    if (tab !== 'Personal' || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
-    setActiveTab(tab);
-
-    Haptics.selectionAsync().catch(() => undefined);
-    setTimeout(() => {
-      if (tab === 'Personal') router.replace('/(personal)/(drawer)/routines');
-      if (tab === 'Collaborative') router.replace('/(collaborative)/routines' as any);
+    requestAnimationFrame(() => {
+      router.replace('/(personal)/(drawer)/routines');
       isSwitchingRef.current = false;
-    }, 90);
+    });
   };
 
   // 4. Effects
