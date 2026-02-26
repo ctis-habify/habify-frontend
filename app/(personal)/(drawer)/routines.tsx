@@ -4,10 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation, useRouter } from 'expo-router';
+import React, { useRef } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // UI
 import { CreateRoutineInListModal } from '@/components/modals/create-routine-in-list-modal';
@@ -34,71 +33,15 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : PERSONAL_GRADIENT;
-  const [activeTab, setActiveTab] = useState('Personal');
+  const activeTab = 'Personal';
   const isSwitchingRef = useRef(false);
 
-  const [loading, setLoading] = useState(true);
-  const [routineLists, setRoutineLists] = useState<RoutineList[]>([]);
-  const [selectedListForNewRoutine, setSelectedListForNewRoutine] = useState<{ listId: number; categoryId?: number | null } | null>(null);
-  const [editListParams, setEditListParams] = useState<{ listId: number; title: string; categoryId?: number } | null>(null);
-
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateXAnim = useRef(new Animated.Value(14)).current;
-  const scaleAnim = useRef(new Animated.Value(0.985)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 260,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateXAnim, {
-        toValue: 0,
-        duration: 260,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        stiffness: 160,
-        damping: 18,
-        mass: 1,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, scaleAnim, translateXAnim]);
-
-  const loadLists = useCallback(async () => {
-    try {
-      setLoading(true);
-      const token = await getToken();
-      if (token) setAuthToken(token);
-      
-      const data = await routineService.getGroupedRoutines(token || undefined);
-      setRoutineLists(data || []);
-    } catch (e) {
-      console.error('Failed to load personal routine lists', e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadLists();
-    }, [loadLists]),
-  );
-
   const handleTabSwitch = (tab: string) => {
-    if (tab === activeTab || isSwitchingRef.current) return;
+    if (tab !== 'Collaborative' || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
-    setActiveTab(tab);
-
-    Haptics.selectionAsync().catch(() => undefined);
-    setTimeout(() => {
-      if (tab === 'Collaborative') router.replace('/(collaborative)/routines' as any);
-      if (tab === 'Personal') router.replace('/(personal)/(drawer)/routines' as any);
+    requestAnimationFrame(() => {
+      router.replace('/(collaborative)/routines' as any);
       isSwitchingRef.current = false;
     }, 90);
   };
@@ -159,14 +102,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const hasNoData = !loading && routineLists.length === 0;
 
   return (
-    <Animated.View
-      style={{
-        flex: 1,
-        opacity: fadeAnim,
-        backgroundColor: screenGradient[0],
-        transform: [{ translateX: translateXAnim }, { scale: scaleAnim }],
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: screenGradient[0] }}>
       <LinearGradient colors={screenGradient} style={styles.container}>
         {/* HEADER */}
         <View style={styles.fixedHeader}>
@@ -290,7 +226,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           </Modal>
         )}
       </LinearGradient>
-    </Animated.View>
+    </View>
   );
 }
 
