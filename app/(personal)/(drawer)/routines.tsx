@@ -2,18 +2,17 @@ import { getBackgroundGradient } from '@/app/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRouter } from 'expo-router';
-import React, { useRef } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, DeviceEventEmitter, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // UI
 import { CreateRoutineInListModal } from '@/components/modals/create-routine-in-list-modal';
 import { CreateRoutineModal } from '@/components/modals/create-routine-modal';
 import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
-import { setAuthToken } from '@/services/api';
 import { routineService } from '@/services/routine.service';
 import type { RoutineList } from '@/types/routine';
 
@@ -36,11 +35,42 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const activeTab = 'Personal';
   const isSwitchingRef = useRef(false);
 
+  const [loading, setLoading] = useState(true);
+  const [routineLists, setRoutineLists] = useState<RoutineList[]>([]);
+  const [selectedListForNewRoutine, setSelectedListForNewRoutine] = useState<{ listId: number; categoryId?: number | null } | null>(null);
+  const [editListParams, setEditListParams] = useState<{ listId: number; title: string; categoryId?: number } | null>(null);
+
+  const loadLists = useCallback(async () => {
+    try {
+      setLoading(true);
+      const t = await getToken();
+      if (t) {
+        const lists = await routineService.getGroupedRoutines(t);
+        setRoutineLists(lists);
+      }
+    } catch (e: any) {
+      console.error('Error loading personal routine lists:', e);
+      Alert.alert('Error', e.message || 'Failed to load routines.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLists();
+    
+    // Refresh listener for when returning from edit/create screens
+    const sub = DeviceEventEmitter.addListener('refreshPersonalRoutines', () => {
+      loadLists();
+    });
+    return () => sub.remove();
+  }, [loadLists]);
+
   const handleTabSwitch = (tab: string) => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       router.replace('/(collaborative)/routines' as any);
       isSwitchingRef.current = false;
     }, 90);
