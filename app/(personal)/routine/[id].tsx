@@ -141,6 +141,7 @@ export default function EditRoutineScreen(): React.ReactElement {
       await routineService.updateRoutine(id, payload, token);
       
       DeviceEventEmitter.emit('SHOW_TOAST', 'Routine updated successfully!');
+      DeviceEventEmitter.emit('refreshPersonalRoutines');
       router.back();
 
     } catch (error: unknown) {
@@ -174,6 +175,7 @@ export default function EditRoutineScreen(): React.ReactElement {
           onPress: async () => {
             try {
               await routineService.deleteRoutine(id as string, token);
+              DeviceEventEmitter.emit('refreshPersonalRoutines');
               router.back();
             } catch (error: any) {
               Alert.alert('Error', error.message);
