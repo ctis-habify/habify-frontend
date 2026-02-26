@@ -12,6 +12,13 @@ interface Props {
   updateForm: (updates: Partial<CreateRoutineFormState>) => void;
 }
 
+const GENDER_OPTIONS = [
+    { label: 'No Requirement', value: 'na' },
+    { label: 'Female Only', value: 'female' },
+    { label: 'Male Only', value: 'male' },
+    { label: 'Other', value: 'other' },
+];
+
 export function StepGamification({ formState, updateForm }: Props) {
   const [genderOpen, setGenderOpen] = useState(false);
 
@@ -74,12 +81,7 @@ export function StepGamification({ formState, updateForm }: Props) {
         <DropDownPicker
             open={genderOpen}
             value={formState.genderRequirement}
-            items={[
-                { label: 'No Requirement', value: 'na' },
-                { label: 'Female Only', value: 'female' },
-                { label: 'Male Only', value: 'male' },
-                { label: 'Other', value: 'other' },
-            ]}
+            items={GENDER_OPTIONS}
             setOpen={setGenderOpen}
             setValue={(valFn) => {
                 const val = valFn instanceof Function ? valFn(formState.genderRequirement) : valFn;
@@ -90,6 +92,8 @@ export function StepGamification({ formState, updateForm }: Props) {
             dropDownContainerStyle={styles.dropdownContainer}
             textStyle={{ color: '#fff' }}
             listMode="SCROLLVIEW"
+            zIndex={2000}
+            zIndexInverse={2000}
         />
       </View>
 

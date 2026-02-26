@@ -9,8 +9,9 @@ import { ThemedView } from '../themed-view';
 
 
 type Props = {
-  tagLabel: string;
   title: string;
+  subtitle?: string;
+  categoryName?: string;
   showWeekDays?: boolean;
   routines: RoutineRowProps[];
   onPressAddRoutine?: () => void;
@@ -21,10 +22,9 @@ type Props = {
   accentColor?: string;
   variant?: 'light' | 'glass';
 };
-
 export function RoutineCategoryCard({
-  tagLabel,
   title,
+  categoryName,
   routines,
   onPressAddRoutine,
   onRoutineToggle,
@@ -45,16 +45,25 @@ export function RoutineCategoryCard({
       variant="card" 
       style={[
         styles.card, 
-        isGlass && styles.cardGlass
+        isGlass && styles.cardGlass,
+        { zIndex: menuVisible ? 999 : 1, elevation: menuVisible ? 10 : 4 }
       ]}
     >
       {/* HEADER */}
       <View style={styles.headerRow}>
-        <ThemedText type="label" style={[styles.categoryTitle, { backgroundColor: accentColor }]}>{tagLabel}</ThemedText>
-
+        <View style={styles.textWrap}>
+          <ThemedText type="default" style={[styles.title, isGlass && { color: '#fff' }]} numberOfLines={1}>
+            {title}
+          </ThemedText>
+        </View>
         <View style={styles.headerRight}>
-          <ThemedText type="default" style={[styles.title, isGlass && { color: '#fff' }]}>{title}</ThemedText>
-
+          {!!categoryName && (
+            <View style={[styles.categoryBadge, isGlass ? { backgroundColor: 'rgba(255,255,255,0.15)' } : { backgroundColor: `${accentColor}15` }]}>
+              <ThemedText style={[styles.categoryText, isGlass ? { color: '#ffffff' } : { color: accentColor }]}>
+                {categoryName}
+              </ThemedText>
+            </View>
+          )}
           {!!onPressAddRoutine && (
             <TouchableOpacity
               onPress={onPressAddRoutine}
@@ -109,7 +118,6 @@ export function RoutineCategoryCard({
       <View style={styles.divider} />
 
       {/* RUTINLER */}
-      {/* RUTINLER */}
       {routines.length === 0 ? (
         <View style={styles.emptyListContainer}>
           <ThemedText type="default" style={styles.emptyListText}>
@@ -118,7 +126,7 @@ export function RoutineCategoryCard({
         </View>
       ) : (
         routines.map((routine: RoutineRowProps, idx) => (
-          <View key={routine.id ?? routine.name ?? `${routine.name}-${idx}`}>
+          <View key={`routine-${routine.id ?? 'new'}-${idx}`}>
             <RoutineRow
               {...routine}
               isDark={isGlass}
@@ -159,46 +167,53 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 22,
-    marginBottom: 10,
+    marginBottom: 14,
+    zIndex: 10,
   },
-
-  categoryTitle: {
-    color: "#fff",
-    backgroundColor: Colors.light.primary, // Back to solid pill as requested/implied
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    overflow: 'hidden',
+  
+  textWrap: {
+    flex: 1,
+    paddingRight: 16,
   },
-
+  
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginTop: -4,
+    zIndex: 10,
   },
 
+
+
   title: {
-    color: Colors.light.text, 
-    fontSize: 20, // Larger
-    fontWeight: '500', // Reduced to Medium
-    letterSpacing: -0.5, // Tighter tracking for modern look
+    color: '#111827', 
+    fontSize: 22, 
+    fontWeight: '400', 
+    letterSpacing: 0.1, 
   },
 
   plusBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.light.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2563eb',
     alignItems: 'center',
     justifyContent: 'center',
-    opacity: 0.9,
   },
 
-
+  categoryBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 6,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
 
   divider: { height: 4 },
   lightDivider: {

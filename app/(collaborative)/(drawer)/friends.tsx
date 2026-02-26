@@ -1,9 +1,9 @@
 import { Colors } from '@/constants/theme';
 import {
-  FriendRequestReceivedItem,
-  FriendRequestSentItem,
-  friendService,
-  UserSearchResult,
+    FriendRequestReceivedItem,
+    FriendRequestSentItem,
+    friendService,
+    UserSearchResult,
 } from '@/services/friend.service';
 import { routineService } from '@/services/routine.service';
 import { RoutineInvitationItem } from '@/types/routine-invitation';
@@ -11,14 +11,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 const COLLABORATIVE_PRIMARY = '#E879F9';
@@ -501,15 +501,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   segmentTabActive: {
-    backgroundColor: COLLABORATIVE_PRIMARY,
-  },
-  segmentTabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.light.text,
-  },
-  segmentTabTextActive: {
-    color: '#fff',
+    backgroundColor: '#fff',
+    borderColor: '#e5e7eb',
   },
   centered: {
     flex: 1,

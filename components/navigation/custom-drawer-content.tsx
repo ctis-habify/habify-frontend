@@ -157,7 +157,8 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
         <DrawerItem
           label="Friend Invitations"
           icon={({ size, color }) => <Ionicons name="person-add-outline" size={size} color={color} />}
-          onPress={() => handleComingSoon('Friend Invitations')}
+          onPress={() => router.push('/(collaborative)/(drawer)/add-friend')}
+          focused={pathname.includes('/(collaborative)/(drawer)/add-friend')}
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}

@@ -6,7 +6,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Keyboard,
   Modal,
   Platform,
   ScrollView,
@@ -14,43 +13,41 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
+import { getBackgroundGradient } from '@/app/theme';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getBackgroundGradient } from '../../app/theme';
 import { FrequencyType } from '../../types/routine';
 import { getRoutineFormStyles } from '../routine-form-styles';
-import { AnimatedToggle } from '../ui/animated-toggle';
 
 type Props = {
   visible: boolean;
   routineListId: number | null;
+  categoryId?: number | null;
   onClose: () => void;
   onCreated?: () => void;
-  isCollaborativeMode?: boolean;
 };
+
+const FREQUENCY_ITEMS = [
+  { label: 'Daily', value: 'DAILY' as FrequencyType },
+  { label: 'Weekly', value: 'WEEKLY' as FrequencyType },
+];
 
 export function CreateRoutineInListModal({
   visible,
   routineListId,
+  categoryId,
   onClose,
   onCreated,
-  isCollaborativeMode = false,
 }: Props): React.ReactElement {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const styles = useMemo(() => getRoutineFormStyles(theme), [theme]);
-  const actionColor = colors.primary;
-  const screenColors =
-    theme === 'dark'
-      ? (['#1E1B4B', '#0F172A'] as const)
-      : isCollaborativeMode
-        ? (['#2e1065', '#581c87'] as const)
-        : getBackgroundGradient(theme);
+  const screenColors = theme === 'dark' ? (['#1E1B4B', '#0F172A'] as const) : getBackgroundGradient(theme);
 
   const createUtcTime = (h: number, m: number) => {
     const d = new Date();
@@ -70,23 +67,9 @@ export function CreateRoutineInListModal({
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
-  // Collaborative State
-  const [isCollaborative, setIsCollaborative] = useState(isCollaborativeMode);
-
   const [freqOpen, setFreqOpen] = useState(false);
 
-  const clearInteractiveFocus = () => {
-    setRoutineNameFocused(false);
-    setFreqOpen(false);
-    Keyboard.dismiss();
-  };
-
   const onFreqOpen = useCallback(() => {}, []);
-
-  const frequencyItems = [
-    { label: 'Daily', value: 'DAILY' as FrequencyType },
-    { label: 'Weekly', value: 'WEEKLY' as FrequencyType },
-  ];
 
   const formatTime = (d: Date) =>
     `${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}`;
@@ -119,6 +102,7 @@ export function CreateRoutineInListModal({
   };
 
   const handleCreate = async () => {
+    console.log('clicked');
     if (!validate()) return;
     setIsSubmitting(true);
     try {
@@ -133,19 +117,15 @@ export function CreateRoutineInListModal({
       const body = {
         routineListId: Number(routineListId),
         routineName: routineName.trim(),
-        frequencyType: frequency,
+        frequencyType: frequency.charAt(0).toUpperCase() + frequency.slice(1).toLowerCase(),
         startTime: finalStartTime,
         endTime: finalEndTime,
         startDate: formatDateForAPI(startDate),
-        categoryId: 0,
         isAiVerified: false,
+        categoryId: categoryId ? Number(categoryId) : undefined,
       };
 
-      if (isCollaborative) {
-        await routineService.createCollaborativeRoutine(body);
-      } else {
-        await routineService.createRoutine(body);
-      }
+      await routineService.createRoutine(body);
 
       onCreated?.();
       onClose();
@@ -172,8 +152,10 @@ export function CreateRoutineInListModal({
           <View style={styles.sheet}>
             <ScrollView
               contentContainerStyle={[styles.content, { paddingBottom: 60 }]}
-              keyboardShouldPersistTaps="never"
-              onTouchStart={clearInteractiveFocus}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              nestedScrollEnabled
+              scrollEnabled={!freqOpen}
             >
               <View style={styles.headerRow}>
                 <Text style={styles.title}>Create Routine</Text>
@@ -202,11 +184,11 @@ export function CreateRoutineInListModal({
 
               {/* Frequency */}
               <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Frequency</Text>
-              <View style={{ zIndex: 2000 }}>
+              <View style={{ ...(Platform.OS === 'ios' && { zIndex: 2000 }) }}>
                 <DropDownPicker
                   open={freqOpen}
                   value={frequency}
-                  items={frequencyItems}
+                  items={FREQUENCY_ITEMS}
                   setOpen={setFreqOpen}
                   setValue={setFrequency}
                   onOpen={onFreqOpen}
@@ -218,8 +200,10 @@ export function CreateRoutineInListModal({
                     borderColor: colors.border,
                   }}
                   placeholderStyle={{ color: colors.icon }}
-                  listMode="SCROLLVIEW"
+                  listMode="MODAL"
                   theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
+                  zIndex={2000}
+                  zIndexInverse={1000}
                 />
               </View>
 
@@ -236,27 +220,7 @@ export function CreateRoutineInListModal({
                 </View>
               )}
 
-              {/* Collaborative Toggle */}
-              <View style={{ marginTop: 20 }}>
-                <AnimatedToggle
-                  label="Make this as Collaborative Routine"
-                  isEnabled={isCollaborative}
-                  onToggle={() => setIsCollaborative(!isCollaborative)}
-                  activeColor={actionColor}
-                  labelColor={theme === 'dark' ? '#ffffff' : colors.text}
-                />
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: theme === 'dark' ? '#ffffff' : colors.icon,
-                    marginLeft: 2,
-                    marginTop: -5,
-                    opacity: 0.9,
-                  }}
-                >
-                  Allow others to join this routine and track progress together.
-                </Text>
-              </View>
+
 
               {/* Times (Only show if DAILY + hasSpecificTime) */}
               {frequency === 'DAILY' && hasSpecificTime && (

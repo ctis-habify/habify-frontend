@@ -70,6 +70,7 @@ export const routineService = {
     endTime: string;
     isAiVerified: boolean;
     startDate: string;
+    categoryId?: number;
   }): Promise<Routine> {
     const res = await api.post('/routines', body);
     return res.data;
