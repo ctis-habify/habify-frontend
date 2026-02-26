@@ -37,7 +37,7 @@ export function AnimatedToggle({
         damping: 15,
         stiffness: 120,
     });
-  }, [isEnabled]);
+  }, [isEnabled, progress]);
 
   const trackStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(

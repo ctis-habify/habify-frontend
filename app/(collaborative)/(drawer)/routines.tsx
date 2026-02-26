@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -101,7 +102,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     requestAnimationFrame(() => {
       router.replace('/(personal)/(drawer)/routines');
       isSwitchingRef.current = false;
-    });
+    }, 90);
   };
 
   // 4. Effects

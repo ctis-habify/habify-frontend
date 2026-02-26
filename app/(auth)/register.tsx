@@ -14,6 +14,12 @@ import { Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View
 import DropDownPicker from 'react-native-dropdown-picker';
 import { authService } from '../../services/auth.service';
 
+const GENDER_OPTIONS = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+  { label: 'Other', value: 'other' },
+];
+
 export default function SignupScreen(): React.ReactElement {
   const router = useRouter(); 
   const theme = useColorScheme() ?? 'light';
@@ -198,11 +204,7 @@ export default function SignupScreen(): React.ReactElement {
           <DropDownPicker
             open={genderOpen}
             value={gender}
-            items={[
-              { label: 'Male', value: 'male' },
-              { label: 'Female', value: 'female' },
-              { label: 'Other', value: 'other' },
-            ]}
+            items={GENDER_OPTIONS}
             setOpen={setGenderOpen}
             setValue={setGender}
             placeholder="Select Gender"
@@ -216,7 +218,7 @@ export default function SignupScreen(): React.ReactElement {
             ]}
             placeholderStyle={[styles.placeholderStyle, { color: colors.icon }]}
             textStyle={[styles.dropdownText, { color: colors.text }]}
-            listMode="SCROLLVIEW"
+            listMode="MODAL"
             theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
           />
         </View>

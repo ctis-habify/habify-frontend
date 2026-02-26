@@ -45,7 +45,7 @@ export function ThemeProvider({ children }: { children: ReactNode }): React.Reac
             }
         };
         loadTheme();
-    }, []);
+    }, [systemTheme]);
 
     const setTheme = (newTheme: Theme) => {
         setThemeState(newTheme);

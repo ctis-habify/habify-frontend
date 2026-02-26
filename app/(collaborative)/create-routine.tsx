@@ -58,7 +58,11 @@ export default function CreateCollaborativeRoutineScreen() {
                 {renderHeader()}
                 <WizardProgress currentStep={step} steps={['Basics', 'Schedule', 'Rules']} />
 
-                <ScrollView contentContainerStyle={styles.scrollContent}>
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled={true}
+                >
                     {step === 0 && (
                         <StepBasicInfo 
                             formState={formState}

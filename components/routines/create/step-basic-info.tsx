@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { categoryService } from '@/services/category.service';
 import type { CreateRoutineFormState } from '@/types/create-routine';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
@@ -23,16 +23,15 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
-  const categoryItems = categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id }));
+  const categoryItems = useMemo(() => categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id })), [categories]);
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
     try {
       await categoryService.createCategory(newCategoryName.trim(), 'collaborative');
       setNewCategoryName('');
-      setShowNewCategory(false);
       await loadCategories();
-    } catch (e) {
+    } catch {
       Alert.alert("Error", "Failed to create category");
     }
   };
@@ -44,9 +43,8 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
       { text: "Delete", style: 'destructive', onPress: async () => {
         try {
           await categoryService.deleteCategory(formState.categoryId!, token || '');
-          updateForm({ categoryId: null });
           await loadCategories();
-        } catch (e) {
+        } catch {
           Alert.alert("Error", "Failed to delete category");
         }
       }}
@@ -97,10 +95,16 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
           value={formState.categoryId}
           items={categoryItems}
           setOpen={setCategoryOpen}
-          setValue={(valFn) => {
-             // DropDownPicker accepts a value or a function receiving the current value
-             const val = valFn instanceof Function ? valFn(formState.categoryId) : valFn;
-             updateForm({ categoryId: val });
+          setValue={(callback) => {
+            if (typeof callback === 'function') {
+              const newValue = callback(formState.categoryId);
+              updateForm({ categoryId: newValue as number | null });
+            } else {
+              updateForm({ categoryId: callback as number | null });
+            }
+          }}
+          onChangeValue={(value) => {
+            updateForm({ categoryId: value });
           }}
           theme="DARK"
           style={styles.dropdown}
@@ -112,6 +116,8 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
           arrowIconStyle={{ width: 20, height: 20 }}
           tickIconStyle={{ width: 20, height: 20 }}
           listMode="SCROLLVIEW"
+          zIndex={3000}
+          zIndexInverse={1000}
           searchable={true}
           searchPlaceholder="Search category..."
           searchContainerStyle={{ borderBottomColor: 'rgba(255,255,255,0.1)', paddingVertical: 10 }}
