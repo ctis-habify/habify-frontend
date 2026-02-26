@@ -2,12 +2,13 @@ import { getBackgroundGradient } from '@/app/theme';
 import { FriendList } from '@/components/profile/FriendList';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useFriends } from '@/hooks/use-friends';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from 'expo-router';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,6 +17,7 @@ export default function ProfileScreen() {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
     const theme = useColorScheme() ?? 'light';
+    const { friends, loading: friendsLoading } = useFriends();
 
     const displayName = user?.name || 'User';
     const displayEmail = user?.email || 'user@example.com';
@@ -105,7 +107,11 @@ export default function ProfileScreen() {
                             <Text style={styles.seeAllText}>See All</Text>
                         </TouchableOpacity>
                     </View>
-                    <FriendList friends={[]} />
+                    {friendsLoading ? (
+                        <ActivityIndicator color="rgba(255,255,255,0.7)" style={styles.loadingIndicator} />
+                    ) : (
+                        <FriendList friends={friends} />
+                    )}
                 </Animated.View>
 
             </ScrollView>
@@ -213,6 +219,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 10,
         marginTop: 10,
+    },
+    loadingIndicator: {
+        paddingVertical: 30,
     },
     sectionTitle: {
         fontSize: 18,
