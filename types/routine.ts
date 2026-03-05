@@ -88,3 +88,15 @@ export interface TodayScreenResponse {
   streak: number;
   routines: Routine[];
 }
+
+export interface PublicRoutine {
+  id: string;
+  routineName: string;
+  description: string | null;
+  category: string | null;
+  categoryId: number;
+  startDate: string; // YYYY-MM-DD
+  frequencyType: string;
+  memberCount: number;
+  isAlreadyMember: boolean;
+}

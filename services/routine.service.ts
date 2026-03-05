@@ -1,4 +1,4 @@
-import { Routine, RoutineList, RoutineLog } from '../types/routine';
+import { PublicRoutine, Routine, RoutineList, RoutineLog } from '../types/routine';
 import { api } from './api';
 
 export type UpdateRoutinePayload = Partial<{
@@ -474,5 +474,25 @@ export const routineService = {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     const res = await api.patch(`/routine-lists/${id}`, { title, categoryId }, config);
     return res.data;
+  },
+
+  // ✅ Browse Public Collaborative Routines (with optional search)
+  async browsePublicRoutines(search?: string): Promise<PublicRoutine[]> {
+    const params = search ? { search } : {};
+    const res = await api.get('/routines/collaborative/public', { params });
+    return res.data;
+  },
+
+  // ✅ Join a Public Routine by ID
+  async joinPublicRoutine(routineId: string): Promise<{ message: string }> {
+    try {
+      const res = await api.post(`/routines/collaborative/${routineId}/join`);
+      return res.data;
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      throw err;
+    }
   },
 };
