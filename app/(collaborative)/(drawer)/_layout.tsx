@@ -29,8 +29,8 @@ export default function DrawerLayout(): React.ReactElement {
         drawerInactiveTintColor: theme === 'dark' ? '#E5E7EB' : colors.text,
         drawerActiveBackgroundColor: theme === 'dark' ? 'rgba(167, 139, 250, 0.2)' : 'rgba(232, 121, 249, 0.1)',
         drawerLabelStyle: {
-            marginLeft: 0,
-            fontWeight: '600',
+          marginLeft: 0,
+          fontWeight: '600',
         },
       }}
     >
@@ -54,6 +54,13 @@ export default function DrawerLayout(): React.ReactElement {
         options={{
           drawerLabel: "Friends",
           drawerIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
+        }}
+      />
+      <Drawer.Screen
+        name="browse"
+        options={{
+          drawerLabel: "Browse Routines",
+          drawerIcon: ({ color, size }) => <Ionicons name="search-outline" size={size} color={color} />,
         }}
       />
     </Drawer>
