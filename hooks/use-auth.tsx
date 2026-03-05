@@ -28,6 +28,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const TOKEN_KEY = 'habify_access_token';
+const ACCESS_TOKEN_KEY = 'accessToken';
 const USER_KEY = 'habify_user';
 
 export const AuthProvider = ({ children }: { children: ReactNode }): React.ReactElement => {
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): React.React
           return SecureStore.getItemAsync(key);
         };
 
-        const storedToken = await getStoredItem(TOKEN_KEY);
+        const storedToken = (await getStoredItem(ACCESS_TOKEN_KEY)) || (await getStoredItem(TOKEN_KEY));
         const storedUser = await getStoredItem(USER_KEY);
 
         if (storedToken) {
@@ -105,10 +106,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }): React.React
 
       // Save to SecureStore only if remember is true
       if (remember) {
+        await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
         await SecureStore.setItemAsync(TOKEN_KEY, accessToken);
         await SecureStore.setItemAsync(USER_KEY, JSON.stringify(loggedInUser));
       } else {
         // If not remembering, ensure we clear any old persisted session just in case
+        await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
         await SecureStore.deleteItemAsync(TOKEN_KEY);
         await SecureStore.deleteItemAsync(USER_KEY);
       }
@@ -125,6 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }): React.React
       setToken(null);
       setUser(null);
       setAuthToken(null);
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
     } catch (error) {
