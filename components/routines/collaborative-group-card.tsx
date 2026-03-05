@@ -1,20 +1,22 @@
-import { Routine } from '@/types/routine';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
+    Pressable,
     Share,
     StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { useAuth } from '@/hooks/use-auth';
+import { Routine } from '@/types/routine';
 import { ManageRoutineUsersModal } from '../modals/manage-routine-users-modal';
 
 interface CollaborativeGroupCardProps {
-    routine: Routine;
-    onPress?: (id: string) => void;
+    routine: Routine | null;
+    onPress?: (routine: Routine) => void;
     accentColor?: string;
 }
 
@@ -23,6 +25,7 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     onPress,
     accentColor = '#E879F9'
 }) => {
+    const safeRoutine = routine ?? ({} as Routine);
     const {
         id,
         routineName,
@@ -38,18 +41,47 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
         genderRequirement,
         xpRequirement,
         creatorId,
-    } = routine;
+    } = safeRoutine;
+
+    const categoryValue =
+        typeof (safeRoutine as { category?: unknown }).category === 'string'
+            ? (safeRoutine as { category?: string }).category || ''
+            : ((safeRoutine as { category?: { name?: string } }).category?.name || '');
+    const hasCategory = !!safeRoutine.categoryName || !!categoryValue;
+    const categoryText = (categoryValue || safeRoutine.categoryName || '').toUpperCase();
 
     const { user } = useAuth();
 
     const [isManageModalVisible, setIsManageModalVisible] = React.useState(false);
+    const cardScale = useSharedValue(1);
 
     const formatTime = (time?: string) => {
         if (!time) return '--:--';
-        return time.split(':').slice(0, 2).join(':');
+        const normalized = time.includes('T') ? time.split('T')[1] : time;
+        if (!normalized) return '--:--';
+        const hhmm = normalized.split(':').slice(0, 2).join(':');
+        return hhmm || '--:--';
     };
 
+    const normalizeId = (value?: string | number | null): string => {
+        if (value === undefined || value === null) return '';
+        return String(value).trim();
+    };
+
+    const creatorCandidate = normalizeId(
+        creatorId
+        || (safeRoutine as { creator_id?: string }).creator_id
+        || (safeRoutine as { createdBy?: string }).createdBy
+        || (safeRoutine as { userId?: string }).userId
+        || (safeRoutine as { ownerId?: string }).ownerId
+        || (safeRoutine as { creator?: { id?: string } }).creator?.id
+        || (safeRoutine as { user?: { id?: string } }).user?.id
+    );
+    const currentUserId = normalizeId(user?.id);
+    const isCreator = !!currentUserId && !!creatorCandidate && currentUserId === creatorCandidate;
+
     const handleInvite = async () => {
+        if (!routine) return;
         try {
             await Share.share({
                 message: `Join my collaborative routine "${routineName}" on Habify! Use code: ${collaborativeKey}`,
@@ -64,25 +96,40 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
         setIsManageModalVisible(true);
     };
 
+    const animatedCardStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: cardScale.value }],
+    }));
+
+    const handlePressIn = () => {
+        if (!onPress) return;
+        cardScale.value = withSpring(0.985, { damping: 20, stiffness: 260 });
+    };
+
+    const handlePressOut = () => {
+        if (!onPress) return;
+        cardScale.value = withSpring(1, { damping: 18, stiffness: 220 });
+    };
+
+    if (!routine) return null;
+
     return (
-        <TouchableOpacity
-            style={styles.card}
-            activeOpacity={onPress ? 0.8 : 1}
-            onPress={onPress ? () => onPress(id) : undefined}
-            disabled={!onPress}
-        >
+        <Animated.View style={animatedCardStyle}>
+            <Pressable
+                style={styles.card}
+                onPress={onPress ? () => onPress(routine) : undefined}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                disabled={!onPress}
+            >
             {/* Header: Title & Category */}
             <View style={styles.header}>
                 <View style={{ flex: 1 }}>
                     <Text style={styles.title} numberOfLines={1}>{routineName || 'Unnamed Space'}</Text>
                 </View>
-                {(!!routine.categoryName || !!(routine as any).category) && (
+                {hasCategory && (
                     <View style={{ marginRight: 8 }}>
                         <Text style={[styles.categoryText, { color: accentColor, opacity: 0.8 }]}>
-                            {(typeof (routine as any).category === 'string'
-                                ? (routine as any).category
-                                : (routine as any).category?.name || routine.categoryName || ''
-                            ).toUpperCase()}
+                            {categoryText}
                         </Text>
                     </View>
                 )}
@@ -162,7 +209,7 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                     <Text style={[styles.actionBtnText, { color: '#E879F9' }]}>Invite</Text>
                 </TouchableOpacity>
 
-                {user?.id === creatorId && (
+                {isCreator && (
                     <TouchableOpacity
                         style={[styles.actionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}
                         onPress={handleManageUsers}
@@ -179,7 +226,8 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                 onClose={() => setIsManageModalVisible(false)}
                 routineId={id.toString()}
             />
-        </TouchableOpacity >
+            </Pressable>
+        </Animated.View >
     );
 };
 

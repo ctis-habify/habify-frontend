@@ -4,6 +4,13 @@ export default function AppLayout(): React.ReactElement {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(drawer)" />
       <Stack.Screen
+        name="routine/[id]"
+        options={{
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
         name="create-routine"
         options={{
           presentation: 'modal',

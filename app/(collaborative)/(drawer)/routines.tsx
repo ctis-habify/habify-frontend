@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
-import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -20,6 +19,7 @@ import { getBackgroundGradient } from '@/app/theme';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
+import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { notificationService } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
@@ -33,6 +33,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   // 1. Hooks
   const router = useRouter();
   const navigation = useNavigation();
+  const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
 
@@ -76,23 +77,60 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     setToastVisible(true);
   }, []);
 
+  const getErrorMessage = useCallback((error: unknown): string => {
+    const fallback = 'Failed to load collaborative routines.';
+
+    if (!error || typeof error !== 'object') {
+      return fallback;
+    }
+
+    const err = error as {
+      message?: string;
+      response?: {
+        data?: {
+          message?: string | string[];
+          error?: string;
+        };
+        status?: number;
+      };
+    };
+
+    const responseMessage = err.response?.data?.message;
+    const normalizedResponseMessage = Array.isArray(responseMessage)
+      ? responseMessage[0]
+      : responseMessage;
+    const message = String(normalizedResponseMessage || err.response?.data?.error || err.message || '').trim();
+    const lower = message.toLowerCase();
+
+    if (lower.includes('network')) {
+      return 'Network issue. Check your connection and backend URL.';
+    }
+    if (lower.includes('unauthorized') || err.response?.status === 401) {
+      return 'Your session has expired. Please log in again.';
+    }
+    if (message) {
+      return message;
+    }
+    return fallback;
+  }, []);
+
   const loadLists = useCallback(
     async (showLoading = false) => {
       if (showLoading || routines.length === 0) setLoading(true);
       try {
         // 1. Fetch collaborative routines array as per spec
-        const data = await routineService.getCollaborativeRoutines();
+        const data = await routineService.getCollaborativeRoutines(token || undefined);
         setRoutines(data);
 
         const socialReminder = notificationService.getSocialInteractionReminder(data.length);
         if (socialReminder) showToast(socialReminder);
       } catch (e) {
-        console.error('Failed to load collaborative routines', e);
+        showToast(getErrorMessage(e));
       } finally {
         setLoading(false);
       }
     },
-    [routines.length, showToast],
+    [getErrorMessage, routines.length, showToast, token],
   );
 
   const handleTabSwitch = (tab: string) => {
@@ -100,10 +138,37 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
     isSwitchingRef.current = true;
     requestAnimationFrame(() => {
-      router.replace('/(personal)/(drawer)/routines');
-      isSwitchingRef.current = false;
-    }, 90);
+      setTimeout(() => {
+        router.replace('/(personal)/(drawer)/routines');
+        isSwitchingRef.current = false;
+      }, 90);
+    });
   };
+
+  const handleOpenRoutineView = useCallback(
+    (routine: Routine) => {
+      if (!routine?.id) return;
+      router.push({
+        pathname: '/(collaborative)/routine/[id]',
+        params: {
+          id: routine.id,
+          routineName: routine.routineName || '',
+          description: routine.description || '',
+          categoryName: routine.categoryName || '',
+          startTime: routine.startTime || '',
+          endTime: routine.endTime || '',
+          frequencyType: routine.frequencyType || '',
+          lives: String(routine.lives ?? 0),
+          streak: String(routine.streak ?? 0),
+          rewardCondition: routine.rewardCondition || '',
+          genderRequirement: routine.genderRequirement || '',
+          ageRequirement: String(routine.ageRequirement ?? ''),
+          isPublic: routine.isPublic ? '1' : '0',
+        },
+      });
+    },
+    [router],
+  );
 
   // 4. Effects
   useEffect(() => {
@@ -160,13 +225,19 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           {loading ? (
             <Text style={{ color: '#fff', textAlign: 'center', marginTop: 20 }}>Loading...</Text>
           ) : (
-            routines.map((routine, index) => {
+            routines
+              .filter((routine): routine is Routine => !!routine && !!routine.id)
+              .map((routine, index) => {
               return (
                 <Animated.View
                   key={routine.id}
                   entering={FadeInDown.delay(index * 100).springify()}
                 >
-                  <CollaborativeGroupCard routine={routine} accentColor={COLLABORATIVE_PRIMARY} />
+                  <CollaborativeGroupCard
+                    routine={routine}
+                    accentColor={COLLABORATIVE_PRIMARY}
+                    onPress={handleOpenRoutineView}
+                  />
                 </Animated.View>
               );
             })

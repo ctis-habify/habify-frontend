@@ -34,7 +34,13 @@ export function useFriends(): UseFriendsResult {
             const data = await friendService.getFriends();
             setFriends(data.map(mapToFriendData));
         } catch (e) {
-            console.error('useFriends: failed to fetch friends', e);
+            const status =
+                e && typeof e === 'object' && 'response' in e
+                    ? (e as { response?: { status?: number } }).response?.status
+                    : undefined;
+            if (status !== 401) {
+                console.error('useFriends: failed to fetch friends', e);
+            }
             setError('Failed to load friends.');
         } finally {
             setLoading(false);
