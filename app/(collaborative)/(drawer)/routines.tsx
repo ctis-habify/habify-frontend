@@ -263,12 +263,20 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             </View>
           )}
 
-          {/* CTA */}
+          {/* CTAs */}
           <TouchableOpacity
             style={styles.createBtn}
             onPress={() => router.push('/(collaborative)/create-routine' as any)}
           >
             <Text style={styles.createBtnText}>Create Collaborative List</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.createBtn, styles.browseBtn]}
+            onPress={() => router.push('/(collaborative)/(drawer)/browse' as any)}
+          >
+            <Ionicons name="search-outline" size={16} color={COLLABORATIVE_PRIMARY} style={{ marginRight: 6 }} />
+            <Text style={[styles.createBtnText, { color: COLLABORATIVE_PRIMARY }]}>Browse Public Routines</Text>
           </TouchableOpacity>
         </ScrollView>
 
@@ -324,6 +332,12 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  browseBtn: {
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderColor: 'rgba(232, 121, 249, 0.35)',
   },
   emptyContainer: {
     paddingVertical: 40,
