@@ -4,19 +4,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   DeviceEventEmitter,
   Animated as RNAnimated,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Themes & Components
 import { getBackgroundGradient } from '@/app/theme';
+import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
@@ -44,6 +44,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [leavingRoutineId, setLeavingRoutineId] = useState<string | null>(null);
+  const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
+  const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
   const activeTab = 'Collaborative';
   const isSwitchingRef = useRef(false);
 
@@ -175,36 +177,30 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const handleLeaveRoutine = useCallback(
     (routine: Routine) => {
       if (!routine?.id) return;
-      Alert.alert(
-        'Leave Routine',
-        `Are you sure you want to leave "${routine.routineName || 'this routine'}"?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Leave',
-            style: 'destructive',
-            onPress: async () => {
-              setLeavingRoutineId(routine.id);
-              try {
-                await routineService.leaveRoutine(routine.id);
-                showToast('You have left the routine.');
-                setRoutines((prev) => prev.filter((r) => r.id !== routine.id));
-              } catch (err: unknown) {
-                const message =
-                  err && typeof err === 'object' && 'message' in err
-                    ? String((err as { message: unknown }).message)
-                    : 'Could not leave the routine. Please try again.';
-                showToast(message);
-              } finally {
-                setLeavingRoutineId(null);
-              }
-            },
-          },
-        ],
-      );
+      setLeavingRoutine(routine);
+      setIsLeaveModalVisible(true);
     },
-    [showToast],
+    [],
   );
+
+  const confirmLeaveRoutine = useCallback(async () => {
+    if (!leavingRoutine?.id) return;
+    setLeavingRoutineId(leavingRoutine.id);
+    try {
+      await routineService.leaveRoutine(leavingRoutine.id);
+      showToast('You have left the routine.');
+      setRoutines((prev) => prev.filter((r) => r.id !== leavingRoutine.id));
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : 'Could not leave the routine. Please try again.';
+      showToast(message);
+      throw err; // Re-throw to inform modal that it failed
+    } finally {
+      setLeavingRoutineId(null);
+    }
+  }, [leavingRoutine, showToast]);
 
   // 4. Effects
   useEffect(() => {
@@ -324,6 +320,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             <Text style={[styles.createBtnText, { color: COLLABORATIVE_PRIMARY }]}>Browse Public Routines</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        <LeaveRoutineModal
+          visible={isLeaveModalVisible}
+          routineName={leavingRoutine?.routineName || ''}
+          onClose={() => setIsLeaveModalVisible(false)}
+          onConfirm={confirmLeaveRoutine}
+          isLoading={leavingRoutineId === leavingRoutine?.id && leavingRoutineId !== null}
+        />
 
         <Toast
           visible={toastVisible}

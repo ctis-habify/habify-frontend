@@ -19,6 +19,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { getBackgroundGradient } from '@/app/theme';
+import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { routineService } from '@/services/routine.service';
@@ -287,6 +288,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [chatError, setChatError] = useState<string | null>(null);
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
   const [isLeavingRoutine, setIsLeavingRoutine] = useState(false);
+  const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
   const chatListRef = useRef<FlatList<ChatMessage> | null>(null);
   const isSendingMessageRef = useRef(false);
 
@@ -615,34 +617,26 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     [routineId, loadChatMessages, user?.email, user?.name],
   );
 
-  const handleLeaveRoutine = useCallback((): void => {
-    Alert.alert(
-      'Leave Routine',
-      'Are you sure you want to leave this routine?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Leave',
-          style: 'destructive',
-          onPress: async () => {
-            setIsLeavingRoutine(true);
-            try {
-              await routineService.leaveRoutine(routineId ?? '');
-              DeviceEventEmitter.emit('refreshCollaborativeRoutines');
-              router.back();
-            } catch (leaveError: unknown) {
-              const message =
-                leaveError && typeof leaveError === 'object' && 'message' in leaveError
-                  ? String((leaveError as { message: unknown }).message)
-                  : 'Could not leave the routine. Please try again.';
-              Alert.alert('Error', message);
-            } finally {
-              setIsLeavingRoutine(false);
-            }
-          },
-        },
-      ],
-    );
+  const handleLeaveRoutineClick = useCallback((): void => {
+    setIsLeaveModalVisible(true);
+  }, []);
+
+  const confirmLeaveRoutine = useCallback(async (): Promise<void> => {
+    setIsLeavingRoutine(true);
+    try {
+      if (routineId) {
+        await routineService.leaveRoutine(routineId);
+      }
+    } catch (leaveError: unknown) {
+      const message =
+        leaveError && typeof leaveError === 'object' && 'message' in leaveError
+          ? String((leaveError as { message: unknown }).message)
+          : 'Could not leave the routine. Please try again.';
+      Alert.alert('Error', message);
+      throw leaveError; // Re-throw to handle in modal
+    } finally {
+      setIsLeavingRoutine(false);
+    }
   }, [routineId, router]);
 
   return (
@@ -653,7 +647,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Routine Details</Text>
         <TouchableOpacity
-          onPress={handleLeaveRoutine}
+          onPress={handleLeaveRoutineClick}
           style={styles.leaveButton}
           disabled={isLeavingRoutine}
           hitSlop={10}
@@ -760,6 +754,18 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           <Text style={styles.chatFabText}>Chat</Text>
         </TouchableOpacity>
       </Animated.View>
+
+      <LeaveRoutineModal
+        visible={isLeaveModalVisible}
+        routineName={displayRoutineName}
+        onClose={() => setIsLeaveModalVisible(false)}
+        onConfirm={confirmLeaveRoutine}
+        onAnimationFinished={() => {
+          DeviceEventEmitter.emit('refreshCollaborativeRoutines');
+          router.back();
+        }}
+        isLoading={isLeavingRoutine}
+      />
 
       <Modal
         visible={isChatVisible}
@@ -883,7 +889,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           </Pressable>
         </Pressable>
       </Modal>
-    </LinearGradient>
+    </LinearGradient >
   );
 }
 
