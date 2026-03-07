@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   DeviceEventEmitter,
   Animated as RNAnimated,
   ScrollView,
@@ -42,6 +43,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [leavingRoutineId, setLeavingRoutineId] = useState<string | null>(null);
   const activeTab = 'Collaborative';
   const isSwitchingRef = useRef(false);
 
@@ -119,7 +121,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       if (showLoading || routines.length === 0) setLoading(true);
       try {
         // 1. Fetch collaborative routines array as per spec
-        const data = await routineService.getCollaborativeRoutines(token || undefined);
+        const data = await routineService.getCollaborativeRoutines();
         setRoutines(data);
 
         const socialReminder = notificationService.getSocialInteractionReminder(data.length);
@@ -170,6 +172,40 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     [router],
   );
 
+  const handleLeaveRoutine = useCallback(
+    (routine: Routine) => {
+      if (!routine?.id) return;
+      Alert.alert(
+        'Leave Routine',
+        `Are you sure you want to leave "${routine.routineName || 'this routine'}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Leave',
+            style: 'destructive',
+            onPress: async () => {
+              setLeavingRoutineId(routine.id);
+              try {
+                await routineService.leaveRoutine(routine.id);
+                showToast('You have left the routine.');
+                setRoutines((prev) => prev.filter((r) => r.id !== routine.id));
+              } catch (err: unknown) {
+                const message =
+                  err && typeof err === 'object' && 'message' in err
+                    ? String((err as { message: unknown }).message)
+                    : 'Could not leave the routine. Please try again.';
+                showToast(message);
+              } finally {
+                setLeavingRoutineId(null);
+              }
+            },
+          },
+        ],
+      );
+    },
+    [showToast],
+  );
+
   // 4. Effects
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
@@ -177,10 +213,17 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         showToast(message);
       }, 500);
     });
+    const leaveSubscription = DeviceEventEmitter.addListener(
+      'refreshCollaborativeRoutines',
+      () => {
+        loadLists(true);
+      },
+    );
     return () => {
       subscription.remove();
+      leaveSubscription.remove();
     };
-  }, [showToast]);
+  }, [showToast, loadLists]);
 
   useFocusEffect(
     useCallback(() => {
@@ -228,19 +271,21 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             routines
               .filter((routine): routine is Routine => !!routine && !!routine.id)
               .map((routine, index) => {
-              return (
-                <Animated.View
-                  key={routine.id}
-                  entering={FadeInDown.delay(index * 100).springify()}
-                >
-                  <CollaborativeGroupCard
-                    routine={routine}
-                    accentColor={COLLABORATIVE_PRIMARY}
-                    onPress={handleOpenRoutineView}
-                  />
-                </Animated.View>
-              );
-            })
+                return (
+                  <Animated.View
+                    key={routine.id}
+                    entering={FadeInDown.delay(index * 100).springify()}
+                  >
+                    <CollaborativeGroupCard
+                      routine={routine}
+                      accentColor={COLLABORATIVE_PRIMARY}
+                      onPress={handleOpenRoutineView}
+                      onLeave={handleLeaveRoutine}
+                      isLeaving={leavingRoutineId === routine.id}
+                    />
+                  </Animated.View>
+                );
+              })
           )}
 
           {!loading && routines.length === 0 && (

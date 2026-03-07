@@ -5,6 +5,8 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  DeviceEventEmitter,
   FlatList,
   Modal,
   Pressable,
@@ -284,6 +286,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
+  const [isLeavingRoutine, setIsLeavingRoutine] = useState(false);
   const chatListRef = useRef<FlatList<ChatMessage> | null>(null);
   const isSendingMessageRef = useRef(false);
 
@@ -471,25 +474,25 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const displayCategory = categoryFromParams || getCategoryName(routineDetail) || '-';
   const displayTimeRange = formatTimeRange(
     startTimeFromParams ||
-      detailString(routineDetail, [
-        'startTime',
-        'start_time',
-        'startAt',
-        'schedule.startTime',
-        'routine.startTime',
-      ]),
+    detailString(routineDetail, [
+      'startTime',
+      'start_time',
+      'startAt',
+      'schedule.startTime',
+      'routine.startTime',
+    ]),
     endTimeFromParams ||
-      detailString(routineDetail, [
-        'endTime',
-        'end_time',
-        'endAt',
-        'schedule.endTime',
-        'routine.endTime',
-      ]),
+    detailString(routineDetail, [
+      'endTime',
+      'end_time',
+      'endAt',
+      'schedule.endTime',
+      'routine.endTime',
+    ]),
   );
   const displayFrequency = formatFrequency(
     frequencyFromParams ||
-      detailString(routineDetail, ['frequencyType', 'frequency_type', 'routine.frequencyType']),
+    detailString(routineDetail, ['frequencyType', 'frequency_type', 'routine.frequencyType']),
   );
   const displayLives =
     livesFromParams ??
@@ -515,11 +518,11 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     '';
   const displayGender = formatGender(
     genderFromParams ||
-      detailString(routineDetail, [
-        'genderRequirement',
-        'gender_requirement',
-        'routine.genderRequirement',
-      ]),
+    detailString(routineDetail, [
+      'genderRequirement',
+      'gender_requirement',
+      'routine.genderRequirement',
+    ]),
   );
   const displayAge =
     ageFromParams ??
@@ -612,6 +615,36 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     [routineId, loadChatMessages, user?.email, user?.name],
   );
 
+  const handleLeaveRoutine = useCallback((): void => {
+    Alert.alert(
+      'Leave Routine',
+      'Are you sure you want to leave this routine?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: async () => {
+            setIsLeavingRoutine(true);
+            try {
+              await routineService.leaveRoutine(routineId ?? '');
+              DeviceEventEmitter.emit('refreshCollaborativeRoutines');
+              router.back();
+            } catch (leaveError: unknown) {
+              const message =
+                leaveError && typeof leaveError === 'object' && 'message' in leaveError
+                  ? String((leaveError as { message: unknown }).message)
+                  : 'Could not leave the routine. Please try again.';
+              Alert.alert('Error', message);
+            } finally {
+              setIsLeavingRoutine(false);
+            }
+          },
+        },
+      ],
+    );
+  }, [routineId, router]);
+
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
       <Animated.View entering={FadeInDown.duration(350)} style={styles.header}>
@@ -619,6 +652,21 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           <Ionicons name="arrow-back" size={20} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Routine Details</Text>
+        <TouchableOpacity
+          onPress={handleLeaveRoutine}
+          style={styles.leaveButton}
+          disabled={isLeavingRoutine}
+          hitSlop={10}
+        >
+          {isLeavingRoutine ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <>
+              <Ionicons name="exit-outline" size={16} color="#ffffff" />
+              <Text style={styles.leaveButtonText}>Leave</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -849,6 +897,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  leaveButton: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(239, 68, 68, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.55)',
+  },
+  leaveButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
   },
   backButton: {
     width: 40,
