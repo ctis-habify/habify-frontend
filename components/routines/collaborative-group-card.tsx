@@ -17,12 +17,16 @@ import { ManageRoutineUsersModal } from '../modals/manage-routine-users-modal';
 interface CollaborativeGroupCardProps {
     routine: Routine | null;
     onPress?: (routine: Routine) => void;
+    onLeave?: (routine: Routine) => void;
+    isLeaving?: boolean;
     accentColor?: string;
 }
 
 export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     routine,
     onPress,
+    onLeave,
+    isLeaving = false,
     accentColor = '#E879F9'
 }) => {
     const safeRoutine = routine ?? ({} as Routine);
@@ -121,111 +125,123 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                 onPressOut={handlePressOut}
                 disabled={!onPress}
             >
-            {/* Header: Title & Category */}
-            <View style={styles.header}>
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.title} numberOfLines={1}>{routineName || 'Unnamed Space'}</Text>
-                </View>
-                {hasCategory && (
-                    <View style={{ marginRight: 8 }}>
-                        <Text style={[styles.categoryText, { color: accentColor, opacity: 0.8 }]}>
-                            {categoryText}
-                        </Text>
+                {/* Header: Title & Category */}
+                <View style={styles.header}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.title} numberOfLines={1}>{routineName || 'Unnamed Space'}</Text>
                     </View>
-                )}
-                <View style={styles.keyPill}>
-                    <Ionicons name={isPublic ? "lock-open" : "lock-closed"} size={12} color="#fff" style={{ marginRight: 4 }} />
-                    <Text style={[styles.categoryText, { color: isPublic ? accentColor : '#e2e8f0' }]}>
-                        {isPublic ? 'PUBLIC' : 'PRIVATE'}
-                    </Text>
-                </View>
-            </View>
-
-            {/* Description */}
-            {!!description && (
-                <Text style={styles.description} numberOfLines={2}>{description}</Text>
-            )}
-
-            {/* Stats Bar */}
-            <View style={styles.statsBar}>
-                <View style={styles.statItem}>
-                    <Ionicons name="heart" size={16} color="#ef4444" />
-                    <Text style={styles.statLabel}>Lives: </Text>
-                    <Text style={styles.statValue}>{lives}</Text>
-                </View>
-                <View style={[styles.divider, { height: '60%' }]} />
-                <View style={styles.statItem}>
-                    <Ionicons name="flame" size={16} color="#f97316" />
-                    <Text style={styles.statLabel}>Streak: </Text>
-                    <Text style={styles.statValue}>{streak}</Text>
-                </View>
-                <View style={[styles.divider, { height: '60%' }]} />
-                <View style={styles.statItem}>
-                    <Ionicons name="time" size={16} color={accentColor} />
-                    <Text style={styles.statValue}>{formatTime(startTime)} - {formatTime(endTime)}</Text>
-                </View>
-            </View>
-
-            {/* Requirements Section */}
-            {!!(rewardCondition || ageRequirement || (genderRequirement && genderRequirement !== 'na') || xpRequirement) && (
-                <View style={styles.footer}>
-                    {!!rewardCondition && (
-                        <View style={styles.conditionItem}>
-                            <Ionicons name="ribbon" size={16} color="#fbbf24" />
-                            <Text style={styles.footerText} numberOfLines={1}>{rewardCondition}</Text>
-                        </View>
-                    )}
-                    {!!ageRequirement && (
-                        <View style={styles.conditionItem}>
-                            <Ionicons name="calendar" size={16} color="#38bdf8" />
-                            <Text style={styles.footerText} numberOfLines={1}>{ageRequirement}+ Age</Text>
-                        </View>
-                    )}
-                    {!!(genderRequirement && genderRequirement !== 'na') && (
-                        <View style={styles.conditionItem}>
-                            <Ionicons name="person" size={16} color="#f472b6" />
-                            <Text style={styles.footerText} numberOfLines={1}>
-                                {genderRequirement.toUpperCase()}
+                    {hasCategory && (
+                        <View style={{ marginRight: 8 }}>
+                            <Text style={[styles.categoryText, { color: accentColor, opacity: 0.8 }]}>
+                                {categoryText}
                             </Text>
                         </View>
                     )}
-                    {!!xpRequirement && (
-                        <View style={styles.conditionItem}>
-                            <Ionicons name="star" size={16} color="#fbbf24" />
-                            <Text style={styles.footerText} numberOfLines={1}>{xpRequirement} XP</Text>
-                        </View>
-                    )}
+                    <View style={styles.keyPill}>
+                        <Ionicons name={isPublic ? "lock-open" : "lock-closed"} size={12} color="#fff" style={{ marginRight: 4 }} />
+                        <Text style={[styles.categoryText, { color: isPublic ? accentColor : '#e2e8f0' }]}>
+                            {isPublic ? 'PUBLIC' : 'PRIVATE'}
+                        </Text>
+                    </View>
                 </View>
-            )}
 
-            {/* Actions */}
-            <View style={styles.actionRow}>
-                <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: 'rgba(232, 121, 249, 0.15)' }]}
-                    onPress={handleInvite}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons name="share-social" size={18} color="#E879F9" />
-                    <Text style={[styles.actionBtnText, { color: '#E879F9' }]}>Invite</Text>
-                </TouchableOpacity>
+                {/* Description */}
+                {!!description && (
+                    <Text style={styles.description} numberOfLines={2}>{description}</Text>
+                )}
 
-                {isCreator && (
+                {/* Stats Bar */}
+                <View style={styles.statsBar}>
+                    <View style={styles.statItem}>
+                        <Ionicons name="heart" size={16} color="#ef4444" />
+                        <Text style={styles.statLabel}>Lives: </Text>
+                        <Text style={styles.statValue}>{lives}</Text>
+                    </View>
+                    <View style={[styles.divider, { height: '60%' }]} />
+                    <View style={styles.statItem}>
+                        <Ionicons name="flame" size={16} color="#f97316" />
+                        <Text style={styles.statLabel}>Streak: </Text>
+                        <Text style={styles.statValue}>{streak}</Text>
+                    </View>
+                    <View style={[styles.divider, { height: '60%' }]} />
+                    <View style={styles.statItem}>
+                        <Ionicons name="time" size={16} color={accentColor} />
+                        <Text style={styles.statValue}>{formatTime(startTime)} - {formatTime(endTime)}</Text>
+                    </View>
+                </View>
+
+                {/* Requirements Section */}
+                {!!(rewardCondition || ageRequirement || (genderRequirement && genderRequirement !== 'na') || xpRequirement) && (
+                    <View style={styles.footer}>
+                        {!!rewardCondition && (
+                            <View style={styles.conditionItem}>
+                                <Ionicons name="ribbon" size={16} color="#fbbf24" />
+                                <Text style={styles.footerText} numberOfLines={1}>{rewardCondition}</Text>
+                            </View>
+                        )}
+                        {!!ageRequirement && (
+                            <View style={styles.conditionItem}>
+                                <Ionicons name="calendar" size={16} color="#38bdf8" />
+                                <Text style={styles.footerText} numberOfLines={1}>{ageRequirement}+ Age</Text>
+                            </View>
+                        )}
+                        {!!(genderRequirement && genderRequirement !== 'na') && (
+                            <View style={styles.conditionItem}>
+                                <Ionicons name="person" size={16} color="#f472b6" />
+                                <Text style={styles.footerText} numberOfLines={1}>
+                                    {genderRequirement.toUpperCase()}
+                                </Text>
+                            </View>
+                        )}
+                        {!!xpRequirement && (
+                            <View style={styles.conditionItem}>
+                                <Ionicons name="star" size={16} color="#fbbf24" />
+                                <Text style={styles.footerText} numberOfLines={1}>{xpRequirement} XP</Text>
+                            </View>
+                        )}
+                    </View>
+                )}
+
+                {/* Actions */}
+                <View style={styles.actionRow}>
                     <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}
-                        onPress={handleManageUsers}
+                        style={[styles.actionBtn, { backgroundColor: 'rgba(232, 121, 249, 0.15)' }]}
+                        onPress={handleInvite}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="people" size={18} color="#38bdf8" />
-                        <Text style={[styles.actionBtnText, { color: '#38bdf8' }]}>Manage</Text>
+                        <Ionicons name="share-social" size={18} color="#E879F9" />
+                        <Text style={[styles.actionBtnText, { color: '#E879F9' }]}>Invite</Text>
                     </TouchableOpacity>
-                )}
-            </View>
 
-            <ManageRoutineUsersModal
-                visible={isManageModalVisible}
-                onClose={() => setIsManageModalVisible(false)}
-                routineId={id.toString()}
-            />
+                    {isCreator && (
+                        <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}
+                            onPress={handleManageUsers}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="people" size={18} color="#38bdf8" />
+                            <Text style={[styles.actionBtnText, { color: '#38bdf8' }]}>Manage</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    {!!onLeave && (
+                        <TouchableOpacity
+                            style={[styles.actionBtn, styles.leaveBtn]}
+                            onPress={() => routine && onLeave(routine)}
+                            activeOpacity={0.7}
+                            disabled={isLeaving}
+                        >
+                            <Ionicons name="exit-outline" size={18} color="#f87171" />
+                            <Text style={styles.leaveBtnText}>{isLeaving ? 'Leaving...' : 'Leave'}</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                <ManageRoutineUsersModal
+                    visible={isManageModalVisible}
+                    onClose={() => setIsManageModalVisible(false)}
+                    routineId={id.toString()}
+                />
             </Pressable>
         </Animated.View >
     );
@@ -351,5 +367,14 @@ const styles = StyleSheet.create({
     actionBtnText: {
         fontSize: 14,
         fontWeight: '700',
+    },
+    leaveBtn: {
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderColor: 'rgba(248, 113, 113, 0.3)',
+    },
+    leaveBtnText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#f87171',
     },
 });

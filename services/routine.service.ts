@@ -236,9 +236,9 @@ const normalizeMessageStrings = (value: unknown): string[] => {
       typeof item === 'string'
         ? item
         : (item as { text?: string; message?: string; content?: string })?.text ||
-          (item as { text?: string; message?: string; content?: string })?.message ||
-          (item as { text?: string; message?: string; content?: string })?.content ||
-          '',
+        (item as { text?: string; message?: string; content?: string })?.message ||
+        (item as { text?: string; message?: string; content?: string })?.content ||
+        '',
     )
     .map((text) => String(text).trim())
     .filter(Boolean);
@@ -487,6 +487,19 @@ export const routineService = {
   async joinPublicRoutine(routineId: string): Promise<{ message: string }> {
     try {
       const res = await api.post(`/routines/collaborative/${routineId}/join`);
+      return res.data;
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      throw err;
+    }
+  },
+
+  // Leave a Collaborative Routine
+  async leaveRoutine(routineId: string): Promise<{ message: string }> {
+    try {
+      const res = await api.delete(`/routines/collaborative/${routineId}/leave`);
       return res.data;
     } catch (err: any) {
       if (err.response?.data?.message) {
