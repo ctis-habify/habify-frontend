@@ -10,12 +10,13 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Themes & Components
 import { getBackgroundGradient } from '@/app/theme';
+import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
@@ -42,6 +43,9 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [leavingRoutineId, setLeavingRoutineId] = useState<string | null>(null);
+  const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
+  const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
   const activeTab = 'Collaborative';
   const isSwitchingRef = useRef(false);
 
@@ -119,7 +123,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       if (showLoading || routines.length === 0) setLoading(true);
       try {
         // 1. Fetch collaborative routines array as per spec
-        const data = await routineService.getCollaborativeRoutines(token || undefined);
+        const data = await routineService.getCollaborativeRoutines();
         setRoutines(data);
 
         const socialReminder = notificationService.getSocialInteractionReminder(data.length);
@@ -170,6 +174,34 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     [router],
   );
 
+  const handleLeaveRoutine = useCallback(
+    (routine: Routine) => {
+      if (!routine?.id) return;
+      setLeavingRoutine(routine);
+      setIsLeaveModalVisible(true);
+    },
+    [],
+  );
+
+  const confirmLeaveRoutine = useCallback(async () => {
+    if (!leavingRoutine?.id) return;
+    setLeavingRoutineId(leavingRoutine.id);
+    try {
+      await routineService.leaveRoutine(leavingRoutine.id);
+      showToast('You have left the routine.');
+      setRoutines((prev) => prev.filter((r) => r.id !== leavingRoutine.id));
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : 'Could not leave the routine. Please try again.';
+      showToast(message);
+      throw err; // Re-throw to inform modal that it failed
+    } finally {
+      setLeavingRoutineId(null);
+    }
+  }, [leavingRoutine, showToast]);
+
   // 4. Effects
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
@@ -177,10 +209,17 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         showToast(message);
       }, 500);
     });
+    const leaveSubscription = DeviceEventEmitter.addListener(
+      'refreshCollaborativeRoutines',
+      () => {
+        loadLists(true);
+      },
+    );
     return () => {
       subscription.remove();
+      leaveSubscription.remove();
     };
-  }, [showToast]);
+  }, [showToast, loadLists]);
 
   useFocusEffect(
     useCallback(() => {
@@ -228,19 +267,21 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             routines
               .filter((routine): routine is Routine => !!routine && !!routine.id)
               .map((routine, index) => {
-              return (
-                <Animated.View
-                  key={routine.id}
-                  entering={FadeInDown.delay(index * 100).springify()}
-                >
-                  <CollaborativeGroupCard
-                    routine={routine}
-                    accentColor={COLLABORATIVE_PRIMARY}
-                    onPress={handleOpenRoutineView}
-                  />
-                </Animated.View>
-              );
-            })
+                return (
+                  <Animated.View
+                    key={routine.id}
+                    entering={FadeInDown.delay(index * 100).springify()}
+                  >
+                    <CollaborativeGroupCard
+                      routine={routine}
+                      accentColor={COLLABORATIVE_PRIMARY}
+                      onPress={handleOpenRoutineView}
+                      onLeave={handleLeaveRoutine}
+                      isLeaving={leavingRoutineId === routine.id}
+                    />
+                  </Animated.View>
+                );
+              })
           )}
 
           {!loading && routines.length === 0 && (
@@ -279,6 +320,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             <Text style={[styles.createBtnText, { color: COLLABORATIVE_PRIMARY }]}>Browse Public Routines</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        <LeaveRoutineModal
+          visible={isLeaveModalVisible}
+          routineName={leavingRoutine?.routineName || ''}
+          onClose={() => setIsLeaveModalVisible(false)}
+          onConfirm={confirmLeaveRoutine}
+          isLoading={leavingRoutineId === leavingRoutine?.id && leavingRoutineId !== null}
+        />
 
         <Toast
           visible={toastVisible}

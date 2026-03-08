@@ -5,6 +5,8 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  DeviceEventEmitter,
   FlatList,
   Modal,
   Pressable,
@@ -17,6 +19,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { getBackgroundGradient } from '@/app/theme';
+import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { routineService } from '@/services/routine.service';
@@ -284,6 +287,8 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
+  const [isLeavingRoutine, setIsLeavingRoutine] = useState(false);
+  const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
   const chatListRef = useRef<FlatList<ChatMessage> | null>(null);
   const isSendingMessageRef = useRef(false);
 
@@ -471,25 +476,25 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const displayCategory = categoryFromParams || getCategoryName(routineDetail) || '-';
   const displayTimeRange = formatTimeRange(
     startTimeFromParams ||
-      detailString(routineDetail, [
-        'startTime',
-        'start_time',
-        'startAt',
-        'schedule.startTime',
-        'routine.startTime',
-      ]),
+    detailString(routineDetail, [
+      'startTime',
+      'start_time',
+      'startAt',
+      'schedule.startTime',
+      'routine.startTime',
+    ]),
     endTimeFromParams ||
-      detailString(routineDetail, [
-        'endTime',
-        'end_time',
-        'endAt',
-        'schedule.endTime',
-        'routine.endTime',
-      ]),
+    detailString(routineDetail, [
+      'endTime',
+      'end_time',
+      'endAt',
+      'schedule.endTime',
+      'routine.endTime',
+    ]),
   );
   const displayFrequency = formatFrequency(
     frequencyFromParams ||
-      detailString(routineDetail, ['frequencyType', 'frequency_type', 'routine.frequencyType']),
+    detailString(routineDetail, ['frequencyType', 'frequency_type', 'routine.frequencyType']),
   );
   const displayLives =
     livesFromParams ??
@@ -515,11 +520,11 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     '';
   const displayGender = formatGender(
     genderFromParams ||
-      detailString(routineDetail, [
-        'genderRequirement',
-        'gender_requirement',
-        'routine.genderRequirement',
-      ]),
+    detailString(routineDetail, [
+      'genderRequirement',
+      'gender_requirement',
+      'routine.genderRequirement',
+    ]),
   );
   const displayAge =
     ageFromParams ??
@@ -612,6 +617,28 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     [routineId, loadChatMessages, user?.email, user?.name],
   );
 
+  const handleLeaveRoutineClick = useCallback((): void => {
+    setIsLeaveModalVisible(true);
+  }, []);
+
+  const confirmLeaveRoutine = useCallback(async (): Promise<void> => {
+    setIsLeavingRoutine(true);
+    try {
+      if (routineId) {
+        await routineService.leaveRoutine(routineId);
+      }
+    } catch (leaveError: unknown) {
+      const message =
+        leaveError && typeof leaveError === 'object' && 'message' in leaveError
+          ? String((leaveError as { message: unknown }).message)
+          : 'Could not leave the routine. Please try again.';
+      Alert.alert('Error', message);
+      throw leaveError; // Re-throw to handle in modal
+    } finally {
+      setIsLeavingRoutine(false);
+    }
+  }, [routineId, router]);
+
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
       <Animated.View entering={FadeInDown.duration(350)} style={styles.header}>
@@ -619,6 +646,21 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           <Ionicons name="arrow-back" size={20} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Routine Details</Text>
+        <TouchableOpacity
+          onPress={handleLeaveRoutineClick}
+          style={styles.leaveButton}
+          disabled={isLeavingRoutine}
+          hitSlop={10}
+        >
+          {isLeavingRoutine ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <>
+              <Ionicons name="exit-outline" size={16} color="#ffffff" />
+              <Text style={styles.leaveButtonText}>Leave</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -712,6 +754,18 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           <Text style={styles.chatFabText}>Chat</Text>
         </TouchableOpacity>
       </Animated.View>
+
+      <LeaveRoutineModal
+        visible={isLeaveModalVisible}
+        routineName={displayRoutineName}
+        onClose={() => setIsLeaveModalVisible(false)}
+        onConfirm={confirmLeaveRoutine}
+        onAnimationFinished={() => {
+          DeviceEventEmitter.emit('refreshCollaborativeRoutines');
+          router.back();
+        }}
+        isLoading={isLeavingRoutine}
+      />
 
       <Modal
         visible={isChatVisible}
@@ -835,7 +889,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           </Pressable>
         </Pressable>
       </Modal>
-    </LinearGradient>
+    </LinearGradient >
   );
 }
 
@@ -849,6 +903,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  leaveButton: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(239, 68, 68, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.55)',
+  },
+  leaveButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
   },
   backButton: {
     width: 40,
