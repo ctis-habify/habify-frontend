@@ -1,3 +1,5 @@
+import { api } from './api';
+
 type NotificationKind = 'unfinished_tasks' | 'social_interactions';
 
 const COOLDOWN_MS = 3 * 60 * 1000;
@@ -16,6 +18,21 @@ export interface NotificationItem {
   category: NotificationCategory;
   message: string;
   createdAt: number;
+  isRead?: boolean;
+  routineId?: string | null;
+}
+
+export interface BackendNotification {
+  id: string;
+  userId: string;
+  routineId: string | null;
+  type: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  pushSent: boolean;
+  createdAt: string;
+  routine?: { id: string; routineName: string } | null;
 }
 
 const notificationFeed: NotificationItem[] = [];
@@ -70,5 +87,47 @@ export const notificationService = {
     }
 
     return null;
+  },
+
+  // ── Backend API methods ──
+
+  async fetchNotifications(
+    limit = 50,
+    offset = 0,
+  ): Promise<{ data: BackendNotification[]; total: number }> {
+    const res = await api.get('/notifications', { params: { limit, offset } });
+    return res.data;
+  },
+
+  async fetchUnreadCount(): Promise<number> {
+    const res = await api.get('/notifications/unread-count');
+    return res.data.count;
+  },
+
+  async markAsRead(notificationId: string): Promise<void> {
+    await api.patch(`/notifications/${notificationId}/read`);
+  },
+
+  async markAllAsRead(): Promise<void> {
+    await api.patch('/notifications/read-all');
+  },
+
+  async registerPushToken(token: string): Promise<void> {
+    await api.post('/notifications/push-token', { token });
+  },
+
+  async removePushToken(): Promise<void> {
+    await api.post('/notifications/push-token/remove');
+  },
+
+  backendToLocal(n: BackendNotification): NotificationItem {
+    return {
+      id: n.id,
+      category: 'unfinished_tasks',
+      message: n.body,
+      createdAt: new Date(n.createdAt).getTime(),
+      isRead: n.isRead,
+      routineId: n.routineId,
+    };
   },
 };

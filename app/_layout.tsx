@@ -2,7 +2,14 @@ import { getBackgroundGradient } from '@/app/theme';
 import { ThemeProvider, useColorScheme } from '@/hooks/use-color-scheme';
 import { Stack } from 'expo-router';
 import { View } from 'react-native';
-import { AuthProvider } from '../hooks/use-auth';
+import { AuthProvider, useAuth } from '../hooks/use-auth';
+import { useNotifications } from '../hooks/use-notifications';
+
+function NotificationSetup(): null {
+  const { token } = useAuth();
+  useNotifications(!!token);
+  return null;
+}
 
 function RootContent(): React.ReactElement {
   const theme = useColorScheme() ?? 'light';
@@ -10,6 +17,7 @@ function RootContent(): React.ReactElement {
 
   return (
     <AuthProvider>
+      <NotificationSetup />
       <View style={{ flex: 1, backgroundColor: topColor }}>
         <Stack
           screenOptions={{
