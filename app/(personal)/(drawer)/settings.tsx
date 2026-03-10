@@ -6,6 +6,7 @@ import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeControl } from '@/hooks/use-color-scheme';
+import { notificationService } from '@/services/notification.service';
 import { userService } from '@/services/user.service';
 import { User, UserUpdateDto } from '@/types/user';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +28,17 @@ export default function SettingsScreen(): React.ReactElement {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingField, setEditingField] = useState<'name' | 'birthDate'>('name');
   const [notifications, setNotifications] = useState(true);
+
+  const handleToggleNotifications = useCallback(async (enabled: boolean) => {
+    setNotifications(enabled);
+    try {
+      if (!enabled) {
+        await notificationService.removePushToken();
+      }
+    } catch {
+      // Silently ignore – toggle still reflects the user's preference locally
+    }
+  }, []);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
 
   const handleLogout = useCallback(() => {
@@ -146,7 +158,7 @@ export default function SettingsScreen(): React.ReactElement {
             label="Notifications"
             type="toggle"
             value={notifications}
-            onToggle={setNotifications}
+            onToggle={handleToggleNotifications}
           />
         </SettingsSection>
 
