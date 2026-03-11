@@ -77,6 +77,7 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
         || (safeRoutine as { creator_id?: string }).creator_id
         || (safeRoutine as { createdBy?: string }).createdBy
         || (safeRoutine as { userId?: string }).userId
+        || (safeRoutine as { user_id?: string }).user_id
         || (safeRoutine as { ownerId?: string }).ownerId
         || (safeRoutine as { creator?: { id?: string } }).creator?.id
         || (safeRoutine as { user?: { id?: string } }).user?.id
@@ -224,7 +225,7 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                         </TouchableOpacity>
                     )}
 
-                    {!!onLeave && (
+                    {!!onLeave && !isCreator && (
                         <TouchableOpacity
                             style={[styles.actionBtn, styles.leaveBtn]}
                             onPress={() => routine && onLeave(routine)}

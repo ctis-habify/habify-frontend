@@ -269,6 +269,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     genderRequirement?: string;
     ageRequirement?: string;
     isPublic?: string;
+    user_id?: string;
   }>();
   const routineId = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
@@ -538,6 +539,32 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     visibilityRaw === 'public';
   const displayVisibility = (isPublicFromParams ?? detailIsPublic) ? 'Public' : 'Private';
 
+  const currentUserId = user?.id ? String(user.id).trim() : '';
+  const creatorCandidate = pickDetailValue(routineDetail, [
+    'creatorId',
+    'creator_id',
+    'createdBy',
+    'userId',
+    'user_id',
+    'ownerId',
+    'creator.id',
+    'user.id',
+    'routine.creatorId',
+    'routine.user_id',
+  ]);
+  const isParticipantAdmin = (routineDetail?.participants || []).some(
+    (p) =>
+      p.role &&
+      ['admin', 'creator', 'owner'].includes(p.role.toLowerCase()) &&
+      String(p.userId || p.user?.id) === currentUserId
+  );
+
+  const isCreatorByCandidate = !!currentUserId && !!creatorCandidate && currentUserId === String(creatorCandidate).trim();
+  const isCreatorFromParams = !!currentUserId && !!params.user_id && currentUserId === String(params.user_id).trim();
+
+  // Consider the user as creator if any of the conditions match
+  const isCreator = isCreatorByCandidate || isParticipantAdmin || isCreatorFromParams;
+
   const detailRows = useMemo<DetailRow[]>(() => {
     const rows: DetailRow[] = [
       { label: 'Category', value: displayCategory },
@@ -646,21 +673,23 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           <Ionicons name="arrow-back" size={20} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Routine Details</Text>
-        <TouchableOpacity
-          onPress={handleLeaveRoutineClick}
-          style={styles.leaveButton}
-          disabled={isLeavingRoutine}
-          hitSlop={10}
-        >
-          {isLeavingRoutine ? (
-            <ActivityIndicator size="small" color="#ffffff" />
-          ) : (
-            <>
-              <Ionicons name="exit-outline" size={16} color="#ffffff" />
-              <Text style={styles.leaveButtonText}>Leave</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {!isCreator && (
+          <TouchableOpacity
+            onPress={handleLeaveRoutineClick}
+            style={styles.leaveButton}
+            disabled={isLeavingRoutine}
+            hitSlop={10}
+          >
+            {isLeavingRoutine ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <>
+                <Ionicons name="exit-outline" size={16} color="#ffffff" />
+                <Text style={styles.leaveButtonText}>Leave</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
