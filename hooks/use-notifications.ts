@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { notificationService } from '../services/notification.service';
+import { emitToast } from './use-toast';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -73,9 +74,12 @@ export function useNotifications(isAuthenticated: boolean) {
     setupPush();
 
     notificationListener.current = Notifications.addNotificationReceivedListener(
-      (_notification) => {
-        // Foreground notification received – no special handling needed,
-        // the handler above shows the alert automatically.
+      (notification) => {
+        const body =
+          notification.request.content.body ??
+          notification.request.content.title ??
+          'New reminder';
+        emitToast(body, 'bell');
       },
     );
 
