@@ -168,6 +168,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           genderRequirement: routine.genderRequirement || '',
           ageRequirement: String(routine.ageRequirement ?? ''),
           isPublic: routine.isPublic ? '1' : '0',
+          user_id: routine.creatorId || routine.user_id || (routine as any).userId || '',
         },
       });
     },
