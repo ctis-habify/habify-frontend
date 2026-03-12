@@ -46,6 +46,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [leavingRoutineId, setLeavingRoutineId] = useState<string | null>(null);
   const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
+  const [deletingRoutineId, setDeletingRoutineId] = useState<string | null>(null);
   const activeTab = 'Collaborative';
   const isSwitchingRef = useRef(false);
 
@@ -184,6 +185,32 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     [],
   );
 
+  const confirmDeleteRoutine = useCallback(async (routine: Routine) => {
+    if (!routine.id || !token) return;
+    setDeletingRoutineId(routine.id);
+    try {
+      await routineService.deleteRoutine(routine.id, token);
+      showToast('Routine has been deleted.');
+      setRoutines((prev) => prev.filter((r) => r.id !== routine.id));
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : 'Could not delete the routine. Please try again.';
+      showToast(message);
+    } finally {
+      setDeletingRoutineId(null);
+    }
+  }, [showToast, token]);
+
+  const handleDeleteRoutine = useCallback(
+    (routine: Routine) => {
+      if (!routine?.id) return;
+      confirmDeleteRoutine(routine);
+    },
+    [confirmDeleteRoutine],
+  );
+
   const confirmLeaveRoutine = useCallback(async () => {
     if (!leavingRoutine?.id) return;
     setLeavingRoutineId(leavingRoutine.id);
@@ -278,7 +305,9 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                       accentColor={COLLABORATIVE_PRIMARY}
                       onPress={handleOpenRoutineView}
                       onLeave={handleLeaveRoutine}
+                      onDelete={handleDeleteRoutine}
                       isLeaving={leavingRoutineId === routine.id}
+                      isDeleting={deletingRoutineId === routine.id}
                     />
                   </Animated.View>
                 );

@@ -19,6 +19,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { getBackgroundGradient } from '@/app/theme';
+import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -273,7 +274,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   }>();
   const routineId = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const gradientColors = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
 
@@ -290,6 +291,8 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
   const [isLeavingRoutine, setIsLeavingRoutine] = useState(false);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
+  const [isDeletingRoutine, setIsDeletingRoutine] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const chatListRef = useRef<FlatList<ChatMessage> | null>(null);
   const isSendingMessageRef = useRef(false);
 
@@ -648,6 +651,27 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     setIsLeaveModalVisible(true);
   }, []);
 
+  const handleDeleteRoutineClick = useCallback((): void => {
+    setIsDeleteModalVisible(true);
+  }, []);
+
+  const confirmDeleteRoutine = useCallback(async (): Promise<void> => {
+    if (!routineId || !token) return;
+    setIsDeletingRoutine(true);
+    try {
+      await routineService.deleteRoutine(routineId, token);
+    } catch (deleteError: unknown) {
+      const message =
+        deleteError && typeof deleteError === 'object' && 'message' in deleteError
+          ? String((deleteError as { message: unknown }).message)
+          : 'Could not delete the routine. Please try again.';
+      Alert.alert('Error', message);
+      throw deleteError;
+    } finally {
+      setIsDeletingRoutine(false);
+    }
+  }, [routineId, token]);
+
   const confirmLeaveRoutine = useCallback(async (): Promise<void> => {
     setIsLeavingRoutine(true);
     try {
@@ -673,7 +697,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           <Ionicons name="arrow-back" size={20} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Routine Details</Text>
-        {!isCreator && (
+        {!isCreator ? (
           <TouchableOpacity
             onPress={handleLeaveRoutineClick}
             style={styles.leaveButton}
@@ -686,6 +710,22 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               <>
                 <Ionicons name="exit-outline" size={16} color="#ffffff" />
                 <Text style={styles.leaveButtonText}>Leave</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={handleDeleteRoutineClick}
+            style={styles.leaveButton}
+            disabled={isDeletingRoutine}
+            hitSlop={10}
+          >
+            {isDeletingRoutine ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={16} color="#ffffff" />
+                <Text style={styles.leaveButtonText}>Delete</Text>
               </>
             )}
           </TouchableOpacity>
@@ -794,6 +834,18 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           router.back();
         }}
         isLoading={isLeavingRoutine}
+      />
+
+      <DeleteRoutineModal
+        visible={isDeleteModalVisible}
+        routineName={displayRoutineName}
+        onClose={() => setIsDeleteModalVisible(false)}
+        onConfirm={confirmDeleteRoutine}
+        onAnimationFinished={() => {
+          DeviceEventEmitter.emit('refreshCollaborativeRoutines');
+          router.back();
+        }}
+        isLoading={isDeletingRoutine}
       />
 
       <Modal
