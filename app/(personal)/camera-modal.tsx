@@ -3,13 +3,13 @@ import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { verificationService } from '../../services/verification.service';
 
@@ -115,18 +115,21 @@ export default function CameraModal(): React.ReactElement {
       await pollVerificationStatus(verificationId);
     } catch (err: unknown) {
       console.error('Full Verification error object:', err);
-      if (typeof err === 'object' && err !== null && 'response' in err) {
-        const anyErr = err as any;
-        if (anyErr.response) {
-            console.error('Error Status:', anyErr.response.status);
-            console.error('Error Data:', JSON.stringify(anyErr.response.data, null, 2));
+      if (typeof err === 'object' && err !== null) {
+        const errorWithResponse = err as { 
+          response?: { status?: number; data?: { message?: string } };
+          message?: string;
+        };
+        
+        if (errorWithResponse.response) {
+            console.error('Error Status:', errorWithResponse.response.status);
+            console.error('Error Data:', JSON.stringify(errorWithResponse.response.data, null, 2));
         }
+
         Alert.alert(
             'Verification Failed',
-            anyErr.response?.data?.message || anyErr.message || 'An unexpected error occurred'
+            errorWithResponse.response?.data?.message || errorWithResponse.message || 'An unexpected error occurred'
         );
-      } else if (err instanceof Error) {
-        Alert.alert('Verification Failed', err.message);
       } else {
         Alert.alert('Verification Failed', 'An unexpected error occurred');
       }

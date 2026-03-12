@@ -3,7 +3,7 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
-import React from 'react';
+import * as React from 'react';
 
 // Collaborative Theme Color (Fuchsia-400) - Compatible with Purple
 const COLLABORATIVE_PRIMARY = '#E879F9';

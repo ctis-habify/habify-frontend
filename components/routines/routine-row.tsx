@@ -42,7 +42,7 @@ const formatRemaining = (minutes: number) => {
 
 const getHoursFromLabel = (label?: string) => {
   if (!label) return 0;
-  let lower = label.toLowerCase();
+  const lower = label.toLowerCase();
   if (lower.includes('minute') || lower.includes('min')) {
     const min = parseInt(lower);
     return min / 60;

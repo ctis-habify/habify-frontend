@@ -17,9 +17,9 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
   const isDark = theme === 'dark';
   
   const getLevel = (pts: number) => {
-    if (pts >= 100) return { label: "Pro", icon: "trophy-outline", color: "#FFD700" }; 
-    if (pts >= 50) return { label: "Good", icon: "star-outline", color: "#FF8C00" }; 
-    return { label: "Beginner", icon: "leaf-outline", color: "#4CAF50" }; 
+    if (pts >= 100) return { label: "Pro", icon: "trophy-outline" as const, color: "#FFD700" }; 
+    if (pts >= 50) return { label: "Good", icon: "star-outline" as const, color: "#FF8C00" }; 
+    return { label: "Beginner", icon: "leaf-outline" as const, color: "#4CAF50" }; 
   };
 
   const level = getLevel(points);
@@ -44,7 +44,7 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
             },
           ]}
         >
-            <Ionicons name={level.icon as any} size={24} color={level.color} style={{ marginRight: 8 }} />
+            <Ionicons name={level.icon} size={24} color={level.color} style={{ marginRight: 8 }} />
             <Text style={[styles.levelText, { color: level.color }]}>
                 {points} Points
             </Text>

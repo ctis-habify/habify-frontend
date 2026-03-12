@@ -15,7 +15,7 @@ export function useCreateRoutine(initialCategoryId?: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Data
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<import('@/types/category').Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
   // Form State
@@ -95,7 +95,7 @@ export function useCreateRoutine(initialCategoryId?: string) {
         const selectedCategory = categories.find(c => (c.categoryId ?? c.id) === formState.categoryId);
         if (!selectedCategory) throw new Error("Category not found");
 
-        const existingList = allLists.find((l: any) => 
+        const existingList = allLists.find((l: { categoryId: number; routineListTitle: string; id: number }) => 
             (l.categoryId === formState.categoryId) || (l.routineListTitle === selectedCategory.name)
         );
 
@@ -128,9 +128,11 @@ export function useCreateRoutine(initialCategoryId?: string) {
 
         DeviceEventEmitter.emit('SHOW_TOAST', "Collaborative routine created!");
         router.replace('/(collaborative)/(drawer)/routines');
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error(err);
-        Alert.alert("Error", err.message || "Failed to create routine");
+        let msg = "Failed to create routine";
+        if (err instanceof Error) msg = err.message;
+        Alert.alert("Error", msg);
     } finally {
         setIsSubmitting(false);
     }

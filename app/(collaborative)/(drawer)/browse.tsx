@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     DeviceEventEmitter,
@@ -29,6 +30,7 @@ import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { Toast } from '@/components/ui/toast';
 import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
+import type { Category } from '@/types/category';
 import { PublicRoutine } from '@/types/routine';
 
 const GRADIENT = ['#2e1065', '#581c87'] as const;
@@ -54,7 +56,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     const [frequencyType, setFrequencyType] = useState<string>('');
     
     // Dropdown options
-    const [categories, setCategories] = useState<any[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [loadingCategories, setLoadingCategories] = useState(false);
     const [categoryOpen, setCategoryOpen] = useState(false);
     const [frequencyOpen, setFrequencyOpen] = useState(false);
@@ -123,6 +125,13 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     }, [opacity, translateX, scale, router]);
     // ────────────────────────────────────────────────────────────
 
+    const categoryItems = useMemo(() => 
+        categories.map(c => ({ 
+            label: c.name, 
+            value: c.categoryId 
+        })), 
+    [categories]);
+
     const showToast = useCallback((msg: string) => {
         setToastMessage(msg);
         setToastVisible(true);
@@ -167,8 +176,8 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                     prev.map((r) => (r.id === id ? { ...r, isAlreadyMember: true, memberCount: r.memberCount + 1 } : r)),
                 );
                 DeviceEventEmitter.emit('SHOW_TOAST', 'Successfully joined the routine!');
-            } catch (err: any) {
-                showToast(err.message ?? 'Failed to join routine');
+            } catch (err: unknown) {
+                showToast(err instanceof Error ? err.message : 'Failed to join routine');
             }
         },
         [showToast],
@@ -201,7 +210,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                 <View style={styles.header}>
                     <TouchableOpacity
                         style={styles.menuBtn}
-                        onPress={() => (navigation as any).dispatch(DrawerActions.toggleDrawer())}
+                        onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
                     >
                         <Ionicons name="menu" size={24} color="#fff" />
                     </TouchableOpacity>
@@ -226,9 +235,9 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                         <DropDownPicker
                             open={categoryOpen}
                             value={categoryId}
-                            items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id }))] as any}
+                            items={[{ label: 'All Categories', value: '' }, ...categoryItems]}
                             setOpen={setCategoryOpen}
-                            setValue={setCategoryId as any}
+                            setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
                             theme="DARK"
                             style={styles.dropdown}
                             dropDownContainerStyle={styles.dropdownContainer}
@@ -250,9 +259,9 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                                 { label: 'Any Frequency', value: '' },
                                 { label: 'Daily', value: 'Daily' },
                                 { label: 'Weekly', value: 'Weekly' }
-                            ] as any}
+                            ] as { label: string; value: string }[]}
                             setOpen={setFrequencyOpen}
-                            setValue={setFrequencyType as any}
+                            setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string>>}
                             theme="DARK"
                             style={styles.dropdown}
                             dropDownContainerStyle={styles.dropdownContainer}

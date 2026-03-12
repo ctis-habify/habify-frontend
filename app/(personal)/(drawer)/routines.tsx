@@ -1,4 +1,4 @@
-import { getBackgroundGradient } from '@/app/theme';
+import { getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
@@ -13,6 +13,7 @@ import { CreateRoutineInListModal } from '@/components/modals/create-routine-in-
 import { CreateRoutineModal } from '@/components/modals/create-routine-modal';
 import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
+import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
 import type { RoutineList } from '@/types/routine';
 
@@ -31,6 +32,8 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const router = useRouter();
   const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
+  const { token: authContextToken } = useAuth();
+  
   const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : PERSONAL_GRADIENT;
   const activeTab = 'Personal';
   const isSwitchingRef = useRef(false);
@@ -43,18 +46,22 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const loadLists = useCallback(async () => {
     try {
       setLoading(true);
-      const t = await getToken();
+      // Use token from context first, fall back to SecureStore only if needed
+      const t = authContextToken || await getToken();
+      
+      console.log('[DEBUG] loadLists - token available:', !!t);
       if (t) {
         const lists = await routineService.getGroupedRoutines(t);
         setRoutineLists(lists);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Error loading personal routine lists:', e);
-      Alert.alert('Error', e.message || 'Failed to load routines.');
+      const msg = e instanceof Error ? e.message : 'Failed to load routines.';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authContextToken]);
 
   useEffect(() => {
     loadLists();
@@ -71,7 +78,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
     isSwitchingRef.current = true;
     setTimeout(() => {
-      router.replace('/(collaborative)/routines' as any);
+      router.replace('/(collaborative)/(drawer)/routines');
       isSwitchingRef.current = false;
     }, 90);
   };
@@ -87,7 +94,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
   const handleEditList = (list: RoutineList) => {
     console.log('[DEBUG] handleEditList triggers', list);
-    const listId = list.id ?? (list as any).routineListId;
+    const listId = list.id ?? (list as RoutineList & { routineListId?: number }).routineListId;
     if (!listId) return;
     setEditListParams({
       listId: Number(listId),
@@ -97,7 +104,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   };
 
   const handleDeleteList = (list: RoutineList) => {
-    const listId = list.id ?? (list as any).routineListId;
+    const listId = list.id ?? (list as RoutineList & { routineListId?: number }).routineListId;
     if (!listId) return;
 
     if (list.routines && list.routines.length > 0) {
@@ -116,8 +123,9 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             if (!t) return;
             await routineService.deleteRoutineList(Number(listId), t);
             loadLists();
-          } catch (err: any) {
-            Alert.alert('Error', err.message || 'Failed to delete list.');
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Failed to delete list.';
+            Alert.alert('Error', msg);
           }
         },
       },
@@ -125,7 +133,6 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   };
 
   const handlePressRoutine = (routineId: string) => {
-    // @ts-ignore
     router.push({ pathname: '/(personal)/routine/[id]', params: { id: routineId } });
   };
 
@@ -139,7 +146,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           <View style={styles.headerTopRow}>
             <TouchableOpacity
               style={styles.menuBtn}
-              onPress={() => (navigation as any).dispatch(DrawerActions.toggleDrawer())}
+              onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             >
               <Ionicons name="menu" size={24} color="#fff" />
             </TouchableOpacity>
@@ -161,7 +168,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           <TouchableOpacity
             style={styles.sectionHeader}
             activeOpacity={0.85}
-            onPress={() => router.push('/(personal)/(drawer)/today-routines' as any)}
+            onPress={() => router.push('/(personal)/(drawer)/today-routines')}
           >
             <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
           </TouchableOpacity>
@@ -194,7 +201,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                 categoryName={list.categoryName}
                 routines={routinesProps}
                 onItemPress={handlePressRoutine}
-                onPressAddRoutine={() => handleAddRoutine(list.id ?? (list as any).routineListId, list.categoryId)}
+                onPressAddRoutine={() => handleAddRoutine(list.id ?? (list as RoutineList & { routineListId?: number }).routineListId, list.categoryId)}
                 onEditList={() => handleEditList(list)}
                 onDeleteList={() => handleDeleteList(list)}
                 variant="light"
@@ -214,7 +221,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
               <TouchableOpacity
                 style={styles.createBtn}
-                onPress={() => router.push('/(personal)/create-routine' as any)}
+                onPress={() => router.push('/(personal)/create-routine')}
               >
                 <Text style={styles.createBtnText}>Create Routine List</Text>
               </TouchableOpacity>
@@ -224,7 +231,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           {!hasNoData && !loading && (
              <TouchableOpacity
                style={[styles.createBtn, { marginTop: 10 }]}
-               onPress={() => router.push('/(personal)/create-routine' as any)}
+               onPress={() => router.push('/(personal)/create-routine')}
              >
                <Text style={styles.createBtnText}>Create Routine List</Text>
              </TouchableOpacity>

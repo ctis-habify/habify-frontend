@@ -41,6 +41,22 @@ export const Colors = {
   },
 };
 
+export const BrandColors = {
+  gradientTop: '#6D28D9', // Violet-700
+  gradientBottom: '#4C1D95', // Violet-900
+};
+
+export const BACKGROUND_GRADIENT = [
+  BrandColors.gradientTop,
+  BrandColors.gradientBottom,
+] as const;
+
+export const BACKGROUND_GRADIENT_DARK = ['#1E1B4B', '#0F172A'] as const;
+
+export function getBackgroundGradient(theme: 'light' | 'dark'): readonly [string, string] {
+  return theme === 'dark' ? BACKGROUND_GRADIENT_DARK : BACKGROUND_GRADIENT;
+}
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

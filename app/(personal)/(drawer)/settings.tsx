@@ -1,11 +1,9 @@
-import { getBackgroundGradient } from '@/app/theme';
 import { EditProfileModal } from '@/components/settings/edit-profile-modal';
 import { SettingsItem } from '@/components/settings/settings-item';
 import { SettingsSection } from '@/components/settings/settings-section';
-import { Colors } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useThemeControl } from '@/hooks/use-color-scheme';
+import { useColorScheme, useThemeControl } from '@/hooks/use-color-scheme';
 import { notificationService } from '@/services/notification.service';
 import { userService } from '@/services/user.service';
 import { User, UserUpdateDto } from '@/types/user';

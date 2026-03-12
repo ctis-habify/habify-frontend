@@ -8,11 +8,15 @@
       ]
     },
     "jsx": "react-native",
+    "jsxImportSource": "react",
     "strict": true,
     "allowJs": true,
     "resolveJsonModule": true,
     "module": "esnext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
   },
   "include": [
     "**/*.ts",

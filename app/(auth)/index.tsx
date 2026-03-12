@@ -17,9 +17,15 @@ export default function LoginScreen(): React.ReactElement {
   const colors = Colors[theme];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(true);
+  const [remember, setRemember] = useState(false);
   
-  const { login, loading } = useAuth();
+  const { login, loading, user, initialized } = useAuth();
+  
+  React.useEffect(() => {
+    if (initialized && user) {
+      router.replace('/(personal)/(drawer)/routines');
+    }
+  }, [initialized, user, router]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -35,7 +41,7 @@ export default function LoginScreen(): React.ReactElement {
       if (error instanceof Error) {
           msg = error.message;
       } else if (typeof error === 'object' && error !== null && 'message' in error) {
-          msg = String((error as any).message);
+          msg = String((error as { message: unknown }).message);
       }
       Alert.alert('Login failed', msg);
     }

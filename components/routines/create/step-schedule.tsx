@@ -1,6 +1,6 @@
 import type { CreateRoutineFormState } from '@/types/create-routine';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
@@ -22,7 +22,7 @@ export function StepSchedule({ formState, updateForm }: Props) {
   const renderDatePicker = (
     show: boolean,
     value: Date,
-    onChange: (event: any, date?: Date) => void,
+    onChange: (event: DateTimePickerEvent, date?: Date) => void,
     mode: 'date' | 'time',
     onClose: () => void
   ) => {

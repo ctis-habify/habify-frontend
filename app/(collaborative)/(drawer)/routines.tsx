@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerActions } from '@react-navigation/native';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import * as React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   DeviceEventEmitter,
   Platform,
+  RefreshControl,
   Animated as RNAnimated,
   ScrollView,
   StyleSheet,
@@ -19,13 +21,12 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Themes & Components
-import { getBackgroundGradient } from '@/app/theme';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
-import { useAuth } from '@/hooks/use-auth';
+import { getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
 import { notificationService } from '@/services/notification.service';
@@ -40,7 +41,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   // 1. Hooks
   const router = useRouter();
   const navigation = useNavigation();
-  const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
 
@@ -49,6 +49,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [leavingRoutineId, setLeavingRoutineId] = useState<string | null>(null);
   const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
@@ -59,7 +60,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<number | ''>('');
   const [frequencyType, setFrequencyType] = useState<string>('');
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string; categoryId?: number }[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [frequencyOpen, setFrequencyOpen] = useState(false);
@@ -100,59 +101,23 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     setToastVisible(true);
   }, []);
 
-  const getErrorMessage = useCallback((error: unknown): string => {
-    const fallback = 'Failed to load collaborative routines.';
-
-    if (!error || typeof error !== 'object') {
-      return fallback;
-    }
-
-    const err = error as {
-      message?: string;
-      response?: {
-        data?: {
-          message?: string | string[];
-          error?: string;
-        };
-        status?: number;
-      };
-    };
-
-    const responseMessage = err.response?.data?.message;
-    const normalizedResponseMessage = Array.isArray(responseMessage)
-      ? responseMessage[0]
-      : responseMessage;
-    const message = String(normalizedResponseMessage || err.response?.data?.error || err.message || '').trim();
-    const lower = message.toLowerCase();
-
-    if (lower.includes('network')) {
-      return 'Network issue. Check your connection and backend URL.';
-    }
-    if (lower.includes('unauthorized') || err.response?.status === 401) {
-      return 'Your session has expired. Please log in again.';
-    }
-    if (message) {
-      return message;
-    }
-    return fallback;
-  }, []);
-
   const loadLists = useCallback(
-    async (showLoading = false) => {
-      if (showLoading || routines.length === 0) setLoading(true);
+    async (refresh = false) => {
+      if (refresh || routines.length === 0) setLoading(true);
+      setIsRefreshing(refresh);
       try {
-        const data = await routineService.getCollaborativeRoutines();
-        setRoutines(data);
-
-        const socialReminder = notificationService.getSocialInteractionReminder(data.length);
+        const list = await routineService.getCollaborativeRoutines();
+        setRoutines(list);
+        const socialReminder = notificationService.getSocialInteractionReminder(list.length);
         if (socialReminder) showToast(socialReminder);
-      } catch (e) {
-        showToast(getErrorMessage(e));
+      } catch (e: unknown) {
+        showToast(e instanceof Error ? e.message : 'Failed to load collaborative routines');
       } finally {
         setLoading(false);
+        setIsRefreshing(false);
       }
     },
-    [getErrorMessage, routines.length, showToast, token],
+    [routines.length, showToast],
   );
 
   const fetchPublicRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string) => {
@@ -179,8 +144,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           prev.map((r) => (r.id === id ? { ...r, isAlreadyMember: true, memberCount: r.memberCount + 1 } : r)),
         );
         DeviceEventEmitter.emit('SHOW_TOAST', 'Successfully joined the routine!');
-      } catch (err: any) {
-        showToast(err.message ?? 'Failed to join routine');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Failed to join routine');
       }
     },
     [loadLists, showToast],
@@ -202,7 +167,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     (routine: Routine) => {
       if (!routine?.id) return;
       router.push({
-        pathname: '/(collaborative)/routine/[id]',
+        pathname: '/(collaborative)/routine/[id]/chat',
         params: {
           id: routine.id,
           routineName: routine.routineName || '',
@@ -217,7 +182,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           genderRequirement: routine.genderRequirement || '',
           ageRequirement: String(routine.ageRequirement ?? ''),
           isPublic: routine.isPublic ? '1' : '0',
-          user_id: routine.creatorId || routine.user_id || (routine as any).userId || '',
+          user_id: routine.creatorId || routine.user_id || (routine as Routine & { userId?: string }).userId || '',
         },
       });
     },
@@ -327,7 +292,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           <View style={styles.headerTopRow}>
             <TouchableOpacity
               style={styles.menuBtn}
-              onPress={() => (navigation as any).dispatch(DrawerActions.toggleDrawer())}
+              onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             >
               <Ionicons name="menu" size={24} color="#fff" />
             </TouchableOpacity>
@@ -343,16 +308,27 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={styles.scroll} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => loadLists(true)}
+              tintColor={COLLABORATIVE_PRIMARY}
+              colors={[COLLABORATIVE_PRIMARY]}
+            />
+          }
+        >
           {/* Filters & Search Integrated */}
           <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
             <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
               <DropDownPicker
                 open={categoryOpen}
                 value={categoryId}
-                items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id }))] as any}
+                items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id }))] as { label: string; value: string | number }[]}
                 setOpen={setCategoryOpen}
-                setValue={setCategoryId as any}
+                setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
                 theme="DARK"
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
@@ -374,9 +350,9 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                   { label: 'Any Frequency', value: '' },
                   { label: 'Daily', value: 'Daily' },
                   { label: 'Weekly', value: 'Weekly' }
-                ] as any}
+                ] as { label: string; value: string }[]}
                 setOpen={setFrequencyOpen}
-                setValue={setFrequencyType as any}
+                setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string | null>>}
                 theme="DARK"
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
@@ -492,7 +468,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
           <TouchableOpacity
             style={styles.createBtn}
-            onPress={() => router.push('/(collaborative)/create-routine' as any)}
+            onPress={() => router.push('/(collaborative)/create-routine')}
           >
             <Text style={styles.createBtnText}>Create Collaborative List</Text>
           </TouchableOpacity>
@@ -558,12 +534,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  browseBtn: {
-    marginTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    borderColor: 'rgba(232, 121, 249, 0.35)',
   },
   emptyContainer: {
     paddingVertical: 40,
