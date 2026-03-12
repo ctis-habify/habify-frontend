@@ -38,14 +38,31 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Routine[]>([]);
+  const [collabIds, setCollabIds] = useState<Set<string>>(new Set());
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
   const goToRoutineDetail = useCallback(
-    (id: string) => {
-      router.push({ pathname: '/(personal)/routine/[id]', params: { id } }); 
+    (routine: Routine) => {
+      console.log('[DEBUG] Navigating from TodayRoutines. ID:', routine.id);
+      
+      const isCollaborative = collabIds.has(routine.id);
+
+      if (isCollaborative) {
+        // Navigate to Collaborative Chat
+        router.push({
+          pathname: '/(collaborative)/routine/[id]/chat',
+          params: { id: routine.id }
+        });
+      } else {
+        // Navigate to Personal Detail
+        router.push({ 
+          pathname: '/(personal)/routine/[id]', 
+          params: { id: routine.id } 
+        });
+      }
     },
-    [router],
+    [router, collabIds],
   );
   
   const handleCameraPress = useCallback(
@@ -68,6 +85,16 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 
       // Token'ı interceptor'a set et
       setAuthToken(token);
+      
+      // Fetch collab IDs for reliable detection
+      try {
+        const joinedCollab = await routineService.getCollaborativeRoutines();
+        const cIds = new Set(joinedCollab.map(r => r.id));
+        setCollabIds(cIds);
+      } catch (ce) {
+        console.log('Failed to fetch collab routines for detection, fallback to personal only', ce);
+      }
+
       const res = await routineService.getTodayRoutines();
       console.log('/routines/today response:', res);
 
@@ -77,11 +104,27 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         : res;
       const normalized: Routine[] = Array.isArray(incoming) ? incoming : [];
 
+      const now = new Date();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const currentSeconds = now.getSeconds();
+      const currentTimeInSeconds = currentHours * 3600 + currentMinutes * 60 + currentSeconds;
+
       const filtered = normalized.filter(r => {
         // Show if not completed today
-        // We want to show everything meant for today, even if it's "Failed" (passed its time)
-        // because the user might want to see what they missed or catch up if allowed.
-        return !r.isCompleted && !r.isDone; 
+        if (r.isCompleted || r.isDone) return false;
+
+        // Time-based filtering: hide if not started yet
+        if (r.startTime) {
+          const [sh, sm, ss] = r.startTime.split(':').map(Number);
+          const startInSeconds = (sh || 0) * 3600 + (sm || 0) * 60 + (ss || 0);
+          
+          if (currentTimeInSeconds < startInSeconds) {
+            return false;
+          }
+        }
+
+        return true; 
       });
       
       console.log('[DEBUG] Today routines count after filter:', filtered.length);

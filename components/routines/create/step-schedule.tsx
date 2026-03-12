@@ -89,39 +89,41 @@ export function StepSchedule({ formState, updateForm }: Props) {
       </View>
 
       {/* Time Window */}
-      <View style={styles.rowBetween}>
-        <View style={{ flex: 1, marginRight: 10 }}>
-          <Text style={styles.label}>Start Time</Text>
-          <TouchableOpacity onPress={() => setShowStartTime(true)} style={styles.input}>
-             <Text style={{ color: '#fff' }}>
-              {formState.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-             </Text>
-          </TouchableOpacity>
-          {renderDatePicker(
-            showStartTime,
-            formState.startTime,
-            (e, d) => d && updateForm({ startTime: d }),
-            'time',
-            () => setShowStartTime(false)
-          )}
-        </View>
+      {formState.frequency === 'Daily' && (
+        <View style={styles.rowBetween}>
+          <View style={{ flex: 1, marginRight: 10 }}>
+            <Text style={styles.label}>Start Time</Text>
+            <TouchableOpacity onPress={() => setShowStartTime(true)} style={styles.input}>
+               <Text style={{ color: '#fff' }}>
+                {formState.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+               </Text>
+            </TouchableOpacity>
+            {renderDatePicker(
+              showStartTime,
+              formState.startTime,
+              (e, d) => d && updateForm({ startTime: d }),
+              'time',
+              () => setShowStartTime(false)
+            )}
+          </View>
 
-         <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={styles.label}>End Time</Text>
-          <TouchableOpacity onPress={() => setShowEndTime(true)} style={styles.input}>
-            <Text style={{ color: '#fff' }}>
-            {formState.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-            </Text>
-          </TouchableOpacity>
-          {renderDatePicker(
-             showEndTime,
-             formState.endTime,
-             (e, d) => d && updateForm({ endTime: d }),
-             'time',
-             () => setShowEndTime(false)
-           )}
+           <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={styles.label}>End Time</Text>
+            <TouchableOpacity onPress={() => setShowEndTime(true)} style={styles.input}>
+              <Text style={{ color: '#fff' }}>
+              {formState.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </Text>
+            </TouchableOpacity>
+            {renderDatePicker(
+               showEndTime,
+               formState.endTime,
+               (e, d) => d && updateForm({ endTime: d }),
+               'time',
+               () => setShowEndTime(false)
+             )}
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Frequency */}
       <View style={styles.fieldContainer}>
@@ -139,12 +141,21 @@ export function StepSchedule({ formState, updateForm }: Props) {
         </View>
       </View>
 
-       <View style={styles.infoBox}>
-         <Ionicons name="information-circle-outline" size={20} color={ACCENT_COLOR} />
-         <Text style={styles.infoText}>
-          Collaborators must complete the routine within the {formState.startTime.getHours()}:{formState.startTime.getMinutes()} - {formState.endTime.getHours()}:{formState.endTime.getMinutes()} window.
-         </Text>
-       </View>
+       {formState.frequency === 'Daily' ? (
+         <View style={styles.infoBox}>
+           <Ionicons name="information-circle-outline" size={20} color={ACCENT_COLOR} />
+           <Text style={styles.infoText}>
+            Collaborators must complete the routine within the {formState.startTime.getHours()}:{formState.startTime.getMinutes()} - {formState.endTime.getHours()}:{formState.endTime.getMinutes()} window.
+           </Text>
+         </View>
+       ) : (
+         <View style={styles.infoBox}>
+           <Ionicons name="information-circle-outline" size={20} color={ACCENT_COLOR} />
+           <Text style={styles.infoText}>
+            Collaborators can complete this routine anytime during the week.
+           </Text>
+         </View>
+       )}
 
     </Animated.View>
   );

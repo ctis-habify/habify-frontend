@@ -227,6 +227,7 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
       toStringOrUndefined(
         pickFirst(source, ['frequencyType', 'frequency_type', 'routine.frequencyType']),
       ) || '',
+    routineType: 'collaborative',
   } as Routine;
 };
 
@@ -312,8 +313,8 @@ export const routineService = {
     routineName: string;
     frequencyType: string;
     frequencyDetail?: number;
-    startTime: string;
-    endTime: string;
+    startTime?: string;
+    endTime?: string;
     startDate: string;
     isAiVerified?: boolean;
     routineType?: string;

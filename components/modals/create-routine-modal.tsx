@@ -10,14 +10,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    DeviceEventEmitter,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  DeviceEventEmitter,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getRoutineFormStyles } from '.././routine-form-styles';
@@ -104,7 +104,7 @@ export function CreateRoutineModal({
     return (categories ?? [])
       .map((c: Category) => ({
         label: String(c?.name ?? ''),
-        value: Number(c.categoryId ?? c.id),
+        value: Number(c.categoryId),
       }))
       .filter((x) => x.label && Number.isFinite(x.value));
   }, [categories]);
@@ -119,7 +119,7 @@ export function CreateRoutineModal({
       const type = isCollaborativeMode ? 'collaborative' : 'personal';
       const created = await categoryService.createCategory(newCategoryName.trim(), type, token || undefined);
       console.log("Created Category Response:", created);
-      const newId = created.categoryId ?? created.id;
+      const newId = created.categoryId;
       setCategories((prev) => [...prev, created]);
       setCategory(Number(newId));
       setNewCategoryName('');
@@ -145,7 +145,7 @@ export function CreateRoutineModal({
     const targetId = Number(category);
 
     const catToDelete = categories.find((c) => {
-      const cid = c.categoryId ?? c.id;
+      const cid = c.categoryId;
       return Number(cid) === targetId;
     });
 
@@ -171,7 +171,7 @@ export function CreateRoutineModal({
 
               setCategories((prev) =>
                 prev.filter((c) => {
-                  const cid = c.categoryId ?? c.id;
+                  const cid = c.categoryId;
                   return Number(cid) !== targetId;
                 }),
               );

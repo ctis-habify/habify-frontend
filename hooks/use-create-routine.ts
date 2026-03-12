@@ -92,7 +92,7 @@ export function useCreateRoutine(initialCategoryId?: string) {
         const allLists = await routineService.getGroupedRoutines();
         
         // Try to find a list 
-        const selectedCategory = categories.find(c => (c.categoryId ?? c.id) === formState.categoryId);
+        const selectedCategory = categories.find(c => c.categoryId === formState.categoryId);
         if (!selectedCategory) throw new Error("Category not found");
 
         const existingList = allLists.find((l: { categoryId: number; routineListTitle: string; id: number }) => 
@@ -112,8 +112,8 @@ export function useCreateRoutine(initialCategoryId?: string) {
             routineName: formState.routineName.trim(),
             description: formState.description.trim(),
             frequencyType: formState.frequency.charAt(0) + formState.frequency.slice(1).toLowerCase(),
-            startTime: formatTime(formState.startTime),
-            endTime: formatTime(formState.endTime),
+            startTime: formState.frequency === 'Weekly' ? '00:00:00' : formatTime(formState.startTime),
+            endTime: formState.frequency === 'Weekly' ? '23:59:59' : formatTime(formState.endTime),
             startDate: formatDate(formState.startDate),
             lives: formState.lives,
             isPublic: formState.isPublic,

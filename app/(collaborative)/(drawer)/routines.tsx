@@ -110,7 +110,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       setIsRefreshing(refresh);
       try {
         const list = await routineService.getCollaborativeRoutines();
-        setRoutines(list);
+        // Newest routines first (assuming backend returns oldest first)
+        setRoutines([...list].reverse());
         const socialReminder = notificationService.getSocialInteractionReminder(list.length);
         if (socialReminder) showToast(socialReminder);
       } catch (e: unknown) {
@@ -441,40 +442,89 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           ) : null}
 
           {/* Section: My Joined Routines */}
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>My Routines</Text>
-          </View>
+          {/* Stats Summary Bar */}
+          {!loading && routines.length > 0 && !search.trim() && !categoryId && !frequencyType && (
+            <Animated.View entering={FadeInDown.duration(400)} style={styles.statsBar}>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{routines.length}</Text>
+                <Text style={styles.statLabel}>Total Active</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{routines.filter(r => r.isPublic).length}</Text>
+                <Text style={styles.statLabel}>Public</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{routines.filter(r => !r.isPublic).length}</Text>
+                <Text style={styles.statLabel}>Private</Text>
+              </View>
+            </Animated.View>
+          )}
 
-          {loading ? (
-            <ActivityIndicator size="small" color={COLLABORATIVE_PRIMARY} style={{ marginTop: 20 }} />
-          ) : (
-            routines
-              .filter((routine): routine is Routine => {
-                if (!routine || !routine.id) return false;
-                if (!search) return true;
-                const lowerSearch = search.toLowerCase();
-                const nameMatch = routine.routineName?.toLowerCase().includes(lowerSearch);
-                const categoryMatch = routine.categoryName?.toLowerCase().includes(lowerSearch);
-                return !!(nameMatch || categoryMatch);
-              })
-              .map((routine, index) => {
-                return (
-                  <Animated.View
-                    key={routine.id}
-                    entering={FadeInDown.delay(index * 100).springify()}
-                  >
-                    <CollaborativeGroupCard
-                      routine={routine}
-                      accentColor={COLLABORATIVE_PRIMARY}
-                      onPress={handleOpenRoutineView}
-                      onLeave={handleLeaveRoutine}
-                      onDelete={handleDeleteRoutine}
-                      isLeaving={leavingRoutineId === routine.id}
-                      isDeleting={deletingRoutineId === routine.id}
-                    />
-                  </Animated.View>
-                );
-              })
+          {/* Section: My Joined Routines */}
+          {!loading && routines.length > 0 && (
+            <>
+              {/* Public Enrollments */}
+              {routines.some(r => r.isPublic) && (
+                <>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Public Enrollments</Text>
+                    <View style={styles.badge}><Text style={styles.badgeText}>{routines.filter(r => r.isPublic).length}</Text></View>
+                  </View>
+                  {routines
+                    .filter(r => r.isPublic)
+                    .filter((routine): routine is Routine => {
+                      if (!search) return true;
+                      const lowerSearch = search.toLowerCase();
+                      return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
+                    })
+                    .map((routine, index) => (
+                      <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
+                        <CollaborativeGroupCard
+                          routine={routine}
+                          accentColor={COLLABORATIVE_PRIMARY}
+                          onPress={handleOpenRoutineView}
+                          onLeave={handleLeaveRoutine}
+                          onDelete={handleDeleteRoutine}
+                          isLeaving={leavingRoutineId === routine.id}
+                          isDeleting={deletingRoutineId === routine.id}
+                        />
+                      </Animated.View>
+                    ))}
+                </>
+              )}
+
+              {/* Private Enrollments */}
+              {routines.some(r => !r.isPublic) && (
+                <>
+                  <View style={[styles.sectionHeader, { marginTop: 20 }]}>
+                    <Text style={styles.sectionTitle}>Private Enrollments</Text>
+                    <View style={styles.badge}><Text style={styles.badgeText}>{routines.filter(r => !r.isPublic).length}</Text></View>
+                  </View>
+                  {routines
+                    .filter(r => !r.isPublic)
+                    .filter((routine): routine is Routine => {
+                      if (!search) return true;
+                      const lowerSearch = search.toLowerCase();
+                      return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
+                    })
+                    .map((routine, index) => (
+                      <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
+                        <CollaborativeGroupCard
+                          routine={routine}
+                          accentColor={COLLABORATIVE_PRIMARY}
+                          onPress={handleOpenRoutineView}
+                          onLeave={handleLeaveRoutine}
+                          onDelete={handleDeleteRoutine}
+                          isLeaving={leavingRoutineId === routine.id}
+                          isDeleting={deletingRoutineId === routine.id}
+                        />
+                      </Animated.View>
+                    ))}
+                </>
+              )}
+            </>
           )}
 
           {!loading && routines.length === 0 && (
@@ -644,5 +694,50 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  statsBar: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  statBox: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    color: COLLABORATIVE_PRIMARY,
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  statLabel: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+    textTransform: 'uppercase',
+  },
+  statDivider: {
+    width: 1,
+    height: 25,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  badge: {
+    backgroundColor: COLLABORATIVE_PRIMARY,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 10,
+  },
+  badgeText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
