@@ -26,6 +26,7 @@ export interface BackendNotification {
   id: string;
   userId: string;
   routineId: string | null;
+  collaborativeRoutineId: string | null;
   type: string;
   title: string;
   body: string;
@@ -33,6 +34,7 @@ export interface BackendNotification {
   pushSent: boolean;
   createdAt: string;
   routine?: { id: string; routineName: string } | null;
+  collaborativeRoutine?: { id: string; routineName: string } | null;
 }
 
 const notificationFeed: NotificationItem[] = [];
@@ -120,14 +122,24 @@ export const notificationService = {
     await api.post('/notifications/push-token/remove');
   },
 
+  async deleteNotification(notificationId: string): Promise<void> {
+    await api.delete(`/notifications/${notificationId}`);
+  },
+
   backendToLocal(n: BackendNotification): NotificationItem {
+    const typeToCategory: Record<string, NotificationCategory> = {
+      friend_request: 'friend_requests',
+      routine_invitation: 'friend_requests',
+      task_reminder: 'unfinished_tasks',
+    };
+
     return {
       id: n.id,
-      category: 'unfinished_tasks',
+      category: typeToCategory[n.type] ?? 'social_interactions',
       message: n.body,
       createdAt: new Date(n.createdAt).getTime(),
       isRead: n.isRead,
-      routineId: n.routineId,
+      routineId: n.routineId ?? n.collaborativeRoutineId,
     };
   },
 };

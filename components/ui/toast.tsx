@@ -5,11 +5,18 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 type Props = {
   visible: boolean;
   message: string;
+  icon?: 'check' | 'bell' | 'warning';
   onHide?: () => void;
   duration?: number;
 };
 
-export function Toast({ visible, message, onHide, duration = 3000 }: Props): React.ReactElement | null {
+const iconMap: Record<string, { name: keyof typeof Ionicons.glyphMap; color: string }> = {
+  check: { name: 'checkmark-circle', color: '#4ade80' },
+  bell: { name: 'notifications', color: '#A78BFA' },
+  warning: { name: 'warning', color: '#FBBF24' },
+};
+
+export function Toast({ visible, message, icon = 'check', onHide, duration = 3500 }: Props): React.ReactElement | null {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -34,6 +41,8 @@ export function Toast({ visible, message, onHide, duration = 3000 }: Props): Rea
 
   if (!visible) return null;
 
+  const { name, color } = iconMap[icon] ?? iconMap.check;
+
   return (
     <Animated.View
       style={[
@@ -44,7 +53,7 @@ export function Toast({ visible, message, onHide, duration = 3000 }: Props): Rea
             {
               translateY: opacity.interpolate({
                 inputRange: [0, 1],
-                outputRange: [20, 0],
+                outputRange: [-30, 0],
               }),
             },
           ],
@@ -52,17 +61,17 @@ export function Toast({ visible, message, onHide, duration = 3000 }: Props): Rea
       ]}
     >
       <View style={styles.content}>
-        <Ionicons name="checkmark-circle" size={24} color="#4ade80" />
-        <Text style={styles.text}>{message}</Text>
+        <Ionicons name={name} size={22} color={color} />
+        <Text style={styles.text} numberOfLines={2}>{message}</Text>
       </View>
     </Animated.View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 50,
+    top: 60,
     left: 20,
     right: 20,
     alignItems: 'center',
@@ -73,21 +82,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 14,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
     gap: 12,
+    maxWidth: '100%',
   },
   text: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
+    flex: 1,
   },
 });

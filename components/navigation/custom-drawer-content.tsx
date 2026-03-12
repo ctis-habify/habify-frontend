@@ -14,13 +14,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useUnreadCount } from '@/hooks/use-unread-count';
 
 export function CustomDrawerContent(props: DrawerContentComponentProps): React.ReactElement {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const theme = useColorScheme() ?? 'light';
+  const { count: unreadCount } = useUnreadCount(!!token);
   const colors = Colors[theme];
   const isCollaborativeDrawer = !props.state.routeNames.includes('profile');
   const activeTint = theme === 'dark' ? colors.secondary : colors.primary;
@@ -166,7 +168,18 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
         />
         <DrawerItem
           label="Notifications"
-          icon={({ size, color }) => <Ionicons name="notifications-outline" size={size} color={color} />}
+          icon={({ size, color }) => (
+            <View>
+              <Ionicons name="notifications-outline" size={size} color={color} />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
           onPress={() => router.push('/(personal)/(drawer)/notifications')}
           focused={pathname.includes('/(personal)/(drawer)/notifications')}
           activeTintColor={activeTint}
@@ -275,5 +288,22 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 'auto',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
   },
 });
