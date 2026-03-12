@@ -477,8 +477,11 @@ export const routineService = {
   },
 
   // ✅ Browse Public Collaborative Routines (with optional search)
-  async browsePublicRoutines(search?: string): Promise<PublicRoutine[]> {
-    const params = search ? { search } : {};
+  async browsePublicRoutines(search?: string, categoryId?: number, frequencyType?: string): Promise<PublicRoutine[]> {
+    const params: any = {};
+    if (search) params.search = search;
+    if (categoryId) params.categoryId = categoryId;
+    if (frequencyType) params.frequencyType = frequencyType;
     const res = await api.get('/routines/collaborative/public', { params });
     return res.data;
   },

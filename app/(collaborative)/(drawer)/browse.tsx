@@ -7,6 +7,7 @@ import {
     ActivityIndicator,
     DeviceEventEmitter,
     FlatList,
+    Platform,
     StyleSheet,
     Text,
     TextInput,
@@ -22,8 +23,11 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 
+import DropDownPicker from 'react-native-dropdown-picker';
+
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { Toast } from '@/components/ui/toast';
+import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
 import { PublicRoutine } from '@/types/routine';
 
@@ -44,6 +48,17 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     const [search, setSearch] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    
+    // Filters
+    const [categoryId, setCategoryId] = useState<number | ''>('');
+    const [frequencyType, setFrequencyType] = useState<string>('');
+    
+    // Dropdown options
+    const [categories, setCategories] = useState<any[]>([]);
+    const [loadingCategories, setLoadingCategories] = useState(false);
+    const [categoryOpen, setCategoryOpen] = useState(false);
+    const [frequencyOpen, setFrequencyOpen] = useState(false);
+
     // Incremented on every focus so FlatList items remount and re-trigger entering animations
     const [listKey, setListKey] = useState(0);
 
@@ -53,6 +68,18 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     const opacity = useSharedValue(0);
     const translateX = useSharedValue(40);   // slide in from the right
     const scale = useSharedValue(0.97);
+
+    const fetchRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string) => {
+        setLoading(true);
+        try {
+            const data = await routineService.browsePublicRoutines(q || undefined, catId || undefined, freq || undefined);
+            setRoutines(data);
+        } catch (e) {
+            console.error('Failed to load public routines', e);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     // useFocusEffect fires on every visit (the drawer keeps the component mounted,
     // so useEffect([]) only runs once and leaves shared values at their exit state).
@@ -68,7 +95,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
             scale.value = withSpring(1, ENTER_SPRING);
 
             // Re-fetch on every focus so the backend filter (joined routines excluded) applies
-            fetchRoutines(search.trim() || undefined);
+            fetchRoutines(search.trim() || undefined, categoryId, frequencyType);
 
             // Remount FlatList items so their entering animations fire fresh each visit
             setListKey((k) => k + 1);
@@ -101,33 +128,34 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
         setToastVisible(true);
     }, []);
 
-    const fetchRoutines = useCallback(async (q?: string) => {
-        setLoading(true);
-        try {
-            const data = await routineService.browsePublicRoutines(q || undefined);
-            setRoutines(data);
-        } catch (e) {
-            console.error('Failed to load public routines', e);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     // Initial load
     useEffect(() => {
-        fetchRoutines();
-    }, [fetchRoutines]);
+        const loadCats = async () => {
+            setLoadingCategories(true);
+            try {
+                const cats = await categoryService.getCategories('collaborative');
+                setCategories(cats);
+            } catch (e) {
+                console.warn('Failed to load categories', e);
+            } finally {
+                setLoadingCategories(false);
+            }
+        };
+        loadCats();
+        fetchRoutines(search.trim() || undefined, categoryId, frequencyType);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Debounced search
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
-            fetchRoutines(search.trim());
+            fetchRoutines(search.trim(), categoryId, frequencyType);
         }, 350);
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
-    }, [search, fetchRoutines]);
+    }, [search, categoryId, frequencyType, fetchRoutines]);
 
     const handleJoin = useCallback(
         async (id: string) => {
@@ -190,6 +218,54 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                     >
                         <Ionicons name="arrow-back" size={24} color="#fff" />
                     </TouchableOpacity>
+                </View>
+
+                {/* Filters */}
+                <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 1000 }) }]}>
+                    <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 1000 }) }}>
+                        <DropDownPicker
+                            open={categoryOpen}
+                            value={categoryId}
+                            items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id }))] as any}
+                            setOpen={setCategoryOpen}
+                            setValue={setCategoryId as any}
+                            theme="DARK"
+                            style={styles.dropdown}
+                            dropDownContainerStyle={styles.dropdownContainer}
+                            placeholder={loadingCategories ? "Loading..." : "Category"}
+                            placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
+                            textStyle={{ color: '#fff', fontSize: 13 }}
+                            labelStyle={{ fontWeight: '600' }}
+                            listMode="SCROLLVIEW"
+                            zIndex={3000}
+                            zIndexInverse={1000}
+                            onOpen={() => setFrequencyOpen(false)}
+                        />
+                    </View>
+                    <View style={{ flex: 1, ...(Platform.OS === 'ios' && { zIndex: 900 }) }}>
+                        <DropDownPicker
+                            open={frequencyOpen}
+                            value={frequencyType}
+                            items={[
+                                { label: 'Any Frequency', value: '' },
+                                { label: 'Daily', value: 'Daily' },
+                                { label: 'Weekly', value: 'Weekly' }
+                            ] as any}
+                            setOpen={setFrequencyOpen}
+                            setValue={setFrequencyType as any}
+                            theme="DARK"
+                            style={styles.dropdown}
+                            dropDownContainerStyle={styles.dropdownContainer}
+                            placeholder="Frequency"
+                            placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
+                            textStyle={{ color: '#fff', fontSize: 13 }}
+                            labelStyle={{ fontWeight: '600' }}
+                            listMode="SCROLLVIEW"
+                            zIndex={2000}
+                            zIndexInverse={2000}
+                            onOpen={() => setCategoryOpen(false)}
+                        />
+                    </View>
                 </View>
 
                 {/* Search Bar */}
@@ -296,6 +372,26 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '500',
         padding: 0,
+    },
+    filtersWrap: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        marginBottom: 16,
+        zIndex: 1000,
+    },
+    dropdown: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 12,
+        minHeight: 40,
+        height: 40,
+        paddingHorizontal: 12,
+    },
+    dropdownContainer: {
+        backgroundColor: '#1e1b4b',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 12,
+        marginTop: 4,
     },
     list: {
         paddingHorizontal: 18,

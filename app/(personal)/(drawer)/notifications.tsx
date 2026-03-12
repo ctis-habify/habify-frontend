@@ -1,11 +1,13 @@
 import { getBackgroundGradient } from '@/app/theme';
+import { SwipeableNotificationRow } from '@/components/ui/swipeable-notification-row';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FriendRequestReceivedItem, friendService } from '@/services/friend.service';
 import {
-    NotificationCategory,
-    NotificationItem,
-    notificationService,
+  BackendNotification,
+  NotificationCategory,
+  NotificationItem,
+  notificationService,
 } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
 import { RoutineInvitationItem } from '@/types/routine-invitation';
@@ -14,7 +16,7 @@ import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLLABORATIVE_PRIMARY = '#E879F9';
@@ -38,33 +40,72 @@ export default function NotificationsScreen(): React.ReactElement {
   const colors = Colors[theme];
 
   const [items, setItems] = useState<NotificationItem[]>([]);
+  const [backendReminders, setBackendReminders] = useState<BackendNotification[]>([]);
   const [pendingRequests, setPendingRequests] = useState<FriendRequestReceivedItem[]>([]);
   const [routineInvitations, setRoutineInvitations] = useState<RoutineInvitationItem[]>([]);
-  const [, setLoading] = useState(false);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadedSections, setLoadedSections] = useState({
+    reminders: false,
+    requests: false,
+    invitations: false,
+  });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [localItems, requests, invites] = await Promise.all([
-        Promise.resolve(notificationService.getNotifications()),
-        friendService.getReceivedRequests().catch(() => []),
-        routineService.getPendingRoutineInvites().catch(() => []),
-      ]);
-      setItems(localItems);
-      setPendingRequests(requests);
-      setRoutineInvitations(invites);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = useCallback(() => {
+    setItems(notificationService.getNotifications());
+
+    const remindersP = notificationService
+      .fetchNotifications(50, 0)
+      .then((res) => {
+        setBackendReminders(res.data);
+        setLoadedSections((prev) => ({ ...prev, reminders: true }));
+        notificationService.markAllAsRead().catch(() => {});
+      })
+      .catch(() => {
+        setLoadedSections((prev) => ({ ...prev, reminders: true }));
+      });
+
+    friendService
+      .getReceivedRequests()
+      .then((data) => {
+        setPendingRequests(data);
+        setLoadedSections((prev) => ({ ...prev, requests: true }));
+      })
+      .catch(() => {
+        setLoadedSections((prev) => ({ ...prev, requests: true }));
+      });
+
+    routineService
+      .getPendingRoutineInvites()
+      .then((data) => {
+        setRoutineInvitations(data);
+        setLoadedSections((prev) => ({ ...prev, invitations: true }));
+      })
+      .catch(() => {
+        setLoadedSections((prev) => ({ ...prev, invitations: true }));
+      });
+
+    return remindersP;
   }, []);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData()?.finally(() => setRefreshing(false));
+  }, [fetchData]);
 
   useFocusEffect(
     useCallback(() => {
       fetchData();
     }, [fetchData]),
+  );
+
+  const handleDeleteNotification = useCallback(
+    async (item: NotificationItem) => {
+      setBackendReminders((prev) => prev.filter((r) => r.id !== item.id));
+      setItems((prev) => prev.filter((n) => n.id !== item.id));
+      notificationService.deleteNotification(item.id).catch(() => {});
+    },
+    [],
   );
 
   const handleAccept = useCallback(
@@ -129,16 +170,30 @@ export default function NotificationsScreen(): React.ReactElement {
     [],
   );
 
+  const mergedUnfinishedItems = useMemo(() => {
+    const localUnfinished = items.filter((i) => i.category === 'unfinished_tasks');
+    const backendMapped = backendReminders.map(notificationService.backendToLocal);
+    const seen = new Set(localUnfinished.map((i) => i.id));
+    const all = [...localUnfinished];
+    for (const b of backendMapped) {
+      if (!seen.has(b.id)) all.push(b);
+    }
+    return all.sort((a, b) => b.createdAt - a.createdAt);
+  }, [items, backendReminders]);
+
   const sections = useMemo(() => {
     const byCategory: Record<NotificationCategory, NotificationItem[]> = {
       friend_requests: [],
-      unfinished_tasks: [],
+      unfinished_tasks: mergedUnfinishedItems,
       social_interactions: [],
     };
 
-    items.forEach((item) => byCategory[item.category].push(item));
+    items.forEach((item) => {
+      if (item.category === 'friend_requests') byCategory.friend_requests.push(item);
+      if (item.category === 'social_interactions') byCategory.social_interactions.push(item);
+    });
     return byCategory;
-  }, [items]);
+  }, [items, mergedUnfinishedItems]);
 
   const background = getBackgroundGradient(theme);
 
@@ -155,7 +210,13 @@ export default function NotificationsScreen(): React.ReactElement {
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#fff" />
+        }
+      >
         {(Object.keys(sections) as NotificationCategory[]).map((category) => (
           <View
             key={category}
@@ -168,7 +229,9 @@ export default function NotificationsScreen(): React.ReactElement {
 
             {category === 'friend_requests' ? (
               <>
-                {pendingRequests.length === 0 && routineInvitations.length === 0 ? (
+                {!loadedSections.requests || !loadedSections.invitations ? (
+                  <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
+                ) : pendingRequests.length === 0 && routineInvitations.length === 0 ? (
                   <Text style={[styles.emptyText, { color: colors.icon }]}>No pending requests.</Text>
                 ) : (
                   <View style={{ gap: 10, marginTop: 8 }}>
@@ -250,20 +313,43 @@ export default function NotificationsScreen(): React.ReactElement {
               </>
             ) : (
               <>
-                {sections[category].length === 0 ? (
+                {!loadedSections.reminders ? (
+                  <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
+                ) : sections[category].length === 0 ? (
                   <Text style={[styles.emptyText, { color: colors.icon }]}>No notifications yet.</Text>
                 ) : (
-                  sections[category].map((item) => (
-                    <View
-                      key={item.id}
-                      style={[styles.itemRow, { borderTopColor: colors.border }]}
-                    >
-                      <Text style={[styles.itemText, { color: colors.text }]}>{item.message}</Text>
-                      <Text style={[styles.timeText, { color: colors.icon }]}>
-                        {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </Text>
-                    </View>
-                  ))
+                  <ScrollView
+                    style={styles.sectionScroll}
+                    contentContainerStyle={styles.sectionScrollContent}
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator
+                    persistentScrollbar
+                  >
+                    {sections[category].map((item) => (
+                      <SwipeableNotificationRow
+                        key={item.id}
+                        onDelete={() => handleDeleteNotification(item)}
+                      >
+                        <View
+                          style={[
+                            styles.itemRow,
+                            { backgroundColor: colors.card },
+                            item.isRead === false && styles.unreadRow,
+                          ]}
+                        >
+                          {item.isRead === false && <View style={styles.unreadDot} />}
+                          <View style={styles.itemContent}>
+                            <Text style={[styles.itemText, { color: colors.text }]}>{item.message}</Text>
+                            <Text style={[styles.timeText, { color: colors.icon }]}>
+                              {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {' · '}
+                              {new Date(item.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            </Text>
+                          </View>
+                        </View>
+                      </SwipeableNotificationRow>
+                    ))}
+                  </ScrollView>
                 )}
               </>
             )}
@@ -298,7 +384,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 18,
-    paddingBottom: 40,
+    paddingBottom: 100,
     gap: 12,
   },
   sectionCard: {
@@ -316,14 +402,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  sectionScroll: {
+    maxHeight: 250,
+  },
+  sectionScrollContent: {
+    gap: 1,
+  },
+  sectionLoader: {
+    paddingVertical: 12,
+  },
   emptyText: {
     fontSize: 14,
     paddingVertical: 8,
   },
   itemRow: {
-    borderTopWidth: 1,
-    paddingTop: 10,
-    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  unreadRow: {
+    paddingLeft: 4,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#7C3AED',
+    marginTop: 5,
+  },
+  itemContent: {
+    flex: 1,
     gap: 4,
   },
   itemText: {
