@@ -4,27 +4,33 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   DeviceEventEmitter,
+  Platform,
   Animated as RNAnimated,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Themes & Components
 import { getBackgroundGradient } from '@/app/theme';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
+import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { categoryService } from '@/services/category.service';
 import { notificationService } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
-import { Routine } from '@/types/routine';
+import { PublicRoutine, Routine } from '@/types/routine';
 
 // Collaborative Theme Constants
 const COLLABORATIVE_GRADIENT = ['#2e1065', '#581c87'] as const; // Violet-950 -> Violet-900
@@ -46,8 +52,21 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [leavingRoutineId, setLeavingRoutineId] = useState<string | null>(null);
   const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
+  
+  // Public Search State
+  const [publicRoutines, setPublicRoutines] = useState<PublicRoutine[]>([]);
+  const [loadingPublic, setLoadingPublic] = useState(false);
+  const [search, setSearch] = useState('');
+  const [categoryId, setCategoryId] = useState<number | ''>('');
+  const [frequencyType, setFrequencyType] = useState<string>('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [frequencyOpen, setFrequencyOpen] = useState(false);
+
   const activeTab = 'Collaborative';
   const isSwitchingRef = useRef(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fadeAnim = useRef(new RNAnimated.Value(0)).current;
   const translateXAnim = useRef(new RNAnimated.Value(-14)).current;
@@ -122,7 +141,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     async (showLoading = false) => {
       if (showLoading || routines.length === 0) setLoading(true);
       try {
-        // 1. Fetch collaborative routines array as per spec
         const data = await routineService.getCollaborativeRoutines();
         setRoutines(data);
 
@@ -135,6 +153,37 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       }
     },
     [getErrorMessage, routines.length, showToast, token],
+  );
+
+  const fetchPublicRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string) => {
+    setLoadingPublic(true);
+    try {
+      const data = await routineService.browsePublicRoutines(q || undefined, catId || undefined, freq || undefined);
+      setPublicRoutines(data);
+    } catch (e) {
+      console.error('Failed to load public routines', e);
+    } finally {
+      setLoadingPublic(false);
+    }
+  }, []);
+
+  const handleJoin = useCallback(
+    async (id: string) => {
+      try {
+        const res = await routineService.joinPublicRoutine(id);
+        showToast(res.message);
+        // Refresh local routines since user joined a new one
+        loadLists(false);
+        // Update public outcomes locally
+        setPublicRoutines((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, isAlreadyMember: true, memberCount: r.memberCount + 1 } : r)),
+        );
+        DeviceEventEmitter.emit('SHOW_TOAST', 'Successfully joined the routine!');
+      } catch (err: any) {
+        showToast(err.message ?? 'Failed to join routine');
+      }
+    },
+    [loadLists, showToast],
   );
 
   const handleTabSwitch = (tab: string) => {
@@ -190,6 +239,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       await routineService.leaveRoutine(leavingRoutine.id);
       showToast('You have left the routine.');
       setRoutines((prev) => prev.filter((r) => r.id !== leavingRoutine.id));
+      // Also update public list if visible
+      setPublicRoutines((prev) => 
+        prev.map(r => r.id === leavingRoutine.id ? { ...r, isAlreadyMember: false, memberCount: Math.max(0, r.memberCount - 1) } : r)
+      );
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'message' in err
@@ -203,6 +256,36 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   }, [leavingRoutine, showToast]);
 
   // 4. Effects
+  useEffect(() => {
+    const loadCats = async () => {
+      setLoadingCategories(true);
+      try {
+        const cats = await categoryService.getCategories('collaborative');
+        setCategories(cats);
+      } catch (e) {
+        console.warn('Failed to load categories', e);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    loadCats();
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (search.trim() || categoryId || frequencyType) {
+        fetchPublicRoutines(search.trim(), categoryId, frequencyType);
+      } else {
+        setPublicRoutines([]);
+      }
+    }, 350);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search, categoryId, frequencyType, fetchPublicRoutines]);
+
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
       setTimeout(() => {
@@ -260,12 +343,114 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* routines as standalone cards */}
+          {/* Filters & Search Integrated */}
+          <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
+            <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
+              <DropDownPicker
+                open={categoryOpen}
+                value={categoryId}
+                items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id }))] as any}
+                setOpen={setCategoryOpen}
+                setValue={setCategoryId as any}
+                theme="DARK"
+                style={styles.dropdown}
+                dropDownContainerStyle={styles.dropdownContainer}
+                placeholder={loadingCategories ? "Loading..." : "Category"}
+                placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                textStyle={{ color: '#fff', fontSize: 12 }}
+                labelStyle={{ fontWeight: '600' }}
+                listMode="SCROLLVIEW"
+                zIndex={3000}
+                zIndexInverse={1000}
+                onOpen={() => setFrequencyOpen(false)}
+              />
+            </View>
+            <View style={{ flex: 1, ...(Platform.OS === 'ios' && { zIndex: 2000 }) }}>
+              <DropDownPicker
+                open={frequencyOpen}
+                value={frequencyType}
+                items={[
+                  { label: 'Any Frequency', value: '' },
+                  { label: 'Daily', value: 'Daily' },
+                  { label: 'Weekly', value: 'Weekly' }
+                ] as any}
+                setOpen={setFrequencyOpen}
+                setValue={setFrequencyType as any}
+                theme="DARK"
+                style={styles.dropdown}
+                dropDownContainerStyle={styles.dropdownContainer}
+                placeholder="Frequency"
+                placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                textStyle={{ color: '#fff', fontSize: 12 }}
+                labelStyle={{ fontWeight: '600' }}
+                listMode="SCROLLVIEW"
+                zIndex={2000}
+                zIndexInverse={2000}
+                onOpen={() => setCategoryOpen(false)}
+              />
+            </View>
+          </View>
+
+          <View style={styles.searchWrap}>
+            <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.4)" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Filter Public Routines…"
+              placeholderTextColor="rgba(255,255,255,0.35)"
+              value={search}
+              onChangeText={setSearch}
+              autoCorrect={false}
+              autoCapitalize="none"
+              returnKeyType="search"
+            />
+            {!!search && (
+              <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.4)" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Section: Public Search Results (Visible when searching/filtering) */}
+          {(search.trim() || categoryId || frequencyType) ? (
+            <View style={{ marginBottom: 20 }}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Global Results</Text>
+                {loadingPublic && <ActivityIndicator size="small" color={COLLABORATIVE_PRIMARY} />}
+              </View>
+              {publicRoutines.length > 0 ? (
+                publicRoutines.map((item, index) => (
+                  <Animated.View key={`public-${item.id}`} entering={FadeInDown.delay(index * 50)}>
+                    <PublicRoutineCard 
+                      routine={item} 
+                      index={index} 
+                      accentColor={COLLABORATIVE_PRIMARY} 
+                      onJoin={handleJoin} 
+                    />
+                  </Animated.View>
+                ))
+              ) : !loadingPublic ? (
+                <Text style={styles.emptyResultsText}>No routines match your filters.</Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          {/* Section: My Joined Routines */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>My Routines</Text>
+          </View>
+
           {loading ? (
-            <Text style={{ color: '#fff', textAlign: 'center', marginTop: 20 }}>Loading...</Text>
+            <ActivityIndicator size="small" color={COLLABORATIVE_PRIMARY} style={{ marginTop: 20 }} />
           ) : (
             routines
-              .filter((routine): routine is Routine => !!routine && !!routine.id)
+              .filter((routine): routine is Routine => {
+                if (!routine || !routine.id) return false;
+                if (!search) return true;
+                const lowerSearch = search.toLowerCase();
+                const nameMatch = routine.routineName?.toLowerCase().includes(lowerSearch);
+                const categoryMatch = routine.categoryName?.toLowerCase().includes(lowerSearch);
+                return !!(nameMatch || categoryMatch);
+              })
               .map((routine, index) => {
                 return (
                   <Animated.View
@@ -304,20 +489,11 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             </View>
           )}
 
-          {/* CTAs */}
           <TouchableOpacity
             style={styles.createBtn}
             onPress={() => router.push('/(collaborative)/create-routine' as any)}
           >
             <Text style={styles.createBtnText}>Create Collaborative List</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.createBtn, styles.browseBtn]}
-            onPress={() => router.push('/(collaborative)/(drawer)/browse' as any)}
-          >
-            <Ionicons name="search-outline" size={16} color={COLLABORATIVE_PRIMARY} style={{ marginRight: 6 }} />
-            <Text style={[styles.createBtnText, { color: COLLABORATIVE_PRIMARY }]}>Browse Public Routines</Text>
           </TouchableOpacity>
         </ScrollView>
 
@@ -405,5 +581,66 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     maxWidth: '80%',
+  },
+  filtersWrap: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    zIndex: 3000,
+  },
+  dropdown: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    minHeight: 38,
+    height: 38,
+    paddingHorizontal: 10,
+  },
+  dropdownContainer: {
+    backgroundColor: '#1e1b4b',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    marginBottom: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+    padding: 0,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  emptyResultsText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
