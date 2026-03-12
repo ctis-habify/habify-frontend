@@ -12,13 +12,16 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 
 import { useAuth } from '@/hooks/use-auth';
 import { Routine } from '@/types/routine';
+import { DeleteRoutineModal } from '../modals/delete-routine-modal';
 import { ManageRoutineUsersModal } from '../modals/manage-routine-users-modal';
 
 interface CollaborativeGroupCardProps {
     routine: Routine | null;
     onPress?: (routine: Routine) => void;
     onLeave?: (routine: Routine) => void;
+    onDelete?: (routine: Routine) => void;
     isLeaving?: boolean;
+    isDeleting?: boolean;
     accentColor?: string;
 }
 
@@ -26,7 +29,9 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     routine,
     onPress,
     onLeave,
+    onDelete,
     isLeaving = false,
+    isDeleting = false,
     accentColor = '#E879F9'
 }) => {
     const safeRoutine = routine ?? ({} as Routine);
@@ -57,6 +62,7 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     const { user } = useAuth();
 
     const [isManageModalVisible, setIsManageModalVisible] = React.useState(false);
+    const [isDeleteModalVisible, setIsDeleteModalVisible] = React.useState(false);
     const cardScale = useSharedValue(1);
 
     const formatTime = (time?: string) => {
@@ -99,6 +105,10 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
 
     const handleManageUsers = () => {
         setIsManageModalVisible(true);
+    };
+
+    const handleDelete = () => {
+        setIsDeleteModalVisible(true);
     };
 
     const animatedCardStyle = useAnimatedStyle(() => ({
@@ -236,12 +246,32 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                             <Text style={styles.leaveBtnText}>{isLeaving ? 'Leaving...' : 'Leave'}</Text>
                         </TouchableOpacity>
                     )}
+
+                    {!!onDelete && isCreator && (
+                        <TouchableOpacity
+                            style={[styles.actionBtn, styles.deleteActionBtn]}
+                            onPress={handleDelete}
+                            activeOpacity={0.7}
+                            disabled={isDeleting}
+                        >
+                            <Ionicons name="trash-outline" size={18} color="#f87171" />
+                            <Text style={styles.deleteActionBtnText}>{isDeleting ? 'Deleting...' : 'Delete'}</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <ManageRoutineUsersModal
                     visible={isManageModalVisible}
                     onClose={() => setIsManageModalVisible(false)}
                     routineId={id.toString()}
+                />
+
+                <DeleteRoutineModal
+                    visible={isDeleteModalVisible}
+                    routineName={routineName || ''}
+                    onClose={() => setIsDeleteModalVisible(false)}
+                    onConfirm={async () => routine && onDelete?.(routine)}
+                    isLoading={isDeleting}
                 />
             </Pressable>
         </Animated.View >
@@ -374,6 +404,15 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(248, 113, 113, 0.3)',
     },
     leaveBtnText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#f87171',
+    },
+    deleteActionBtn: {
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderColor: 'rgba(248, 113, 113, 0.3)',
+    },
+    deleteActionBtnText: {
         fontSize: 14,
         fontWeight: '700',
         color: '#f87171',

@@ -27,10 +27,12 @@ import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
 import { getBackgroundGradient } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
 import { notificationService } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
+import { Category } from '@/types/category';
 import { PublicRoutine, Routine } from '@/types/routine';
 
 // Collaborative Theme Constants
@@ -41,6 +43,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   // 1. Hooks
   const router = useRouter();
   const navigation = useNavigation();
+  const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
 
@@ -53,14 +56,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [leavingRoutineId, setLeavingRoutineId] = useState<string | null>(null);
   const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
-  
+  const [deletingRoutineId, setDeletingRoutineId] = useState<string | null>(null);
   // Public Search State
   const [publicRoutines, setPublicRoutines] = useState<PublicRoutine[]>([]);
   const [loadingPublic, setLoadingPublic] = useState(false);
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<number | ''>('');
   const [frequencyType, setFrequencyType] = useState<string>('');
-  const [categories, setCategories] = useState<{ id: number; name: string; categoryId?: number }[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [frequencyOpen, setFrequencyOpen] = useState(false);
@@ -198,6 +201,32 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     [],
   );
 
+  const confirmDeleteRoutine = useCallback(async (routine: Routine) => {
+    if (!routine.id || !token) return;
+    setDeletingRoutineId(routine.id);
+    try {
+      await routineService.deleteRoutine(routine.id, token);
+      showToast('Routine has been deleted.');
+      setRoutines((prev) => prev.filter((r) => r.id !== routine.id));
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : 'Could not delete the routine. Please try again.';
+      showToast(message);
+    } finally {
+      setDeletingRoutineId(null);
+    }
+  }, [showToast, token]);
+
+  const handleDeleteRoutine = useCallback(
+    (routine: Routine) => {
+      if (!routine?.id) return;
+      confirmDeleteRoutine(routine);
+    },
+    [confirmDeleteRoutine],
+  );
+
   const confirmLeaveRoutine = useCallback(async () => {
     if (!leavingRoutine?.id) return;
     setLeavingRoutineId(leavingRoutine.id);
@@ -326,7 +355,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               <DropDownPicker
                 open={categoryOpen}
                 value={categoryId}
-                items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id }))] as { label: string; value: string | number }[]}
+                items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId }))] as { label: string; value: string | number }[]}
                 setOpen={setCategoryOpen}
                 setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
                 theme="DARK"
@@ -439,7 +468,9 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                       accentColor={COLLABORATIVE_PRIMARY}
                       onPress={handleOpenRoutineView}
                       onLeave={handleLeaveRoutine}
+                      onDelete={handleDeleteRoutine}
                       isLeaving={leavingRoutineId === routine.id}
+                      isDeleting={deletingRoutineId === routine.id}
                     />
                   </Animated.View>
                 );
