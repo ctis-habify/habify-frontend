@@ -3,9 +3,10 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FriendRequestReceivedItem, friendService } from '@/services/friend.service';
 import {
-    NotificationCategory,
-    NotificationItem,
-    notificationService,
+  BackendNotification,
+  NotificationCategory,
+  NotificationItem,
+  notificationService,
 } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
 import { RoutineInvitationItem } from '@/types/routine-invitation';
@@ -38,6 +39,7 @@ export default function NotificationsScreen(): React.ReactElement {
   const colors = Colors[theme];
 
   const [items, setItems] = useState<NotificationItem[]>([]);
+  const [backendReminders, setBackendReminders] = useState<BackendNotification[]>([]);
   const [pendingRequests, setPendingRequests] = useState<FriendRequestReceivedItem[]>([]);
   const [routineInvitations, setRoutineInvitations] = useState<RoutineInvitationItem[]>([]);
   const [, setLoading] = useState(false);
@@ -46,14 +48,18 @@ export default function NotificationsScreen(): React.ReactElement {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [localItems, requests, invites] = await Promise.all([
+      const [localItems, requests, invites, reminders] = await Promise.all([
         Promise.resolve(notificationService.getNotifications()),
         friendService.getReceivedRequests().catch(() => []),
         routineService.getPendingRoutineInvites().catch(() => []),
+        notificationService.fetchNotifications(50, 0).catch(() => ({ data: [], total: 0 })),
       ]);
       setItems(localItems);
       setPendingRequests(requests);
       setRoutineInvitations(invites);
+      setBackendReminders(reminders.data);
+
+      notificationService.markAllAsRead().catch(() => {});
     } catch {
       // ignore
     } finally {
@@ -129,16 +135,38 @@ export default function NotificationsScreen(): React.ReactElement {
     [],
   );
 
+  const mergedUnfinishedItems = useMemo(() => {
+    const localUnfinished = items.filter((i) => i.category === 'unfinished_tasks');
+    const backendMapped = backendReminders.map(notificationService.backendToLocal);
+    const seen = new Set(localUnfinished.map((i) => i.id));
+    const all = [...localUnfinished];
+    for (const b of backendMapped) {
+      if (!seen.has(b.id)) all.push(b);
+    }
+    all.sort((a, b) => b.createdAt - a.createdAt);
+
+    const seenRoutines = new Set<string>();
+    return all.filter((item) => {
+      const key = item.routineId ?? item.id;
+      if (seenRoutines.has(key)) return false;
+      seenRoutines.add(key);
+      return true;
+    });
+  }, [items, backendReminders]);
+
   const sections = useMemo(() => {
     const byCategory: Record<NotificationCategory, NotificationItem[]> = {
       friend_requests: [],
-      unfinished_tasks: [],
+      unfinished_tasks: mergedUnfinishedItems,
       social_interactions: [],
     };
 
-    items.forEach((item) => byCategory[item.category].push(item));
+    items.forEach((item) => {
+      if (item.category === 'friend_requests') byCategory.friend_requests.push(item);
+      if (item.category === 'social_interactions') byCategory.social_interactions.push(item);
+    });
     return byCategory;
-  }, [items]);
+  }, [items, mergedUnfinishedItems]);
 
   const background = getBackgroundGradient(theme);
 
@@ -256,12 +284,21 @@ export default function NotificationsScreen(): React.ReactElement {
                   sections[category].map((item) => (
                     <View
                       key={item.id}
-                      style={[styles.itemRow, { borderTopColor: colors.border }]}
+                      style={[
+                        styles.itemRow,
+                        { borderTopColor: colors.border },
+                        item.isRead === false && styles.unreadRow,
+                      ]}
                     >
-                      <Text style={[styles.itemText, { color: colors.text }]}>{item.message}</Text>
-                      <Text style={[styles.timeText, { color: colors.icon }]}>
-                        {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </Text>
+                      {item.isRead === false && <View style={styles.unreadDot} />}
+                      <View style={styles.itemContent}>
+                        <Text style={[styles.itemText, { color: colors.text }]}>{item.message}</Text>
+                        <Text style={[styles.timeText, { color: colors.icon }]}>
+                          {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {' · '}
+                          {new Date(item.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                        </Text>
+                      </View>
                     </View>
                   ))
                 )}
@@ -324,6 +361,22 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingTop: 10,
     marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  unreadRow: {
+    paddingLeft: 4,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#7C3AED',
+    marginTop: 5,
+  },
+  itemContent: {
+    flex: 1,
     gap: 4,
   },
   itemText: {
