@@ -1,13 +1,12 @@
-import { getBackgroundGradient } from '@/app/theme';
 import { SwipeableNotificationRow } from '@/components/ui/swipeable-notification-row';
-import { Colors } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FriendRequestReceivedItem, friendService } from '@/services/friend.service';
 import {
-  BackendNotification,
-  NotificationCategory,
-  NotificationItem,
-  notificationService,
+    BackendNotification,
+    NotificationCategory,
+    NotificationItem,
+    notificationService,
 } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
 import { RoutineInvitationItem } from '@/types/routine-invitation';
@@ -201,7 +200,7 @@ export default function NotificationsScreen(): React.ReactElement {
     <LinearGradient colors={background} style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
-          onPress={() => (navigation as any).dispatch(DrawerActions.toggleDrawer())}
+          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
           style={styles.menuButton}
         >
           <Ionicons name="menu" size={24} color="#fff" />

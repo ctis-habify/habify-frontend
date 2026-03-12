@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerActions } from '@react-navigation/native';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import * as React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   DeviceEventEmitter,
   Platform,
+  RefreshControl,
   Animated as RNAnimated,
   ScrollView,
   StyleSheet,
@@ -19,17 +21,18 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Themes & Components
-import { getBackgroundGradient } from '@/app/theme';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
+import { getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
 import { notificationService } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
+import { Category } from '@/types/category';
 import { PublicRoutine, Routine } from '@/types/routine';
 
 // Collaborative Theme Constants
@@ -49,6 +52,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [leavingRoutineId, setLeavingRoutineId] = useState<string | null>(null);
   const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
@@ -59,7 +63,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<number | ''>('');
   const [frequencyType, setFrequencyType] = useState<string>('');
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [frequencyOpen, setFrequencyOpen] = useState(false);
@@ -100,59 +104,24 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     setToastVisible(true);
   }, []);
 
-  const getErrorMessage = useCallback((error: unknown): string => {
-    const fallback = 'Failed to load collaborative routines.';
-
-    if (!error || typeof error !== 'object') {
-      return fallback;
-    }
-
-    const err = error as {
-      message?: string;
-      response?: {
-        data?: {
-          message?: string | string[];
-          error?: string;
-        };
-        status?: number;
-      };
-    };
-
-    const responseMessage = err.response?.data?.message;
-    const normalizedResponseMessage = Array.isArray(responseMessage)
-      ? responseMessage[0]
-      : responseMessage;
-    const message = String(normalizedResponseMessage || err.response?.data?.error || err.message || '').trim();
-    const lower = message.toLowerCase();
-
-    if (lower.includes('network')) {
-      return 'Network issue. Check your connection and backend URL.';
-    }
-    if (lower.includes('unauthorized') || err.response?.status === 401) {
-      return 'Your session has expired. Please log in again.';
-    }
-    if (message) {
-      return message;
-    }
-    return fallback;
-  }, []);
-
   const loadLists = useCallback(
-    async (showLoading = false) => {
-      if (showLoading || routines.length === 0) setLoading(true);
+    async (refresh = false) => {
+      if (refresh || routines.length === 0) setLoading(true);
+      setIsRefreshing(refresh);
       try {
-        const data = await routineService.getCollaborativeRoutines();
-        setRoutines(data);
-
-        const socialReminder = notificationService.getSocialInteractionReminder(data.length);
+        const list = await routineService.getCollaborativeRoutines();
+        // Newest routines first (assuming backend returns oldest first)
+        setRoutines([...list].reverse());
+        const socialReminder = notificationService.getSocialInteractionReminder(list.length);
         if (socialReminder) showToast(socialReminder);
-      } catch (e) {
-        showToast(getErrorMessage(e));
+      } catch (e: unknown) {
+        showToast(e instanceof Error ? e.message : 'Failed to load collaborative routines');
       } finally {
         setLoading(false);
+        setIsRefreshing(false);
       }
     },
-    [getErrorMessage, routines.length, showToast, token],
+    [routines.length, showToast],
   );
 
   const fetchPublicRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string) => {
@@ -179,8 +148,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           prev.map((r) => (r.id === id ? { ...r, isAlreadyMember: true, memberCount: r.memberCount + 1 } : r)),
         );
         DeviceEventEmitter.emit('SHOW_TOAST', 'Successfully joined the routine!');
-      } catch (err: any) {
-        showToast(err.message ?? 'Failed to join routine');
+      } catch (err: unknown) {
+        showToast(err instanceof Error ? err.message : 'Failed to join routine');
       }
     },
     [loadLists, showToast],
@@ -202,7 +171,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     (routine: Routine) => {
       if (!routine?.id) return;
       router.push({
-        pathname: '/(collaborative)/routine/[id]',
+        pathname: '/(collaborative)/routine/[id]/chat',
         params: {
           id: routine.id,
           routineName: routine.routineName || '',
@@ -217,7 +186,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           genderRequirement: routine.genderRequirement || '',
           ageRequirement: String(routine.ageRequirement ?? ''),
           isPublic: routine.isPublic ? '1' : '0',
-          user_id: routine.creatorId || routine.user_id || (routine as any).userId || '',
+          user_id: routine.creatorId || routine.user_id || (routine as Routine & { userId?: string }).userId || '',
         },
       });
     },
@@ -353,7 +322,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           <View style={styles.headerTopRow}>
             <TouchableOpacity
               style={styles.menuBtn}
-              onPress={() => (navigation as any).dispatch(DrawerActions.toggleDrawer())}
+              onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             >
               <Ionicons name="menu" size={24} color="#fff" />
             </TouchableOpacity>
@@ -369,16 +338,27 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={styles.scroll} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => loadLists(true)}
+              tintColor={COLLABORATIVE_PRIMARY}
+              colors={[COLLABORATIVE_PRIMARY]}
+            />
+          }
+        >
           {/* Filters & Search Integrated */}
           <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
             <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
               <DropDownPicker
                 open={categoryOpen}
                 value={categoryId}
-                items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id }))] as any}
+                items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId }))] as { label: string; value: string | number }[]}
                 setOpen={setCategoryOpen}
-                setValue={setCategoryId as any}
+                setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
                 theme="DARK"
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
@@ -400,9 +380,9 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                   { label: 'Any Frequency', value: '' },
                   { label: 'Daily', value: 'Daily' },
                   { label: 'Weekly', value: 'Weekly' }
-                ] as any}
+                ] as { label: string; value: string }[]}
                 setOpen={setFrequencyOpen}
-                setValue={setFrequencyType as any}
+                setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string | null>>}
                 theme="DARK"
                 style={styles.dropdown}
                 dropDownContainerStyle={styles.dropdownContainer}
@@ -462,40 +442,89 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           ) : null}
 
           {/* Section: My Joined Routines */}
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>My Routines</Text>
-          </View>
+          {/* Stats Summary Bar */}
+          {!loading && routines.length > 0 && !search.trim() && !categoryId && !frequencyType && (
+            <Animated.View entering={FadeInDown.duration(400)} style={styles.statsBar}>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{routines.length}</Text>
+                <Text style={styles.statLabel}>Total Active</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{routines.filter(r => r.isPublic).length}</Text>
+                <Text style={styles.statLabel}>Public</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{routines.filter(r => !r.isPublic).length}</Text>
+                <Text style={styles.statLabel}>Private</Text>
+              </View>
+            </Animated.View>
+          )}
 
-          {loading ? (
-            <ActivityIndicator size="small" color={COLLABORATIVE_PRIMARY} style={{ marginTop: 20 }} />
-          ) : (
-            routines
-              .filter((routine): routine is Routine => {
-                if (!routine || !routine.id) return false;
-                if (!search) return true;
-                const lowerSearch = search.toLowerCase();
-                const nameMatch = routine.routineName?.toLowerCase().includes(lowerSearch);
-                const categoryMatch = routine.categoryName?.toLowerCase().includes(lowerSearch);
-                return !!(nameMatch || categoryMatch);
-              })
-              .map((routine, index) => {
-                return (
-                  <Animated.View
-                    key={routine.id}
-                    entering={FadeInDown.delay(index * 100).springify()}
-                  >
-                    <CollaborativeGroupCard
-                      routine={routine}
-                      accentColor={COLLABORATIVE_PRIMARY}
-                      onPress={handleOpenRoutineView}
-                      onLeave={handleLeaveRoutine}
-                      onDelete={handleDeleteRoutine}
-                      isLeaving={leavingRoutineId === routine.id}
-                      isDeleting={deletingRoutineId === routine.id}
-                    />
-                  </Animated.View>
-                );
-              })
+          {/* Section: My Joined Routines */}
+          {!loading && routines.length > 0 && (
+            <>
+              {/* Public Enrollments */}
+              {routines.some(r => r.isPublic) && (
+                <>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Public Enrollments</Text>
+                    <View style={styles.badge}><Text style={styles.badgeText}>{routines.filter(r => r.isPublic).length}</Text></View>
+                  </View>
+                  {routines
+                    .filter(r => r.isPublic)
+                    .filter((routine): routine is Routine => {
+                      if (!search) return true;
+                      const lowerSearch = search.toLowerCase();
+                      return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
+                    })
+                    .map((routine, index) => (
+                      <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
+                        <CollaborativeGroupCard
+                          routine={routine}
+                          accentColor={COLLABORATIVE_PRIMARY}
+                          onPress={handleOpenRoutineView}
+                          onLeave={handleLeaveRoutine}
+                          onDelete={handleDeleteRoutine}
+                          isLeaving={leavingRoutineId === routine.id}
+                          isDeleting={deletingRoutineId === routine.id}
+                        />
+                      </Animated.View>
+                    ))}
+                </>
+              )}
+
+              {/* Private Enrollments */}
+              {routines.some(r => !r.isPublic) && (
+                <>
+                  <View style={[styles.sectionHeader, { marginTop: 20 }]}>
+                    <Text style={styles.sectionTitle}>Private Enrollments</Text>
+                    <View style={styles.badge}><Text style={styles.badgeText}>{routines.filter(r => !r.isPublic).length}</Text></View>
+                  </View>
+                  {routines
+                    .filter(r => !r.isPublic)
+                    .filter((routine): routine is Routine => {
+                      if (!search) return true;
+                      const lowerSearch = search.toLowerCase();
+                      return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
+                    })
+                    .map((routine, index) => (
+                      <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
+                        <CollaborativeGroupCard
+                          routine={routine}
+                          accentColor={COLLABORATIVE_PRIMARY}
+                          onPress={handleOpenRoutineView}
+                          onLeave={handleLeaveRoutine}
+                          onDelete={handleDeleteRoutine}
+                          isLeaving={leavingRoutineId === routine.id}
+                          isDeleting={deletingRoutineId === routine.id}
+                        />
+                      </Animated.View>
+                    ))}
+                </>
+              )}
+            </>
           )}
 
           {!loading && routines.length === 0 && (
@@ -520,7 +549,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
           <TouchableOpacity
             style={styles.createBtn}
-            onPress={() => router.push('/(collaborative)/create-routine' as any)}
+            onPress={() => router.push('/(collaborative)/create-routine')}
           >
             <Text style={styles.createBtnText}>Create Collaborative List</Text>
           </TouchableOpacity>
@@ -586,12 +615,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  browseBtn: {
-    marginTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    borderColor: 'rgba(232, 121, 249, 0.35)',
   },
   emptyContainer: {
     paddingVertical: 40,
@@ -671,5 +694,50 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  statsBar: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  statBox: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    color: COLLABORATIVE_PRIMARY,
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  statLabel: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+    textTransform: 'uppercase',
+  },
+  statDivider: {
+    width: 1,
+    height: 25,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  badge: {
+    backgroundColor: COLLABORATIVE_PRIMARY,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 10,
+  },
+  badgeText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

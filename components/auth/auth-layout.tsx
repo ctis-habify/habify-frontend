@@ -1,5 +1,4 @@
-import { getBackgroundGradient } from '@/app/theme';
-import { Colors } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';

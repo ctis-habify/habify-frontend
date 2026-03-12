@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
@@ -20,7 +20,6 @@ import {
   View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { getBackgroundGradient } from '../../app/theme';
 import { getRoutineFormStyles } from '.././routine-form-styles';
 
 interface CreateRoutineModalProps {
@@ -105,7 +104,7 @@ export function CreateRoutineModal({
     return (categories ?? [])
       .map((c: Category) => ({
         label: String(c?.name ?? ''),
-        value: Number((c as any).categoryId ?? (c as any).id),
+        value: Number(c.categoryId),
       }))
       .filter((x) => x.label && Number.isFinite(x.value));
   }, [categories]);
@@ -120,7 +119,7 @@ export function CreateRoutineModal({
       const type = isCollaborativeMode ? 'collaborative' : 'personal';
       const created = await categoryService.createCategory(newCategoryName.trim(), type, token || undefined);
       console.log("Created Category Response:", created);
-      const newId = created.categoryId ?? (created as any).id;
+      const newId = created.categoryId;
       setCategories((prev) => [...prev, created]);
       setCategory(Number(newId));
       setNewCategoryName('');
@@ -128,8 +127,8 @@ export function CreateRoutineModal({
     } catch (e: unknown) {
       console.error('Create category failed', e);
       let msg = 'Failed to create category';
-      if (typeof e === 'object' && e !== null && 'response' in e) {
-        msg = (e as any).response?.data?.message || msg;
+      if (axios.isAxiosError(e)) {
+        msg = e.response?.data?.message || msg;
       }
       Alert.alert('Error', msg);
     }
@@ -146,7 +145,7 @@ export function CreateRoutineModal({
     const targetId = Number(category);
 
     const catToDelete = categories.find((c) => {
-      const cid = (c as any).categoryId ?? (c as any).id;
+      const cid = c.categoryId;
       return Number(cid) === targetId;
     });
 
@@ -172,7 +171,7 @@ export function CreateRoutineModal({
 
               setCategories((prev) =>
                 prev.filter((c) => {
-                  const cid = (c as any).categoryId ?? (c as any).id;
+                  const cid = c.categoryId;
                   return Number(cid) !== targetId;
                 }),
               );
@@ -182,8 +181,8 @@ export function CreateRoutineModal({
             } catch (error: unknown) {
               console.error('[DEBUG] Silme Hatası Detayı:', error);
               let errorMsg = 'Unknown error occurred.';
-              if (typeof error === 'object' && error !== null && 'response' in error) {
-                errorMsg = (error as any).response?.data?.message || errorMsg;
+              if (axios.isAxiosError(error)) {
+                errorMsg = error.response?.data?.message || errorMsg;
               } else if (error instanceof Error) {
                 errorMsg = error.message;
               }

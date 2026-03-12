@@ -177,7 +177,11 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                     <View style={[styles.divider, { height: '60%' }]} />
                     <View style={styles.statItem}>
                         <Ionicons name="time" size={16} color={accentColor} />
-                        <Text style={styles.statValue}>{formatTime(startTime)} - {formatTime(endTime)}</Text>
+                        <Text style={styles.statValue}>
+                            {safeRoutine.frequencyType?.toUpperCase() === 'WEEKLY'
+                                ? 'Weekly'
+                                : `${formatTime(startTime)} - ${formatTime(endTime)}`}
+                        </Text>
                     </View>
                 </View>
 

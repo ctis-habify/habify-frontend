@@ -20,7 +20,7 @@ type Props = {
   items: Routine[];
   loading: boolean;
   onRefresh: () => void;
-  onPressRoutine: (_id: string) => void;
+  onPressRoutine: (_routine: Routine) => void;
   onPressCamera?: (_id: string) => void;
 };
 
@@ -48,7 +48,7 @@ export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, o
   const renderItem = useCallback(({ item }: { item: Routine }) => (
     <RoutineCard 
       routine={item} 
-      onPress={() => onPressRoutine(item.id)} 
+      onPress={() => onPressRoutine(item)} 
       onPressCamera={onPressCamera}
     />
   ), [onPressRoutine, onPressCamera]);

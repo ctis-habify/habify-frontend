@@ -1,39 +1,40 @@
 import { Colors } from '@/constants/theme';
 import {
-  FriendRequestSentItem,
-  friendService,
-  UserSearchResult,
+    FriendRequestSentItem,
+    friendService,
+    UserSearchResult,
 } from '@/services/friend.service';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
-  ZoomIn,
+    FadeIn,
+    FadeInDown,
+    interpolate,
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withTiming,
+    ZoomIn,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -761,15 +762,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  emptyIconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(232, 121, 249, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
   emptyTitle: {
     marginTop: 12,
     fontSize: 17,
@@ -834,27 +826,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.light.icon,
     marginTop: 2,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  acceptBtn: {
-    backgroundColor: Colors.light.success,
-  },
-  declineBtn: {
-    backgroundColor: Colors.light.error,
-  },
-  btnDisabled: {
-    opacity: 0.6,
   },
   pendingBadge: {
     alignSelf: 'flex-start',

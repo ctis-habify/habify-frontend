@@ -10,9 +10,10 @@ import { routineService } from '../../../services/routine.service';
 import type { Routine } from '../../../types/routine';
 
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getBackgroundGradient } from '@/app/theme';
 import { Toast } from '@/components/ui/toast';
+import { getBackgroundGradient } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { setAuthToken } from '@/services/api';
 import { notificationService } from '@/services/notification.service';
 import { BottomReturnButton } from '../../../components/today/bottom-return-button';
@@ -31,25 +32,41 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
+  const { token: authContextToken } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const screenColors = getBackgroundGradient(theme);
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Routine[]>([]);
+  const [collabIds, setCollabIds] = useState<Set<string>>(new Set());
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
   const goToRoutineDetail = useCallback(
-    (id: string) => {
-      // @ts-ignore
-      router.push({ pathname: '/(personal)/routine/[id]', params: { id } }); 
+    (routine: Routine) => {
+      console.log('[DEBUG] Navigating from TodayRoutines. ID:', routine.id);
+      
+      const isCollaborative = collabIds.has(routine.id);
+
+      if (isCollaborative) {
+        // Navigate to Collaborative Chat
+        router.push({
+          pathname: '/(collaborative)/routine/[id]/chat',
+          params: { id: routine.id }
+        });
+      } else {
+        // Navigate to Personal Detail
+        router.push({ 
+          pathname: '/(personal)/routine/[id]', 
+          params: { id: routine.id } 
+        });
+      }
     },
-    [router],
+    [router, collabIds],
   );
   
   const handleCameraPress = useCallback(
     (id: string) => {
-      // @ts-ignore
       router.push({ pathname: '/(personal)/camera-modal', params: { routineId: id } });
     },
     [router],
@@ -58,7 +75,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await getToken();
+      const token = authContextToken || await getToken();
 
       if (!token) {
         setAuthToken(null);
@@ -68,60 +85,67 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 
       // Token'ı interceptor'a set et
       setAuthToken(token);
+      
+      // Fetch collab IDs for reliable detection
+      try {
+        const joinedCollab = await routineService.getCollaborativeRoutines();
+        const cIds = new Set(joinedCollab.map(r => r.id));
+        setCollabIds(cIds);
+      } catch (ce) {
+        console.log('Failed to fetch collab routines for detection, fallback to personal only', ce);
+      }
+
       const res = await routineService.getTodayRoutines();
       console.log('/routines/today response:', res);
 
-      // Normalize et: array değilse içinden array çıkar
-      const normalized: Routine[] = Array.isArray(res)
-        ? res
-        : Array.isArray((res as any)?.data)
-          ? (res as any).data
-          : Array.isArray((res as any)?.items)
-            ? (res as any).items
-            : Array.isArray((res as any)?.routines)
-              ? (res as any).routines
-              : [];
+      // Normalize et (res is unknown usually, but service says Routine[] | {routines: Routine[]})
+      const incoming = (typeof res === 'object' && res !== null && 'routines' in res) 
+        ? (res as { routines: Routine[] }).routines 
+        : res;
+      const normalized: Routine[] = Array.isArray(incoming) ? incoming : [];
 
-      const visibleUnfinished = normalized.filter(r => {
-        if (!r.startTime) return true; 
+      const now = new Date();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const currentSeconds = now.getSeconds();
+      const currentTimeInSeconds = currentHours * 3600 + currentMinutes * 60 + currentSeconds;
 
-        const now = new Date();
-        const [h, m] = r.startTime.split(':').map(Number);
-        const start = new Date();
-        start.setHours(h, m, 0, 0);
+      const filtered = normalized.filter(r => {
+        // Show if not completed today
+        if (r.isCompleted || r.isDone) return false;
 
-        // Check end time for failure
-        let isFailed = false;
-        if (r.endTime) {
-            const [eh, em] = r.endTime.split(':').map(Number);
-            const end = new Date();
-            end.setHours(eh, em, 0, 0);
-            if (now > end && !r.isDone) {
-                isFailed = true;
-            }
+        // Time-based filtering: hide if not started yet
+        if (r.startTime) {
+          const [sh, sm, ss] = r.startTime.split(':').map(Number);
+          const startInSeconds = (sh || 0) * 3600 + (sm || 0) * 60 + (ss || 0);
+          
+          if (currentTimeInSeconds < startInSeconds) {
+            return false;
+          }
         }
 
-        // Show if started AND not failed AND not completed
-        // Backend key is isCompleted
-        return now >= start && !isFailed && !r.isCompleted; 
+        return true; 
       });
-      setItems(visibleUnfinished);
+      
+      console.log('[DEBUG] Today routines count after filter:', filtered.length);
+      setItems(filtered);
 
-      const reminder = notificationService.getUnfinishedTaskReminder(visibleUnfinished.length);
+      const reminder = notificationService.getUnfinishedTaskReminder(filtered.length);
       if (reminder) {
         setToastMessage(reminder);
         setToastVisible(true);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.log('Today routines load error:', e);
       setItems([]);
-      setToastMessage("Failed to load today's routines.");
+      let msg = "Failed to load today's routines.";
+      if (e instanceof Error) msg = e.message;
+      setToastMessage(msg);
       setToastVisible(true);
     } finally {
-
       setLoading(false);
     }
-  }, []);
+  }, [authContextToken]);
 
   useEffect(() => {
     if (isFocused) {

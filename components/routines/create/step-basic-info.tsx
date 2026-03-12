@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/use-auth';
 import { categoryService } from '@/services/category.service';
+import type { Category } from '@/types/category';
 import type { CreateRoutineFormState } from '@/types/create-routine';
 import React, { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -12,7 +13,7 @@ const INPUT_BG = 'rgba(0,0,0,0.2)';
 interface Props {
   formState: CreateRoutineFormState;
   updateForm: (updates: Partial<CreateRoutineFormState>) => void;
-  categories: any[];
+  categories: Category[];
   loadCategories: () => Promise<void>;
   loadingCategories: boolean;
 }

@@ -1,5 +1,4 @@
 import { Colors } from '@/constants/theme';
-import { setAuthToken } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import {
   DrawerContentComponentProps,
@@ -7,8 +6,7 @@ import {
   DrawerItem,
 } from '@react-navigation/drawer';
 import { usePathname, useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import React from 'react';
+import * as React from 'react';
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,7 +18,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const { count: unreadCount } = useUnreadCount(!!token);
   const colors = Colors[theme];
@@ -57,10 +55,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
 
   const handleLogout = async () => {
     try {
-      // 1. Clear token
-      await SecureStore.deleteItemAsync('habify_access_token');
-      setAuthToken(null);
-      // 2. Redirect to auth
+      await logout();
       router.replace('/(auth)');
     } catch (error) {
       console.error('Logout failed', error);
@@ -131,13 +126,12 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
         <DrawerItem
           label="My Routines"
           icon={({ size, color }) => <Ionicons name="list-outline" size={size} color={color} />}
-          onPress={() =>
-            router.push(
-              (isCollaborativeDrawer
-                ? '/(collaborative)/routines'
-                : '/(personal)/(drawer)/routines') as any,
-            )
-          }
+          onPress={() => {
+            const h = (isCollaborativeDrawer
+                ? '/(collaborative)/(drawer)/routines'
+                : '/(personal)/(drawer)/routines') as `/(collaborative)/(drawer)/routines` | `/(personal)/(drawer)/routines`;
+            router.push(h);
+          }}
           focused={
             pathname.includes('/(personal)/(drawer)/routines') ||
             pathname.includes('/(collaborative)/routines')

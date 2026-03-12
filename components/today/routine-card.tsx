@@ -37,6 +37,13 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
         return;
      }
 
+     const freq = (routine.frequencyType || '').toUpperCase();
+     if (freq === 'WEEKLY') {
+        setLabel('Weekly');
+        setMinsLeft(1440); // Any large positive number
+        return;
+     }
+
      if (!endTime) {
         setLabel('Pending');
         setMinsLeft(100);
@@ -45,7 +52,12 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
 
      const now = new Date();
      // Parse end time
-     const [eh, em] = endTime.split(':').map(Number);
+     const parts = endTime.split(':').map(Number);
+     if (parts.length < 2) {
+         setLabel('Pending');
+         return;
+     }
+     const [eh, em] = parts;
      const end = new Date();
      end.setHours(eh, em, 0, 0);
 
@@ -66,7 +78,7 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
         const m = diffMins % 60;
         setLabel(`${h}h ${m}m left`);
      }
-  }, [endTime, remainingLabel]);
+  }, [endTime, remainingLabel, routine.frequencyType]);
 
   React.useEffect(() => {
      updateState();
@@ -98,15 +110,17 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
           
           {label !== 'Pending' && (
             <View style={styles.badgeRow}>
-              <View
-                style={[
-                  styles.timeBadge,
-                  { backgroundColor: isDark ? colors.background : '#f8fafc' },
-                ]}
-              >
-                 <Ionicons name="time-outline" size={14} color={color} style={{ marginRight: 4 }} />
-                 <Text style={[styles.duration, { color }]}>{label}</Text>
-              </View>
+              {label !== 'Weekly' && (
+                <View
+                  style={[
+                    styles.timeBadge,
+                    { backgroundColor: isDark ? colors.background : '#f8fafc' },
+                  ]}
+                >
+                   <Ionicons name="time-outline" size={14} color={color} style={{ marginRight: 4 }} />
+                   <Text style={[styles.duration, { color }]}>{label}</Text>
+                </View>
+              )}
 
               {!!routine.collaborativeKey && (
                 <View

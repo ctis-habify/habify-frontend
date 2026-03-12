@@ -1,10 +1,9 @@
-import { getBackgroundGradient } from '@/app/theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { TextInput } from '@/components/ui/text-input';
 import { Toast } from '@/components/ui/toast';
-import { Colors } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Routine } from '@/types/routine';
@@ -14,14 +13,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
-  DeviceEventEmitter,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View
+    Alert,
+    DeviceEventEmitter,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { routineService } from '../../../services/routine.service';
@@ -59,7 +58,7 @@ export default function EditRoutineScreen(): React.ReactElement {
   const [is_ai_verified, setIsAiVerified] = useState(false);
   const [start_date, setStartDate] = useState('2025-10-10');
   const [streak, setStreak] = useState(0);
-  const [originalData, setOriginalData] = useState<any>(null);
+  const [originalData, setOriginalData] = useState<Routine | null>(null);
 
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
@@ -147,7 +146,9 @@ export default function EditRoutineScreen(): React.ReactElement {
     } catch (error: unknown) {
       let msg = 'Failed to update routine';
       if (error instanceof Error) msg = error.message;
-      else if (typeof error === 'object' && error !== null && 'message' in error) msg = String((error as any).message);
+      else if (typeof error === 'object' && error !== null && 'message' in error) {
+        msg = String((error as { message: unknown }).message);
+      }
       Alert.alert('Error', msg);
     } finally {
       setIsLoading(false);
@@ -177,8 +178,9 @@ export default function EditRoutineScreen(): React.ReactElement {
               await routineService.deleteRoutine(id as string, token);
               DeviceEventEmitter.emit('refreshPersonalRoutines');
               router.back();
-            } catch (error: any) {
-              Alert.alert('Error', error.message);
+            } catch (error: unknown) {
+              const msg = error instanceof Error ? error.message : "Failed to delete routine";
+              Alert.alert('Error', msg);
             }
           },
         },

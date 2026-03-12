@@ -23,13 +23,29 @@ interface ManageRoutineUsersModalProps {
     routineId: string;
 }
 
+interface Participant {
+    id?: string;
+    userId?: string;
+    username?: string;
+    name?: string;
+    avatarUrl?: string;
+    avatar?: string;
+    role?: string;
+    user?: {
+        id: string;
+        name?: string;
+        username?: string;
+        avatarUrl?: string;
+    };
+}
+
 export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = ({
     visible,
     onClose,
     routineId,
 }) => {
     const [friendsList, setFriendsList] = useState<UserSearchResult[]>([]);
-    const [participants, setParticipants] = useState<any[]>([]);
+    const [participants, setParticipants] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(false);
     const [invitingId, setInvitingId] = useState<string | null>(null);
     const [actioningId, setActioningId] = useState<string | null>(null);
@@ -73,7 +89,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         }
     };
 
-    const handleDelete = (user: any) => {
+    const handleDelete = (user: Participant) => {
         Alert.alert(
             'Remove Member',
             `Are you sure you want to remove ${user.name || user.username} from this routine?`,
@@ -83,7 +99,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                     text: 'Remove',
                     style: 'destructive',
                     onPress: async () => {
-                        const identifier = user.userId || user.id;
+                        const identifier = (user.userId || user.id) ?? '';
                         setActioningId(identifier);
                         try {
                             await routineService.removeMemberFromRoutine(routineId, identifier);
@@ -104,11 +120,12 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         );
     };
 
-    const renderUserRow = (item: any, isMember: boolean, index: number) => {
+    const renderUserRow = (item: Participant | UserSearchResult, isMember: boolean, index: number) => {
         // Handle potential nested user object from participants or flat from friends
-        const user = item.user || item;
-        const key = item.userId || item.id || user.id || index;
-        const displayName = user.name || user.username || 'User';
+        const user = ('user' in item && item.user) ? item.user : item;
+        const userIdProp = 'userId' in item ? item.userId : undefined;
+        const key = userIdProp || item.id || index;
+        const displayName = ('name' in user ? user.name : undefined) || ('username' in user ? user.username : undefined) || 'User';
 
         const getAvatarUrl = (id?: string) => {
             switch (id) {
@@ -121,7 +138,8 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
             }
         };
 
-        const resolvedAvatarUrl = getAvatarUrl(user.avatarUrl || user.avatar);
+        const avatarUrl = 'avatarUrl' in user ? user.avatarUrl : ('avatar' in user ? user.avatar : undefined);
+        const resolvedAvatarUrl = getAvatarUrl(avatarUrl);
 
         return (
             <View key={`${isMember ? 'member' : 'friend'}-${key}-${index}`} style={styles.row}>
@@ -138,9 +156,9 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                 </View>
                 <View style={styles.info}>
                     <Text style={styles.name} numberOfLines={1}>
-                        {user.name || user.username}
+                        {displayName}
                     </Text>
-                    {user.username && (
+                    {'username' in user && user.username && (
                         <Text style={styles.meta} numberOfLines={1}>
                             @{user.username}
                         </Text>

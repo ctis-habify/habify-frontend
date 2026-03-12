@@ -15,7 +15,7 @@ export function useCreateRoutine(initialCategoryId?: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Data
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<import('@/types/category').Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
   // Form State
@@ -92,10 +92,10 @@ export function useCreateRoutine(initialCategoryId?: string) {
         const allLists = await routineService.getGroupedRoutines();
         
         // Try to find a list 
-        const selectedCategory = categories.find(c => (c.categoryId ?? c.id) === formState.categoryId);
+        const selectedCategory = categories.find(c => c.categoryId === formState.categoryId);
         if (!selectedCategory) throw new Error("Category not found");
 
-        const existingList = allLists.find((l: any) => 
+        const existingList = allLists.find((l: { categoryId: number; routineListTitle: string; id: number }) => 
             (l.categoryId === formState.categoryId) || (l.routineListTitle === selectedCategory.name)
         );
 
@@ -112,8 +112,8 @@ export function useCreateRoutine(initialCategoryId?: string) {
             routineName: formState.routineName.trim(),
             description: formState.description.trim(),
             frequencyType: formState.frequency.charAt(0) + formState.frequency.slice(1).toLowerCase(),
-            startTime: formatTime(formState.startTime),
-            endTime: formatTime(formState.endTime),
+            startTime: formState.frequency === 'Weekly' ? '00:00:00' : formatTime(formState.startTime),
+            endTime: formState.frequency === 'Weekly' ? '23:59:59' : formatTime(formState.endTime),
             startDate: formatDate(formState.startDate),
             lives: formState.lives,
             isPublic: formState.isPublic,
@@ -128,9 +128,11 @@ export function useCreateRoutine(initialCategoryId?: string) {
 
         DeviceEventEmitter.emit('SHOW_TOAST', "Collaborative routine created!");
         router.replace('/(collaborative)/(drawer)/routines');
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error(err);
-        Alert.alert("Error", err.message || "Failed to create routine");
+        let msg = "Failed to create routine";
+        if (err instanceof Error) msg = err.message;
+        Alert.alert("Error", msg);
     } finally {
         setIsSubmitting(false);
     }

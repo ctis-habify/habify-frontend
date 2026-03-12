@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useRef } from 'react';
+import * as React from 'react';
+import { useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import type { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -78,7 +79,7 @@ function RightActionButton({
 const styles = StyleSheet.create({
   rightActionWrapper: {
     width: 72,
-    justifyContent: 'stretch',
+    alignItems: 'stretch',
   },
   rightAction: {
     flex: 1,

@@ -4,21 +4,20 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Platform,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Modal,
+    Platform,
+    ScrollView,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
-import { getBackgroundGradient } from '@/app/theme';
-import { Colors } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FrequencyType } from '../../types/routine';
 import { getRoutineFormStyles } from '../routine-form-styles';
@@ -133,8 +132,8 @@ export function CreateRoutineInListModal({
     } catch (e: unknown) {
       let msg = 'Failed to create routine';
       if (typeof e === 'object' && e !== null && 'response' in e) {
-        const anyE = e as any;
-        msg = anyE.response?.data?.message || msg;
+        const errorWithResponse = e as { response?: { data?: { message?: string } } };
+        msg = errorWithResponse.response?.data?.message || msg;
       } else if (e instanceof Error) {
         msg = e.message;
       }

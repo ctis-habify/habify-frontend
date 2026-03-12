@@ -58,57 +58,61 @@ export function StepGamification({ formState, updateForm }: Props) {
       </View>
 
 
-      <View style={styles.divider} />
-      <Text style={[styles.stepTitle, { fontSize: 18, marginTop: 10 }]}>Entry Requirements</Text>
-      <Text style={[styles.stepSub, { fontSize: 14, marginBottom: 20 }]}>Who can join this routine?</Text>
+      {formState.isPublic && (
+        <>
+          <View style={styles.divider} />
+          <Text style={[styles.stepTitle, { fontSize: 18, marginTop: 10 }]}>Entry Requirements</Text>
+          <Text style={[styles.stepSub, { fontSize: 14, marginBottom: 20 }]}>Who can join this routine?</Text>
 
-      {/* Age Requirement */}
-      <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Minimum Age</Text>
-        <TextInput 
-            style={styles.input}
-            placeholder="None (e.g. 18)"
-            placeholderTextColor="rgba(255,255,255,0.4)"
-            value={formState.ageRequirement}
-            onChangeText={(text) => updateForm({ ageRequirement: text })}
-            keyboardType="numeric"
-        />
-      </View>
+          {/* Age Requirement */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Minimum Age</Text>
+            <TextInput 
+                style={styles.input}
+                placeholder="None (e.g. 18)"
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                value={formState.ageRequirement}
+                onChangeText={(text) => updateForm({ ageRequirement: text })}
+                keyboardType="numeric"
+            />
+          </View>
 
-      {/* Gender Requirement */}
-      <View style={[styles.fieldContainer, { zIndex: 3000 }]}>
-        <Text style={styles.label}>Gender Requirement</Text>
-        <DropDownPicker
-            open={genderOpen}
-            value={formState.genderRequirement}
-            items={GENDER_OPTIONS}
-            setOpen={setGenderOpen}
-            setValue={(valFn) => {
-                const val = valFn instanceof Function ? valFn(formState.genderRequirement) : valFn;
-                updateForm({ genderRequirement: val });
-            }}
-            theme="DARK"
-            style={styles.dropdown}
-            dropDownContainerStyle={styles.dropdownContainer}
-            textStyle={{ color: '#fff' }}
-            listMode="SCROLLVIEW"
-            zIndex={2000}
-            zIndexInverse={2000}
-        />
-      </View>
+          {/* Gender Requirement */}
+          <View style={[styles.fieldContainer, { zIndex: 3000 }]}>
+            <Text style={styles.label}>Gender Requirement</Text>
+            <DropDownPicker
+                open={genderOpen}
+                value={formState.genderRequirement}
+                items={GENDER_OPTIONS}
+                setOpen={setGenderOpen}
+                setValue={(valFn) => {
+                    const val = valFn instanceof Function ? valFn(formState.genderRequirement) : valFn;
+                    updateForm({ genderRequirement: val });
+                }}
+                theme="DARK"
+                style={styles.dropdown}
+                dropDownContainerStyle={styles.dropdownContainer}
+                textStyle={{ color: '#fff' }}
+                listMode="SCROLLVIEW"
+                zIndex={2000}
+                zIndexInverse={2000}
+            />
+          </View>
 
-      {/* Completion XP Reward */}
-      <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Completion XP Reward</Text>
-        <TextInput 
-            style={styles.input}
-            placeholder="e.g. 10 (Default)"
-            placeholderTextColor="rgba(255,255,255,0.4)"
-            value={formState.completionXp}
-            onChangeText={(text) => updateForm({ completionXp: text })}
-            keyboardType="numeric"
-        />
-      </View>
+          {/* Completion XP Reward */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Completion XP Reward</Text>
+            <TextInput 
+                style={styles.input}
+                placeholder="e.g. 10 (Default)"
+                placeholderTextColor="rgba(255,255,255,0.4)"
+                value={formState.completionXp}
+                onChangeText={(text) => updateForm({ completionXp: text })}
+                keyboardType="numeric"
+            />
+          </View>
+        </>
+      )}
 
     </Animated.View>
   );

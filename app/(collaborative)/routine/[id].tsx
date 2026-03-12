@@ -18,9 +18,9 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { getBackgroundGradient } from '@/app/theme';
 import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
+import { getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { routineService } from '@/services/routine.service';
@@ -688,7 +688,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     } finally {
       setIsLeavingRoutine(false);
     }
-  }, [routineId, router]);
+  }, [routineId]);
 
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>

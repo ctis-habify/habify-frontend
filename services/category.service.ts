@@ -56,7 +56,8 @@ export const categoryService = {
       ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {})
     };
     const res = await api.get('/categories', config);
-    return res.data;
+    const rawList = unwrapCategoryList(res.data);
+    return rawList.map(toCategory).filter((c): c is Category => c !== null);
   },
 
   // Get category by ID
@@ -77,7 +78,9 @@ export const categoryService = {
   ): Promise<Category> {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     const res = await api.post('/categories', { name, type }, config);
-    return res.data;
+    const category = toCategory(unwrapSingleCategory(res.data));
+    if (!category) throw new Error('Failed to create category: Invalid response');
+    return category;
   },
 
   async deleteCategory(categoryId: number, token?: string): Promise<void> {

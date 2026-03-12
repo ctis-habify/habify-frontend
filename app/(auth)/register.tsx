@@ -102,7 +102,7 @@ export default function SignupScreen(): React.ReactElement {
        if (error instanceof Error) {
            msg = error.message;
        } else if (typeof error === 'object' && error !== null && 'message' in error) {
-           msg = String((error as any).message);
+           msg = String((error as { message: unknown }).message);
        }
        Alert.alert('Registration Failed', msg);
     } finally {

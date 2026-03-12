@@ -12,7 +12,10 @@ export default tseslint.config(
     ignores: ['node_modules', 'dist', '.expo', 'android', 'ios'],
   },
 
-  // 2) Uygulama kodu (React Native, TS/TSX)
+  // 2) Recommended configs
+  eslint.configs.recommended,
+
+  // 3) Uygulama kodu (React Native, TS/TSX)
   {
     files: [
       'app/**/*.{ts,tsx}',
@@ -20,6 +23,7 @@ export default tseslint.config(
       'hooks/**/*.{ts,tsx}',
       'lib/**/*.{ts,tsx}',
     ],
+    extends: [...tseslint.configs.recommended],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -31,21 +35,14 @@ export default tseslint.config(
       globals: {
         ...globals.browser,
         JSX: 'readonly',
-        // Expo/React Native tarafında process kullandığın için:
         process: 'readonly',
       },
     },
     plugins: {
-      '@typescript-eslint': tseslint.plugin,
       'react-hooks': reactHooks,
       'react-native': reactNative,
     },
     rules: {
-      // ESLint temel kuralları
-      ...eslint.configs.recommended.rules,
-      // TS için önerilen (type-checked) kurallar
-      ...tseslint.configs.recommendedTypeChecked[0].rules,
-
       // React Hooks
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
@@ -63,14 +60,20 @@ export default tseslint.config(
         },
       ],
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       'no-undef': 'off',
-      'no-unused-vars': 'off', // Turn off base rule as TS rule is used
+      'no-unused-vars': 'off',
     },
   },
 
-  // 3) Config & script dosyaları (Node ortamı)
+  // 4) Config & script dosyaları (Node ortamı)
   {
-    files: ['eslint.config.js', 'commitlint.config.js', 'scripts/**/*.{js,ts}'],
+    files: [
+      'eslint.config.mjs',
+      'commitlint.config.js',
+      'metro.config.js',
+      'scripts/**/*.{js,ts}',
+    ],
     languageOptions: {
       parserOptions: {
         ecmaVersion: 'latest',

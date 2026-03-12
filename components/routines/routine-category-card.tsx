@@ -1,7 +1,8 @@
 import { RoutineRow, RoutineRowProps } from '@/components/routines/routine-row';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
@@ -36,7 +37,7 @@ export function RoutineCategoryCard({
 }: Props): React.ReactElement {
 
   const isGlass = variant === 'glass';
-  const [menuVisible, setMenuVisible] = React.useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const optionsAvailable = !!onEditList || !!onDeleteList;
 
 
@@ -126,7 +127,7 @@ export function RoutineCategoryCard({
         </View>
       ) : (
         routines.map((routine: RoutineRowProps, idx) => (
-          <View key={`routine-${routine.id ?? 'new'}-${idx}`}>
+          <View key={`routine-${routine.id || 'new'}-${idx}`}>
             <RoutineRow
               {...routine}
               isDark={isGlass}
