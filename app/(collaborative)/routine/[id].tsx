@@ -831,7 +831,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
         onConfirm={confirmLeaveRoutine}
         onAnimationFinished={() => {
           DeviceEventEmitter.emit('refreshCollaborativeRoutines');
-          router.back();
+          router.replace('/(collaborative)/(drawer)/routines');
         }}
         isLoading={isLeavingRoutine}
       />
@@ -843,7 +843,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
         onConfirm={confirmDeleteRoutine}
         onAnimationFinished={() => {
           DeviceEventEmitter.emit('refreshCollaborativeRoutines');
-          router.back();
+          router.replace('/(collaborative)/(drawer)/routines');
         }}
         isLoading={isDeletingRoutine}
       />
