@@ -91,6 +91,10 @@ const toNumberOrDefault = (value: unknown, defaultValue = 0): number => {
 const toStringOrUndefined = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (value && typeof value === 'object') {
+     const obj = value as Record<string, unknown>;
+     return toStringOrUndefined(obj.name || obj.value || obj.type || obj.label || obj.text || obj.message);
+  }
   return undefined;
 };
 
@@ -128,6 +132,7 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
         'category_name',
         'routine.categoryName',
         'routine.category_name',
+        'rules.category',
       ]),
     ) ||
     (categoryValue && typeof categoryValue === 'object'
@@ -150,7 +155,7 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
       ]),
     ) || '';
 
-  const startTime =
+  let startTime =
     toStringOrUndefined(
       pickFirst(source, [
         'startTime',
@@ -161,10 +166,21 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
         'schedule.start_time',
         'routine.startTime',
         'routine.start_time',
+        'routine.startAt',
+        'routine.start_at',
+        'startAt',
+        'start_at',
+        'start_time',
+        'startTime',
+        'routine.repeat_at',
+        'routine.repeatAt',
+        'repeat_at',
+        'repeatAt',
+        'rules.time',
       ]),
     ) || '';
 
-  const endTime =
+  let endTime =
     toStringOrUndefined(
       pickFirst(source, [
         'endTime',
@@ -175,8 +191,24 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
         'schedule.end_time',
         'routine.endTime',
         'routine.end_time',
+        'routine.endAt',
+        'routine.end_at',
+        'endAt',
+        'end_at',
+        'end_time',
+        'endTime',
+        'rules.time',
       ]),
     ) || '';
+
+  // Handle special case where 'time' is a range "HH:MM:SS - HH:MM:SS"
+  if (startTime && startTime.includes(' - ')) {
+    const parts = startTime.split(' - ');
+    startTime = parts[0] || '';
+    if (endTime === parts[0] || endTime === startTime || endTime.includes(' - ')) {
+      endTime = parts[1] || '';
+    }
+  }
 
   return {
     ...(source as Partial<Routine>),
@@ -194,6 +226,7 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
         'maxLives',
         'max_lives',
         'routine.lives',
+        'rules.lives',
       ]),
       0,
     ),
@@ -222,10 +255,26 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
         pickFirst(source, ['visibility', 'privacy', 'routine.visibility']) || '',
       ).toLowerCase() === 'public',
     categoryName,
+    rewardCondition:
+      toStringOrUndefined(pickFirst(source, ['rewardCondition', 'reward_condition', 'rules.reward'])) || '',
     title: toStringOrUndefined(pickFirst(source, ['title', 'routineName', 'routine_name'])) || '',
     frequencyType:
       toStringOrUndefined(
-        pickFirst(source, ['frequencyType', 'frequency_type', 'routine.frequencyType']),
+        pickFirst(source, [
+          'frequencyType',
+          'frequency_type',
+          'frequency',
+          'repetition',
+          'repeat_type',
+          'repeat',
+          'routine.frequencyType',
+          'routine.frequency_type',
+          'routine.frequency',
+          'routine.repetition',
+          'routine.repeat',
+          'rules.frequency',
+          'rules.repeat',
+        ]),
       ) || '',
     routineType: 'collaborative',
   } as Routine;
@@ -335,7 +384,7 @@ export const routineService = {
   // ✅ Get Collaborative Routines
   async getCollaborativeRoutines(): Promise<Routine[]> {
     const res = await api.get('/routines/collaborative');
-    return res.data;
+    return getCollaborativeRoutinesFromResponse(res.data);
   },
 
   // ✅ Join a Group
@@ -354,7 +403,11 @@ export const routineService = {
   // ✅ Group Detail (Profile View)
   async getGroupDetail(id: string): Promise<Routine & { participants: any[] }> {
     const res = await api.get(`/routines/group/${id}`);
-    return res.data;
+    const normalized = normalizeCollaborativeRoutine(res.data);
+    return {
+      ...normalized,
+      participants: res.data?.participants || [],
+    };
   },
 
   // ✅ Get Predefined Messages for Collaborative Routine Chat

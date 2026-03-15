@@ -49,7 +49,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
       // Use token from context first, fall back to SecureStore only if needed
       const t = authContextToken || await getToken();
       
-      console.log('[DEBUG] loadLists - token available:', !!t);
+
       if (t) {
         const lists = await routineService.getGroupedRoutines(t);
         setRoutineLists(lists);
@@ -84,7 +84,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   };
 
   const handleAddRoutine = (listId: string | number, categoryId?: number | null) => {
-    console.log('[DEBUG] handleAddRoutine args: listId=', listId, 'categoryId=', categoryId);
+
     if (!listId) {
       Alert.alert('Error', 'Routine List ID is missing or null.');
       return;
@@ -93,7 +93,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   };
 
   const handleEditList = (list: RoutineList) => {
-    console.log('[DEBUG] handleEditList triggers', list);
+
     const listId = list.id ?? (list as RoutineList & { routineListId?: number }).routineListId;
     if (!listId) return;
     setEditListParams({
@@ -176,7 +176,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           {loading && <ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} />}
 
           {!loading && routineLists.map((list, idx) => {
-            if (idx === 0) console.log('[DEBUG] First routine list looks like:', JSON.stringify(list, null, 2));
+
             const routinesProps = (list.routines || []).map(r => ({
               id: r.id,
               name: r.routineName || r.title,

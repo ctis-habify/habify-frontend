@@ -61,7 +61,7 @@ export function StepGamification({ formState, updateForm }: Props) {
       {formState.isPublic && (
         <>
           <View style={styles.divider} />
-          <Text style={[styles.stepTitle, { fontSize: 18, marginTop: 10 }]}>Entry Requirements</Text>
+          <Text style={[styles.stepTitle, { fontSize: 18, marginTop: 4 }]}>Entry Requirements</Text>
           <Text style={[styles.stepSub, { fontSize: 14, marginBottom: 20 }]}>Who can join this routine?</Text>
 
           {/* Age Requirement */}
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 8,
   },
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: 20 },
+  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: 12 },
   counterRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     backgroundColor: INPUT_BG, borderRadius: 16, padding: 10,

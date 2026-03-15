@@ -178,9 +178,13 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                     <View style={styles.statItem}>
                         <Ionicons name="time" size={16} color={accentColor} />
                         <Text style={styles.statValue}>
-                            {safeRoutine.frequencyType?.toUpperCase() === 'WEEKLY'
+                            {(safeRoutine.frequencyType?.toUpperCase() === 'WEEKLY' || 
+                              String(safeRoutine.frequency || '').toUpperCase() === 'WEEKLY' ||
+                              String(safeRoutine.repetition || '').toUpperCase() === 'WEEKLY' ||
+                              String(safeRoutine.repeat || '').toUpperCase() === 'WEEKLY' ||
+                              String(safeRoutine.rules?.frequency || '').toUpperCase() === 'WEEKLY')
                                 ? 'Weekly'
-                                : `${formatTime(startTime)} - ${formatTime(endTime)}`}
+                                : `${formatTime(startTime || safeRoutine.rules?.time)} - ${formatTime(endTime || safeRoutine.rules?.time)}`}
                         </Text>
                     </View>
                 </View>

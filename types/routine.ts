@@ -33,6 +33,15 @@ export interface Routine {
   genderRequirement?: 'female' | 'male' | 'other' | 'na';
   xpRequirement?: number;
   completionXp?: number;
+  frequency?: string;
+  repetition?: string;
+  repeat?: string;
+  rules?: {
+    lives?: number;
+    reward?: string;
+    frequency?: string;
+    time?: string;
+  };
 }
 
 export interface RoutineList {

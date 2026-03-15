@@ -10,14 +10,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  DeviceEventEmitter,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    DeviceEventEmitter,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { getRoutineFormStyles } from '.././routine-form-styles';
@@ -97,7 +97,7 @@ export function CreateRoutineModal({
   }, [initialRoutineListId, initialTitle, initialCategoryId]);
 
   useEffect(() => {
-    console.log('Current selected category ID:', category);
+
   }, [category]);
 
   const categoryItems = useMemo(() => {
@@ -118,7 +118,7 @@ export function CreateRoutineModal({
     try {
       const type = isCollaborativeMode ? 'collaborative' : 'personal';
       const created = await categoryService.createCategory(newCategoryName.trim(), type, token || undefined);
-      console.log("Created Category Response:", created);
+
       const newId = created.categoryId;
       setCategories((prev) => [...prev, created]);
       setCategory(Number(newId));
@@ -135,7 +135,7 @@ export function CreateRoutineModal({
   };
 
   const handleDeleteCategory = async () => {
-    console.log('[DEBUG] Silme butonu basıldı. Kategori ID:', category);
+
 
     if (category === null || category === undefined) {
       Alert.alert('Error', 'Please select a category to delete.');
@@ -150,7 +150,7 @@ export function CreateRoutineModal({
     });
 
     if (!catToDelete) {
-      console.log('[DEBUG] Kategori listede bulunamadı. Liste:', categories);
+
       Alert.alert('Error', 'Selected category not found.');
       return;
     }
@@ -164,7 +164,7 @@ export function CreateRoutineModal({
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            console.log('[DEBUG] Silme işlemi başlatılıyor. ID:', targetId);
+
             setIsDeleting(true);
             try {
               await categoryService.deleteCategory(targetId, token || '');
@@ -231,11 +231,11 @@ export function CreateRoutineModal({
         handleClose();
       } else {
         // CREATE MODE
-        const routineList = await routineService.createRoutineList(
+        const _routineList = await routineService.createRoutineList(
           Number(category),
           routineListTitle.trim(),
         );
-        console.log('CreateRoutineList response:', routineList);
+
 
         DeviceEventEmitter.emit('SHOW_TOAST', 'Routine list created successfully!');
 
@@ -247,11 +247,7 @@ export function CreateRoutineModal({
       }
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        console.log('Create routine/list failed STATUS:', err.response?.status);
-        console.log(
-          'Create routine/list failed DATA:',
-          JSON.stringify(err.response?.data, null, 2),
-        );
+
         const msg = err.response?.data?.message;
         Alert.alert(
           'Error',
@@ -260,7 +256,7 @@ export function CreateRoutineModal({
             : (msg ?? (isEditMode ? 'Failed to update list' : 'Failed to create routine list')),
         );
       } else {
-        console.log('Create routine/list failed UNKNOWN:', err);
+
         Alert.alert('Error', 'Unexpected error occurred');
       }
     } finally {
