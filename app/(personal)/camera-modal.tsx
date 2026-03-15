@@ -68,50 +68,50 @@ export default function CameraModal(): React.ReactElement {
       setLoadingText('Uploading to cloud...');
 
       // 1. Get Signed URL
-      console.log('Step 1: Requesting Signed URL...');
-      const { signedUrl, objectPath } = await verificationService.getSignedUrl('jpg', 'image/jpeg');
-      console.log('Signed URL received:', signedUrl);
 
-      console.log('Object path:', objectPath);
+      const { signedUrl, objectPath } = await verificationService.getSignedUrl('jpg', 'image/jpeg');
+
+
+
 
       // 2. Prepare file blob
-      console.log('Step 2: Preparing blob...');
+
       let blob;
       if (photoUri === 'mock-photo') {
         const asset = require('../../img/true.jpg');
         const assetSource = Image.resolveAssetSource(asset);
-        console.log('Resolved asset URI (PASS):', assetSource.uri);
+
         const assetResponse = await fetch(assetSource.uri);
         blob = await assetResponse.blob();
       } else if (photoUri === 'mock-photo-fail') {
         const asset = require('../../img/false.png');
         const assetSource = Image.resolveAssetSource(asset);
-        console.log('Resolved asset URI (FAIL):', assetSource.uri);
+
         const assetResponse = await fetch(assetSource.uri);
         blob = await assetResponse.blob();
       } else {
         const photoResponse = await fetch(photoUri);
         blob = await photoResponse.blob();
       }
-      console.log('Blob prepared, size:', blob.size);
+
 
       // 3. Upload to GCS via PUT
-      console.log('Step 3: Uploading to GCS...');
+
       await verificationService.uploadToGcs(signedUrl, blob);
-      console.log('Upload successful');
+
 
       // 4. Submit verification to Backend
       setLoadingText('Submitting to AI...');
-      console.log('Step 4: Submitting verification for routineId:', routineId);
+
       const { id: verificationId } = await verificationService.submitVerification(
         routineId,
         objectPath
       );
-      console.log('Verification submitted, ID:', verificationId);
+
 
       // 5. Start Polling for Status
       setLoadingText('AI is verifying...');
-      console.log('Step 5: Starting polling...');
+
       await pollVerificationStatus(verificationId);
     } catch (err: unknown) {
       console.error('Full Verification error object:', err);

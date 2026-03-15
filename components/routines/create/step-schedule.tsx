@@ -145,7 +145,7 @@ export function StepSchedule({ formState, updateForm }: Props) {
          <View style={styles.infoBox}>
            <Ionicons name="information-circle-outline" size={20} color={ACCENT_COLOR} />
            <Text style={styles.infoText}>
-            Collaborators must complete the routine within the {formState.startTime.getHours()}:{formState.startTime.getMinutes()} - {formState.endTime.getHours()}:{formState.endTime.getMinutes()} window.
+            Collaborators must complete the routine within the {String(formState.startTime.getHours()).padStart(2, '0')}:{String(formState.startTime.getMinutes()).padStart(2, '0')} - {String(formState.endTime.getHours()).padStart(2, '0')}:{String(formState.endTime.getMinutes()).padStart(2, '0')} window.
            </Text>
          </View>
        ) : (

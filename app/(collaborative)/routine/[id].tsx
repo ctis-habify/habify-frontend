@@ -77,9 +77,9 @@ const formatFrequency = (frequency?: string): string => {
 
 const formatTimeRange = (startTime?: string, endTime?: string): string => {
   if (!startTime || !endTime) return '-';
-  const start = startTime.split(':').slice(0, 2).join(':');
-  const end = endTime.split(':').slice(0, 2).join(':');
-  return `${start} - ${end}`;
+  const pad = (s: string) => s.padStart(2, '0');
+  const format = (t: string) => t.split(':').slice(0, 2).map(pad).join(':');
+  return `${format(startTime)} - ${format(endTime)}`;
 };
 
 const formatGender = (gender?: string): string => {
@@ -242,6 +242,20 @@ const detailString = (source: unknown, paths: string[]): string | undefined => {
   const value = pickDetailValue(source, paths);
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    return toStringOrUndefined(obj.name || obj.value || obj.type || obj.label || obj.text);
+  }
+  return undefined;
+};
+
+const toStringOrUndefined = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (value && typeof value === 'object') {
+     const obj = value as Record<string, unknown>;
+     return toStringOrUndefined(obj.name || obj.value || obj.type || obj.label || obj.text);
+  }
   return undefined;
 };
 
@@ -484,21 +498,51 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       'startTime',
       'start_time',
       'startAt',
+      'start_at',
       'schedule.startTime',
+      'schedule.start_time',
       'routine.startTime',
+      'routine.start_time',
+      'routine.startAt',
+      'routine.start_at',
+      'routine.repeat_at',
+      'routine.repeatAt',
+      'repeat_at',
+      'repeatAt',
+      'rules.time',
     ]),
     endTimeFromParams ||
     detailString(routineDetail, [
       'endTime',
       'end_time',
       'endAt',
+      'end_at',
       'schedule.endTime',
+      'schedule.end_time',
       'routine.endTime',
+      'routine.end_time',
+      'routine.endAt',
+      'routine.end_at',
+      'rules.time',
     ]),
   );
   const displayFrequency = formatFrequency(
     frequencyFromParams ||
-    detailString(routineDetail, ['frequencyType', 'frequency_type', 'routine.frequencyType']),
+    detailString(routineDetail, [
+      'frequencyType',
+      'frequency_type',
+      'frequency',
+      'repetition',
+      'repeat_type',
+      'repeat',
+      'routine.frequencyType',
+      'routine.frequency_type',
+      'routine.frequency',
+      'routine.repetition',
+      'routine.repeat',
+      'rules.frequency',
+      'rules.repeat',
+    ]),
   );
   const displayLives =
     livesFromParams ??
@@ -520,6 +564,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       'rewardCondition',
       'reward_condition',
       'routine.rewardCondition',
+      'rules.reward',
     ]) ||
     '';
   const displayGender = formatGender(
@@ -569,14 +614,18 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const isCreator = isCreatorByCandidate || isParticipantAdmin || isCreatorFromParams;
 
   const detailRows = useMemo<DetailRow[]>(() => {
-    const rows: DetailRow[] = [
-      { label: 'Category', value: displayCategory },
-      { label: 'Start - End Time', value: displayTimeRange },
+    const rows: DetailRow[] = [{ label: 'Category', value: displayCategory }];
+
+    if (displayFrequency.toLowerCase() !== 'weekly') {
+      rows.push({ label: 'Start - End Time', value: displayTimeRange });
+    }
+
+    rows.push(
       { label: 'Frequency', value: displayFrequency },
       { label: 'Visibility', value: displayVisibility },
       { label: 'Lives', value: String(displayLives) },
       { label: 'Streak', value: String(displayStreak) },
-    ];
+    );
 
     if (displayReward) rows.push({ label: 'Reward', value: displayReward });
     if (displayGender) rows.push({ label: 'Gender Restriction', value: displayGender });

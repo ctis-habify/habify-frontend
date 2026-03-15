@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 24,
-        paddingBottom: 100,
+        paddingBottom: 150,
     },
     footer: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
