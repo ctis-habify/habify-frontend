@@ -24,7 +24,7 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
-  const categoryItems = useMemo(() => categories.map(c => ({ label: c.name, value: c.categoryId ?? c.id })), [categories]);
+  const categoryItems = useMemo(() => categories.map(c => ({ label: c.name, value: c.categoryId })), [categories]);
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;

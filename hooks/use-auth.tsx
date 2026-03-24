@@ -11,8 +11,8 @@ export interface AuthUser {
   name?: string;
   avatar?: string;
   birthDate?: string;
-  total_xp?: number;
-  current_streak?: number;
+  totalXp?: number;
+  currentStreak?: number;
 }
 
 interface AuthContextValue {

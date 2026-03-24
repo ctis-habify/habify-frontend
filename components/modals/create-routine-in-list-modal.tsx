@@ -101,7 +101,7 @@ export function CreateRoutineInListModal({
   };
 
   const handleCreate = async () => {
-    console.log('clicked');
+    // clicked
     if (!validate()) return;
     setIsSubmitting(true);
     try {
@@ -199,7 +199,7 @@ export function CreateRoutineInListModal({
                     borderColor: colors.border,
                   }}
                   placeholderStyle={{ color: colors.icon }}
-                  listMode="MODAL"
+                  listMode="SCROLLVIEW"
                   theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
                   zIndex={2000}
                   zIndexInverse={1000}

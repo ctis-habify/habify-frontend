@@ -313,6 +313,8 @@ export function CreateRoutineModal({
                   searchable={true}
                   closeAfterSelecting={true}
                   theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
+                  zIndex={2000}
+                  zIndexInverse={1000}
                 />
               </View>
 

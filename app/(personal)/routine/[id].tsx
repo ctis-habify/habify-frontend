@@ -55,7 +55,7 @@ export default function EditRoutineScreen(): React.ReactElement {
   const [routineListId, setRoutineListId] = useState(0);
   const [frequency_type, setFrequencyType] = useState('');
   const [frequency_detail, setFrequencyDetail] = useState<number>(0);
-  const [is_ai_verified, setIsAiVerified] = useState(false);
+  const [isAiVerified, setIsAiVerified] = useState(false);
   const [start_date, setStartDate] = useState('2025-10-10');
   const [streak, setStreak] = useState(0);
   const [originalData, setOriginalData] = useState<Routine | null>(null);
@@ -78,7 +78,6 @@ export default function EditRoutineScreen(): React.ReactElement {
     const fetchData = async () => {
       try {
         const data = await routineService.getRoutineById(id, token || '');
-        console.log("EditRoutine data:", data);
         setOriginalData(data);
         
         setName(data?.routineName || '');
@@ -87,7 +86,7 @@ export default function EditRoutineScreen(): React.ReactElement {
         setRoutineListId(data?.routineListId || 1);
         setFrequencyDetail(data?.frequencyDetail || 0);
         setFrequencyType(data?.frequencyType || 'DAILY');
-        setIsAiVerified(data?.is_ai_verified || false);
+        setIsAiVerified(data?.isAiVerified || false);
         setStartDate(data?.startDate || '2025-01-01');
         setStreak(data?.streak || 0);
       } catch (err) {
@@ -113,7 +112,7 @@ export default function EditRoutineScreen(): React.ReactElement {
     const origListId = originalData?.routineListId;
     const origFreqType = originalData?.frequencyType;
     const origFreqDetail = originalData?.frequencyDetail;
-    const origAi = originalData?.is_ai_verified;
+    const origAi = originalData?.isAiVerified;
     const origStartDate = originalData?.startDate;
 
     if (start_time !== origStartTime || end_time !== origEndTime) {
@@ -125,7 +124,7 @@ export default function EditRoutineScreen(): React.ReactElement {
     if (routineListId !== origListId) payload.routineListId = routineListId;
     if (frequency_type !== origFreqType) payload.frequencyType = frequency_type;
     if (frequency_detail !== origFreqDetail) payload.frequencyDetail = frequency_detail;
-    if (is_ai_verified !== origAi) payload.is_ai_verified = is_ai_verified;
+    if (isAiVerified !== origAi) payload.isAiVerified = isAiVerified;
     if (start_date !== origStartDate) payload.startDate = start_date;
     
     // Always send at least one field or handle empty? 
@@ -136,7 +135,6 @@ export default function EditRoutineScreen(): React.ReactElement {
     }
 
     try {
-      console.log('handleSave Partial Payload:', payload);
       await routineService.updateRoutine(id, payload, token);
       
       DeviceEventEmitter.emit('SHOW_TOAST', 'Routine updated successfully!');
@@ -155,8 +153,8 @@ export default function EditRoutineScreen(): React.ReactElement {
     }
   }, [
     token, router, originalData, id, start_time, end_time, 
-    routine_name, routineListId, frequency_type, 
-    frequency_detail, is_ai_verified, start_date
+    routine_name, routineListId, frequency_type,
+    frequency_detail, isAiVerified, start_date
   ]);
 
   const handleDelete = useCallback(async () => {
@@ -372,7 +370,7 @@ export default function EditRoutineScreen(): React.ReactElement {
                 backgroundColor: Colors.light.background,
                 borderColor: Colors.light.border,
               }}
-              listMode="MODAL"
+              listMode="SCROLLVIEW"
             />
           </View>
 

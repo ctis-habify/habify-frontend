@@ -1,7 +1,7 @@
 export type FrequencyType = 'DAILY' | 'WEEKLY';
 
 export interface Routine {
-  is_ai_verified: boolean;
+  isAiVerified: boolean;
   routineName?: string;
   title: string;
   id: string; // uuid
@@ -13,7 +13,7 @@ export interface Routine {
   isDone: boolean;
   isCompleted?: boolean;
   isFailed: boolean;
-  user_id: string;
+  userId: string;
   frequencyType: string;
   remainingLabel: string;
   remainingMinutes: number;
@@ -46,21 +46,33 @@ export interface Routine {
 
 export interface RoutineList {
   id: number;
-  user_id: string; // uuid
+  userId: string;
   categoryId: number;
   categoryName: string
   routineListTitle: string;
-  created_at: string; // timestamp
+  createdAt: string;
   routines: Routine[];
+}
+
+export interface RoutineLogUser {
+  id: string;
+  name: string;
+  avatarUrl?: string;
 }
 
 export interface RoutineLog {
   id: number;
-  routine_id: string; // uuid
-  user_id: string; // uuid
-  log_date: string; // date
+  routineId: string;
+  userId: string;
+  logDate: string;
+  createdAt?: string;
   isAiVerified: boolean;
-  verification_image_url?: string;
+  isVerified?: boolean;
+  verificationImageUrl?: string;
+  status?: 'pending' | 'approved' | 'rejected' | string;
+  approvals?: (string | RoutineLogUser)[];
+  rejections?: (string | RoutineLogUser)[];
+  userName?: string;
 }
 
 export interface CreateRoutineDto {

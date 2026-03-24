@@ -13,23 +13,24 @@ import {
     View,
 } from 'react-native';
 import { verificationService } from '../../services/verification.service';
+import { routineService } from '../../services/routine.service';
 
-export default function CameraModal(): React.ReactElement {
+export default function CollaborativeCameraModal(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams(); 
-  const routineId = params.routineId as string; // We will use this later for API
+  const routineId = params.routineId as string;
 
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [loadingText, setLoadingText] = useState('Verifying with AI...');
+  const [loadingText, setLoadingText] = useState('Processing...');
   const [facing, setFacing] = useState<CameraType>('back');
 
   // 1. Check Permissions
   if (!permission) {
-    return <View />; // Loading state
+    return <View style={styles.container} />; // Loading state
   }
   if (!permission.granted) {
     return (
@@ -49,8 +50,8 @@ export default function CameraModal(): React.ReactElement {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.7, // Basic compression
-          skipProcessing: true, // Faster capture
+          quality: 0.7,
+          skipProcessing: true,
         });
         setPhotoUri(photo?.uri || null);
       } catch (error) {
@@ -60,132 +61,56 @@ export default function CameraModal(): React.ReactElement {
     }
   };
 
-  // ... (handleUpload logic unchanged) ...
   const handleUpload = async () => {
-    if (!photoUri) return;
+    if (!photoUri || !routineId) return;
 
     try {
       setIsUploading(true);
       setLoadingText('Uploading to cloud...');
 
       // 1. Get Signed URL
-
       const { signedUrl, objectPath } = await verificationService.getSignedUrl('jpg', 'image/jpeg');
 
-
-
-
       // 2. Prepare file blob
-
-      let blob;
-      if (photoUri === 'mock-photo') {
-        const asset = require('../../img/true.jpg');
-        const assetSource = Image.resolveAssetSource(asset);
-
-        const assetResponse = await fetch(assetSource.uri);
-        blob = await assetResponse.blob();
-      } else if (photoUri === 'mock-photo-fail') {
-        const asset = require('../../img/false.png');
-        const assetSource = Image.resolveAssetSource(asset);
-
-        const assetResponse = await fetch(assetSource.uri);
-        blob = await assetResponse.blob();
-      } else {
-        const photoResponse = await fetch(photoUri);
-        blob = await photoResponse.blob();
-      }
-
+      const photoResponse = await fetch(photoUri);
+      const blob = await photoResponse.blob();
 
       // 3. Upload to GCS via PUT
-
       await verificationService.uploadToGcs(signedUrl, blob);
 
-
       // 4. Submit verification to Backend
-      setLoadingText('Submitting to AI...');
+      setLoadingText('Submitting to group...');
+      
+      const publicUrl = `https://storage.googleapis.com/habify-verification-photos/${objectPath}`;
+      
+      // Submit to unified verification flow (Backend handles collaborative directly)
+      await verificationService.submitVerification(routineId, objectPath);
 
-      const result = await verificationService.submitVerification(
-        routineId,
-        objectPath
+      // 5. Success
+      setIsUploading(false);
+      
+      // Notify chat to refresh and main list
+      DeviceEventEmitter.emit('refreshCollaborativeRoutines');
+      
+      try {
+          await routineService.sendRoutineChatMessage(routineId, publicUrl);
+      } catch {
+          // ignore notification failure
+      }
+
+      Alert.alert('Success', 'Photo posted to group! Waiting for approvals.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+      
+    } catch (err: unknown) {
+      console.error('Collaborative Verification error:', err);
+      Alert.alert(
+        'Post Failed',
+        err.response?.data?.message || err.message || 'An unexpected error occurred'
       );
-
-      // 5. Check if already verified or need polling
-      if (result.status === 'succeeded' || result.verified) {
-        setIsUploading(false);
-        DeviceEventEmitter.emit('refreshPersonalRoutines');
-        Alert.alert('Success', 'AI verified your routine! Great job!', [
-          { text: 'Awesome', onPress: () => router.back() },
-        ]);
-      } else if (result.status === 'failed') {
-        setIsUploading(false);
-        Alert.alert(
-          'Verification Failed',
-          result.failReason || 'AI could not verify this action. Please try again.',
-          [{ text: 'OK' }]
-        );
-      } else if (result.id) {
-        setLoadingText('AI is verifying...');
-        await pollVerificationStatus(result.id);
-      } else {
-        setIsUploading(false);
-        Alert.alert('System Busy', 'AI verification is pending. Your photo is safe.');
-      }
-    } catch (err: unknown) {
-      console.error('Full Verification error object:', err);
-      if (typeof err === 'object' && err !== null) {
-        const errorWithResponse = err as { 
-          response?: { status?: number; data?: { message?: string } };
-          message?: string;
-        };
-        
-        if (errorWithResponse.response?.status === 503) {
-          Alert.alert(
-            'AI Service Busy',
-            'The AI verification service is currently unavailable or busy. Your photo has been uploaded, but AI verification failed. Please try again in a few minutes.'
-          );
-        } else {
-          Alert.alert(
-            'Verification Failed',
-            errorWithResponse.response?.data?.message || errorWithResponse.message || 'An unexpected error occurred'
-          );
-        }
-      } else {
-        Alert.alert('Verification Failed', 'An unexpected error occurred');
-      }
       setIsUploading(false);
     }
-
   };
-
-  const pollVerificationStatus = async (verificationId: string) => {
-    try {
-      const result = await verificationService.getVerificationStatus(verificationId);
-
-      if (result.status === 'succeeded' || result.verified) {
-        setIsUploading(false);
-        DeviceEventEmitter.emit('refreshPersonalRoutines');
-        Alert.alert('Success', 'AI verified your routine! Great job!', [
-          { text: 'Awesome', onPress: () => router.back() },
-        ]);
-      } else if (result.status === 'failed') {
-        setIsUploading(false);
-        Alert.alert(
-          'Verification Failed',
-          result.failReason || 'AI could not verify this action. Please try again.',
-          [{ text: 'OK' }]
-        );
-      } else {
-        // Still pending
-        setTimeout(() => pollVerificationStatus(verificationId), 2000);
-      }
-    } catch (err: unknown) {
-      console.error('Polling error:', err instanceof Error ? err.message : String(err));
-      setIsUploading(false);
-      Alert.alert('Error', 'Failed to get verification status. Please check your internet.');
-    }
-  };
-
-
 
   const toggleCameraFacing = () => {
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
@@ -193,22 +118,9 @@ export default function CameraModal(): React.ReactElement {
 
   // --- RENDER: PREVIEW MODE (Photo Taken) ---
   if (photoUri) {
-    const isMock = photoUri.startsWith('mock-photo');
     return (
       <View style={styles.container}>
-        {(photoUri === 'mock-photo') ? (
-          <Image source={require('../../img/true.jpg')} style={styles.previewImage} />
-        ) : (photoUri === 'mock-photo-fail') ? (
-          <Image source={require('../../img/false.png')} style={styles.previewImage} />
-        ) : (
-          <Image source={{ uri: photoUri }} style={styles.previewImage} />
-        )}
-        
-        {isMock && (
-          <View style={{ position: 'absolute', top: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 8, borderRadius: 8, zIndex: 20 }}>
-          </View>
-        )}
-
+        <Image source={{ uri: photoUri }} style={styles.previewImage} />
         
         {isUploading && (
           <View style={styles.loadingOverlay}>
@@ -231,8 +143,8 @@ export default function CameraModal(): React.ReactElement {
             onPress={handleUpload}
             disabled={isUploading}
           >
-            <Ionicons name="cloud-upload" size={20} color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.btnText}>Upload & Verify</Text>
+            <Ionicons name="send" size={20} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.btnText}>Post to Chat</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -258,22 +170,6 @@ export default function CameraModal(): React.ReactElement {
 
         {/* Bottom Bar: Shutter */}
         <View style={styles.bottomBar}>
-          <TouchableOpacity 
-            onPress={() => setPhotoUri('mock-photo')} 
-            style={[styles.iconBtn, { marginBottom: 10, backgroundColor: 'rgba(255,165,0,0.6)' }]}
-          >
-            <Ionicons name="bug" size={24} color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>PASS</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            onPress={() => setPhotoUri('mock-photo-fail')} 
-            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: 'rgba(255,0,0,0.6)' }]}
-          >
-            <Ionicons name="bug" size={24} color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>FAIL</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
             <View style={styles.shutterInner} />
           </TouchableOpacity>
@@ -285,21 +181,19 @@ export default function CameraModal(): React.ReactElement {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
-
   cameraUi: { 
-    ...StyleSheet.absoluteFillObject, // Overlay on top
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between', 
     padding: 20,
     zIndex: 10,
   },
-  
   permissionBtn: {
-    backgroundColor: '#2563eb', // Keep distinct blue for actions
+    backgroundColor: '#2563eb',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
+    alignSelf: 'center',
   },
-  
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -310,7 +204,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 30,
   },
-  
   bottomBar: {
     alignItems: 'center',
     marginBottom: 40,
@@ -330,8 +223,6 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     backgroundColor: 'white',
   },
-
-  // Preview Styles
   previewImage: { flex: 1, resizeMode: 'contain' },
   bottomControls: {
     position: 'absolute',
@@ -352,9 +243,8 @@ const styles = StyleSheet.create({
   },
   cancelBtn: { backgroundColor: '#374151' },
   cancelText: { color: '#fff', fontWeight: '600' },
-  uploadBtn: { backgroundColor: '#2563eb' },
+  uploadBtn: { backgroundColor: '#E879F9' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.7)',

@@ -129,8 +129,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     try {
       const data = await routineService.browsePublicRoutines(q || undefined, catId || undefined, freq || undefined);
       setPublicRoutines(data);
-    } catch (e) {
-      console.error('Failed to load public routines', e);
+    } catch {
+      // ignore
     } finally {
       setLoadingPublic(false);
     }
@@ -186,7 +186,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           genderRequirement: routine.genderRequirement || '',
           ageRequirement: String(routine.ageRequirement ?? ''),
           isPublic: routine.isPublic ? '1' : '0',
-          user_id: routine.creatorId || routine.user_id || (routine as Routine & { userId?: string }).userId || '',
+          userId: routine.creatorId || routine.userId || '',
         },
       });
     },
@@ -258,8 +258,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       try {
         const cats = await categoryService.getCategories('collaborative');
         setCategories(cats);
-      } catch (e) {
-        console.warn('Failed to load categories', e);
+      } catch {
+        // ignore
       } finally {
         setLoadingCategories(false);
       }

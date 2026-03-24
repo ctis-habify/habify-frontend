@@ -139,7 +139,9 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         };
 
         const avatarUrl = 'avatarUrl' in user ? user.avatarUrl : ('avatar' in user ? user.avatar : undefined);
-        const resolvedAvatarUrl = getAvatarUrl(avatarUrl);
+        const resolvedAvatarUrl = getAvatarUrl(avatarUrl ?? undefined);
+
+        const identifier = userIdProp || item.id;
 
         return (
             <View key={`${isMember ? 'member' : 'friend'}-${key}-${index}`} style={styles.row}>
@@ -168,12 +170,12 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                     <TouchableOpacity
                         style={[
                             styles.inviteBtn,
-                            invitingId === (user.userId || user.id) && styles.inviteBtnDisabled,
+                            invitingId === identifier && styles.inviteBtnDisabled,
                         ]}
-                        onPress={() => handleInvite(user)}
+                        onPress={() => handleInvite(item as UserSearchResult)}
                         disabled={invitingId !== null}
                     >
-                        {invitingId === (user.userId || user.id) ? (
+                        {invitingId === identifier ? (
                             <ActivityIndicator size="small" color="#fff" />
                         ) : (
                             <>
@@ -183,14 +185,14 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                         )}
                     </TouchableOpacity>
                 )}
-                {isMember && user.role !== 'creator' && (
+                {isMember && (item as Participant).role !== 'creator' && (
                     <TouchableOpacity
-                        style={[styles.iconBtn, styles.deleteBtn, actioningId === (user.userId || user.id) && styles.btnDisabled]}
-                        onPress={() => handleDelete(user)}
+                        style={[styles.iconBtn, styles.deleteBtn, actioningId === identifier && styles.btnDisabled]}
+                        onPress={() => handleDelete(item as Participant)}
                         disabled={actioningId !== null}
                         hitSlop={8}
                     >
-                        {actioningId === (user.userId || user.id) ? (
+                        {actioningId === identifier ? (
                             <ActivityIndicator size="small" color="#fff" />
                         ) : (
                             <Ionicons name="trash-outline" size={20} color="#ef4444" />

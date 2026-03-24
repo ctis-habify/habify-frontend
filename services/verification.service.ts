@@ -5,6 +5,7 @@ export interface VerificationResponse {
   status: 'pending' | 'succeeded' | 'failed';
   failReason?: string;
   score?: number;
+  verified?: boolean;
 }
 
 export const verificationService = {
@@ -29,6 +30,7 @@ export const verificationService = {
     });
 
     if (!response.ok) {
+      console.error('[VerificationService] GCS upload failed:', response.status);
       throw new Error(`Failed to upload to GCS: ${response.statusText}`);
     }
   },
@@ -36,12 +38,23 @@ export const verificationService = {
   /**
    * 3. Submit verification to backend queue (Unified endpoint)
    */
-  async submitVerification(routineId: string, objectPath: string): Promise<{ id: string }> {
+  async submitVerification(routineId: string, objectPath: string): Promise<VerificationResponse & { id?: string }> {
     const res = await api.post('/routines/verify', {
       routineId,
+      routine_id: routineId, // Fallback for backend consistency
       objectPath,
     });
-    return res.data;
+    
+    // Normalize response
+    const raw = res.data.data || res.data.verification || res.data.result || res.data;
+    
+    // Support both immediate results and polling IDs
+    return {
+      id: String(raw.id || raw.verificationId || raw.verification_id || ''),
+      status: raw.status || (raw.verified ? 'succeeded' : 'pending'),
+      score: raw.score,
+      failReason: raw.failReason || raw.reason,
+    };
   },
 
   /**

@@ -51,17 +51,6 @@ const getArrayFromResponse = (data: unknown): any[] => {
   return [];
 };
 
-const getAccessTokenFromLocalStorage = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  const storage = (window as unknown as { localStorage?: Storage }).localStorage;
-  if (!storage) return null;
-  try {
-    return storage.getItem('accessToken');
-  } catch {
-    return null;
-  }
-};
-
 const getCollaborativeRoutinesFromResponse = (data: unknown): Routine[] => {
   if (Array.isArray(data)) return data.map(normalizeCollaborativeRoutine);
   if (data && typeof data === 'object') {
@@ -98,110 +87,30 @@ const toStringOrUndefined = (value: unknown): string | undefined => {
   return undefined;
 };
 
-const getByPath = (source: Record<string, unknown>, path: string): unknown => {
-  const keys = path.split('.');
-  let current: unknown = source;
-  for (const key of keys) {
-    if (!current || typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[key];
-  }
-  return current;
-};
 
-const pickFirst = (source: Record<string, unknown>, paths: string[]): unknown => {
-  for (const path of paths) {
-    const value = getByPath(source, path);
-    if (value !== undefined && value !== null && value !== '') {
-      return value;
-    }
-  }
-  return undefined;
-};
 
 const normalizeCollaborativeRoutine = (item: unknown): Routine => {
   const rawSource = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
-  const nestedRoutine = (
-    rawSource.routine && typeof rawSource.routine === 'object' ? rawSource.routine : {}
-  ) as Record<string, unknown>;
-  const source = { ...nestedRoutine, ...rawSource } as Record<string, unknown>;
-  const categoryValue = pickFirst(source, ['category', 'routine.category']);
+  const nestedRoutine = (rawSource.routine && typeof rawSource.routine === 'object' ? rawSource.routine : {}) as Record<string, unknown>;
+  const rules = (rawSource.rules && typeof rawSource.rules === 'object' ? rawSource.rules : {}) as Record<string, unknown>;
+  
+  // Flatten so we don't need deep paths
+  const source = { ...rules, ...nestedRoutine, ...rawSource } as Record<string, unknown>;
+
+  const categoryValue = source.category;
   const categoryName =
-    toStringOrUndefined(
-      pickFirst(source, [
-        'categoryName',
-        'category_name',
-        'routine.categoryName',
-        'routine.category_name',
-        'rules.category',
-      ]),
-    ) ||
+    toStringOrUndefined(source.categoryName || source.category_name) ||
     (categoryValue && typeof categoryValue === 'object'
       ? toStringOrUndefined((categoryValue as Record<string, unknown>).name)
       : undefined) ||
     (typeof categoryValue === 'string' ? categoryValue : undefined) ||
     '';
 
-  const routineName =
-    toStringOrUndefined(
-      pickFirst(source, [
-        'routineName',
-        'routine_name',
-        'name',
-        'title',
-        'routine.routineName',
-        'routine.routine_name',
-        'routine.name',
-        'routine.title',
-      ]),
-    ) || '';
+  const routineName = toStringOrUndefined(source.routineName || source.routine_name || source.title || source.name) || '';
 
-  let startTime =
-    toStringOrUndefined(
-      pickFirst(source, [
-        'startTime',
-        'start_time',
-        'startAt',
-        'start_at',
-        'schedule.startTime',
-        'schedule.start_time',
-        'routine.startTime',
-        'routine.start_time',
-        'routine.startAt',
-        'routine.start_at',
-        'startAt',
-        'start_at',
-        'start_time',
-        'startTime',
-        'routine.repeat_at',
-        'routine.repeatAt',
-        'repeat_at',
-        'repeatAt',
-        'rules.time',
-      ]),
-    ) || '';
+  let startTime = toStringOrUndefined(source.startTime || source.start_time || source.startAt || source.time) || '';
+  let endTime = toStringOrUndefined(source.endTime || source.end_time || source.endAt || source.time) || '';
 
-  let endTime =
-    toStringOrUndefined(
-      pickFirst(source, [
-        'endTime',
-        'end_time',
-        'endAt',
-        'end_at',
-        'schedule.endTime',
-        'schedule.end_time',
-        'routine.endTime',
-        'routine.end_time',
-        'routine.endAt',
-        'routine.end_at',
-        'endAt',
-        'end_at',
-        'end_time',
-        'endTime',
-        'rules.time',
-      ]),
-    ) || '';
-
-  // Handle special case where 'time' is a range "HH:MM:SS - HH:MM:SS"
   if (startTime && startTime.includes(' - ')) {
     const parts = startTime.split(' - ');
     startTime = parts[0] || '';
@@ -212,84 +121,50 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
 
   return {
     ...(source as Partial<Routine>),
-    id:
-      toStringOrUndefined(pickFirst(source, ['id', 'routineId', 'routine_id', 'routine.id'])) || '',
+    id: toStringOrUndefined(source.id || source.routineId || source.routine_id) || '',
     routineName,
-    description:
-      toStringOrUndefined(pickFirst(source, ['description', 'desc', 'routine.description'])) || '',
-    lives: toNumberOrDefault(
-      pickFirst(source, [
-        'lives',
-        'life',
-        'remainingLives',
-        'remaining_lives',
-        'maxLives',
-        'max_lives',
-        'routine.lives',
-        'rules.lives',
-      ]),
-      0,
-    ),
-    streak: toNumberOrDefault(
-      pickFirst(source, ['streak', 'current_streak', 'currentStreak', 'routine.streak']),
-      0,
-    ),
+    title: routineName,
+    description: toStringOrUndefined(source.description || source.desc) || '',
+    lives: toNumberOrDefault(source.lives || source.life || source.remainingLives || source.maxLives, 0),
+    streak: toNumberOrDefault(source.streak || source.currentStreak || source.current_streak, 0),
     startTime,
     endTime,
-    creatorId:
-      toStringOrUndefined(
-        pickFirst(source, [
-          'creatorId',
-          'creator_id',
-          'createdBy',
-          'userId',
-          'ownerId',
-          'creator.id',
-          'user.id',
-          'routine.creatorId',
-        ]),
-      ) || undefined,
-    isPublic:
-      pickFirst(source, ['isPublic', 'is_public', 'routine.isPublic']) === true ||
-      String(
-        pickFirst(source, ['visibility', 'privacy', 'routine.visibility']) || '',
-      ).toLowerCase() === 'public',
+    creatorId: toStringOrUndefined(source.creatorId || source.creator_id || source.userId || source.user_id || source.ownerId || (source.creator as any)?.id || (source.user as any)?.id),
+    isPublic: source.isPublic === true || source.is_public === true || String(source.visibility || source.privacy || '').toLowerCase() === 'public',
     categoryName,
-    rewardCondition:
-      toStringOrUndefined(pickFirst(source, ['rewardCondition', 'reward_condition', 'rules.reward'])) || '',
-    title: toStringOrUndefined(pickFirst(source, ['title', 'routineName', 'routine_name'])) || '',
-    frequencyType:
-      toStringOrUndefined(
-        pickFirst(source, [
-          'frequencyType',
-          'frequency_type',
-          'frequency',
-          'repetition',
-          'repeat_type',
-          'repeat',
-          'routine.frequencyType',
-          'routine.frequency_type',
-          'routine.frequency',
-          'routine.repetition',
-          'routine.repeat',
-          'rules.frequency',
-          'rules.repeat',
-        ]),
-      ) || '',
+    rewardCondition: toStringOrUndefined(source.rewardCondition || source.reward_condition || source.reward) || '',
+    frequencyType: toStringOrUndefined(source.frequencyType || source.frequency_type || source.frequency || source.repetition || source.repeat_type || source.repeat) || '',
     routineType: 'collaborative',
   } as Routine;
 };
 
+const normalizeRoutineLog = (item: unknown): RoutineLog => {
+  const source = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
+  
+  return {
+    ...(source as Partial<RoutineLog>),
+    id: toNumberOrDefault(source.id || source.logId || source.log_id || source.LOG_ID),
+    routineId: toStringOrUndefined(source.routineId || source.routine_id || source.ROUTINE_ID) || '',
+    userId: toStringOrUndefined(source.userId || source.user_id || source.USER_ID) || '',
+    logDate: toStringOrUndefined(source.logDate || source.log_date || source.LOG_DATE) || '',
+    createdAt: toStringOrUndefined(source.createdAt || source.created_at || source.CREATED_AT),
+    isAiVerified: source.isAiVerified === true || source.is_ai_verified === true,
+    isVerified: source.isVerified === true || source.is_verified === true || source.isVerifiedAI === true,
+    verificationImageUrl: toStringOrUndefined(source.verificationImageUrl || source.verification_image_url || source.imageUrl),
+    status: (toStringOrUndefined(source.status || source.STATUS) || 'pending').toLowerCase() as any,
+    approvals: Array.isArray(source.approvals) ? source.approvals.map(a => typeof a === 'object' ? a : String(a)) : [],
+    rejections: Array.isArray(source.rejections) ? source.rejections.map(r => typeof r === 'object' ? r : String(r)) : [],
+    userName: toStringOrUndefined(source.userName || source.user_name || source.username || (source.user as any)?.name),
+  } as RoutineLog;
+};
+
 const normalizeMessageStrings = (value: unknown): string[] => {
   return getArrayFromResponse(value)
-    .map((item) =>
-      typeof item === 'string'
-        ? item
-        : (item as { text?: string; message?: string; content?: string })?.text ||
-        (item as { text?: string; message?: string; content?: string })?.message ||
-        (item as { text?: string; message?: string; content?: string })?.content ||
-        '',
-    )
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      const obj = item as { text?: string; message?: string; content?: string };
+      return obj?.text || obj?.message || obj?.content || '';
+    })
     .map((text) => String(text).trim())
     .filter(Boolean);
 };
@@ -327,9 +202,19 @@ export const routineService = {
     return res.data;
   },
   async getRoutineLogs(routineId?: string): Promise<RoutineLog[]> {
-    const endpoint = routineId ? `/routines/${routineId}/logs` : '/routine-logs';
-    const res = await api.get(endpoint);
-    return res.data;
+    try {
+      const endpoint = routineId ? `/routines/${routineId}/logs` : '/routine-logs';
+      const res = await api.get(endpoint);
+      const data = getArrayFromResponse(res.data);
+      return data.map(normalizeRoutineLog);
+    } catch (err: any) {
+      if (err.response?.status === 404 && routineId) {
+        const res = await api.get('/routine-logs', { params: { routine_id: routineId } });
+        const data = getArrayFromResponse(res.data);
+        return data.map(normalizeRoutineLog);
+      }
+      throw err;
+    }
   },
   async createRoutineList(categoryId: number, title: string): Promise<RoutineList> {
     const res = await api.post('/routine-lists', {
@@ -471,9 +356,9 @@ export const routineService = {
     verificationImageUrl?: string,
   ): Promise<RoutineLog> {
     const res = await api.post('/routine-logs', {
-      routine_id: routineId,
-      log_date: logDate,
-      verification_image_url: verificationImageUrl,
+      routineId,
+      logDate,
+      verificationImageUrl,
     });
     return res.data;
   },
@@ -485,9 +370,18 @@ export const routineService = {
     verificationImageUrl?: string,
   ): Promise<RoutineLog> {
     const res = await api.patch(`/routine-logs/${logId}`, {
-      is_verified: isVerified,
-      verification_image_url: verificationImageUrl,
+      isVerified: isVerified,
+      verificationImageUrl: verificationImageUrl,
     });
+    return res.data;
+  },
+
+  // ✅ Verify Collaborative Log (Voting)
+  async verifyCollaborativeLog(
+    logId: number,
+    status: 'approved' | 'rejected',
+  ): Promise<{ message: string }> {
+    const res = await api.post(`/routines/collaborative/logs/${logId}/verify`, { status });
     return res.data;
   },
 

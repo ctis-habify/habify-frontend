@@ -20,7 +20,7 @@ export function AuthHeader(): React.ReactElement {
 const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
-    marginBottom: 25,
+    marginBottom: 15,
   },
   icon: {
     marginBottom: 5,
