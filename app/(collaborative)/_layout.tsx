@@ -17,6 +17,13 @@ export default function AppLayout(): React.ReactElement {
           animation: 'slide_from_bottom',
         }}
       />
+      <Stack.Screen
+        name="camera-modal"
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
     </Stack>
   );
 }

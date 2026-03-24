@@ -9,7 +9,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   name: string;
-  fcm_token?: string;
+  fcmToken?: string;
   birthDate?: string;
   gender?: string;
 }

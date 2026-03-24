@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { DeviceEventEmitter, Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { routineService } from '../../../services/routine.service';
@@ -44,8 +44,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 
   const goToRoutineDetail = useCallback(
     (routine: Routine) => {
-      console.log('[DEBUG] Navigating from TodayRoutines. ID:', routine.id);
-      
       const isCollaborative = collabIds.has(routine.id);
 
       if (isCollaborative) {
@@ -91,12 +89,11 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         const joinedCollab = await routineService.getCollaborativeRoutines();
         const cIds = new Set(joinedCollab.map(r => r.id));
         setCollabIds(cIds);
-      } catch (ce) {
-        console.log('Failed to fetch collab routines for detection, fallback to personal only', ce);
+      } catch (_ce) {
+        // ignore
       }
 
       const res = await routineService.getTodayRoutines();
-      console.log('/routines/today response:', res);
 
       // Normalize et (res is unknown usually, but service says Routine[] | {routines: Routine[]})
       const incoming = (typeof res === 'object' && res !== null && 'routines' in res) 
@@ -127,7 +124,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         return true; 
       });
       
-      console.log('[DEBUG] Today routines count after filter:', filtered.length);
       setItems(filtered);
 
       const reminder = notificationService.getUnfinishedTaskReminder(filtered.length);
@@ -136,7 +132,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         setToastVisible(true);
       }
     } catch (e: unknown) {
-      console.log('Today routines load error:', e);
       setItems([]);
       let msg = "Failed to load today's routines.";
       if (e instanceof Error) msg = e.message;
@@ -151,6 +146,13 @@ export default function TodayRoutinesScreen(): React.ReactElement {
     if (isFocused) {
       load();
     }
+    
+    // Also listen for cross-screen events like successful AI verification in camera-modal
+    const sub = DeviceEventEmitter.addListener('refreshPersonalRoutines', () => {
+      load();
+    });
+    
+    return () => sub.remove();
   }, [isFocused, load]);
 
   return (

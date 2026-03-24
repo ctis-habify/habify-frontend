@@ -86,8 +86,7 @@ export default function SignupScreen(): React.ReactElement {
         // Assuming backend handles or ignores extra fields.
       };
 
-      const data = await authService.register(payload);
-      console.log('User created:', data);
+      await authService.register(payload);
       
       // Persist avatar locally in case backend doesn't support it yet
       const safeEmail = email.toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
@@ -128,6 +127,7 @@ export default function SignupScreen(): React.ReactElement {
           onChangeText={setName}
           placeholder="Name Surname"
           icon="person-outline"
+          containerStyle={{ marginBottom: 12 }}
         />
 
         <TextInput 
@@ -138,10 +138,11 @@ export default function SignupScreen(): React.ReactElement {
           keyboardType="email-address"
           autoCapitalize="none"
           icon="mail-outline"
+          containerStyle={{ marginBottom: 12 }}
         />
 
         {/* Birth Date Picker */}
-        <View style={{ marginBottom: 16 }}>
+        <View style={{ marginBottom: 12 }}>
           <ThemedText type="label" style={[styles.dropdownLabel, { color: colors.icon }]}>Birth Date</ThemedText>
           <TouchableOpacity
             style={[
@@ -199,7 +200,7 @@ export default function SignupScreen(): React.ReactElement {
           )}
         </View>
 
-        <View style={{ marginBottom: 16, zIndex: 5000 }}>
+        <View style={{ marginBottom: 12, zIndex: 5000 }}>
           <ThemedText type="label" style={[styles.dropdownLabel, { color: colors.icon }]}>Gender</ThemedText>
           <DropDownPicker
             open={genderOpen}
@@ -218,7 +219,7 @@ export default function SignupScreen(): React.ReactElement {
             ]}
             placeholderStyle={[styles.placeholderStyle, { color: colors.icon }]}
             textStyle={[styles.dropdownText, { color: colors.text }]}
-            listMode="MODAL"
+            listMode="SCROLLVIEW"
             theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
           />
         </View>
@@ -230,10 +231,11 @@ export default function SignupScreen(): React.ReactElement {
           placeholder="***********"
           secureTextEntry
           icon="lock-closed-outline"
+          containerStyle={{ marginBottom: 12 }}
         />
 
         {/* Avatar Selection */}
-        <View style={{ marginBottom: 20 }}>
+        <View style={{ marginBottom: 12 }}>
           <ThemedText type="label" style={{ marginBottom: 12, marginLeft: 4, color: colors.icon }}>
             Select Avatar
           </ThemedText>
@@ -267,7 +269,7 @@ export default function SignupScreen(): React.ReactElement {
           title="Sign Up" 
           onPress={handleRegister} 
           isLoading={isLoading} 
-          style={{ marginTop: 20 }}
+          style={{ marginTop: 10 }}
         />
       </View>
     </AuthLayout>

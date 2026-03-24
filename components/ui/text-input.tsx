@@ -2,7 +2,7 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { TextInput as RNTextInput, StyleSheet, TextInputProps, TouchableOpacity, View } from 'react-native';
+import { TextInput as RNTextInput, StyleSheet, TextInputProps, TouchableOpacity, View, StyleProp, ViewStyle } from 'react-native';
 import { ThemedText } from '../themed-text';
 
 interface Props extends TextInputProps {
@@ -12,6 +12,7 @@ interface Props extends TextInputProps {
   onIconPress?: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightIconPress?: () => void;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export function TextInput({
@@ -21,6 +22,7 @@ export function TextInput({
   onIconPress,
   rightIcon,
   onRightIconPress,
+  containerStyle,
   style,
   ...props
 }: Props): React.ReactElement {
@@ -32,7 +34,7 @@ export function TextInput({
   const placeholderColor = colors.icon;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       {label && (
         <ThemedText type="label" style={[styles.label, { color: colors.icon }]}>
           {label}

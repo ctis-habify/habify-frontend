@@ -144,8 +144,8 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
             try {
                 const cats = await categoryService.getCategories('collaborative');
                 setCategories(cats);
-            } catch (e) {
-                console.warn('Failed to load categories', e);
+            } catch {
+                // ignore
             } finally {
                 setLoadingCategories(false);
             }

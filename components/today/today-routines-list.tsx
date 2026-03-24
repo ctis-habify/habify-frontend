@@ -39,7 +39,7 @@ export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, o
     try {
       if (!authUser?.id) return;
       const user = await userService.getCurrentUser();
-      setPoints(user.total_xp ?? user.totalXp ?? 0);
+      setPoints(user.totalXp ?? 0);
     } catch (error) {
       console.error("Failed to fetch user XP", error);
     }

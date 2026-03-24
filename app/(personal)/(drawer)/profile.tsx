@@ -88,12 +88,12 @@ export default function ProfileScreen() {
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.statItem}>
-                            <Text style={styles.statValue}>{user?.total_xp || 0}</Text>
+                            <Text style={styles.statValue}>{user?.totalXp || 0}</Text>
                             <Text style={styles.statLabel}>Total XP</Text>
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.statItem}>
-                            <Text style={styles.statValue}>{user?.current_streak || 0}</Text>
+                            <Text style={styles.statValue}>{user?.currentStreak || 0}</Text>
                             <Text style={styles.statLabel}>Streak</Text>
                         </View>
                     </View>
