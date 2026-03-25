@@ -126,11 +126,17 @@ export const notificationService = {
     await api.delete(`/notifications/${notificationId}`);
   },
 
+  async sendPoke(toUserId: string, collaborativeRoutineId: string): Promise<{ message: string }> {
+    const res = await api.post('/notifications/poke', { toUserId, collaborativeRoutineId });
+    return res.data;
+  },
+
   backendToLocal(n: BackendNotification): NotificationItem {
     const typeToCategory: Record<string, NotificationCategory> = {
       friend_request: 'friend_requests',
       routine_invitation: 'friend_requests',
       task_reminder: 'unfinished_tasks',
+      poke: 'social_interactions',
     };
 
     return {

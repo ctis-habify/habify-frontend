@@ -3,10 +3,10 @@ import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FriendRequestReceivedItem, friendService } from '@/services/friend.service';
 import {
-    BackendNotification,
-    NotificationCategory,
-    NotificationItem,
-    notificationService,
+  BackendNotification,
+  NotificationCategory,
+  NotificationItem,
+  notificationService,
 } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
 import { RoutineInvitationItem } from '@/types/routine-invitation';
@@ -58,7 +58,7 @@ export default function NotificationsScreen(): React.ReactElement {
       .then((res) => {
         setBackendReminders(res.data);
         setLoadedSections((prev) => ({ ...prev, reminders: true }));
-        notificationService.markAllAsRead().catch(() => {});
+        notificationService.markAllAsRead().catch(() => { });
       })
       .catch(() => {
         setLoadedSections((prev) => ({ ...prev, reminders: true }));
@@ -102,7 +102,7 @@ export default function NotificationsScreen(): React.ReactElement {
     async (item: NotificationItem) => {
       setBackendReminders((prev) => prev.filter((r) => r.id !== item.id));
       setItems((prev) => prev.filter((n) => n.id !== item.id));
-      notificationService.deleteNotification(item.id).catch(() => {});
+      notificationService.deleteNotification(item.id).catch(() => { });
     },
     [],
   );
@@ -169,30 +169,39 @@ export default function NotificationsScreen(): React.ReactElement {
     [],
   );
 
-  const mergedUnfinishedItems = useMemo(() => {
-    const localUnfinished = items.filter((i) => i.category === 'unfinished_tasks');
-    const backendMapped = backendReminders.map(notificationService.backendToLocal);
-    const seen = new Set(localUnfinished.map((i) => i.id));
-    const all = [...localUnfinished];
-    for (const b of backendMapped) {
-      if (!seen.has(b.id)) all.push(b);
-    }
-    return all.sort((a, b) => b.createdAt - a.createdAt);
-  }, [items, backendReminders]);
+  const backendMappedItems = useMemo(() => {
+    return backendReminders.map(notificationService.backendToLocal);
+  }, [backendReminders]);
 
   const sections = useMemo(() => {
     const byCategory: Record<NotificationCategory, NotificationItem[]> = {
       friend_requests: [],
-      unfinished_tasks: mergedUnfinishedItems,
+      unfinished_tasks: [],
       social_interactions: [],
     };
 
+    // Add local items
     items.forEach((item) => {
-      if (item.category === 'friend_requests') byCategory.friend_requests.push(item);
-      if (item.category === 'social_interactions') byCategory.social_interactions.push(item);
+      if (byCategory[item.category]) {
+        byCategory[item.category].push(item);
+      }
     });
+
+    // Merge backend items into correct categories (deduped)
+    const seenIds = new Set(items.map((i) => i.id));
+    for (const mapped of backendMappedItems) {
+      if (!seenIds.has(mapped.id) && byCategory[mapped.category]) {
+        byCategory[mapped.category].push(mapped);
+      }
+    }
+
+    // Sort each category by createdAt descending
+    for (const key of Object.keys(byCategory) as NotificationCategory[]) {
+      byCategory[key].sort((a, b) => b.createdAt - a.createdAt);
+    }
+
     return byCategory;
-  }, [items, mergedUnfinishedItems]);
+  }, [items, backendMappedItems]);
 
   const background = getBackgroundGradient(theme);
 
