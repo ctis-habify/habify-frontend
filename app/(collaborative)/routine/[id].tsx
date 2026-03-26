@@ -13,13 +13,16 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
+import { PokeAnimation } from '@/components/animations/poke-animation';
 import { getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { routineService } from '@/services/routine.service';
+import { notificationService } from '@/services/notification.service';
 import { Routine } from '@/types/routine';
 
 type GroupParticipant = {
@@ -109,8 +112,8 @@ const toStringOrUndefined = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (value && typeof value === 'object') {
-     const obj = value as Record<string, unknown>;
-     return toStringOrUndefined(obj.name || obj.value || obj.type || obj.label || obj.text);
+    const obj = value as Record<string, unknown>;
+    return toStringOrUndefined(obj.name || obj.value || obj.type || obj.label || obj.text);
   }
   return undefined;
 };
@@ -155,7 +158,9 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isDeletingRoutine, setIsDeletingRoutine] = useState(false);
-  // pendingLogs and loadingLogs removed as they are unused
+  const [pokingUserId, setPokingUserId] = useState<string | null>(null);
+  const [pokeAnimationVisible, setPokeAnimationVisible] = useState(false);
+  const [pokedName, setPokedName] = useState('');
 
   const getErrorMessage = useCallback((error: unknown): string => {
     const message =
@@ -182,12 +187,12 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
 
   useEffect(() => {
     loadRoutineDetail();
-    
+
     // Also listen for refresh events
     const sub = DeviceEventEmitter.addListener('refreshCollaborativeRoutines', () => {
       loadRoutineDetail();
     });
-    
+
     return () => sub.remove();
   }, [loadRoutineDetail]);
 
@@ -216,9 +221,9 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     descriptionFromParams ||
     detailString(routineDetail, ['description'])?.trim() ||
     'No description provided.';
-  const displayCategory = categoryFromParams || 
-    (routineDetail?.categoryName) || 
-    (typeof routineDetail?.category === 'string' ? routineDetail.category : (routineDetail?.category as { name?: string })?.name) || 
+  const displayCategory = categoryFromParams ||
+    (routineDetail?.categoryName) ||
+    (typeof routineDetail?.category === 'string' ? routineDetail.category : (routineDetail?.category as { name?: string })?.name) ||
     '-';
   const displayTimeRange = formatTimeRange(
     startTimeFromParams ||
@@ -318,6 +323,30 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       );
     });
   }, [routineDetail?.participants]);
+
+  const handlePoke = useCallback(async (participant: GroupParticipant) => {
+    const targetUserId = participant.userId || participant.user?.id || participant.id;
+    if (!targetUserId || !routineId) return;
+
+    const targetName = participant.user?.name || participant.name || participant.user?.username || participant.username || 'User';
+
+    setPokingUserId(targetUserId);
+    try {
+      await notificationService.sendPoke(targetUserId, routineId);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setPokedName(targetName);
+      setPokeAnimationVisible(true);
+    } catch (err: unknown) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Could not send poke.')
+          : 'Could not send poke. Please try again.';
+      Alert.alert('Poke Failed', message);
+    } finally {
+      setPokingUserId(null);
+    }
+  }, [routineId]);
 
   const handleLeaveRoutineClick = useCallback((): void => {
     setIsLeaveModalVisible(true);
@@ -445,21 +474,52 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               </View>
 
               <Text style={[styles.sectionTitle, styles.spacingTop]}>Enrolled Users</Text>
+              <Text style={styles.pokeHint}>Tap a member to poke them 👈</Text>
               {participantNames.length === 0 ? (
                 <Text style={styles.secondaryValue}>No users enrolled yet.</Text>
               ) : (
                 <View style={styles.participantsContainer}>
-                  {participantNames.map((name, index) => (
-                    <Animated.View
-                      key={`${name}-${index}`}
-                      entering={FadeInDown.delay(180 + index * 60).duration(280)}
-                      style={styles.participantChip}
-                    >
-                      <Text style={styles.participantChipText} numberOfLines={1}>
-                        {name}
-                      </Text>
-                    </Animated.View>
-                  ))}
+                  {(routineDetail?.participants || []).map((participant, index) => {
+                    const u = participant.user;
+                    const name = u?.name || participant.name || u?.username || participant.username || 'Unnamed User';
+                    const participantUserId = participant.userId || u?.id || participant.id;
+                    const isSelf = !!currentUserId && currentUserId === String(participantUserId || '').trim();
+                    const isPoking = pokingUserId === participantUserId;
+
+                    return (
+                      <Animated.View
+                        key={`${name}-${index}`}
+                        entering={FadeInDown.delay(180 + index * 60).duration(280)}
+                      >
+                        <TouchableOpacity
+                          style={[
+                            styles.participantChip,
+                            isSelf && styles.participantChipSelf,
+                            isPoking && styles.participantChipPoking,
+                          ]}
+                          onPress={isSelf ? undefined : () => handlePoke(participant)}
+                          disabled={isSelf || !!pokingUserId}
+                          activeOpacity={isSelf ? 1 : 0.7}
+                        >
+                          {isPoking ? (
+                            <ActivityIndicator size="small" color="#E879F9" />
+                          ) : (
+                            <>
+                              {!isSelf && (
+                                <Text style={styles.pokeIcon}>👈</Text>
+                              )}
+                              <Text style={[
+                                styles.participantChipText,
+                                isSelf && styles.participantChipTextSelf,
+                              ]} numberOfLines={1}>
+                                {name}{isSelf ? ' (You)' : ''}
+                              </Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      </Animated.View>
+                    );
+                  })}
                 </View>
               )}
             </Animated.View>
@@ -491,11 +551,11 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       </ScrollView>
 
       <Animated.View entering={FadeInDown.delay(280).duration(320)} style={styles.chatFabWrap}>
-        <TouchableOpacity 
-          style={styles.chatFab} 
+        <TouchableOpacity
+          style={styles.chatFab}
           onPress={() => router.push({
             pathname: '/(collaborative)/routine/[id]/chat',
-            params: { id: routineId, routineName: displayRoutineName } 
+            params: { id: routineId, routineName: displayRoutineName }
           } as never)}
         >
           <Ionicons name="chatbubble-ellipses-outline" size={18} color="#ffffff" />
@@ -525,6 +585,12 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           router.replace('/(collaborative)/(drawer)/routines');
         }}
         isLoading={isDeletingRoutine}
+      />
+
+      <PokeAnimation
+        play={pokeAnimationVisible}
+        targetName={pokedName}
+        onComplete={() => setPokeAnimationVisible(false)}
       />
 
     </LinearGradient >
@@ -690,17 +756,41 @@ const styles = StyleSheet.create({
   },
   participantChip: {
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     backgroundColor: 'rgba(232, 121, 249, 0.2)',
     borderWidth: 1,
     borderColor: 'rgba(232, 121, 249, 0.4)',
     maxWidth: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  participantChipSelf: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  participantChipPoking: {
+    backgroundColor: 'rgba(232, 121, 249, 0.35)',
+    borderColor: 'rgba(232, 121, 249, 0.7)',
   },
   participantChipText: {
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '700',
+  },
+  participantChipTextSelf: {
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
+  pokeIcon: {
+    fontSize: 12,
+  },
+  pokeHint: {
+    color: 'rgba(255, 255, 255, 0.45)',
+    fontSize: 11,
+    marginTop: 4,
+    marginBottom: 2,
+    fontStyle: 'italic',
   },
   infoRow: {
     marginTop: 10,
