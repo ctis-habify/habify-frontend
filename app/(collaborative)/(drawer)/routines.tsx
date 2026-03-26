@@ -23,11 +23,13 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 // Themes & Components
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
+import { CollaborativeScoreBanner } from '@/components/routines/collaborative-score-banner';
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
 import { getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
+import { useCollaborativeScore } from '@/hooks/use-collaborative-score';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
 import { notificationService } from '@/services/notification.service';
@@ -46,6 +48,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
+  const { points: collabPoints, streak: collabStreak, rank: collabRank, loading: collabScoreLoading } = useCollaborativeScore();
 
   // 2. State
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -350,6 +353,15 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             />
           }
         >
+          {/* Collaborative Score Banner (FReq 5.5, 5.7, 5.8) */}
+          <CollaborativeScoreBanner
+            points={collabPoints}
+            streak={collabStreak}
+            rank={collabRank}
+            loading={collabScoreLoading}
+            accentColor={COLLABORATIVE_PRIMARY}
+          />
+
           {/* Filters & Search Integrated */}
           <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
             <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
