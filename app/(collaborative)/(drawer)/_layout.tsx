@@ -63,6 +63,14 @@ export default function DrawerLayout(): React.ReactElement {
           drawerIcon: ({ color, size }) => <Ionicons name="search-outline" size={size} color={color} />,
         }}
       />
+      <Drawer.Screen
+        name="leaderboard"
+        options={{
+          drawerItemStyle: { display: 'none' },
+          drawerLabel: "Leaderboard",
+          drawerIcon: ({ color, size }) => <Ionicons name="trophy-outline" size={size} color={color} />,
+        }}
+      />
     </Drawer>
   );
 }

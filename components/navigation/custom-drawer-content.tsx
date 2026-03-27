@@ -144,7 +144,8 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
         <DrawerItem
           label="Leaderboard"
           icon={({ size, color }) => <Ionicons name="trophy-outline" size={size} color={color} />}
-          onPress={() => handleComingSoon('Leaderboard')}
+          onPress={() => router.push('/(collaborative)/(drawer)/leaderboard' as any)}
+          focused={pathname.includes('/(collaborative)/(drawer)/leaderboard')}
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}

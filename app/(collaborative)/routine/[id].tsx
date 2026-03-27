@@ -24,6 +24,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { routineService } from '@/services/routine.service';
 import { notificationService } from '@/services/notification.service';
 import { Routine } from '@/types/routine';
+import { RoutineScoreList, RoutineLeaderboardEntry } from '@/components/routine-score-list';
 
 type GroupParticipant = {
   id?: string;
@@ -161,6 +162,9 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [pokingUserId, setPokingUserId] = useState<string | null>(null);
   const [pokeAnimationVisible, setPokeAnimationVisible] = useState(false);
   const [pokedName, setPokedName] = useState('');
+  
+  const [leaderboard, setLeaderboard] = useState<RoutineLeaderboardEntry[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
 
   const getErrorMessage = useCallback((error: unknown): string => {
     const message =
@@ -174,14 +178,20 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const loadRoutineDetail = useCallback(async (): Promise<void> => {
     if (!routineId) return;
     setLoading(true);
+    setLoadingLeaderboard(true);
     setError(null);
     try {
-      const detail = await routineService.getGroupDetail(routineId);
+      const [detail, leaderboardData] = await Promise.all([
+        routineService.getGroupDetail(routineId),
+        routineService.getCollaborativeRoutineLeaderboard(routineId).catch(() => []),
+      ]);
       setRoutineDetail(detail);
+      setLeaderboard(leaderboardData);
     } catch (fetchError) {
       setError(getErrorMessage(fetchError));
     } finally {
       setLoading(false);
+      setLoadingLeaderboard(false);
     }
   }, [getErrorMessage, routineId]);
 
@@ -537,6 +547,12 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                 </Animated.View>
               ))}
             </Animated.View>
+
+            <RoutineScoreList 
+              leaderboard={leaderboard} 
+              currentUserId={currentUserId} 
+              loading={loadingLeaderboard} 
+            />
           </>
         ) : null}
 

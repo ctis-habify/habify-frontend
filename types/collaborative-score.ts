@@ -17,6 +17,15 @@ export interface CollaborativeScoreSummary {
   currentStreak: number;
 }
 
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  username: string | null;
+  avatarUrl: string | null;
+  totalPoints: number;
+}
+
 export const COLLABORATIVE_RANKS: readonly CollaborativeRankInfo[] = [
   { label: 'Champion', icon: 'trophy-outline', color: '#FFD700', minPoints: 500 },
   { label: 'Leader', icon: 'shield-outline', color: '#E879F9', minPoints: 250 },
