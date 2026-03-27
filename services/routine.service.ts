@@ -459,4 +459,10 @@ export const routineService = {
       throw err;
     }
   },
+
+  // ✅ Get Collaborative Routine Leaderboard
+  async getCollaborativeRoutineLeaderboard(routineId: string): Promise<any[]> {
+    const res = await api.get(`/routines/collaborative/${routineId}/leaderboard`);
+    return getArrayFromResponse(res.data);
+  },
 };
