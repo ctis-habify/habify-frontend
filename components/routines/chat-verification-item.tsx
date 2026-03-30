@@ -1,6 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { RoutineLog } from '@/types/routine';
 
@@ -8,7 +17,7 @@ interface ChatVerificationItemProps {
   log: RoutineLog;
   onApprove: (logId: number) => Promise<void>;
   onReject: (logId: number) => Promise<void>;
-  onViewVotes?: (log: RoutineLog) => void;
+  onViewVotes?: (log: RoutineLog, tab: 'approvals' | 'rejections') => void;
   currentUserId?: string;
 }
 
@@ -20,6 +29,8 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   currentUserId 
 }) => {
   const [loading, setLoading] = React.useState<'approve' | 'reject' | null>(null);
+  const badgeScale = React.useRef(new Animated.Value(1)).current;
+  const sparkleOpacity = React.useRef(new Animated.Value(0.7)).current;
   
   const hasApproved = log.status === 'approved';
   const hasRejected = log.status === 'rejected';
@@ -60,16 +71,68 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   const isOwner = log.userId === currentUserId;
   const approvalCount = log.approvals?.length || 0;
   const rejectionCount = log.rejections?.length || 0;
+  const requiredApprovals = log.requiredApprovals || 0;
+  const approvedNames = (log.approvals || [])
+    .map((voter) => (typeof voter === 'string' ? '' : voter.name || 'Member'))
+    .filter(Boolean)
+    .slice(0, 3);
+
+  React.useEffect(() => {
+    if (log.status !== 'approved') return;
+
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(badgeScale, {
+          toValue: 1.08,
+          duration: 450,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(badgeScale, {
+          toValue: 1,
+          duration: 450,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    const sparkle = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sparkleOpacity, {
+          toValue: 1,
+          duration: 420,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sparkleOpacity, {
+          toValue: 0.55,
+          duration: 420,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    pulse.start();
+    sparkle.start();
+
+    return () => {
+      pulse.stop();
+      sparkle.stop();
+    };
+  }, [badgeScale, log.status, sparkleOpacity]);
 
   return (
     <View style={styles.container}>
       <View style={styles.imageWrapper}>
         <Image source={{ uri: imageUrl }} style={styles.image} />
         {log.status === 'approved' && (
-          <View style={styles.statusBadgeSuccess}>
+          <Animated.View style={[styles.statusBadgeSuccess, { transform: [{ scale: badgeScale }] }]}>
+            <Animated.View style={[styles.sparkleWrap, { opacity: sparkleOpacity }]}>
+              <Ionicons name="sparkles" size={12} color="#fff" />
+            </Animated.View>
             <Ionicons name="checkmark-circle" size={16} color="#fff" />
             <Text style={styles.statusBadgeText}>Verified</Text>
-          </View>
+          </Animated.View>
         )}
         {log.status === 'rejected' && (
           <View style={styles.statusBadgeError}>
@@ -137,25 +200,51 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
           </View>
         )
       ) : (
-        <TouchableOpacity style={styles.ownerSummaryRow} onPress={() => onViewVotes?.(log)} activeOpacity={0.7} disabled={approvalCount === 0 && rejectionCount === 0}>
-          <View style={styles.summaryBadge}>
+        <View style={styles.ownerSummaryRow}>
+          <TouchableOpacity
+            style={styles.summaryBadge}
+            onPress={() => onViewVotes?.(log, 'approvals')}
+            activeOpacity={0.7}
+            disabled={approvalCount === 0}
+          >
             <Ionicons name="checkmark-circle-outline" size={14} color="#4ade80" />
-            <Text style={styles.summaryText}>{approvalCount} Approvals</Text>
-          </View>
-          <View style={styles.summaryBadge}>
+            <Text style={styles.summaryText}>
+              {approvalCount}
+              {requiredApprovals > 0 ? `/${requiredApprovals}` : ''} Approvals
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.summaryBadge}
+            onPress={() => onViewVotes?.(log, 'rejections')}
+            activeOpacity={0.7}
+            disabled={rejectionCount === 0}
+          >
             <Ionicons name="close-circle-outline" size={14} color="#f87171" />
             <Text style={styles.summaryText}>{rejectionCount} Rejections</Text>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       )}
       
       {!isOwner && isPending && (approvalCount > 0 || rejectionCount > 0) && (
-        <TouchableOpacity style={styles.progressRow} onPress={() => onViewVotes?.(log)} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.progressRow}
+          onPress={() =>
+            onViewVotes?.(
+              log,
+              approvalCount >= rejectionCount ? 'approvals' : 'rejections',
+            )
+          }
+          activeOpacity={0.7}
+        >
             <Text style={styles.progressText}>
-              {approvalCount > 0 && `${approvalCount} Approvals `}
+              {approvalCount > 0 &&
+                `${approvalCount}${requiredApprovals > 0 ? `/${requiredApprovals}` : ''} Approvals `}
               {rejectionCount > 0 && `${rejectionCount} Rejections`}
             </Text>
         </TouchableOpacity>
+      )}
+      {log.status === 'approved' && approvedNames.length > 0 && (
+        <Text style={styles.approvedByText}>Approved by {approvedNames.join(', ')}</Text>
       )}
     </View>
   );
@@ -191,6 +280,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 10,
     gap: 4,
+  },
+  sparkleWrap: {
+    marginRight: 1,
   },
   statusBadgeError: {
     position: 'absolute',
@@ -285,5 +377,11 @@ const styles = StyleSheet.create({
   votedStatusText: {
     fontSize: 13,
     fontWeight: '700',
-  }
+  },
+  approvedByText: {
+    marginTop: 6,
+    color: 'rgba(255,255,255,0.68)',
+    fontSize: 11,
+    fontStyle: 'italic',
+  },
 });

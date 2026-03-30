@@ -18,6 +18,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ChatVerificationItem } from '@/components/routines/chat-verification-item';
+import { RoutineCompletedAnimation } from '@/components/animations/routine-completed-animation';
 import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
 import { RoutineLog } from '@/types/routine';
@@ -28,6 +29,7 @@ type ChatMessage = {
   sender: 'me' | 'system';
   senderName: string;
   createdAt?: string;
+  isSystemEvent?: boolean;
 };
 type RawChatMessage = {
   id?: string | number;
@@ -66,13 +68,15 @@ const normalizeChatMessages = (
         msg.user?.username ||
         msg.user?.email ||
         (senderId ? `User ${String(senderId).slice(0, 6)}` : 'Unknown User');
+      const isSystemMessage = /^\[SYSTEM\]\s*/i.test(text);
 
       return {
         id: String(msg.id ?? `${senderId || 'msg'}-${index}-${text.slice(0, 8)}`),
-        text,
-        sender: currentUserId && senderId === currentUserId ? 'me' : 'system',
-        senderName,
+        text: text.replace(/^\[SYSTEM\]\s*/i, ''),
+        sender: isSystemMessage ? 'system' : currentUserId && senderId === currentUserId ? 'me' : 'system',
+        senderName: isSystemMessage ? 'System' : senderName,
         createdAt: msg.sentAt,
+        isSystemEvent: isSystemMessage,
       } as ChatMessage;
     })
     .filter((item): item is ChatMessage => item !== null);
@@ -143,7 +147,7 @@ const formatMessageTime = (value?: string): string => {
 
 export default function CollaborativeChatScreen() {
   const params = useLocalSearchParams<{ id: string; routineName?: string }>();
-  const routineId = params.id;
+  const routineId = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
   const { user } = useAuth();
 
@@ -156,6 +160,10 @@ export default function CollaborativeChatScreen() {
   const [pendingLogs, setPendingLogs] = useState<RoutineLog[]>([]);
   const [isQuickReplyOpen, setIsQuickReplyOpen] = useState(false);
   const [votersModalLog, setVotersModalLog] = useState<RoutineLog | null>(null);
+  const [votersModalTab, setVotersModalTab] = useState<'approvals' | 'rejections'>('approvals');
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
+  const [completionRewardText, setCompletionRewardText] = useState('');
+  const lastApprovedLogIdsRef = useRef<Set<number>>(new Set());
 
   const displayMessages = useMemo(() => {
     // 1. Create virtual messages for any logs that don't have a corresponding chat message
@@ -257,11 +265,29 @@ export default function CollaborativeChatScreen() {
     try {
       const logs = await routineService.getRoutineLogs(routineId);
       const logsWithImages = logs.filter(l => !!l.verificationImageUrl);
+      const newlyApprovedByGroup = logsWithImages.find((log) => {
+        if (!user?.id || log.userId !== user.id) return false;
+        const isApproved = log.status === 'approved' || log.isCompletedByGroup;
+        return isApproved && !lastApprovedLogIdsRef.current.has(log.id);
+      });
+
+      if (newlyApprovedByGroup) {
+        const xp = newlyApprovedByGroup.completionXp || 10;
+        const streak = newlyApprovedByGroup.submitterStreak || 0;
+        setCompletionRewardText(streak > 0 ? `+${xp} XP  ·  🔥 Streak ${streak}` : `+${xp} XP`);
+        setShowCompletionAnimation(true);
+      }
+
+      lastApprovedLogIdsRef.current = new Set(
+        logsWithImages
+          .filter((log) => log.status === 'approved' || log.isCompletedByGroup)
+          .map((log) => log.id),
+      );
       setPendingLogs(logsWithImages);
     } catch (_e) {
       // ignore
     }
-  }, [routineId]);
+  }, [routineId, user?.id]);
 
   const loadPredefinedMessages = useCallback(async (): Promise<void> => {
     if (!routineId) return;
@@ -362,18 +388,32 @@ export default function CollaborativeChatScreen() {
       // Update local state for immediate feedback
       setPendingLogs(prev => prev.map(l => {
         if (l.id === logId) {
-          const voterObj = user ? { id: user.id, name: user.name || 'You', avatarUrl: ('avatar' in user ? String(user.avatar) : '') } : '';
-          const newApprovals = [...(l.approvals || []), voterObj].filter(Boolean);
+          const alreadyApproved = (l.approvals || []).some((item) =>
+            (typeof item === 'string' ? item : item?.id) === user?.id,
+          );
+          const voterObj =
+            user && !alreadyApproved
+              ? { id: user.id, name: user.name || 'You' }
+              : null;
+          const newApprovals = [...(l.approvals || []), ...(voterObj ? [voterObj] : [])];
+          const requiredApprovals = l.requiredApprovals || 0;
+          const isCompletedByGroup =
+            requiredApprovals > 0
+              ? newApprovals.length >= requiredApprovals
+              : l.status === 'approved' || l.isCompletedByGroup === true;
           return { 
             ...l, 
-            status: 'approved',
-            approvals: newApprovals as string[]
+            approvals: newApprovals,
+            approvalCount: newApprovals.length,
+            status: isCompletedByGroup ? 'approved' : 'pending',
+            isCompletedByGroup,
           };
         }
         return l;
       }));
       
-      Alert.alert('Success', 'Log approved successfully!');
+      Alert.alert('Success', 'Your vote has been recorded.');
+      fetchPendingLogs();
     } catch (_e) {
       Alert.alert('Error', 'Failed to approve. Please try again.');
     }
@@ -386,18 +426,25 @@ export default function CollaborativeChatScreen() {
       // Update local state
       setPendingLogs(prev => prev.map(l => {
         if (l.id === logId) {
-          const voterObj = user ? { id: user.id, name: user.name || 'You', avatarUrl: ('avatar' in user ? String(user.avatar) : '') } : '';
-          const newRejections = [...(l.rejections || []), voterObj].filter(Boolean);
+          const alreadyRejected = (l.rejections || []).some((item) =>
+            (typeof item === 'string' ? item : item?.id) === user?.id,
+          );
+          const voterObj =
+            user && !alreadyRejected
+              ? { id: user.id, name: user.name || 'You' }
+              : null;
+          const newRejections = [...(l.rejections || []), ...(voterObj ? [voterObj] : [])];
           return { 
             ...l, 
             status: 'rejected',
-            rejections: newRejections as string[]
+            rejections: newRejections,
           };
         }
         return l;
       }));
       
       Alert.alert('Rejected', 'The log has been rejected.');
+      fetchPendingLogs();
     } catch (_e) {
       Alert.alert('Error', 'Failed to reject. Please try again.');
     }
@@ -455,16 +502,32 @@ export default function CollaborativeChatScreen() {
             )
           }
           renderItem={({ item }) => (
-            <View style={item.sender === 'me' ? styles.chatRowMine : styles.chatRowOther}>
+            <View
+              style={
+                item.isSystemEvent
+                  ? styles.chatRowSystemEvent
+                  : item.sender === 'me'
+                    ? styles.chatRowMine
+                    : styles.chatRowOther
+              }
+            >
               <View
                 style={[
                   styles.chatBubble,
-                  item.sender === 'me' ? styles.chatBubbleMine : styles.chatBubbleSystem,
+                  item.isSystemEvent
+                    ? styles.chatBubbleEvent
+                    : item.sender === 'me'
+                      ? styles.chatBubbleMine
+                      : styles.chatBubbleSystem,
                 ]}
               >
-                <Text style={styles.chatSender}>
-                  {item.sender === 'me' ? 'You' : item.senderName}
-                </Text>
+                {!item.isSystemEvent ? (
+                  <Text style={styles.chatSender}>
+                    {item.sender === 'me' ? 'You' : item.senderName}
+                  </Text>
+                ) : (
+                  <Text style={styles.chatSystemLabel}>System</Text>
+                )}
                 {item.text.includes('storage.googleapis.com') || item.text.startsWith('[PHOTO]:') || item.text.includes('.jpg') || item.text.includes('.png') ? (
                   (() => {
                     const isPrefixed = item.text.startsWith('[PHOTO]:');
@@ -492,7 +555,10 @@ export default function CollaborativeChatScreen() {
                           log={matchingLog}
                           onApprove={handleApproveLog}
                           onReject={handleRejectLog}
-                          onViewVotes={(log) => setVotersModalLog(log)}
+                          onViewVotes={(log, tab) => {
+                            setVotersModalTab(tab);
+                            setVotersModalLog(log);
+                          }}
                           currentUserId={user?.id}
                         />
                       );
@@ -594,7 +660,9 @@ export default function CollaborativeChatScreen() {
               </View>
 
               <View style={{gap: 16}}>
-                {votersModalLog?.approvals && votersModalLog.approvals.length > 0 && (
+                {votersModalTab === 'approvals' &&
+                  votersModalLog?.approvals &&
+                  votersModalLog.approvals.length > 0 && (
                   <View style={{gap: 8}}>
                     <Text style={{color: '#4ade80', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1}}>Approvals</Text>
                     {votersModalLog.approvals.map((voter, index) => {
@@ -617,7 +685,9 @@ export default function CollaborativeChatScreen() {
                   </View>
                 )}
 
-                {votersModalLog?.rejections && votersModalLog.rejections.length > 0 && (
+                {votersModalTab === 'rejections' &&
+                  votersModalLog?.rejections &&
+                  votersModalLog.rejections.length > 0 && (
                   <View style={{gap: 8}}>
                     <Text style={{color: '#f87171', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1}}>Rejections</Text>
                     {votersModalLog.rejections.map((voter, index) => {
@@ -640,14 +710,24 @@ export default function CollaborativeChatScreen() {
                   </View>
                 )}
                 
-                {(!votersModalLog?.approvals?.length && !votersModalLog?.rejections?.length) && (
+                {(votersModalTab === 'approvals' && !votersModalLog?.approvals?.length) ||
+                (votersModalTab === 'rejections' && !votersModalLog?.rejections?.length) ? (
                    <Text style={{color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 10}}>No votes yet.</Text>
-                )}
+                ) : null}
               </View>
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
       </View>
+      <RoutineCompletedAnimation
+        visible={showCompletionAnimation}
+        routineName={String(params.routineName || '')}
+        rewardText={completionRewardText}
+        onComplete={() => {
+          setShowCompletionAnimation(false);
+          setCompletionRewardText('');
+        }}
+      />
     </LinearGradient>
   );
 }
@@ -722,6 +802,9 @@ const styles = StyleSheet.create({
   chatRowOther: {
     alignItems: 'flex-start',
   },
+  chatRowSystemEvent: {
+    alignItems: 'center',
+  },
   chatBubble: {
     maxWidth: '85%',
     borderRadius: 18,
@@ -738,6 +821,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
   },
+  chatBubbleEvent: {
+    backgroundColor: 'rgba(16, 185, 129, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.32)',
+    maxWidth: '94%',
+  },
   chatBubbleText: {
     color: '#ffffff',
     fontSize: 14,
@@ -748,6 +837,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     marginBottom: 4,
+  },
+  chatSystemLabel: {
+    color: '#6ee7b7',
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   chatTime: {
     color: 'rgba(255,255,255,0.5)',

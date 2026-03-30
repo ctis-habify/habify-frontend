@@ -155,6 +155,14 @@ const normalizeRoutineLog = (item: unknown): RoutineLog => {
     approvals: Array.isArray(source.approvals) ? source.approvals.map(a => typeof a === 'object' ? a : String(a)) : [],
     rejections: Array.isArray(source.rejections) ? source.rejections.map(r => typeof r === 'object' ? r : String(r)) : [],
     userName: toStringOrUndefined(source.userName || source.user_name || source.username || (source.user as any)?.name),
+    requiredApprovals: toNumberOrDefault(source.requiredApprovals || source.required_approvals, 0),
+    approvalCount: toNumberOrDefault(source.approvalCount || source.approval_count, 0),
+    isCompletedByGroup:
+      source.isCompletedByGroup === true ||
+      source.is_completed_by_group === true ||
+      (toStringOrUndefined(source.status || source.STATUS) || '').toLowerCase() === 'approved',
+    completionXp: toNumberOrDefault(source.completionXp || source.completion_xp, 0),
+    submitterStreak: toNumberOrDefault(source.submitterStreak || source.submitter_streak, 0),
   } as RoutineLog;
 };
 
