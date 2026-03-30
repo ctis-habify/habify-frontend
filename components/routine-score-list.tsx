@@ -3,6 +3,11 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 
+import { CupIndicator } from '@/components/cup-indicator';
+import {
+  UserCupAward,
+} from '@/types/collaborative-score';
+
 export type RoutineLeaderboardEntry = {
   rank: number;
   userId: string;
@@ -10,6 +15,7 @@ export type RoutineLeaderboardEntry = {
   username: string | null;
   avatarUrl: string | null;
   score: number;
+  cup?: UserCupAward | null;
 };
 
 type RoutineScoreListProps = {
@@ -43,6 +49,7 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
           {leaderboard.map((entry, index) => {
             const isSelf = !!currentUserId && currentUserId === entry.userId;
             const displayName = entry.name || entry.username || 'Unnamed User';
+            const displayCup = entry.cup || null;
 
             return (
               <Animated.View
@@ -73,9 +80,12 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
                 )}
 
                 <View style={styles.nameContainer}>
-                  <Text style={[styles.nameText, isSelf && styles.nameTextSelf]} numberOfLines={1}>
-                    {displayName} {isSelf ? '(You)' : ''}
-                  </Text>
+                  <View style={styles.nameRow}>
+                    <Text style={[styles.nameText, isSelf && styles.nameTextSelf]} numberOfLines={1}>
+                      {displayName} {isSelf ? '(You)' : ''}
+                    </Text>
+                    <CupIndicator cup={displayCup} compact showLabel={false} transparent />
+                  </View>
                 </View>
 
                 <View style={styles.scoreContainer}>
@@ -170,10 +180,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
   nameText: {
     color: '#ffffff',
     fontSize: 15,
     fontWeight: '600',
+    flexShrink: 1,
   },
   nameTextSelf: {
     color: COLLABORATIVE_PRIMARY,

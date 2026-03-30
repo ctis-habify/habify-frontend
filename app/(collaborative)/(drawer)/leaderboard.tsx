@@ -1,6 +1,7 @@
+import { CupIndicator } from '@/components/cup-indicator';
 import { Colors } from '@/constants/theme';
 import { collaborativeScoreService } from '@/services/collaborative-score.service';
-import { LeaderboardEntry, resolveCollaborativeRank } from '@/types/collaborative-score';
+import { LeaderboardEntry, createLeaderboardCupAward, resolveCollaborativeRank } from '@/types/collaborative-score';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -51,6 +52,7 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
   const medal = MEDAL_COLORS[item.rank];
   const rankInfo = resolveCollaborativeRank(item.totalPoints);
   const isTopThree = item.rank <= 3;
+  const displayCup = item.cup || createLeaderboardCupAward(item.rank, item.totalPoints);
 
   return (
     <Animated.View
@@ -91,9 +93,12 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
 
       {/* Info */}
       <View style={styles.info}>
-        <Text style={[styles.name, isTopThree && medal && { color: medal.text }]} numberOfLines={1}>
-          {item.name}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text style={[styles.name, isTopThree && medal && { color: medal.text }]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <CupIndicator cup={displayCup} compact />
+        </View>
         {item.username && (
           <Text style={styles.meta} numberOfLines={1}>@{item.username}</Text>
         )}
@@ -301,10 +306,17 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
   name: {
     fontSize: 15,
     fontWeight: '600',
     color: Colors.light.text,
+    flexShrink: 1,
   },
   meta: {
     fontSize: 13,
