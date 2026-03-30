@@ -73,6 +73,11 @@ export interface RoutineLog {
   approvals?: (string | RoutineLogUser)[];
   rejections?: (string | RoutineLogUser)[];
   userName?: string;
+  requiredApprovals?: number;
+  approvalCount?: number;
+  isCompletedByGroup?: boolean;
+  completionXp?: number;
+  submitterStreak?: number;
 }
 
 export interface CreateRoutineDto {

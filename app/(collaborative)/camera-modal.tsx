@@ -18,7 +18,8 @@ import { routineService } from '../../services/routine.service';
 export default function CollaborativeCameraModal(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams(); 
-  const routineId = params.routineId as string;
+  const routineIdRaw = params.routineId;
+  const routineId = Array.isArray(routineIdRaw) ? routineIdRaw[0] : routineIdRaw;
 
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -62,7 +63,10 @@ export default function CollaborativeCameraModal(): React.ReactElement {
   };
 
   const handleUpload = async () => {
-    if (!photoUri || !routineId) return;
+    if (!photoUri || !routineId) {
+      Alert.alert('Post Failed', 'Routine ID is missing.');
+      return;
+    }
 
     try {
       setIsUploading(true);
