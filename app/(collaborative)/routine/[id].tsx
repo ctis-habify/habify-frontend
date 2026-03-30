@@ -18,11 +18,14 @@ import * as Haptics from 'expo-haptics';
 import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { PokeAnimation } from '@/components/animations/poke-animation';
+import { CupIndicator } from '@/components/cup-indicator';
 import { getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { collaborativeScoreService } from '@/services/collaborative-score.service';
 import { routineService } from '@/services/routine.service';
 import { notificationService } from '@/services/notification.service';
+import { LeaderboardEntry, UserCupAward, createLeaderboardCupAward } from '@/types/collaborative-score';
 import { Routine } from '@/types/routine';
 import { RoutineScoreList, RoutineLeaderboardEntry } from '@/components/routine-score-list';
 
@@ -32,10 +35,12 @@ type GroupParticipant = {
   name?: string;
   username?: string;
   role?: string;
+  cup?: UserCupAward | null;
   user?: {
     id?: string;
     name?: string;
     username?: string;
+    cup?: UserCupAward | null;
   };
 };
 
@@ -164,6 +169,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [pokedName, setPokedName] = useState('');
   
   const [leaderboard, setLeaderboard] = useState<RoutineLeaderboardEntry[]>([]);
+  const [globalLeaderboard, setGlobalLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
 
   const getErrorMessage = useCallback((error: unknown): string => {
@@ -181,12 +187,14 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     setLoadingLeaderboard(true);
     setError(null);
     try {
-      const [detail, leaderboardData] = await Promise.all([
+      const [detail, leaderboardData, globalLeaderboardData] = await Promise.all([
         routineService.getGroupDetail(routineId),
         routineService.getCollaborativeRoutineLeaderboard(routineId).catch(() => []),
+        collaborativeScoreService.getLeaderboard(200).catch(() => []),
       ]);
       setRoutineDetail(detail);
       setLeaderboard(leaderboardData);
+      setGlobalLeaderboard(globalLeaderboardData);
     } catch (fetchError) {
       setError(getErrorMessage(fetchError));
     } finally {
@@ -273,6 +281,31 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const displayVisibility = (isPublicFromParams ?? detailIsPublic) ? 'Public' : 'Private';
 
   const currentUserId = user?.id ? String(user.id).trim() : '';
+  const globalCupByUserId = useMemo(() => {
+    const cupMap = new Map<string, UserCupAward | null>();
+
+    globalLeaderboard.forEach((entry) => {
+      const userId = String(entry.userId || '').trim();
+      if (!userId) return;
+
+      cupMap.set(
+        userId,
+        entry.cup || createLeaderboardCupAward(entry.rank, entry.totalPoints) || null,
+      );
+    });
+
+    return cupMap;
+  }, [globalLeaderboard]);
+
+  const leaderboardWithGlobalCups = useMemo(
+    () =>
+      leaderboard.map((entry) => ({
+        ...entry,
+        cup: entry.cup || globalCupByUserId.get(String(entry.userId || '').trim()) || null,
+      })),
+    [globalCupByUserId, leaderboard],
+  );
+
   const creatorCandidate = pickDetailValue(routineDetail, ['userId', 'creatorId']);
   const isParticipantAdmin = (routineDetail?.participants || []).some(
     (p) =>
@@ -493,6 +526,11 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                     const u = participant.user;
                     const name = u?.name || participant.name || u?.username || participant.username || 'Unnamed User';
                     const participantUserId = participant.userId || u?.id || participant.id;
+                    const participantCup =
+                      participant.cup ||
+                      u?.cup ||
+                      globalCupByUserId.get(String(participantUserId || '').trim()) ||
+                      null;
                     const isSelf = !!currentUserId && currentUserId === String(participantUserId || '').trim();
                     const isPoking = pokingUserId === participantUserId;
 
@@ -518,12 +556,15 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                               {!isSelf && (
                                 <Text style={styles.pokeIcon}>👈</Text>
                               )}
-                              <Text style={[
-                                styles.participantChipText,
-                                isSelf && styles.participantChipTextSelf,
-                              ]} numberOfLines={1}>
-                                {name}{isSelf ? ' (You)' : ''}
-                              </Text>
+                              <View style={styles.participantNameRow}>
+                                <Text style={[
+                                  styles.participantChipText,
+                                  isSelf && styles.participantChipTextSelf,
+                                ]} numberOfLines={1}>
+                                  {name}{isSelf ? ' (You)' : ''}
+                                </Text>
+                                <CupIndicator cup={participantCup} compact />
+                              </View>
                             </>
                           )}
                         </TouchableOpacity>
@@ -549,7 +590,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             </Animated.View>
 
             <RoutineScoreList 
-              leaderboard={leaderboard} 
+              leaderboard={leaderboardWithGlobalCups} 
               currentUserId={currentUserId} 
               loading={loadingLeaderboard} 
             />
@@ -794,9 +835,17 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '700',
+    flexShrink: 1,
   },
   participantChipTextSelf: {
     color: 'rgba(255, 255, 255, 0.5)',
+  },
+  participantNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+    maxWidth: '100%',
   },
   pokeIcon: {
     fontSize: 12,
