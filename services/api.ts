@@ -1,7 +1,7 @@
 // src/services/api.ts
 import axios from 'axios';
 
-import { Platform } from 'react-native';
+
 
 let authToken: string | null = null;
 
@@ -9,7 +9,6 @@ export const setAuthToken = (token: string | null): void => {
   authToken = token;
 };
 
-// Android emulator typically accesses localhost via 10.0.2.2
 const BASE_URL = 'https://habify-backend.onrender.com';
 
 export const api = axios.create({
