@@ -227,6 +227,7 @@ export function CreateRoutineModal({
         );
 
         DeviceEventEmitter.emit('SHOW_TOAST', 'List updated successfully!');
+        DeviceEventEmitter.emit('refreshPersonalRoutines');
         if (onCreated) onCreated();
         handleClose();
       } else {
@@ -238,6 +239,7 @@ export function CreateRoutineModal({
 
 
         DeviceEventEmitter.emit('SHOW_TOAST', 'Routine list created successfully!');
+        DeviceEventEmitter.emit('refreshPersonalRoutines');
 
         if (onCreated) {
           onCreated();

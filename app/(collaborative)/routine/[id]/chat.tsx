@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -19,6 +19,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { ChatVerificationItem } from '@/components/routines/chat-verification-item';
 import { RoutineCompletedAnimation } from '@/components/animations/routine-completed-animation';
+import { ImageFullscreenModal } from '@/components/modals/image-fullscreen-modal';
 import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
 import { RoutineLog } from '@/types/routine';
@@ -117,7 +118,7 @@ const getChatCacheKey = (routineId?: string): string =>
 const readCachedChatMessages = async (routineId?: string): Promise<ChatMessage[]> => {
   if (!routineId) return [];
   try {
-    const raw = await SecureStore.getItemAsync(getChatCacheKey(routineId));
+    const raw = await AsyncStorage.getItem(getChatCacheKey(routineId));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as ChatMessage[];
     return Array.isArray(parsed) ? parsed : [];
@@ -132,7 +133,7 @@ const writeCachedChatMessages = async (
 ): Promise<void> => {
   if (!routineId) return;
   try {
-    await SecureStore.setItemAsync(getChatCacheKey(routineId), JSON.stringify(messages));
+    await AsyncStorage.setItem(getChatCacheKey(routineId), JSON.stringify(messages));
   } catch {
     // ignore cache write errors
   }
@@ -154,6 +155,16 @@ export default function CollaborativeChatScreen() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // Image Preview State
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+
+  const handleImagePreview = (url: string) => {
+    setPreviewImage(url);
+    setIsPreviewVisible(true);
+  };
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
   const [predefinedMessages, setPredefinedMessages] = useState<string[]>([]);
   const [predefinedLoading, setPredefinedLoading] = useState(false);
@@ -223,11 +234,21 @@ export default function CollaborativeChatScreen() {
     };
   }, [routineId]);
 
-  const loadChatMessages = useCallback(async (): Promise<void> => {
+  const loadChatMessages = useCallback(async (isInitial: boolean = false): Promise<void> => {
     if (!routineId) return;
-    setChatLoading(true);
-    setChatError(null);
+    
+    // Always show loading for initial load to ensure fresh data is fetched
+    if (isInitial) {
+      setChatLoading(true);
+    }
+    
+    // Read from cache immediately for initial load to avoid flicker (optional if we cover it, but good to have)
     const cached = await readCachedChatMessages(routineId);
+    if (isInitial && cached.length > 0) {
+      setChatMessages(cached);
+    }
+    
+    setChatError(null);
     try {
       const messages = await routineService.getRoutineChatMessages(routineId);
       const normalized = sortChatMessagesOldToNew(
@@ -303,9 +324,20 @@ export default function CollaborativeChatScreen() {
   }, [routineId]);
 
   useEffect(() => {
-    loadChatMessages();
-    loadPredefinedMessages();
-    fetchPendingLogs();
+    const initPage = async () => {
+      setIsInitialLoading(true);
+      try {
+        await Promise.all([
+          loadChatMessages(true),
+          loadPredefinedMessages(),
+          fetchPendingLogs(),
+        ]);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    initPage();
     
     // Listen for manual refreshes (e.g. after camera upload)
     const sub = DeviceEventEmitter.addListener('refreshCollaborativeRoutines', () => {
@@ -316,7 +348,7 @@ export default function CollaborativeChatScreen() {
     const intervalId = setInterval(() => {
       loadChatMessages();
       fetchPendingLogs();
-    }, 4000);
+    }, 1500);
 
     return () => {
       clearInterval(intervalId);
@@ -528,46 +560,61 @@ export default function CollaborativeChatScreen() {
                 ) : (
                   <Text style={styles.chatSystemLabel}>System</Text>
                 )}
-                {item.text.includes('storage.googleapis.com') || item.text.startsWith('[PHOTO]:') || item.text.includes('.jpg') || item.text.includes('.png') ? (
-                  (() => {
-                    const isPrefixed = item.text.startsWith('[PHOTO]:');
-                    let imageUrl = isPrefixed ? item.text.replace('[PHOTO]:', '') : item.text;
-                    
-                    if (!imageUrl.startsWith('http') && (imageUrl.includes('.jpg') || imageUrl.includes('.png'))) {
-                       imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl}`;
-                    }
+                {(() => {
+                  const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
+                  const isPhotoMessage = item.text.startsWith('[PHOTO]:') || 
+                                       item.text.includes('storage.googleapis.com') || 
+                                       imageRegex.test(item.text);
+                  
+                  if (!isPhotoMessage) {
+                    return <Text style={styles.chatBubbleText}>{item.text}</Text>;
+                  }
 
-                    // Try to find a matching pending log for this image
-                    const matchingLog = pendingLogs.find(l => {
-                      const logUrl = (l.verificationImageUrl || '').toLowerCase();
-                      const msgUrl = imageUrl.toLowerCase();
-                      const logFileName = logUrl.split('/').pop() || '!!!';
-                      const msgFileName = msgUrl.split('/').pop() || '???';
+                  const isPrefixed = item.text.startsWith('[PHOTO]:');
+                  let imageUrl = isPrefixed ? item.text.replace('[PHOTO]:', '') : item.text;
+                  
+                  if (!imageUrl.startsWith('http')) {
+                    imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
+                  }
 
-                      return logUrl === msgUrl || msgUrl.includes(logUrl) || logUrl.includes(msgUrl) || logFileName === msgFileName;
-                    });
+                  const matchingLog = pendingLogs.find(l => {
+                    const logUrl = (l.verificationImageUrl || '').toLowerCase();
+                    const msgUrl = imageUrl.toLowerCase();
+                    const logFileName = logUrl.split('/').pop() || '!!!';
+                    const msgFileName = msgUrl.split('/').pop() || '???';
+                    return logUrl === msgUrl || msgUrl.includes(logUrl) || logUrl.includes(msgUrl) || logFileName === msgFileName;
+                  });
 
-                    /* removed console.log */
+                  if (matchingLog) {
+                    return (
+                      <ChatVerificationItem 
+                        log={matchingLog}
+                        onApprove={handleApproveLog}
+                        onReject={handleRejectLog}
+                        onViewVotes={(log, tab) => {
+                          setVotersModalTab(tab);
+                          setVotersModalLog(log);
+                        }}
+                        onPressImage={handleImagePreview}
+                        currentUserId={user?.id}
+                      />
+                    );
+                  }
 
-                    if (matchingLog) {
-                      return (
-                        <ChatVerificationItem 
-                          log={matchingLog}
-                          onApprove={handleApproveLog}
-                          onReject={handleRejectLog}
-                          onViewVotes={(log, tab) => {
-                            setVotersModalTab(tab);
-                            setVotersModalLog(log);
-                          }}
-                          currentUserId={user?.id}
-                        />
-                      );
-                    }
-                    return <Image source={{ uri: imageUrl }} style={styles.chatImage} resizeMode="contain" />;
-                  })()
-                ) : (
-                  <Text style={styles.chatBubbleText}>{item.text}</Text>
-                )}
+                  return (
+                    <TouchableOpacity 
+                      style={styles.chatImageWrapper}
+                      onPress={() => handleImagePreview(imageUrl)}
+                      activeOpacity={0.9}
+                    >
+                      <Image 
+                        source={{ uri: imageUrl }} 
+                        style={styles.chatImage} 
+                        resizeMode="contain" 
+                      />
+                    </TouchableOpacity>
+                  );
+                })()}
                 {!!item.createdAt && (
                   <Text style={styles.chatTime}>{formatMessageTime(item.createdAt)}</Text>
                 )}
@@ -722,12 +769,26 @@ export default function CollaborativeChatScreen() {
       <RoutineCompletedAnimation
         visible={showCompletionAnimation}
         routineName={String(params.routineName || '')}
-        rewardText={completionRewardText}
+        rewardText={completionRewardText || 'Calculating rewards...'}
         onComplete={() => {
           setShowCompletionAnimation(false);
           setCompletionRewardText('');
         }}
       />
+
+      <ImageFullscreenModal
+        visible={isPreviewVisible}
+        imageUrl={previewImage}
+        onClose={() => setIsPreviewVisible(false)}
+      />
+
+      {/* Global Initial Loading Overlay */}
+      {isInitialLoading && (
+        <View style={styles.globalLoadingOverlay}>
+          <ActivityIndicator size="large" color="#e879f9" />
+          <Text style={styles.globalLoadingText}>Loading chat...</Text>
+        </View>
+      )}
     </LinearGradient>
   );
 }
@@ -852,13 +913,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'right',
   },
-  chatImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 12,
-    marginTop: 4,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-  },
   chatStateBox: {
     borderRadius: 12,
     padding: 12,
@@ -964,5 +1018,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  chatImageWrapper: {
+    width: 200,
+    height: 150,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    marginVertical: 4,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatImage: {
+    width: '100%',
+    height: '100%',
+    zIndex: 2,
+  },
+  chatImageLoading: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  globalLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(8,6,18,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  globalLoadingText: {
+    color: '#e879f9',
+    marginTop: 15,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

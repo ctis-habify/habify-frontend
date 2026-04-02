@@ -18,6 +18,7 @@ interface ChatVerificationItemProps {
   onApprove: (logId: number) => Promise<void>;
   onReject: (logId: number) => Promise<void>;
   onViewVotes?: (log: RoutineLog, tab: 'approvals' | 'rejections') => void;
+  onPressImage?: (url: string) => void;
   currentUserId?: string;
 }
 
@@ -26,6 +27,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   onApprove, 
   onReject,
   onViewVotes,
+  onPressImage,
   currentUserId 
 }) => {
   const [loading, setLoading] = React.useState<'approve' | 'reject' | null>(null);
@@ -65,8 +67,8 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
 
   const rawImageUrl = log.verificationImageUrl;
   const imageUrl = (rawImageUrl || '').startsWith('http') 
-    ? rawImageUrl 
-    : `https://storage.googleapis.com/habify-verification-photos/${rawImageUrl}`;
+    ? (rawImageUrl as string)
+    : `https://storage.googleapis.com/habify-verification-photos/${rawImageUrl || ''}`;
 
   const isOwner = log.userId === currentUserId;
   const approvalCount = log.approvals?.length || 0;
@@ -123,8 +125,15 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.imageWrapper}>
-        <Image source={{ uri: imageUrl }} style={styles.image} />
+      <TouchableOpacity 
+        style={styles.imageWrapper} 
+        activeOpacity={0.9} 
+        onPress={() => onPressImage && onPressImage(imageUrl)}
+      >
+        <Image 
+          source={{ uri: imageUrl }} 
+          style={styles.image} 
+        />
         {log.status === 'approved' && (
           <Animated.View style={[styles.statusBadgeSuccess, { transform: [{ scale: badgeScale }] }]}>
             <Animated.View style={[styles.sparkleWrap, { opacity: sparkleOpacity }]}>
@@ -140,7 +149,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
             <Text style={styles.statusBadgeText}>Rejected</Text>
           </View>
         )}
-      </View>
+      </TouchableOpacity>
 
       {!isOwner && isPending ? (
         userHasVoted ? (
@@ -383,5 +392,18 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.68)',
     fontSize: 11,
     fontStyle: 'italic',
+  },
+  imageLoadingPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    zIndex: 1,
+  },
+  imageLoadingText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 10,
+    fontWeight: '600',
   },
 });
