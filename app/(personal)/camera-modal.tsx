@@ -3,14 +3,14 @@ import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    DeviceEventEmitter,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  DeviceEventEmitter,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { verificationService } from '../../services/verification.service';
 
@@ -120,7 +120,7 @@ export default function CameraModal(): React.ReactElement {
         setIsUploading(false);
         Alert.alert(
           'Verification Failed',
-          result.failReason || 'AI could not verify this action. Please try again.',
+          result.failReason || 'AI could not verify. Please try again.',
           [{ text: 'OK' }]
         );
       } else if (result.id) {
@@ -128,7 +128,7 @@ export default function CameraModal(): React.ReactElement {
         await pollVerificationStatus(result.id);
       } else {
         setIsUploading(false);
-        Alert.alert('System Busy', 'AI verification is pending. Your photo is safe.');
+        Alert.alert('Verification Failed', 'Please try taking the photo again.');
       }
     } catch (err: unknown) {
       console.error('Full Verification error object:', err);

@@ -45,15 +45,26 @@ export const verificationService = {
       objectPath,
     });
     
+    console.log('[VerificationService] Backend Response:', JSON.stringify(res.data, null, 2));
+    
     // Normalize response
     const raw = res.data.data || res.data.verification || res.data.result || res.data;
     
+    // Determine status: if explicitly failed or (not verified AND not pending anymore)
+    let status: 'pending' | 'succeeded' | 'failed' = 'pending';
+    if (raw.status === 'succeeded' || raw.verified === true) {
+      status = 'succeeded';
+    } else if (raw.status === 'failed' || (raw.verified === false && raw.pending === false)) {
+      status = 'failed';
+    }
+
     // Support both immediate results and polling IDs
     return {
       id: String(raw.id || raw.verificationId || raw.verification_id || ''),
-      status: raw.status || (raw.verified ? 'succeeded' : 'pending'),
+      status,
       score: raw.score,
       failReason: raw.failReason || raw.reason,
+      verified: !!raw.verified,
     };
   },
 
