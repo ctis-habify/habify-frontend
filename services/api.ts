@@ -10,7 +10,7 @@ export const setAuthToken = (token: string | null): void => {
 };
 
 // Android emulator typically accesses localhost via 10.0.2.2
-const BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+const BASE_URL = 'https://habify-backend.onrender.com';
 
 export const api = axios.create({
   baseURL: BASE_URL,
