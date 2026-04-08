@@ -9,7 +9,7 @@ import { getCupInfoByTier } from '@/types/collaborative-score';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
   Image,
@@ -21,10 +21,12 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback } from 'react';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useColorScheme() ?? 'light';
   const { friends, loading: friendsLoading } = useFriends();
@@ -53,6 +55,13 @@ export default function ProfileScreen() {
   };
 
   const age = calculateAge(user?.birthDate);
+
+  const handlePressFriend = useCallback(
+    (friendId: string): void => {
+      router.push({ pathname: '/(personal)/friend-profile', params: { userId: friendId } });
+    },
+    [router],
+  );
 
   // Helper for Avatar URL
   const getAvatarUrl = (id?: string) => {
@@ -168,7 +177,7 @@ export default function ProfileScreen() {
           {friendsLoading ? (
             <ActivityIndicator color="rgba(255,255,255,0.7)" style={styles.loadingIndicator} />
           ) : (
-            <FriendList friends={friends} />
+            <FriendList friends={friends} onPressFriend={handlePressFriend} />
           )}
         </Animated.View>
       </ScrollView>

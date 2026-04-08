@@ -10,6 +10,13 @@ export default function AppLayout(): React.ReactElement {
           animation: 'slide_from_bottom',
         }}
       />
+      <Stack.Screen
+        name="friend-profile"
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
     </Stack>
   );
 }
+
