@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Friend, FriendItem } from './FriendItem';
 
 interface FriendListProps {
     friends: Friend[];
+    onPressFriend?: (friendId: string) => void;
 }
 
-export const FriendList: React.FC<FriendListProps> = ({ friends }) => {
+export function FriendList({ friends, onPressFriend }: FriendListProps): React.ReactElement {
+    const handlePress = useCallback(
+        (friendId: string) => {
+            onPressFriend?.(friendId);
+        },
+        [onPressFriend],
+    );
+
     if (!friends || friends.length === 0) {
         return (
             <View style={styles.emptyContainer}>
@@ -19,11 +27,15 @@ export const FriendList: React.FC<FriendListProps> = ({ friends }) => {
     return (
         <View style={styles.container}>
             {friends.map((friend) => (
-                <FriendItem key={friend.id} friend={friend} />
+                <FriendItem
+                    key={friend.id}
+                    friend={friend}
+                    onPress={() => handlePress(friend.id)}
+                />
             ))}
         </View>
     );
-};
+}
 
 const styles = StyleSheet.create({
     container: {

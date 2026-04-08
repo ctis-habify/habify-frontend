@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface Friend {
     id: string;
@@ -11,11 +11,12 @@ export interface Friend {
 
 interface FriendItemProps {
     friend: Friend;
+    onPress?: () => void;
 }
 
-export const FriendItem: React.FC<FriendItemProps> = ({ friend }) => {
+export function FriendItem({ friend, onPress }: FriendItemProps): React.ReactElement {
     return (
-        <View style={styles.container}>
+        <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
             <View style={styles.avatarContainer}>
                 {friend.avatar ? (
                     <Image source={{ uri: friend.avatar }} style={styles.avatar} />
@@ -26,16 +27,14 @@ export const FriendItem: React.FC<FriendItemProps> = ({ friend }) => {
                         </Text>
                     </View>
                 )}
-                {/* Optional Status Indicator could go here */}
             </View>
             <View style={styles.info}>
                 <Text style={styles.name} numberOfLines={1}>{friend.name}</Text>
-                {/* <Text style={styles.status}>Online</Text> */}
             </View>
             <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
-        </View>
+        </TouchableOpacity>
     );
-};
+}
 
 const styles = StyleSheet.create({
     container: {
