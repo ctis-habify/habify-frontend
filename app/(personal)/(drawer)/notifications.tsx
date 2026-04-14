@@ -220,11 +220,11 @@ export default function NotificationsScreen(): React.ReactElement {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={styles.menuButton}
+          style={[styles.menuButton, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
         >
-          <Ionicons name="menu" size={24} color="#fff" />
+          <Ionicons name="menu" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -232,7 +232,7 @@ export default function NotificationsScreen(): React.ReactElement {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#fff" />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }
       >
         {categoryOrder.map((category) => (
@@ -250,39 +250,39 @@ export default function NotificationsScreen(): React.ReactElement {
                 {!loadedSections.requests || !loadedSections.invitations ? (
                   <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
                 ) : pendingRequests.length === 0 && routineInvitations.length === 0 ? (
-                  <Text style={[styles.emptyText, { color: colors.icon }]}>No pending requests.</Text>
+                  <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No pending requests.</Text>
                 ) : (
                   <View style={{ gap: 10, marginTop: 8 }}>
                     {/* Render Friend Requests */}
                     {pendingRequests.map((item) => (
-                      <View key={`fr-${item.id}`} style={[styles.actionRow, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
+                      <View key={`fr-${item.id}`} style={[styles.actionRow, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderColor: colors.border }]}>
                         <View style={styles.actionAvatarWrap}>
                           {item.fromUser.avatarUrl ? (
                             <Image source={{ uri: item.fromUser.avatarUrl }} style={styles.actionAvatar} />
                           ) : (
                             <View style={[styles.actionAvatarPlaceholder, { backgroundColor: colors.primary }]}>
-                              <Text style={styles.actionAvatarLetter}>{item.fromUser.name.charAt(0).toUpperCase()}</Text>
+                              <Text style={[styles.actionAvatarLetter, { color: colors.white }]}>{item.fromUser.name.charAt(0).toUpperCase()}</Text>
                             </View>
                           )}
                         </View>
                         <View style={styles.actionInfo}>
                           <Text style={[styles.actionName, { color: colors.text }]} numberOfLines={1}>{item.fromUser.name}</Text>
-                          <Text style={[styles.actionMeta, { color: colors.icon }]} numberOfLines={1}>wants to be friends</Text>
+                          <Text style={[styles.actionMeta, { color: colors.textSecondary }]} numberOfLines={1}>wants to be friends</Text>
                         </View>
                         <View style={styles.actionButtons}>
                           <TouchableOpacity
-                            style={[styles.actionBtn, styles.acceptBtn, actioningId === item.id && styles.btnDisabled]}
+                            style={[styles.actionBtn, styles.acceptBtn, { backgroundColor: colors.success }, actioningId === item.id && styles.btnDisabled]}
                             onPress={() => handleAccept(item)}
                             disabled={actioningId !== null}
                           >
-                            {actioningId === item.id ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}
+                            {actioningId === item.id ? <ActivityIndicator size="small" color={colors.white} /> : <Ionicons name="checkmark" size={18} color={colors.white} />}
                           </TouchableOpacity>
                           <TouchableOpacity
-                            style={[styles.actionBtn, styles.declineBtn, actioningId === item.id && styles.btnDisabled]}
+                            style={[styles.actionBtn, styles.declineBtn, { backgroundColor: colors.error }, actioningId === item.id && styles.btnDisabled]}
                             onPress={() => handleDecline(item)}
                             disabled={actioningId !== null}
                           >
-                            <Ionicons name="close" size={18} color="#fff" />
+                            <Ionicons name="close" size={18} color={colors.white} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -290,13 +290,13 @@ export default function NotificationsScreen(): React.ReactElement {
 
                     {/* Render Routine Invitations */}
                     {routineInvitations.map((item) => (
-                      <View key={`ri-${item.id}`} style={[styles.actionRow, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
+                      <View key={`ri-${item.id}`} style={[styles.actionRow, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderColor: colors.border }]}>
                         <View style={styles.actionAvatarWrap}>
                           {item.fromUserAvatarUrl ? (
                             <Image source={{ uri: item.fromUserAvatarUrl }} style={styles.actionAvatar} />
                           ) : (
                             <View style={[styles.actionAvatarPlaceholder, { backgroundColor: COLLABORATIVE_PRIMARY }]}>
-                              <Text style={styles.actionAvatarLetter}>{item.fromUserName ? item.fromUserName.charAt(0).toUpperCase() : '?'}</Text>
+                              <Text style={[styles.actionAvatarLetter, { color: colors.white }]}>{item.fromUserName ? item.fromUserName.charAt(0).toUpperCase() : '?'}</Text>
                             </View>
                           )}
                         </View>
@@ -304,24 +304,24 @@ export default function NotificationsScreen(): React.ReactElement {
                           <Text style={[styles.actionName, { color: colors.text }]} numberOfLines={1}>
                             {item.routineName || 'Unnamed Routine'}
                           </Text>
-                          <Text style={[styles.actionMeta, { color: colors.icon }]} numberOfLines={1}>
+                          <Text style={[styles.actionMeta, { color: colors.textSecondary }]} numberOfLines={1}>
                             invite from {item.fromUserName || 'Unknown'}
                           </Text>
                         </View>
                         <View style={styles.actionButtons}>
                           <TouchableOpacity
-                            style={[styles.actionBtn, styles.acceptBtn, actioningId === item.id && styles.btnDisabled]}
+                            style={[styles.actionBtn, styles.acceptBtn, { backgroundColor: colors.success }, actioningId === item.id && styles.btnDisabled]}
                             onPress={() => handleAcceptRoutine(item)}
                             disabled={actioningId !== null}
                           >
-                            {actioningId === item.id ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="checkmark" size={18} color="#fff" />}
+                            {actioningId === item.id ? <ActivityIndicator size="small" color={colors.white} /> : <Ionicons name="checkmark" size={18} color={colors.white} />}
                           </TouchableOpacity>
                           <TouchableOpacity
-                            style={[styles.actionBtn, styles.declineBtn, actioningId === item.id && styles.btnDisabled]}
+                            style={[styles.actionBtn, styles.declineBtn, { backgroundColor: colors.error }, actioningId === item.id && styles.btnDisabled]}
                             onPress={() => handleDeclineRoutine(item)}
                             disabled={actioningId !== null}
                           >
-                            <Ionicons name="close" size={18} color="#fff" />
+                            <Ionicons name="close" size={18} color={colors.white} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -334,9 +334,7 @@ export default function NotificationsScreen(): React.ReactElement {
                 {!loadedSections.reminders ? (
                   <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
                 ) : sections[category].length === 0 ? (
-                  <Text style={[styles.emptyText, { color: colors.icon }]}>
-                    {category === 'awards' ? 'No rewards yet.' : 'No notifications yet.'}
-                  </Text>
+                  <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No notifications yet.</Text>
                 ) : (
                   <ScrollView
                     style={styles.sectionScroll}
@@ -358,7 +356,7 @@ export default function NotificationsScreen(): React.ReactElement {
                             category === 'rewards' && styles.rewardRow,
                           ]}
                         >
-                          {item.isRead === false && <View style={styles.unreadDot} />}
+                          {item.isRead === false && <View style={[styles.unreadDot, { backgroundColor: colors.tint }]} />}
                           <View style={styles.itemContent}>
                             {category === 'rewards' ? (
                               <View style={styles.rewardHeader}>
@@ -369,7 +367,7 @@ export default function NotificationsScreen(): React.ReactElement {
                               </View>
                             ) : null}
                             <Text style={[styles.itemText, { color: colors.text }]}>{item.message}</Text>
-                            <Text style={[styles.timeText, { color: colors.icon }]}>
+                            <Text style={[styles.timeText, { color: colors.textSecondary }]}>
                               {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               {' · '}
                               {new Date(item.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
@@ -401,15 +399,14 @@ const styles = StyleSheet.create({
   menuButton: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '800',
+    letterSpacing: -0.4,
   },
   content: {
     padding: 18,
@@ -417,22 +414,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionCard: {
-    borderRadius: 18,
+    borderRadius: 24,
     borderWidth: 1,
-    padding: 14,
+    padding: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   sectionScroll: {
-    maxHeight: 250,
+    maxHeight: 280,
   },
   sectionScrollContent: {
     gap: 1,
@@ -441,11 +438,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   emptyText: {
-    fontSize: 14,
-    paddingVertical: 8,
+    fontSize: 13,
+    fontWeight: '500',
+    paddingVertical: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   itemRow: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -461,8 +461,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#7C3AED',
-    marginTop: 5,
+    marginTop: 6,
   },
   itemContent: {
     flex: 1,
@@ -479,18 +478,19 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
+    lineHeight: 18,
   },
   timeText: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '500',
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    padding: 10,
+    borderRadius: 14,
+    padding: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
   },
   actionAvatarWrap: {
     marginRight: 10,
@@ -508,19 +508,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionAvatarLetter: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   actionInfo: {
     flex: 1,
   },
   actionName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '800',
   },
   actionMeta: {
     fontSize: 12,
+    fontWeight: '500',
     marginTop: 2,
   },
   actionButtons: {
@@ -534,12 +534,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  acceptBtn: {
-    backgroundColor: Colors.light.success,
-  },
-  declineBtn: {
-    backgroundColor: Colors.light.error,
-  },
+  acceptBtn: {},
+  declineBtn: {},
   btnDisabled: {
     opacity: 0.5,
   },

@@ -4,6 +4,7 @@ import {
     friendService,
     UserSearchResult,
 } from '@/services/friend.service';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -38,13 +39,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-const COLLABORATIVE_PRIMARY = '#E879F9';
 const SEARCH_DEBOUNCE_MS = 400;
 
 type SegmentTab = 'add' | 'sent' | 'list';
 
 /** Sent boş ekranı: uçak sağa dönük, belirgin; sayfadan uçar */
-function FlyingPlaneIllustration(): React.ReactElement {
+function FlyingPlaneIllustration({ color }: { color: string }): React.ReactElement {
   const fly = useSharedValue(0);
   useEffect(() => {
     fly.value = withRepeat(
@@ -62,7 +62,6 @@ function FlyingPlaneIllustration(): React.ReactElement {
       { rotate: '8deg' },
     ],
   }));
-  const color = COLLABORATIVE_PRIMARY;
   return (
     <View style={styles.emptyIllustration} pointerEvents="none">
       <Animated.View style={[styles.flyingPlaneWrap, planeStyle]}>
@@ -83,7 +82,7 @@ function FlyingPlaneIllustration(): React.ReactElement {
 }
 
 
-function EmptyStateIllustration({ type }: { type: 'friends' | 'sent' | 'search' }): React.ReactElement {
+function EmptyStateIllustration({ type, color }: { type: 'friends' | 'sent' | 'search', color: string }): React.ReactElement {
   const pulse = useSharedValue(1);
   useEffect(() => {
     pulse.value = withRepeat(
@@ -98,10 +97,9 @@ function EmptyStateIllustration({ type }: { type: 'friends' | 'sent' | 'search' 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
   }));
-  const color = COLLABORATIVE_PRIMARY;
 
   if (type === 'sent') {
-    return <FlyingPlaneIllustration />;
+    return <FlyingPlaneIllustration color={color} />;
   }
 
   if (type === 'search') {
@@ -138,6 +136,11 @@ function EmptyStateIllustration({ type }: { type: 'friends' | 'sent' | 'search' 
 
 export default function FriendsScreen(): React.ReactElement {
   const router = useRouter();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const collaborativePrimary = colors.collaborativePrimary;
+  const isDark = theme === 'dark';
+
   const [segment, setSegment] = useState<SegmentTab>('add');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
@@ -237,12 +240,12 @@ export default function FriendsScreen(): React.ReactElement {
   }));
 
   return (
-    <View style={styles.container}>
-      <Animated.View style={styles.header} entering={FadeInDown.duration(400).springify()}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Animated.View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]} entering={FadeInDown.duration(400).springify()}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={Colors.light.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Friends</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Friends</Text>
       </Animated.View>
 
       <Animated.View
@@ -250,9 +253,9 @@ export default function FriendsScreen(): React.ReactElement {
         entering={FadeIn.delay(80).duration(320)}
       >
       {/* Segment bar: Add Friends | Sent | Friends */}
-      <View style={styles.segmentBar}>
+      <View style={[styles.segmentBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.segmentTab, segment === 'add' && styles.segmentTabActive]}
+          style={[styles.segmentTab, segment === 'add' && { backgroundColor: collaborativePrimary }]}
           onPress={() => setSegment('add')}
           onPressIn={() => { tabScaleAdd.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
           onPressOut={() => { tabScaleAdd.value = withSpring(1); }}
@@ -261,10 +264,10 @@ export default function FriendsScreen(): React.ReactElement {
             <Ionicons
               name="person-add-outline"
               size={18}
-              color={segment === 'add' ? '#fff' : Colors.light.icon}
+              color={segment === 'add' ? (isDark ? '#000' : '#fff') : colors.icon}
             />
             <Text
-              style={[styles.segmentLabel, segment === 'add' && styles.segmentLabelActive]}
+              style={[styles.segmentLabel, { color: colors.icon }, segment === 'add' && { color: isDark ? '#000' : '#fff' }]}
               numberOfLines={1}
             >
               Add Friends
@@ -272,7 +275,7 @@ export default function FriendsScreen(): React.ReactElement {
           </Animated.View>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.segmentTab, segment === 'sent' && styles.segmentTabActive]}
+          style={[styles.segmentTab, segment === 'sent' && { backgroundColor: collaborativePrimary }]}
           onPress={() => setSegment('sent')}
           onPressIn={() => { tabScaleSent.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
           onPressOut={() => { tabScaleSent.value = withSpring(1); }}
@@ -281,10 +284,10 @@ export default function FriendsScreen(): React.ReactElement {
             <Ionicons
               name="paper-plane-outline"
               size={18}
-              color={segment === 'sent' ? '#fff' : Colors.light.icon}
+              color={segment === 'sent' ? (isDark ? '#000' : '#fff') : colors.icon}
             />
             <Text
-              style={[styles.segmentLabel, segment === 'sent' && styles.segmentLabelActive]}
+              style={[styles.segmentLabel, { color: colors.icon }, segment === 'sent' && { color: isDark ? '#000' : '#fff' }]}
               numberOfLines={1}
             >
               Sent
@@ -292,7 +295,7 @@ export default function FriendsScreen(): React.ReactElement {
           </Animated.View>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.segmentTab, segment === 'list' && styles.segmentTabActive]}
+          style={[styles.segmentTab, segment === 'list' && { backgroundColor: collaborativePrimary }]}
           onPress={() => setSegment('list')}
           onPressIn={() => { tabScaleList.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
           onPressOut={() => { tabScaleList.value = withSpring(1); }}
@@ -301,10 +304,10 @@ export default function FriendsScreen(): React.ReactElement {
             <Ionicons
               name="people"
               size={18}
-              color={segment === 'list' ? '#fff' : Colors.light.icon}
+              color={segment === 'list' ? (isDark ? '#000' : '#fff') : colors.icon}
             />
             <Text
-              style={[styles.segmentLabel, segment === 'list' && styles.segmentLabelActive]}
+              style={[styles.segmentLabel, { color: colors.icon }, segment === 'list' && { color: isDark ? '#000' : '#fff' }]}
               numberOfLines={1}
             >
               Friends
@@ -327,12 +330,12 @@ export default function FriendsScreen(): React.ReactElement {
           keyboardVerticalOffset={0}
         >
           <View style={styles.searchRow}>
-            <View style={styles.inputWrap}>
-              <Ionicons name="search" size={20} color={Colors.light.icon} style={styles.searchIcon} />
+            <View style={[styles.inputWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Ionicons name="search" size={20} color={colors.icon} style={styles.searchIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Search by name or username..."
-                placeholderTextColor={Colors.light.icon}
+                placeholderTextColor={colors.icon}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 returnKeyType="search"
@@ -347,7 +350,7 @@ export default function FriendsScreen(): React.ReactElement {
                   }}
                   style={styles.clearBtn}
                 >
-                  <Ionicons name="close-circle" size={20} color={Colors.light.icon} />
+                  <Ionicons name="close-circle" size={20} color={colors.icon} />
                 </TouchableOpacity>
               )}
             </View>
@@ -359,18 +362,18 @@ export default function FriendsScreen(): React.ReactElement {
           >
             {searchLoading && (
               <Animated.View style={styles.centeredMinimal} entering={FadeIn.duration(200)}>
-                <ActivityIndicator size="large" color={COLLABORATIVE_PRIMARY} />
+                <ActivityIndicator size="large" color={collaborativePrimary} />
               </Animated.View>
             )}
             {!searchLoading && searchQuery.trim() && searchResults.length === 0 && (
               <Animated.View entering={FadeIn.delay(100).duration(280)} style={styles.emptySearchWrap}>
-                <EmptyStateIllustration type="search" />
-                <Text style={styles.emptyText}>No users found.</Text>
+                <EmptyStateIllustration type="search" color={collaborativePrimary} />
+                <Text style={[styles.emptyText, { color: colors.icon }]}>No users found.</Text>
               </Animated.View>
             )}
             {!searchLoading && !searchQuery.trim() && (
               <Animated.View entering={FadeIn.duration(280)}>
-                <Text style={styles.hintText}>Type a name or username to search.</Text>
+                <Text style={[styles.hintText, { color: colors.icon }]}>Type a name or username to search.</Text>
               </Animated.View>
             )}
             {!searchLoading &&
@@ -380,45 +383,45 @@ export default function FriendsScreen(): React.ReactElement {
                   <Animated.View
                     key={user.id}
                     entering={ZoomIn.delay(index * 50).duration(280).springify()}
-                    style={styles.row}
+                    style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
                   >
                     <View style={styles.avatarWrap}>
                       {user.avatarUrl ? (
                         <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
                       ) : (
-                        <View style={styles.avatarPlaceholder}>
-                          <Text style={styles.avatarLetter}>{user.name.charAt(0).toUpperCase()}</Text>
+                        <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                          <Text style={[styles.avatarLetter, { color: colors.text }]}>{user.name.charAt(0).toUpperCase()}</Text>
                         </View>
                       )}
                     </View>
                     <View style={styles.info}>
-                      <Text style={styles.name} numberOfLines={1}>
+                      <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
                         {user.name}
                       </Text>
                       {(user.username || user.id) && (
-                        <Text style={styles.meta} numberOfLines={1}>
+                        <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
                           @{user.username || user.id.slice(0, 8)}
                         </Text>
                       )}
-                      <Text style={styles.xpText}>{user.totalXp} XP</Text>
+                      <Text style={[styles.xpText, { color: collaborativePrimary }]}>{user.totalXp} XP</Text>
                     </View>
                     {isFriend ? (
                       <View style={styles.friendsBadge}>
-                        <Ionicons name="people" size={18} color={COLLABORATIVE_PRIMARY} />
-                        <Text style={styles.friendsBadgeText}>Friends</Text>
+                        <Ionicons name="people" size={18} color={collaborativePrimary} />
+                        <Text style={[styles.friendsBadgeText, { color: collaborativePrimary }]}>Friends</Text>
                       </View>
                     ) : (
                       <TouchableOpacity
-                        style={[styles.sendBtn, sendingId === user.id && styles.sendBtnDisabled]}
+                        style={[styles.sendBtn, { backgroundColor: collaborativePrimary }, sendingId === user.id && styles.sendBtnDisabled]}
                         onPress={() => sendRequest(user)}
                         disabled={sendingId !== null}
                       >
                         {sendingId === user.id ? (
-                          <ActivityIndicator size="small" color="#fff" />
+                          <ActivityIndicator size="small" color={isDark ? "#000" : "#fff"} />
                         ) : (
                           <>
-                            <Ionicons name="person-add" size={18} color="#fff" />
-                            <Text style={styles.sendBtnText}>Add</Text>
+                            <Ionicons name="person-add" size={18} color={isDark ? "#000" : "#fff"} />
+                            <Text style={[styles.sendBtnText, { color: isDark ? '#000' : '#fff' }]}>Add</Text>
                           </>
                         )}
                       </TouchableOpacity>
@@ -436,13 +439,13 @@ export default function FriendsScreen(): React.ReactElement {
         <>
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator size="large" color={COLLABORATIVE_PRIMARY} />
+              <ActivityIndicator size="large" color={collaborativePrimary} />
             </View>
           ) : sentRequests.length === 0 ? (
             <Animated.View style={styles.centered} entering={FadeIn.delay(80).duration(320)}>
-              <EmptyStateIllustration type="sent" />
-              <Text style={styles.emptyTitle}>No sent requests</Text>
-              <Text style={styles.emptySubtitle}>
+              <EmptyStateIllustration type="sent" color={collaborativePrimary} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No sent requests</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.icon }]}>
                 Requests you send from Add Friend will appear here.
               </Text>
             </Animated.View>
@@ -454,30 +457,30 @@ export default function FriendsScreen(): React.ReactElement {
               renderItem={({ item, index }) => (
                 <Animated.View
                   entering={ZoomIn.delay(index * 50).duration(280).springify()}
-                  style={styles.row}
+                  style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
                   <View style={styles.avatarWrap}>
                     {item.toUser.avatarUrl ? (
                       <Image source={{ uri: item.toUser.avatarUrl }} style={styles.avatar} />
                     ) : (
-                      <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarLetter}>
+                      <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                        <Text style={[styles.avatarLetter, { color: colors.text }]}>
                           {item.toUser.name.charAt(0).toUpperCase()}
                         </Text>
                       </View>
                     )}
                   </View>
                   <View style={styles.info}>
-                    <Text style={styles.name} numberOfLines={1}>
+                    <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
                       {item.toUser.name}
                     </Text>
                     {item.toUser.username && (
-                      <Text style={styles.meta} numberOfLines={1}>
+                      <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
                         @{item.toUser.username}
                       </Text>
                     )}
-                    <View style={styles.pendingBadge}>
-                      <Text style={styles.pendingBadgeText}>Pending</Text>
+                    <View style={[styles.pendingBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                      <Text style={[styles.pendingBadgeText, { color: colors.text, opacity: 0.7 }]}>Pending</Text>
                     </View>
                   </View>
                 </Animated.View>
@@ -493,13 +496,13 @@ export default function FriendsScreen(): React.ReactElement {
         <>
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator size="large" color={COLLABORATIVE_PRIMARY} />
+              <ActivityIndicator size="large" color={collaborativePrimary} />
             </View>
           ) : friendsList.length === 0 ? (
             <Animated.View style={styles.centered} entering={FadeIn.delay(80).duration(320)}>
-              <EmptyStateIllustration type="friends" />
-              <Text style={styles.emptyTitle}>No friends yet</Text>
-              <Text style={styles.emptySubtitle}>
+              <EmptyStateIllustration type="friends" color={collaborativePrimary} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No friends yet</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.icon }]}>
                 Accept invitations to see your friends here.
               </Text>
             </Animated.View>
@@ -510,13 +513,13 @@ export default function FriendsScreen(): React.ReactElement {
                 entering={FadeInDown.delay(50).duration(300).springify()}
               >
                 <LinearGradient
-                  colors={[COLLABORATIVE_PRIMARY, '#D946EF']}
+                  colors={[collaborativePrimary, isDark ? '#D946EF' : '#C026D3']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.friendsCountPill}
+                  style={[styles.friendsCountPill, { shadowColor: collaborativePrimary }]}
                 >
-                  <Ionicons name="heart" size={16} color="#fff" />
-                  <Text style={styles.friendsCountText}>{friendsList.length} friend{friendsList.length !== 1 ? 's' : ''}</Text>
+                  <Ionicons name="heart" size={16} color={isDark ? "#000" : "#fff"} />
+                  <Text style={[styles.friendsCountText, { color: isDark ? '#000' : '#fff' }]}>{friendsList.length} friend{friendsList.length !== 1 ? 's' : ''}</Text>
                 </LinearGradient>
               </Animated.View>
             <FlatList
@@ -526,29 +529,29 @@ export default function FriendsScreen(): React.ReactElement {
               renderItem={({ item, index }) => (
                 <Animated.View
                   entering={ZoomIn.delay(index * 50).duration(280).springify()}
-                  style={styles.row}
+                  style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
                   <View style={styles.avatarWrap}>
                     {item.avatarUrl ? (
                       <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
                     ) : (
-                      <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarLetter}>
+                      <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                        <Text style={[styles.avatarLetter, { color: colors.text }]}>
                           {item.name.charAt(0).toUpperCase()}
                         </Text>
                       </View>
                     )}
                   </View>
                   <View style={styles.info}>
-                    <Text style={styles.name} numberOfLines={1}>
+                    <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
                       {item.name}
                     </Text>
                     {item.username && (
-                      <Text style={styles.meta} numberOfLines={1}>
+                      <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
                         @{item.username}
                       </Text>
                     )}
-                    <Text style={styles.xpText}>{item.totalXp} XP</Text>
+                    <Text style={[styles.xpText, { color: collaborativePrimary }]}>{item.totalXp} XP</Text>
                   </View>
                 </Animated.View>
               )}
@@ -565,7 +568,6 @@ export default function FriendsScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -573,9 +575,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     paddingTop: 56,
-    backgroundColor: Colors.light.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
   },
   backBtn: {
     marginRight: 12,
@@ -583,7 +583,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   segmentBarWrapper: {},
   segmentBar: {
@@ -591,12 +590,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 8,
-    backgroundColor: Colors.light.surface,
     borderRadius: 14,
     padding: 5,
     borderWidth: 1,
-    borderColor: Colors.light.border,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -617,17 +613,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
-  segmentTabActive: {
-    backgroundColor: COLLABORATIVE_PRIMARY,
-  },
   segmentLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.light.icon,
     maxWidth: 72,
-  },
-  segmentLabelActive: {
-    color: '#fff',
   },
   emptyIllustration: {
     marginBottom: 12,
@@ -657,7 +646,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    shadowColor: COLLABORATIVE_PRIMARY,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -666,7 +654,6 @@ const styles = StyleSheet.create({
   friendsCountText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#fff',
   },
   flex1: {
     flex: 1,
@@ -679,10 +666,8 @@ const styles = StyleSheet.create({
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     paddingHorizontal: 12,
   },
   searchIcon: {
@@ -692,7 +677,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    color: Colors.light.text,
   },
   clearBtn: {
     padding: 4,
@@ -708,7 +692,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: Colors.light.icon,
     textAlign: 'center',
     paddingVertical: 0,
     marginTop: 4,
@@ -721,7 +704,6 @@ const styles = StyleSheet.create({
   },
   hintText: {
     fontSize: 14,
-    color: Colors.light.icon,
     textAlign: 'center',
     paddingVertical: 24,
   },
@@ -729,7 +711,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COLLABORATIVE_PRIMARY,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
@@ -740,7 +721,6 @@ const styles = StyleSheet.create({
   sendBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#fff',
   },
   friendsBadge: {
     flexDirection: 'row',
@@ -754,7 +734,6 @@ const styles = StyleSheet.create({
   friendsBadgeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLLABORATIVE_PRIMARY,
   },
   centered: {
     flex: 1,
@@ -766,12 +745,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 17,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   emptySubtitle: {
     marginTop: 4,
     fontSize: 14,
-    color: Colors.light.icon,
     textAlign: 'center',
   },
   listContent: {
@@ -781,12 +758,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   avatarWrap: {
     marginRight: 12,
@@ -800,44 +775,40 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLLABORATIVE_PRIMARY,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarLetter: {
-    color: '#fff',
     fontSize: 20,
     fontWeight: '700',
   },
   info: {
     flex: 1,
+    justifyContent: 'center',
   },
   name: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   meta: {
     fontSize: 13,
-    color: Colors.light.icon,
-    marginTop: 2,
+    marginTop: 1,
   },
   xpText: {
     fontSize: 12,
-    color: Colors.light.icon,
-    marginTop: 2,
+    fontWeight: '700',
+    marginTop: 4,
   },
   pendingBadge: {
     alignSelf: 'flex-start',
-    marginTop: 4,
-    backgroundColor: 'rgba(232, 121, 249, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    marginTop: 6,
   },
   pendingBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLLABORATIVE_PRIMARY,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
 });

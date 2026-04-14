@@ -35,7 +35,7 @@ import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { PokeAnimation } from '@/components/animations/poke-animation';
 import { CupIndicator } from '@/components/cup-indicator';
-import { getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { collaborativeScoreService } from '@/services/collaborative-score.service';
@@ -71,9 +71,6 @@ type DetailRow = {
   label: string;
   value: string;
 };
-
-const COLLABORATIVE_PRIMARY = '#E879F9';
-const COLLABORATIVE_GRADIENT = ['#2e1065', '#581c87'] as const;
 
 const toNumber = (value?: string | string[]): number | null => {
   if (typeof value !== 'string') return null;
@@ -173,7 +170,10 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const router = useRouter();
   const { user, token } = useAuth();
   const theme = useColorScheme() ?? 'light';
-  const gradientColors = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
+  const gradientColors = getBackgroundGradient(theme, 'collaborative');
+  const collaborativePrimary = colors.collaborativePrimary;
 
   const [routineDetail, setRoutineDetail] = useState<CollaborativeRoutineDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -456,10 +456,10 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
       <Animated.View entering={FadeInDown.duration(350)} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} hitSlop={10}>
-          <Ionicons name="arrow-back" size={20} color="#ffffff" />
+        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderColor: colors.border }]} hitSlop={10}>
+          <Ionicons name="arrow-back" size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Routine Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Routine Details</Text>
         {!isCreator ? (
           <TouchableOpacity
             onPress={handleLeaveRoutineClick}
@@ -498,46 +498,45 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={styles.centeredBlock}>
-            <ActivityIndicator color={COLLABORATIVE_PRIMARY} size="large" />
-            <Text style={styles.loadingText}>Loading routine details...</Text>
+            <ActivityIndicator color={collaborativePrimary} size="large" />
+            <Text style={[styles.loadingText, { color: colors.text, opacity: 0.6 }]}>Loading routine details...</Text>
           </View>
         ) : null}
 
         {!!error && !loading ? (
-          <Animated.View entering={FadeInDown.delay(80).duration(320)} style={styles.errorBanner}>
-            <Ionicons name="warning-outline" size={16} color="#ffd7de" />
-            <Text style={styles.errorBannerText}>{error}</Text>
+          <Animated.View entering={FadeInDown.delay(80).duration(320)} style={[styles.errorBanner, { backgroundColor: colors.error + '20', borderColor: colors.error + '40' }]}>
+            <Ionicons name="warning-outline" size={16} color={colors.error} />
+            <Text style={[styles.errorBannerText, { color: colors.error }]}>{error}</Text>
           </Animated.View>
         ) : null}
 
         {canRenderContent ? (
           <>
-            <Animated.View entering={FadeInDown.delay(120).duration(420)} style={styles.card}>
-              <Text style={styles.sectionTitle}>Routine Name</Text>
-              <Text style={styles.primaryValue}>{displayRoutineName}</Text>
+            <Animated.View entering={FadeInDown.delay(120).duration(420)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Routine Name</Text>
+              <Text style={[styles.primaryValue, { color: colors.text }]}>{displayRoutineName}</Text>
 
-              <Text style={[styles.sectionTitle, styles.spacingTop]}>Description</Text>
-              <Text style={styles.secondaryValue}>{displayDescription}</Text>
+              <Text style={[styles.sectionTitle, styles.spacingTop, { color: collaborativePrimary }]}>Description</Text>
+              <Text style={[styles.secondaryValue, { color: colors.text }]}>{displayDescription}</Text>
 
               <View style={styles.pillRow}>
-                <View style={styles.metaPill}>
-                  <Ionicons name="repeat-outline" size={13} color="#f4b3ff" />
-                  <Text style={styles.metaPillText}>{displayFrequency}</Text>
+                <View style={[styles.metaPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border }]}>
+                  <Ionicons name="repeat-outline" size={13} color={collaborativePrimary} />
+                  <Text style={[styles.metaPillText, { color: colors.text }]}>{displayFrequency}</Text>
                 </View>
-                <View style={styles.metaPill}>
+                <View style={[styles.metaPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border }]}>
                   <ThrobbingHeart lives={displayLives} size={13} />
-                  <Text style={styles.metaPillText}>Lives {displayLives}</Text>
+                  <Text style={[styles.metaPillText, { color: colors.text }]}>Lives {displayLives}</Text>
                 </View>
-                <View style={styles.metaPill}>
+                <View style={[styles.metaPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border }]}>
                   <AnimatedFlame streak={displayStreak} size={13} />
-                  <Text style={styles.metaPillText}>Streak {displayStreak}</Text>
-                </View>
+                  <Text style={[styles.metaPillText, { color: colors.text }]}>Streak {displayStreak}</Text>
               </View>
 
-              <Text style={[styles.sectionTitle, styles.spacingTop]}>Enrolled Users</Text>
-              <Text style={styles.pokeHint}>Tap a member to poke them 👈</Text>
+              <Text style={[styles.sectionTitle, styles.spacingTop, { color: collaborativePrimary }]}>Enrolled Users</Text>
+              <Text style={[styles.pokeHint, { color: colors.text, opacity: 0.6 }]}>Tap a member to poke them 👈</Text>
               {participantNames.length === 0 ? (
-                <Text style={styles.secondaryValue}>No users enrolled yet.</Text>
+                <Text style={[styles.secondaryValue, { color: colors.text }]}>No users enrolled yet.</Text>
               ) : (
                 <View style={styles.participantsContainer}>
                   {(routineDetail?.participants || []).map((participant, index) => {
@@ -566,6 +565,37 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                           name={name}
                           participantCup={participantCup}
                         />
+                        <TouchableOpacity
+                          style={[
+                            styles.participantChip,
+                            { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border },
+                            isSelf && [styles.participantChipSelf, { borderColor: collaborativePrimary, backgroundColor: collaborativePrimary + '15' }],
+                            isPoking && [styles.participantChipPoking, { borderColor: collaborativePrimary }],
+                          ]}
+                          onPress={isSelf ? undefined : () => handlePoke(participant)}
+                          disabled={isSelf || !!pokingUserId}
+                          activeOpacity={isSelf ? 1 : 0.7}
+                        >
+                          {isPoking ? (
+                            <ActivityIndicator size="small" color={collaborativePrimary} />
+                          ) : (
+                            <>
+                              {!isSelf && (
+                                <Text style={styles.pokeIcon}>👈</Text>
+                              )}
+                              <View style={styles.participantNameRow}>
+                                <Text style={[
+                                  styles.participantChipText,
+                                  { color: colors.text },
+                                  isSelf && [styles.participantChipTextSelf, { color: collaborativePrimary }],
+                                ]} numberOfLines={1}>
+                                  {name}{isSelf ? ' (You)' : ''}
+                                </Text>
+                                <CupIndicator cup={participantCup} compact />
+                              </View>
+                            </>
+                          )}
+                        </TouchableOpacity>
                       </Animated.View>
                     );
                   })}
@@ -573,16 +603,16 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               )}
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(220).duration(420)} style={styles.card}>
-              <Text style={styles.sectionTitle}>Routine Details</Text>
+            <Animated.View entering={FadeInDown.delay(220).duration(420)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Routine Details</Text>
               {detailRows.map((row, index) => (
                 <Animated.View
                   key={`${row.label}-${index}`}
                   entering={FadeInDown.delay(260 + index * 50).duration(250)}
-                  style={styles.infoRow}
+                  style={[styles.infoRow, { borderBottomColor: colors.border }]}
                 >
-                  <Text style={styles.infoLabel}>{row.label}</Text>
-                  <Text style={styles.infoValue}>{row.value}</Text>
+                  <Text style={[styles.infoLabel, { color: colors.text, opacity: 0.6 }]}>{row.label}</Text>
+                  <Text style={[styles.infoValue, { color: colors.text }]}>{row.value}</Text>
                 </Animated.View>
               ))}
             </Animated.View>
@@ -597,9 +627,9 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
 
         {!canRenderContent && !loading ? (
           <View style={styles.centeredBlock}>
-            <Text style={styles.errorText}>No routine data available.</Text>
-            <TouchableOpacity onPress={loadRoutineDetail} style={styles.retryButton}>
-              <Text style={styles.retryButtonText}>Try Again</Text>
+            <Text style={[styles.errorText, { color: colors.text }]}>No routine data available.</Text>
+            <TouchableOpacity onPress={loadRoutineDetail} style={[styles.retryButton, { backgroundColor: collaborativePrimary }]}>
+              <Text style={[styles.retryButtonText, { color: isDark ? '#000' : '#fff' }]}>Try Again</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -610,6 +640,18 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
         displayRoutineName={displayRoutineName}
         router={router}
       />
+      <Animated.View entering={FadeInDown.delay(280).duration(320)} style={styles.chatFabWrap}>
+        <TouchableOpacity
+          style={[styles.chatFab, { backgroundColor: collaborativePrimary }]}
+          onPress={() => router.push({
+            pathname: '/(collaborative)/routine/[id]/chat',
+            params: { id: routineId, routineName: displayRoutineName }
+          } as never)}
+        >
+          <Ionicons name="chatbubble-ellipses-outline" size={18} color={isDark ? "#000" : "#fff"} />
+          <Text style={[styles.chatFabText, { color: isDark ? '#000' : '#fff' }]}>Chat</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
       <LeaveRoutineModal
         visible={isLeaveModalVisible}
@@ -823,9 +865,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(239, 68, 68, 0.3)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.55)',
+    backgroundColor: '#ef4444',
   },
   leaveButtonText: {
     color: '#ffffff',
@@ -838,12 +878,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.16)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
   },
   headerTitle: {
-    color: '#ffffff',
     fontSize: 22,
     fontWeight: '800',
   },
@@ -858,11 +895,9 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    color: 'rgba(255,255,255,0.8)',
     fontSize: 14,
   },
   errorText: {
-    color: '#ffffff',
     fontSize: 14,
     marginBottom: 14,
   },
@@ -871,67 +906,55 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.45)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   errorBannerText: {
-    color: '#ffd7de',
     fontSize: 12,
     fontWeight: '600',
     flex: 1,
   },
   retryButton: {
     borderRadius: 12,
-    backgroundColor: COLLABORATIVE_PRIMARY,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
   retryButtonText: {
-    color: '#ffffff',
     fontWeight: '700',
     fontSize: 13,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.17)',
     marginBottom: 14,
-    shadowColor: '#050110',
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   sectionTitle: {
-    color: '#F8E9FF',
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
-    textShadowColor: 'rgba(0,0,0,0.35)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
   },
   spacingTop: {
     marginTop: 14,
   },
   primaryValue: {
     marginTop: 8,
-    color: '#ffffff',
     fontSize: 22,
     fontWeight: '800',
   },
   secondaryValue: {
     marginTop: 8,
-    color: 'rgba(255,255,255,0.87)',
     fontSize: 15,
     lineHeight: 22,
+    opacity: 0.9,
   },
   pillRow: {
     marginTop: 14,

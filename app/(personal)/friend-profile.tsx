@@ -1,4 +1,4 @@
-import { getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,9 @@ export default function FriendProfileScreen(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+
   const { user, loading, error } = useUserProfile(userId ?? '');
 
   const displayName = user?.name || 'User';
@@ -51,14 +54,17 @@ export default function FriendProfileScreen(): React.ReactElement {
     return (
       <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
           <View style={{ width: 44 }} />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator color="rgba(255,255,255,0.7)" size="large" />
+          <ActivityIndicator color={colors.textSecondary} size="large" />
         </View>
       </LinearGradient>
     );
@@ -68,17 +74,23 @@ export default function FriendProfileScreen(): React.ReactElement {
     return (
       <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
           <View style={{ width: 44 }} />
         </View>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color="rgba(255,255,255,0.5)" />
-          <Text style={styles.errorText}>{error || 'User not found.'}</Text>
-          <TouchableOpacity onPress={() => router.back()} style={styles.errorButton}>
-            <Text style={styles.errorButtonText}>Go Back</Text>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.textTertiary} />
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || 'User not found.'}</Text>
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={[styles.errorButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)' }]}
+          >
+            <Text style={[styles.errorButtonText, { color: colors.text }]}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -88,53 +100,56 @@ export default function FriendProfileScreen(): React.ReactElement {
   return (
     <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{displayName}</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>{displayName}</Text>
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View
           entering={FadeInDown.delay(100).duration(600).springify()}
-          style={styles.profileCard}
+          style={[styles.profileCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)', borderColor: colors.border }]}
         >
-          <View style={styles.avatarContainer}>
+          <View style={[styles.avatarContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)' }]}>
             <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
           </View>
 
-          <Text style={styles.nameText}>{displayName}</Text>
+          <Text style={[styles.nameText, { color: colors.text }]}>{displayName}</Text>
           {displayEmail ? (
-            <Text style={styles.emailText}>{displayEmail}</Text>
+            <Text style={[styles.emailText, { color: colors.textSecondary }]}>{displayEmail}</Text>
           ) : null}
 
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{age}</Text>
-              <Text style={styles.statLabel}>Age</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{age}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Age</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user.totalXp || 0}</Text>
-              <Text style={styles.statLabel}>Total XP</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{user.totalXp || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total XP</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user.currentStreak || 0}</Text>
-              <Text style={styles.statLabel}>Streak</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{user.currentStreak || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Streak</Text>
             </View>
           </View>
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(200).duration(600).springify()}
-          style={styles.infoCard}
+          style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)', borderColor: colors.border }]}
         >
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color="rgba(255,255,255,0.7)" />
-            <Text style={styles.infoLabel}>Member since</Text>
-            <Text style={styles.infoValue}>
+            <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Member since</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>
               {new Date(user.createdAt).toLocaleDateString('en-US', {
                 month: 'long',
                 year: 'numeric',
@@ -142,10 +157,10 @@ export default function FriendProfileScreen(): React.ReactElement {
             </Text>
           </View>
           {user.gender && user.gender !== 'na' ? (
-            <View style={styles.infoRow}>
-              <Ionicons name="person-outline" size={20} color="rgba(255,255,255,0.7)" />
-              <Text style={styles.infoLabel}>Gender</Text>
-              <Text style={styles.infoValue}>
+            <View style={[styles.infoRow, { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16 }]}>
+              <Ionicons name="person-outline" size={20} color={colors.textSecondary} />
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Gender</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
                 {user.gender.charAt(0).toUpperCase() + user.gender.slice(1)}
               </Text>
             </View>
@@ -159,7 +174,6 @@ export default function FriendProfileScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
@@ -171,15 +185,16 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    flex: 1,
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,
@@ -195,12 +210,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
     textAlign: 'center',
   },
   errorButton: {
     marginTop: 8,
-    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 12,
     paddingHorizontal: 24,
     paddingVertical: 10,
@@ -208,25 +221,22 @@ const styles = StyleSheet.create({
   errorButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#fff',
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   profileCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 24,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
     marginBottom: 20,
   },
   avatarContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -240,12 +250,10 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
     marginBottom: 4,
   },
   emailText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
     marginBottom: 24,
   },
   statsContainer: {
@@ -262,39 +270,34 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
     marginTop: 4,
   },
   statDivider: {
     width: 1,
     height: 30,
-    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   infoCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
     gap: 16,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   infoLabel: {
     flex: 1,
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
   },
   infoValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '700',
   },
 });

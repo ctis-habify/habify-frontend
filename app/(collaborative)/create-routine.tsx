@@ -16,15 +16,17 @@ import { StepBasicInfo } from '@/components/routines/create/step-basic-info';
 import { StepGamification } from '@/components/routines/create/step-gamification';
 import { StepSchedule } from '@/components/routines/create/step-schedule';
 import { WizardProgress } from '@/components/routines/create/wizard-progress';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCreateRoutine } from '@/hooks/use-create-routine';
-
-const GRADIENT_COLORS = ['#2e1065', '#581c87'] as const;
-const BUTTON_GRADIENT = ['#e879f9', '#c026d3'] as const;
-const ACCENT_COLOR = '#E879F9';
 
 export default function CreateCollaborativeRoutineScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
+    const theme = useColorScheme() ?? 'light';
+    const isDark = theme === 'dark';
+    const screenGradient = getBackgroundGradient(theme, 'collaborative');
+    const collaborativePrimary = Colors[theme].collaborativePrimary;
     const categoryIdParam = Array.isArray(params.categoryId) ? params.categoryId[0] : params.categoryId;
     
     const { 
@@ -42,16 +44,19 @@ export default function CreateCollaborativeRoutineScreen() {
 
     const renderHeader = () => (
         <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                <Ionicons name="arrow-back" size={24} color="#fff" />
+            <TouchableOpacity 
+                onPress={() => router.back()} 
+                style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+            >
+                <Ionicons name="arrow-back" size={24} color={isDark ? "#fff" : Colors[theme].text} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Create Collaborative Routine</Text>
+            <Text style={[styles.headerTitle, { color: Colors[theme].text }]}>Create Collaborative Routine</Text>
             <View style={{ width: 40 }} />
         </View>
     );
 
     return (
-        <LinearGradient colors={GRADIENT_COLORS} style={styles.container}>
+        <LinearGradient colors={screenGradient} style={styles.container}>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 
                 {renderHeader()}
@@ -82,8 +87,8 @@ export default function CreateCollaborativeRoutineScreen() {
                 {/* Footer Buttons */}
                 <View style={styles.footer}>
                      {step > 0 && (
-                         <TouchableOpacity onPress={prevStep} style={styles.backStepBtn}>
-                             <Text style={styles.backStepText}>Back</Text>
+                         <TouchableOpacity onPress={prevStep} style={[styles.backStepBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: Colors[theme].border }]}>
+                             <Text style={[styles.backStepText, { color: Colors[theme].text, opacity: 0.6 }]}>Back</Text>
                          </TouchableOpacity>
                      )}
                      
@@ -92,10 +97,8 @@ export default function CreateCollaborativeRoutineScreen() {
                         disabled={isSubmitting}
                         style={{ flex: 1, marginLeft: step > 0 ? 15 : 0 }}
                     >
-                        <LinearGradient
-                            colors={BUTTON_GRADIENT}
-                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                            style={styles.nextStepBtnGradient}
+                        <View
+                            style={[styles.nextStepBtn, { backgroundColor: collaborativePrimary, shadowColor: collaborativePrimary }]}
                         >
                             {isSubmitting ? (
                                 <ActivityIndicator color="#fff" />
@@ -103,7 +106,7 @@ export default function CreateCollaborativeRoutineScreen() {
                                 <Text style={styles.nextStepText}>{step === 2 ? 'Create Routine' : 'Next Step'}</Text>
                             )}
                             {!isSubmitting && step < 2 && <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />}
-                        </LinearGradient>
+                        </View>
                      </TouchableOpacity>
                 </View>
 
@@ -125,11 +128,10 @@ const styles = StyleSheet.create({
     backBtn: {
         width: 40, height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.1)',
         alignItems: 'center', justifyContent: 'center',
     },
     headerTitle: {
-        color: '#fff', fontSize: 18, fontWeight: '700',
+        fontSize: 18, fontWeight: '700',
     },
     scrollContent: {
         paddingHorizontal: 24,
@@ -146,18 +148,16 @@ const styles = StyleSheet.create({
     backStepBtn: {
         paddingVertical: 16, paddingHorizontal: 20,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
         marginRight: 10,
     },
-    backStepText: { color: 'rgba(255,255,255,0.8)', fontWeight: '600', fontSize: 14 },
-    nextStepBtnGradient: {
+    backStepText: { fontWeight: '600', fontSize: 14 },
+    nextStepBtn: {
         paddingVertical: 16, paddingHorizontal: 32,
         borderRadius: 20,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        shadowColor: ACCENT_COLOR, 
-        shadowOpacity: 0.5, 
-        shadowRadius: 15,
+        shadowOpacity: 0.4, 
+        shadowRadius: 12,
         elevation: 8,
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
     },

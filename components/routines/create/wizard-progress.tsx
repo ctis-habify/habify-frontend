@@ -1,9 +1,9 @@
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-
-const ACCENT_COLOR = '#E879F9';
 
 interface Props {
   currentStep: number;
@@ -11,13 +11,20 @@ interface Props {
 }
 
 export function WizardProgress({ currentStep, steps }: Props) {
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
+
   return (
     <View style={styles.progressContainer}>
       {/* Track - Contains Background and Fill */}
-      <View style={styles.progressTrackBackground}>
+      <View style={[styles.progressTrackBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
         <Animated.View style={[
           styles.progressTrackFill, 
-          { width: `${(currentStep / (steps.length - 1)) * 100}%` }
+          { 
+            width: `${(currentStep / (steps.length - 1)) * 100}%`,
+            backgroundColor: colors.collaborativePrimary
+          }
         ]} />
       </View>
 
@@ -31,21 +38,34 @@ export function WizardProgress({ currentStep, steps }: Props) {
             <View key={i} style={styles.nodeWrapper}>
               <View style={[
                 styles.progressNode,
-                (isActive || isCompleted) && styles.progressNodeActiveGlass
+                { 
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                },
+                (isActive || isCompleted) && [
+                  styles.progressNodeActiveGlass, 
+                  { 
+                    backgroundColor: colors.collaborativePrimary, 
+                    borderColor: colors.collaborativePrimary,
+                    shadowColor: colors.collaborativePrimary
+                  }
+                ]
               ]}>
                 {isCompleted ? (
-                  <Ionicons name="checkmark" size={16} color="#000" />
+                  <Ionicons name="checkmark" size={16} color={isDark ? "#000" : "#fff"} />
                 ) : (
                   <Text style={[
                     styles.stepNum, 
-                    (isActive || isCompleted) && styles.stepNumActive
+                    { color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' },
+                    (isActive || isCompleted) && [styles.stepNumActive, { color: isDark ? '#000' : '#fff' }]
                   ]}>{i + 1}</Text>
                 )}
               </View>
               <Text style={[
                 styles.stepLabel,
-                isActive && styles.stepLabelActive,
-                isCompleted && styles.stepLabelCompleted
+                { color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' },
+                isActive && [styles.stepLabelActive, { color: colors.text }],
+                isCompleted && [styles.stepLabelCompleted, { color: colors.collaborativePrimary }]
               ]}>{label}</Text>
             </View>
           );
@@ -66,13 +86,11 @@ const styles = StyleSheet.create({
     top: 20,
     left: 40, right: 40,
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     zIndex: 0,
     overflow: 'hidden',
   },
   progressTrackFill: {
     height: '100%',
-    backgroundColor: ACCENT_COLOR,
   },
   nodesContainer: {
     flexDirection: 'row',
@@ -86,22 +104,18 @@ const styles = StyleSheet.create({
   },
   progressNode: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 8,
   },
   progressNodeActiveGlass: {
-    backgroundColor: ACCENT_COLOR,
-    borderColor: ACCENT_COLOR,
-    shadowColor: ACCENT_COLOR,
     shadowOpacity: 0.6,
     shadowRadius: 15,
     elevation: 10,
   },
-  stepNum: { color: 'rgba(255,255,255,0.5)', fontSize: 14, fontWeight: 'bold' },
-  stepNumActive: { color: '#000' },
-  stepLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 12, fontWeight: '600' },
-  stepLabelActive: { color: '#fff', fontWeight: 'bold' },
-  stepLabelCompleted: { color: ACCENT_COLOR },
+  stepNum: { fontSize: 14, fontWeight: 'bold' },
+  stepNumActive: {},
+  stepLabel: { fontSize: 12, fontWeight: '600' },
+  stepLabelActive: { fontWeight: 'bold' },
+  stepLabelCompleted: {},
 });

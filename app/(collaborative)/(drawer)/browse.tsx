@@ -28,14 +28,13 @@ import DropDownPicker from 'react-native-dropdown-picker';
 
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { Toast } from '@/components/ui/toast';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { getCategoryAccentColor } from '@/constants/category-colors';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
 import type { Category } from '@/types/category';
 import { PublicRoutine } from '@/types/routine';
-
-const GRADIENT = ['#2e1065', '#581c87'] as const;
-const ACCENT = '#E879F9';
 
 // Spring config for the enter animation – feels snappy and physical
 const ENTER_SPRING = { damping: 22, stiffness: 200, mass: 0.8 };
@@ -45,6 +44,11 @@ const EXIT_TIMING = { duration: 220, easing: Easing.in(Easing.cubic) };
 export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     const navigation = useNavigation();
     const router = useRouter();
+    const theme = useColorScheme() ?? 'light';
+    const isDark = theme === 'dark';
+    const colors = Colors[theme];
+    const screenGradient = getBackgroundGradient(theme, 'collaborative');
+    const collaborativePrimary = colors.collaborativePrimary;
 
     const [routines, setRoutines] = useState<PublicRoutine[]>([]);
     const [loading, setLoading] = useState(true);
@@ -188,13 +192,13 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
         if (loading) return null;
         return (
             <View style={styles.emptyContainer}>
-                <View style={styles.emptyIconWrap}>
-                    <Ionicons name="search" size={52} color={ACCENT} />
+                <View style={[styles.emptyIconWrap, { backgroundColor: isDark ? 'rgba(232, 121, 249, 0.1)' : 'rgba(219, 39, 119, 0.05)' }]}>
+                    <Ionicons name="search" size={52} color={collaborativePrimary} />
                 </View>
-                <Text style={styles.emptyTitle}>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>
                     {search ? 'No routines found' : 'No public routines yet'}
                 </Text>
-                <Text style={styles.emptySubtitle}>
+                <Text style={[styles.emptySubtitle, { color: colors.text }]}>
                     {search
                         ? `No results for "${search}". Try a different name.`
                         : 'Public collaborative routines will appear here once created.'}
@@ -206,27 +210,27 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     return (
         // Animated.View handles both enter and exit transforms on the UI thread
         <Animated.View style={pageStyle}>
-            <LinearGradient colors={GRADIENT} style={styles.container}>
+            <LinearGradient colors={screenGradient} style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity
-                        style={styles.menuBtn}
+                        style={[styles.menuBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
                         onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
                     >
-                        <Ionicons name="menu" size={24} color="#fff" />
+                        <Ionicons name="menu" size={24} color={isDark ? "#fff" : colors.text} />
                     </TouchableOpacity>
 
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.headerTitle}>Browse Routines</Text>
-                        <Text style={styles.headerSubtitle}>Discover & join public groups</Text>
+                        <Text style={[styles.headerTitle, { color: colors.text }]}>Browse Routines</Text>
+                        <Text style={[styles.headerSubtitle, { color: colors.text }]}>Discover & join public groups</Text>
                     </View>
 
                     <TouchableOpacity
-                        style={styles.menuBtn}
+                        style={[styles.menuBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
                         onPress={goBack}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="arrow-back" size={24} color="#fff" />
+                        <Ionicons name="arrow-back" size={24} color={isDark ? "#fff" : colors.text} />
                     </TouchableOpacity>
                 </View>
 
@@ -239,12 +243,12 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                             items={[{ label: 'All Categories', value: '' }, ...categoryItems]}
                             setOpen={setCategoryOpen}
                             setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
-                            theme="DARK"
-                            style={styles.dropdown}
-                            dropDownContainerStyle={styles.dropdownContainer}
+                            theme={isDark ? "DARK" : "LIGHT"}
+                            style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                            dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
                             placeholder={loadingCategories ? "Loading..." : "Category"}
-                            placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
-                            textStyle={{ color: '#fff', fontSize: 13 }}
+                            placeholderStyle={{ color: colors.icon, fontSize: 13, opacity: 0.6 }}
+                            textStyle={{ color: colors.text, fontSize: 13 }}
                             labelStyle={{ fontWeight: '600' }}
                             listMode="SCROLLVIEW"
                             zIndex={3000}
@@ -263,12 +267,12 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                             ] as { label: string; value: string }[]}
                             setOpen={setFrequencyOpen}
                             setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string>>}
-                            theme="DARK"
-                            style={styles.dropdown}
-                            dropDownContainerStyle={styles.dropdownContainer}
+                            theme={isDark ? "DARK" : "LIGHT"}
+                            style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                            dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
                             placeholder="Frequency"
-                            placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
-                            textStyle={{ color: '#fff', fontSize: 13 }}
+                            placeholderStyle={{ color: colors.icon, fontSize: 13, opacity: 0.6 }}
+                            textStyle={{ color: colors.text, fontSize: 13 }}
                             labelStyle={{ fontWeight: '600' }}
                             listMode="SCROLLVIEW"
                             zIndex={2000}
@@ -279,12 +283,12 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                 </View>
 
                 {/* Search Bar */}
-                <View style={styles.searchWrap}>
-                    <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.4)" style={styles.searchIcon} />
+                <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <Ionicons name="search-outline" size={18} color={colors.icon} style={styles.searchIcon} />
                     <TextInput
-                        style={styles.searchInput}
+                        style={[styles.searchInput, { color: colors.text }]}
                         placeholder="Search by name…"
-                        placeholderTextColor="rgba(255,255,255,0.35)"
+                        placeholderTextColor={colors.icon}
                         value={search}
                         onChangeText={setSearch}
                         autoCorrect={false}
@@ -293,7 +297,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                     />
                     {!!search && (
                         <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                            <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.4)" />
+                            <Ionicons name="close-circle" size={18} color={colors.icon} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -301,8 +305,8 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                 {/* List */}
                 {loading ? (
                     <View style={styles.loadingWrap}>
-                        <ActivityIndicator size="large" color={ACCENT} />
-                        <Text style={styles.loadingText}>Loading routines…</Text>
+                        <ActivityIndicator size="large" color={collaborativePrimary} />
+                        <Text style={[styles.loadingText, { color: colors.text, opacity: 0.6 }]}>Loading routines…</Text>
                     </View>
                 ) : (
                     <FlatList
@@ -344,7 +348,6 @@ const styles = StyleSheet.create({
     menuBtn: {
         width: 44,
         height: 44,
-        backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
@@ -352,18 +355,16 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 22,
         fontWeight: '700',
-        color: '#fff',
         letterSpacing: -0.5,
     },
     headerSubtitle: {
         fontSize: 13,
-        color: 'rgba(255,255,255,0.5)',
+        opacity: 0.5,
         marginTop: 2,
     },
     searchWrap: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.09)',
         borderRadius: 16,
         marginHorizontal: 20,
         marginTop: 12,
@@ -371,14 +372,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 11,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.12)',
     },
     searchIcon: {
         marginRight: 8,
     },
     searchInput: {
         flex: 1,
-        color: '#fff',
         fontSize: 15,
         fontWeight: '500',
         padding: 0,
@@ -390,16 +389,12 @@ const styles = StyleSheet.create({
         zIndex: 1000,
     },
     dropdown: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderColor: 'rgba(255,255,255,0.1)',
         borderRadius: 12,
         minHeight: 40,
         height: 40,
         paddingHorizontal: 12,
     },
     dropdownContainer: {
-        backgroundColor: '#1e1b4b',
-        borderColor: 'rgba(255,255,255,0.1)',
         borderRadius: 12,
         marginTop: 4,
     },
@@ -414,7 +409,6 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     loadingText: {
-        color: 'rgba(255,255,255,0.5)',
         fontSize: 14,
     },
     emptyContainer: {
@@ -423,22 +417,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 32,
     },
     emptyIconWrap: {
-        backgroundColor: 'rgba(232, 121, 249, 0.1)',
         padding: 28,
         borderRadius: 999,
         marginBottom: 20,
     },
     emptyTitle: {
-        color: '#fff',
         fontSize: 18,
         fontWeight: '700',
         textAlign: 'center',
         marginBottom: 8,
     },
     emptySubtitle: {
-        color: 'rgba(255,255,255,0.5)',
         fontSize: 14,
         textAlign: 'center',
         lineHeight: 20,
+        opacity: 0.5,
     },
 });

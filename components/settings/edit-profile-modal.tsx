@@ -93,55 +93,64 @@ export function EditProfileModal({
                     entering={ZoomIn.duration(300)}
                     style={[
                         styles.content,
-                        { backgroundColor: isDark ? '#1E1B4B' : '#FFFFFF' }
+                        { 
+                            backgroundColor: Colors[theme].card,
+                            borderColor: Colors[theme].border
+                        }
                     ]}
                 >
                     <View style={styles.header}>
-                        <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>{modalTitle}</Text>
-                        <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
-                            <Ionicons name="close" size={24} color={isDark ? "#fff" : "#000"} />
+                        <Text style={[styles.title, { color: Colors[theme].text }]}>{modalTitle}</Text>
+                        <TouchableOpacity 
+                            onPress={onClose} 
+                            style={[
+                                styles.closeButton, 
+                                { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
+                            ]}
+                        >
+                            <Ionicons name="close" size={24} color={Colors[theme].text} />
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.form}>
                         {isEditingName ? (
                           <>
-                            <Text style={[styles.label, { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }]}>Full Name</Text>
+                            <Text style={[styles.label, { color: Colors[theme].textSecondary }]}>Full Name</Text>
                             <TextInput
                                 style={[
                                     styles.input,
                                     {
-                                        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                        color: isDark ? '#fff' : '#000',
-                                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                                        color: Colors[theme].text,
+                                        borderColor: Colors[theme].border
                                     }
                                 ]}
                                 value={name}
                                 onChangeText={setName}
                                 placeholder="Enter your name"
-                                placeholderTextColor={isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)"}
+                                placeholderTextColor={Colors[theme].textTertiary}
                             />
                           </>
                         ) : (
                           <>
-                            <Text style={[styles.label, { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }]}>Birth Date</Text>
+                            <Text style={[styles.label, { color: Colors[theme].textSecondary }]}>Birth Date</Text>
                             <TouchableOpacity
                               style={[
                                 styles.input,
                                 styles.dateField,
                                 {
-                                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                                  borderColor: Colors[theme].border,
                                 },
                               ]}
                               onPress={() => setShowDatePicker(true)}
                               activeOpacity={0.8}
                             >
-                              <Text style={[styles.dateText, { color: isDark ? '#fff' : '#000' }]}>{dateText}</Text>
+                              <Text style={[styles.dateText, { color: Colors[theme].text }]}>{dateText}</Text>
                               <Ionicons
                                 name="calendar-outline"
-                                size={18}
-                                color={isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.55)'}
+                                size={20}
+                                color={Colors[theme].icon}
                               />
                             </TouchableOpacity>
                             {showDatePicker && (
@@ -158,14 +167,18 @@ export function EditProfileModal({
                         )}
 
                         <TouchableOpacity
-                            style={[styles.saveButton, loading && styles.disabledButton]}
+                            style={[
+                                styles.saveButton, 
+                                { backgroundColor: Colors[theme].primary },
+                                loading && styles.disabledButton
+                            ]}
                             onPress={handleSave}
                             disabled={loading}
                         >
                             {loading ? (
-                                <ActivityIndicator color="#fff" />
+                                <ActivityIndicator color={Colors[theme].white} />
                             ) : (
-                                <Text style={styles.saveButtonText}>Save Changes</Text>
+                                <Text style={[styles.saveButtonText, { color: Colors[theme].white }]}>Save Changes</Text>
                             )}
                         </TouchableOpacity>
                     </View>
@@ -180,54 +193,52 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
+        padding: 24,
     },
     backdrop: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.6)',
     },
     backdropTouch: {
         flex: 1,
     },
     content: {
         width: '100%',
-        borderRadius: 24,
+        borderRadius: 28,
         padding: 24,
-        // Borders and shadows
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)', // Subtle border
         shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 10,
-        },
-        shadowOpacity: 0.2,
-        shadowRadius: 20,
-        elevation: 10,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 24,
+        elevation: 12,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 28,
     },
     title: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 22,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
     closeButton: {
-        padding: 4,
-        borderRadius: 12,
+        padding: 6,
+        borderRadius: 14,
     },
     form: {
-        gap: 16,
+        gap: 18,
     },
     label: {
         fontSize: 14,
-        marginBottom: 4,
+        fontWeight: '600',
+        marginBottom: -8,
+        marginLeft: 4,
     },
     input: {
-        borderRadius: 16,
+        borderRadius: 18,
         padding: 16,
         fontSize: 16,
         borderWidth: 1,
@@ -239,21 +250,24 @@ const styles = StyleSheet.create({
     },
     dateText: {
       fontSize: 16,
-      fontWeight: '500',
+      fontWeight: '600',
     },
     saveButton: {
-        backgroundColor: Colors.light.primary,
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: 18,
+        padding: 18,
         alignItems: 'center',
-        marginTop: 8,
+        marginTop: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
     },
     disabledButton: {
-        opacity: 0.7,
+        opacity: 0.6,
     },
     saveButtonText: {
-        color: '#fff',
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '700',
     },
 });

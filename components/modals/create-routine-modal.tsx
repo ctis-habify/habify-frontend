@@ -53,9 +53,9 @@ export function CreateRoutineModal({
   const actionColor = colors.primary;
   const screenColors =
     theme === 'dark'
-      ? (['#1E1B4B', '#0F172A'] as const)
+      ? BACKGROUND_GRADIENT_DARK
       : isCollaborativeMode
-        ? (['#2e1065', '#581c87'] as const)
+        ? Colors[theme].collaborativeGradient
         : getBackgroundGradient(theme);
 
   const isEditMode = !!initialRoutineListId;
@@ -348,7 +348,7 @@ export function CreateRoutineModal({
                         width: 44,
                         height: 44,
                         borderRadius: 22,
-                        backgroundColor: theme === 'dark' ? '#7f1d1d' : '#fee2e2',
+                        backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
                       },
                     ]}
                     onPress={handleDeleteCategory}
@@ -356,9 +356,9 @@ export function CreateRoutineModal({
                     hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                   >
                     {isDeleting ? (
-                      <ActivityIndicator size="small" color="#ef4444" />
+                      <ActivityIndicator size="small" color={colors.error} />
                     ) : (
-                      <Ionicons name="trash-outline" size={24} color="#ef4444" />
+                      <Ionicons name="trash-outline" size={24} color={colors.error} />
                     )}
                   </TouchableOpacity>
                 )}
@@ -370,13 +370,13 @@ export function CreateRoutineModal({
                       width: 44,
                       height: 44,
                       borderRadius: 22,
-                      backgroundColor: actionColor,
+                      backgroundColor: colors.primary,
                     },
                   ]}
                   onPress={() => setShowNewCategoryInput((prev) => !prev)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons name="add" size={24} color="#ffffff" />
+                  <Ionicons name="add" size={24} color={colors.white} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -441,9 +441,9 @@ export function CreateRoutineModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.white} />
               ) : (
-                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                <Text style={{ color: colors.white, fontWeight: 'bold', fontSize: 16 }}>
                   {isEditMode ? 'Update' : 'Create List'}
                 </Text>
               )}

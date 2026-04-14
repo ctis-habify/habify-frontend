@@ -12,7 +12,7 @@ import type { Routine } from '../../../types/routine';
 
 
 import { Toast } from '@/components/ui/toast';
-import { getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { setAuthToken } from '@/services/api';
@@ -35,6 +35,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   const isFocused = useIsFocused();
   const { token: authContextToken } = useAuth();
   const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
   const screenColors = getBackgroundGradient(theme);
 
   const [loading, setLoading] = useState(true);
@@ -160,7 +161,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
 
       <LinearGradient
         colors={screenColors}

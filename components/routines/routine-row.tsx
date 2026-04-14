@@ -4,6 +4,8 @@ import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { CircularCheckbox } from '@/components/ui/circular-checkbox';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export type RoutineRowProps = {
   id: string;
@@ -77,10 +79,10 @@ export const RoutineRow = React.memo(({
   startTime,
   endTime,
   collaborativeKey,
-  isDark = false,
 }: RoutineRowProps): React.ReactElement => {
    
-  // 1. Hooks & State
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
   const router = useRouter();
   const [isChecked, setIsChecked] = useState(completed);
   const [displayLabel, setDisplayLabel] = useState(initialLabel);
@@ -181,12 +183,12 @@ export const RoutineRow = React.memo(({
       activeOpacity={0.7}
     >
       <TouchableOpacity onPress={handleCameraPress}>
-        <CircularCheckbox value={isChecked} color={isDark ? '#E879F9' : undefined} />
+        <CircularCheckbox value={isChecked} color={isDark ? Colors[theme].tint : undefined} />
       </TouchableOpacity>
       
       <Text style={[
           styles.name, 
-          isDark && { color: '#fff' },
+          { color: Colors[theme].text },
           isChecked && styles.completedText
       ]} numberOfLines={1}>
         {name}
@@ -232,7 +234,7 @@ export const RoutineRow = React.memo(({
       {!isChecked && showCamera && !effectiveFailed && !displayLabel.startsWith('Starts') && (
         <TouchableOpacity 
             onPress={handleCameraPress} 
-            style={[styles.cameraBtn, isDark && { backgroundColor: 'rgba(232, 121, 249, 0.1)' }]}
+            style={[styles.cameraBtn, { backgroundColor: isDark ? 'rgba(232, 121, 249, 0.1)' : '#eff6ff' }]}
         >
           <Ionicons name="camera" size={18} color={isDark ? '#E879F9' : "#3b82f6"} />
         </TouchableOpacity>
@@ -254,7 +256,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: '#1f2937', // Gray-800
     marginLeft: 14,
   },
   completedText: {
@@ -263,15 +264,14 @@ const styles = StyleSheet.create({
   },
   cameraBtn: {
     padding: 8,
-    marginLeft: 8, // Changed from marginRight to marginLeft
-    backgroundColor: '#eff6ff', 
+    marginLeft: 8, 
     borderRadius: 8,
   },
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 999, 
-    marginLeft: 4, // Reduced margin since it's now internal
+    marginLeft: 4, 
     opacity: 0.9,
   },
   badgeText: {

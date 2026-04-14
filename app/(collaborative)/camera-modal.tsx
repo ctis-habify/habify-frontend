@@ -14,12 +14,17 @@ import {
 } from 'react-native';
 import { verificationService } from '../../services/verification.service';
 import { routineService } from '../../services/routine.service';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 export default function CollaborativeCameraModal(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams(); 
   const routineIdRaw = params.routineId;
   const routineId = Array.isArray(routineIdRaw) ? routineIdRaw[0] : routineIdRaw;
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
 
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -31,15 +36,15 @@ export default function CollaborativeCameraModal(): React.ReactElement {
 
   // 1. Check Permissions
   if (!permission) {
-    return <View style={styles.container} />; // Loading state
+    return <View style={[styles.container, { backgroundColor: colors.background }]} />; // Loading state
   }
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginBottom: 20, color: 'white' }}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={{ textAlign: 'center', marginBottom: 20, color: colors.text, fontSize: 16, fontWeight: '600' }}>
           We need your permission to show the camera
         </Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.permissionBtn}>
+        <TouchableOpacity onPress={requestPermission} style={[styles.permissionBtn, { backgroundColor: colors.collaborativePrimary }]}>
           <Text style={styles.btnText}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
@@ -123,27 +128,27 @@ export default function CollaborativeCameraModal(): React.ReactElement {
   // --- RENDER: PREVIEW MODE (Photo Taken) ---
   if (photoUri) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: '#000' }]}>
         <Image source={{ uri: photoUri }} style={styles.previewImage} />
         
         {isUploading && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#ffffff" />
+            <ActivityIndicator size="large" color={colors.collaborativePrimary} />
             <Text style={styles.loadingText}>{loadingText}</Text>
           </View>
         )}
 
         <View style={styles.bottomControls}>
           <TouchableOpacity
-            style={[styles.btn, styles.cancelBtn]}
+            style={[styles.btn, styles.cancelBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.2)' }]}
             onPress={() => setPhotoUri(null)}
             disabled={isUploading}
           >
-            <Text style={styles.cancelText}>Retake</Text>
+            <Text style={[styles.cancelText, { color: '#fff' }]}>Retake</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btn, styles.uploadBtn]}
+            style={[styles.btn, styles.uploadBtn, { backgroundColor: colors.collaborativePrimary }]}
             onPress={handleUpload}
             disabled={isUploading}
           >
@@ -192,7 +197,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   permissionBtn: {
-    backgroundColor: '#2563eb',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -245,9 +249,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
   },
-  cancelBtn: { backgroundColor: '#374151' },
-  cancelText: { color: '#fff', fontWeight: '600' },
-  uploadBtn: { backgroundColor: '#E879F9' },
+  cancelBtn: {},
+  cancelText: { fontWeight: '600' },
+  uploadBtn: {},
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

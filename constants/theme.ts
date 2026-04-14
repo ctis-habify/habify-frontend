@@ -10,24 +10,32 @@ const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
-    text: '#1F2937', // Deep Grey for primary text
-    background: '#F9FAFB', // Light greyish white for background
-    tint: '#7C3AED', // Violet-600
-    icon: '#6B7280', // Cool Grey-500
+    text: '#111827', // Gray-900 (Deep dark for maximum readability)
+    textSecondary: '#4B5563', // Gray-600
+    textTertiary: '#9CA3AF', // Gray-400
+    white: '#FFFFFF',
+    background: '#FFFFFF',
+    tint: '#7C3AED', 
+    icon: '#4B5563', 
     tabIconDefault: '#9CA3AF',
     tabIconSelected: '#7C3AED',
     primary: '#7C3AED',
-    secondary: '#8B5CF6', // Violet-500
+    secondary: '#A78BFA', 
     success: '#10B981',
     error: '#EF4444',
     border: '#E5E7EB',
     card: '#FFFFFF',
-    surface: '#FFFFFF',
+    surface: '#F9FAFB',
+    collaborativePrimary: '#DB2777', // Deep Pink
+    collaborativeGradient: ['#FDF4FF', '#FAE8FF'] as const, // Fuchsia-50 -> Fuchsia-100
   },
   dark: {
     text: '#F9FAFB',
-    background: '#0F172A', // Matches routines dark gradient bottom
-    tint: '#A78BFA', // Violet-400
+    textSecondary: '#D1D5DB', // Gray-300
+    textTertiary: '#9CA3AF', // Gray-400
+    white: '#FFFFFF',
+    background: '#0F172A',
+    tint: '#A78BFA',
     icon: '#9CA3AF',
     tabIconDefault: '#9CA3AF',
     tabIconSelected: '#A78BFA',
@@ -36,14 +44,16 @@ export const Colors = {
     success: '#34D399',
     error: '#F87171',
     border: 'rgba(167, 139, 250, 0.25)',
-    card: '#1E1B4B', // Matches routines dark gradient top
+    card: '#1E1B4B',
     surface: '#1E1B4B',
+    collaborativePrimary: '#E879F9', // Fuchsia-400
+    collaborativeGradient: ['#2E1065', '#581C87'] as const, // Violet-950 -> Violet-900
   },
 };
 
 export const BrandColors = {
-  gradientTop: '#6D28D9', // Violet-700
-  gradientBottom: '#4C1D95', // Violet-900
+  gradientTop: '#A78BFA', 
+  gradientBottom: '#C4B5FD', 
 };
 
 export const BACKGROUND_GRADIENT = [
@@ -53,7 +63,13 @@ export const BACKGROUND_GRADIENT = [
 
 export const BACKGROUND_GRADIENT_DARK = ['#1E1B4B', '#0F172A'] as const;
 
-export function getBackgroundGradient(theme: 'light' | 'dark'): readonly [string, string] {
+export function getBackgroundGradient(
+  theme: 'light' | 'dark', 
+  section: 'personal' | 'collaborative' = 'personal'
+): readonly [string, string] {
+  if (section === 'collaborative') {
+    return Colors[theme].collaborativeGradient;
+  }
   return theme === 'dark' ? BACKGROUND_GRADIENT_DARK : BACKGROUND_GRADIENT;
 }
 

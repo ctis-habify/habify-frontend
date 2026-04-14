@@ -1,13 +1,12 @@
 import { RoutineRow, RoutineRowProps } from '@/components/routines/routine-row';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import * as React from 'react';
 import { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
-
-
 
 type Props = {
   title: string;
@@ -32,11 +31,12 @@ export function RoutineCategoryCard({
   onItemPress,
   onDeleteList,
   onEditList,
-  accentColor = Colors.light.primary,
-  variant = 'light',
+  accentColor,
+  variant,
 }: Props): React.ReactElement {
-
-  const isGlass = variant === 'glass';
+  const theme = useColorScheme() ?? 'light';
+  const effectiveAccentColor = accentColor || Colors[theme].primary;
+  const isGlass = variant === 'glass' || theme === 'dark';
   const [menuVisible, setMenuVisible] = useState(false);
   const optionsAvailable = !!onEditList || !!onDeleteList;
 
@@ -46,6 +46,7 @@ export function RoutineCategoryCard({
       variant="card" 
       style={[
         styles.card, 
+        { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border },
         isGlass && styles.cardGlass,
         { zIndex: menuVisible ? 999 : 1, elevation: menuVisible ? 10 : 4 }
       ]}
@@ -53,14 +54,14 @@ export function RoutineCategoryCard({
       {/* HEADER */}
       <View style={styles.headerRow}>
         <View style={styles.textWrap}>
-          <ThemedText type="default" style={[styles.title, isGlass && { color: '#fff' }]} numberOfLines={2}>
+          <ThemedText type="default" style={[styles.title, { color: Colors[theme].text }]} numberOfLines={2}>
             {title}
           </ThemedText>
         </View>
         <View style={styles.headerRight}>
           {!!categoryName && (
-            <View style={[styles.categoryBadge, isGlass ? { backgroundColor: 'rgba(255,255,255,0.15)' } : { backgroundColor: `${accentColor}15` }]}>
-              <ThemedText style={[styles.categoryText, isGlass ? { color: '#ffffff' } : { color: accentColor }]} numberOfLines={1}>
+            <View style={[styles.categoryBadge, { backgroundColor: `${effectiveAccentColor}15` }]}>
+              <ThemedText style={[styles.categoryText, { color: effectiveAccentColor }]} numberOfLines={1}>
                 {categoryName}
               </ThemedText>
             </View>
@@ -68,7 +69,7 @@ export function RoutineCategoryCard({
           {!!onPressAddRoutine && (
             <TouchableOpacity
               onPress={onPressAddRoutine}
-              style={[styles.plusBtn, { backgroundColor: accentColor }]}
+              style={[styles.plusBtn, { backgroundColor: effectiveAccentColor }]}
               hitSlop={10}
               activeOpacity={0.85}
             >
@@ -83,28 +84,28 @@ export function RoutineCategoryCard({
                 style={styles.iconButton}
                 hitSlop={10}
               >
-                <Ionicons name="ellipsis-vertical" size={20} color={Colors.light.icon} />
+                <Ionicons name="ellipsis-vertical" size={20} color={Colors[theme].icon} />
               </TouchableOpacity>
 
               {menuVisible && (
-                <View style={[styles.menuContainer, { zIndex: 101 }]}>
+                <View style={[styles.menuContainer, { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border, zIndex: 101 }]}>
                   {!!onEditList && (
                     <TouchableOpacity 
                       style={styles.menuItem} 
                       onPress={() => { setMenuVisible(false); onEditList(); }}
                     >
-                      <Ionicons name="pencil-outline" size={16} color={isGlass ? '#fff' : Colors.light.text} />
-                      <ThemedText style={[styles.menuText, isGlass && { color: '#fff' }]}>Edit</ThemedText>
+                      <Ionicons name="pencil-outline" size={16} color={Colors[theme].text} />
+                      <ThemedText style={[styles.menuText, { color: Colors[theme].text }]}>Edit</ThemedText>
                     </TouchableOpacity>
                   )}
-                  {!!onEditList && !!onDeleteList && <View style={[styles.menuDivider, isGlass && { backgroundColor: 'rgba(255,255,255,0.1)' }]} />}
+                  {!!onEditList && !!onDeleteList && <View style={[styles.menuDivider, { backgroundColor: Colors[theme].border }]} />}
                   {!!onDeleteList && (
                     <TouchableOpacity 
                       style={styles.menuItem} 
                       onPress={() => { setMenuVisible(false); onDeleteList(); }}
                     >
-                      <Ionicons name="trash-outline" size={16} color={Colors.light.error} />
-                      <ThemedText style={[styles.menuText, { color: Colors.light.error }]}>Delete</ThemedText>
+                      <Ionicons name="trash-outline" size={16} color={Colors[theme].error} />
+                      <ThemedText style={[styles.menuText, { color: Colors[theme].error }]}>Delete</ThemedText>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -119,7 +120,7 @@ export function RoutineCategoryCard({
       {/* RUTINLER */}
       {routines.length === 0 ? (
         <View style={styles.emptyListContainer}>
-          <ThemedText type="default" style={styles.emptyListText}>
+          <ThemedText type="default" style={[styles.emptyListText, { color: Colors[theme].icon }]}>
             No routines in this list.
           </ThemedText>
         </View>
@@ -128,11 +129,11 @@ export function RoutineCategoryCard({
           <View key={`routine-${routine.id || 'new'}-${idx}`}>
             <RoutineRow
               {...routine}
-              isDark={isGlass}
+              isDark={theme === 'dark'}
               onToggle={(val: boolean) => onRoutineToggle?.(idx, val)}
               onPress={() => onItemPress?.(routine.id)}
             />
-            {idx !== routines.length - 1 && <View style={[styles.lightDivider, isGlass && { backgroundColor: 'rgba(255,255,255,0.05)' }]} />}
+            {idx !== routines.length - 1 && <View style={[styles.lightDivider, { backgroundColor: Colors[theme].border }]} />}
           </View>
         ))
       )}
@@ -143,22 +144,19 @@ export function RoutineCategoryCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 24,
-    backgroundColor: '#fff',
     borderRadius: 24,
     paddingVertical: 18,
-    // Stronger Shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 4,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
   },
   cardGlass: {
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderColor: 'rgba(255,255,255,0.1)',
-    shadowOpacity: 0, // Glow handles it if needed
+    shadowOpacity: 0,
   },
 
   headerRow: {
@@ -184,10 +182,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
 
-
-
   title: {
-    color: '#111827', 
     fontSize: 18, 
     fontWeight: '400', 
     letterSpacing: 0.1, 
@@ -198,7 +193,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2563eb',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -218,7 +212,6 @@ const styles = StyleSheet.create({
   divider: { height: 4 },
   lightDivider: {
     height: 1,
-    backgroundColor: '#f3f4f6', // Ultra light
     marginLeft: 66, 
     marginRight: 20,
   },
@@ -228,7 +221,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyListText: {
-    color: '#9ca3af',
     fontSize: 14,
     fontStyle: 'italic',
   },
@@ -239,7 +231,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 30,
     right: 0,
-    backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 4,
     width: 120,
@@ -249,7 +240,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
   },
   menuItem: {
     flexDirection: 'row',
@@ -264,7 +254,6 @@ const styles = StyleSheet.create({
   },
   menuDivider: {
     height: 1,
-    backgroundColor: '#f3f4f6',
     marginHorizontal: 8,
   },
 });

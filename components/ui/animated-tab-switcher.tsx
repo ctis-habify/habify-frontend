@@ -10,6 +10,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
 interface AnimatedTabSwitcherProps {
   tabs: string[];
   activeTab: string;
@@ -56,7 +59,7 @@ function TabLabel({
 }: TabLabelProps) {
   const tabTextStyle = useAnimatedStyle(() => {
     const distance = Math.abs(activeIndexSV.value - index);
-    const opacity = interpolate(distance, [0, 1], [1, 0.65]);
+    const opacity = interpolate(distance, [0, 1], [1, 0.75]);
 
     return {
       opacity,
@@ -71,9 +74,17 @@ export function AnimatedTabSwitcher({
   tabs,
   activeTab,
   onTabPress,
-  activeColor = '#06b6d4',
-  inactiveColor = 'rgba(255,255,255,0.7)',
+  activeColor,
+  inactiveColor,
 }: AnimatedTabSwitcherProps) {
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
+
+  // Defaults
+  const effectiveActiveColor = activeColor || colors.primary;
+  const effectiveInactiveColor = inactiveColor || (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)');
+
   const activeIndex = Math.max(0, tabs.indexOf(activeTab));
   const activeIndexSV = useSharedValue(activeIndex);
   const containerWidthSV = useSharedValue(0);
@@ -103,11 +114,21 @@ export function AnimatedTabSwitcher({
   });
 
   return (
-    <View style={styles.container} onLayout={onContainerLayout}>
+    <View 
+      style={[
+        styles.container, 
+        { 
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', 
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' 
+        }
+      ]} 
+      onLayout={onContainerLayout}
+    >
         {/* Animated Background Indicator */}
         <Animated.View 
             style={[
                 styles.indicator, 
+                { backgroundColor: colors.card },
                 indicatorStyle
             ]} 
         />
@@ -119,8 +140,8 @@ export function AnimatedTabSwitcher({
               text={tab}
               index={index}
               activeIndexSV={activeIndexSV}
-              activeColor={activeColor}
-              inactiveColor={inactiveColor}
+              activeColor={effectiveActiveColor}
+              inactiveColor={effectiveInactiveColor}
             />
           </TabButton>
         ))}
@@ -132,25 +153,22 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: 48,
-    backgroundColor: 'rgba(255,255,255,0.14)',
     borderRadius: 24,
     padding: 4,
     position: 'relative',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   indicator: {
     position: 'absolute',
     top: 4,
     bottom: 4,
     left: 4,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   tab: {
     flex: 1,
@@ -159,7 +177,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   tabText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
 });

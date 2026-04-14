@@ -110,11 +110,11 @@ export default function SettingsScreen(): React.ReactElement {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={styles.menuButton}
+          style={[styles.menuButton, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
         >
-          <Ionicons name="menu" size={24} color="#fff" />
+          <Ionicons name="menu" size={24} color={Colors[colorScheme].text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: Colors[colorScheme].text }]}>Settings</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -211,25 +211,25 @@ export default function SettingsScreen(): React.ReactElement {
         onRequestClose={handleClosePrivacy}
       >
         <View style={styles.privacyOverlay}>
-          <View style={[styles.privacyModal, theme === 'dark' && styles.privacyModalDark]}>
+          <View style={[styles.privacyModal, { backgroundColor: Colors[colorScheme].card }]}>
             <View style={styles.privacyHeader}>
               <Ionicons
                 name="shield-checkmark-outline"
                 size={22}
-                color={theme === 'dark' ? Colors.dark.tint : Colors.light.primary}
+                color={Colors[colorScheme].tint}
               />
-              <Text style={[styles.privacyTitle, theme === 'dark' && styles.textDark]}>Privacy Policy</Text>
+              <Text style={[styles.privacyTitle, { color: Colors[colorScheme].text }]}>Privacy Policy</Text>
             </View>
 
-            <Text style={[styles.privacyBody, theme === 'dark' && styles.textDark]}>
+            <Text style={[styles.privacyBody, { color: Colors[colorScheme].textSecondary }]}>
               When you take a photo to confirm a habit, Habify uses it to verify completion via AI. Your images are kept private, never shared with third parties, and only stored as long as needed.{'\n\n'}By using the app you agree to this.
             </Text>
 
             <TouchableOpacity
-              style={[styles.privacyClose, theme === 'dark' && styles.privacyCloseDark]}
+              style={[styles.privacyClose, { backgroundColor: Colors[colorScheme].primary }]}
               onPress={handleClosePrivacy}
             >
-              <Text style={styles.privacyCloseText}>Got it</Text>
+              <Text style={[styles.privacyCloseText, { color: Colors[colorScheme].white }]}>Got it</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -252,15 +252,14 @@ const styles = StyleSheet.create({
   menuButton: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '800',
+    letterSpacing: -0.4,
   },
   content: {
     padding: 20,
@@ -274,8 +273,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   privacyModal: {
-    backgroundColor: Colors.light.card,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
     width: '100%',
     maxHeight: '75%',
@@ -285,41 +283,29 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
-  privacyModalDark: {
-    backgroundColor: Colors.dark.card,
-  },
   privacyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     marginBottom: 16,
   },
   privacyTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.light.text,
+    fontSize: 18,
+    fontWeight: '800',
   },
   privacyBody: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: Colors.light.icon,
-  },
-  textDark: {
-    color: Colors.dark.text,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   privacyClose: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 20,
   },
-  privacyCloseDark: {
-    backgroundColor: Colors.dark.primary,
-  },
   privacyCloseText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 15,
+    fontWeight: '800',
+    fontSize: 16,
   },
 });

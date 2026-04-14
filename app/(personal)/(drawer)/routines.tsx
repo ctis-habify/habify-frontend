@@ -1,4 +1,4 @@
-import { getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
@@ -23,8 +23,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
 import type { RoutineList } from '@/types/routine';
 
-const PERSONAL_GRADIENT = ['#4c1d95', '#7c3aed'] as const;
-const PERSONAL_PRIMARY = '#f9a8ff';
 const TOKEN_KEY = 'habify_access_token';
 
 async function getToken(): Promise<string | null> {
@@ -40,7 +38,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const theme = useColorScheme() ?? 'light';
   const { token: authContextToken } = useAuth();
   
-  const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : PERSONAL_GRADIENT;
+  const screenGradient = getBackgroundGradient(theme);
   const activeTab = 'Personal';
   const isSwitchingRef = useRef(false);
 
@@ -167,10 +165,10 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
         <View style={styles.fixedHeader}>
           <View style={styles.headerTopRow}>
             <TouchableOpacity
-              style={styles.menuBtn}
+              style={[styles.menuBtn, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
               onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             >
-              <Ionicons name="menu" size={24} color="#fff" />
+              <Ionicons name="menu" size={24} color={Colors[theme].text} />
             </TouchableOpacity>
 
             <View style={{ flex: 1 }}>
@@ -178,7 +176,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                 tabs={['Personal', 'Collaborative']}
                 activeTab={activeTab}
                 onTabPress={handleTabSwitch}
-                activeColor={PERSONAL_PRIMARY}
+                activeColor={Colors[theme].tint}
               />
             </View>
           </View>
@@ -193,16 +191,16 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
         >
           {/* Today's Routines' Header */}
           <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
-            <TouchableOpacity
-            style={styles.sectionHeader}
+          <TouchableOpacity
+            style={[styles.sectionHeader, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderColor: Colors[theme].border }]}
             activeOpacity={0.85}
             onPress={() => router.push('/(personal)/(drawer)/today-routines')}
           >
-            <Text style={styles.sectionTitle}>Click to See Today&apos;s Routines</Text>
+            <Text style={[styles.sectionTitle, { color: Colors[theme].text }]}>Today&apos;s Routines</Text>
           </TouchableOpacity>
           </Animated.View>
 
-          {loading && <ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} />}
+          {loading && <ActivityIndicator size="large" color={Colors[theme].textSecondary} style={{ marginTop: 40 }} />}
 
           {!loading && routineLists.map((list, idx) => {
             const accentColor = getCategoryAccentColor(list.categoryName, list.categoryId ?? null);
@@ -240,7 +238,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                   onEditList={() => handleEditList(list)}
                   onDeleteList={() => handleDeleteList(list)}
                   accentColor={accentColor}
-                  variant="light"
+                  variant={theme === 'dark' ? 'glass' : 'light'}
                 />
               </Animated.View>
             );
@@ -248,30 +246,43 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
           {hasNoData && (
             <View style={styles.emptyOuter}>
-              <View style={styles.emptyIconWrapper}>
-                <Ionicons name="calendar-outline" size={64} color={PERSONAL_PRIMARY} />
+              <View style={[styles.emptyIconWrapper, { backgroundColor: theme === 'dark' ? 'rgba(249,168,255,0.12)' : 'rgba(0,0,0,0.05)' }]}>
+                <Ionicons name="calendar-outline" size={64} color={Colors[theme].primary} />
               </View>
-              <Text style={styles.emptyTitle}>You haven&apos;t created a routine yet.</Text>
-              <Text style={styles.emptySub}>
+              <Text style={[styles.emptyTitle, { color: Colors[theme].text }]}>You haven&apos;t created a routine yet.</Text>
+              <Text style={[styles.emptySub, { color: Colors[theme].textSecondary }]}>
                 You can create a new list by clicking the button below.
               </Text>
 
               <TouchableOpacity
-                style={styles.createBtn}
+                style={[
+                   styles.createBtn, 
+                   { 
+                     backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)', 
+                     borderColor: Colors[theme].border 
+                   }
+                ]}
                 onPress={() => router.push('/(personal)/create-routine')}
               >
-                <Text style={styles.createBtnText}>Create Routine List</Text>
+                <Text style={[styles.createBtnText, { color: Colors[theme].text }]}>Create Routine List</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {!hasNoData && !loading && (
              <Animated.View entering={FadeInDown.delay(220).duration(560).springify()}>
-               <TouchableOpacity
-               style={[styles.createBtn, { marginTop: 10 }]}
+             <TouchableOpacity
+               style={[
+                  styles.createBtn, 
+                  { 
+                    marginTop: 10, 
+                    backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)', 
+                    borderColor: Colors[theme].border 
+                  }
+               ]}
                onPress={() => router.push('/(personal)/create-routine')}
              >
-               <Text style={styles.createBtnText}>Create Routine List</Text>
+               <Text style={[styles.createBtnText, { color: Colors[theme].text }]}>Create Routine List</Text>
              </TouchableOpacity>
              </Animated.View>
           )}
@@ -335,18 +346,15 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   sectionHeader: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   sectionTitle: {
-    color: '#ffffff',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   emptyOuter: {
     alignItems: 'center',
@@ -360,14 +368,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyTitle: {
-    color: '#ffffff',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
     marginBottom: 8,
   },
   emptySub: {
-    color: 'rgba(255,255,255,0.75)',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 24,
@@ -376,16 +382,13 @@ const styles = StyleSheet.create({
   createBtn: {
     width: '100%',
     borderRadius: 20,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
     borderStyle: 'dashed',
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   createBtnText: {
-    color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

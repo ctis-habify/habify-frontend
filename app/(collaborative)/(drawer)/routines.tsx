@@ -28,7 +28,7 @@ import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
 import { getCategoryAccentColor } from '@/constants/category-colors';
-import { getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useCollaborativeScore } from '@/hooks/use-collaborative-score';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -38,25 +38,17 @@ import { routineService } from '@/services/routine.service';
 import { Category } from '@/types/category';
 import { PublicRoutine, Routine } from '@/types/routine';
 
-// Collaborative Theme Constants
-const COLLABORATIVE_GRADIENT = ['#2e1065', '#581c87'] as const; // Violet-950 -> Violet-900
-const COLLABORATIVE_PRIMARY = '#E879F9'; // Fuchsia-400
-
 export default function CollaborativeRoutinesScreen(): React.ReactElement {
   // 1. Hooks
   const router = useRouter();
   const navigation = useNavigation();
   const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
-  const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
-  const {
-    points: collabPoints,
-    streak: collabStreak,
-    nextBonusStreak,
-    nextBonusPoints,
-    rank: collabRank,
-    loading: collabScoreLoading,
-  } = useCollaborativeScore();
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
+  const collaborativePrimary = colors.collaborativePrimary;
+  const screenGradient = getBackgroundGradient(theme, 'collaborative');
+  const { points: collabPoints, streak: collabStreak, rank: collabRank, loading: collabScoreLoading } = useCollaborativeScore();
 
   // 2. State
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -68,6 +60,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
   const [deletingRoutineId, setDeletingRoutineId] = useState<string | null>(null);
+  
   // Public Search State
   const [publicRoutines, setPublicRoutines] = useState<PublicRoutine[]>([]);
   const [loadingPublic, setLoadingPublic] = useState(false);
@@ -121,7 +114,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       setIsRefreshing(refresh);
       try {
         const list = await routineService.getCollaborativeRoutines();
-        // Newest routines first (assuming backend returns oldest first)
         setRoutines([...list].reverse());
         const socialReminder = notificationService.getSocialInteractionReminder(list.length);
         if (socialReminder) showToast(socialReminder);
@@ -152,9 +144,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       try {
         const res = await routineService.joinPublicRoutine(id);
         showToast(res.message);
-        // Refresh local routines since user joined a new one
         loadLists(false);
-        // Update public outcomes locally
         setPublicRoutines((prev) =>
           prev.map((r) => (r.id === id ? { ...r, isAlreadyMember: true, memberCount: r.memberCount + 1 } : r)),
         );
@@ -246,8 +236,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       await routineService.leaveRoutine(leavingRoutine.id);
       showToast('You have left the routine.');
       setRoutines((prev) => prev.filter((r) => r.id !== leavingRoutine.id));
-      // Also update public list if visible
-      setPublicRoutines((prev) => 
+      setPublicRoutines((prev) =>
         prev.map(r => r.id === leavingRoutine.id ? { ...r, isAlreadyMember: false, memberCount: Math.max(0, r.memberCount - 1) } : r)
       );
     } catch (err: unknown) {
@@ -256,7 +245,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           ? String((err as { message: unknown }).message)
           : 'Could not leave the routine. Please try again.';
       showToast(message);
-      throw err; // Re-throw to inform modal that it failed
+      throw err;
     } finally {
       setLeavingRoutineId(null);
     }
@@ -278,7 +267,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     loadCats();
   }, []);
 
-  // Debounced search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -332,10 +320,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         <View style={styles.fixedHeader}>
           <View style={styles.headerTopRow}>
             <TouchableOpacity
-              style={styles.menuBtn}
+              style={[styles.menuBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
               onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             >
-              <Ionicons name="menu" size={24} color="#fff" />
+              <Ionicons name="menu" size={24} color={colors.text} />
             </TouchableOpacity>
 
             <View style={{ flex: 1 }}>
@@ -343,25 +331,25 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 tabs={['Personal', 'Collaborative']}
                 activeTab={activeTab}
                 onTabPress={handleTabSwitch}
-                activeColor={COLLABORATIVE_PRIMARY}
+                activeColor={collaborativePrimary}
               />
             </View>
           </View>
         </View>
 
-        <ScrollView 
-          contentContainerStyle={styles.scroll} 
+        <ScrollView
+          contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={() => loadLists(true)}
-              tintColor={COLLABORATIVE_PRIMARY}
-              colors={[COLLABORATIVE_PRIMARY]}
+              tintColor={collaborativePrimary}
+              colors={[collaborativePrimary]}
             />
           }
         >
-          {/* Collaborative Score Banner (FReq 5.5, 5.7, 5.8) */}
+          {/* Collaborative Score Banner */}
           <CollaborativeScoreBanner
             points={collabPoints}
             streak={collabStreak}
@@ -369,7 +357,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             nextBonusPoints={nextBonusPoints}
             rank={collabRank}
             loading={collabScoreLoading}
-            accentColor={COLLABORATIVE_PRIMARY}
+            accentColor={collaborativePrimary}
           />
 
           {/* Filters & Search Integrated */}
@@ -381,12 +369,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId }))] as { label: string; value: string | number }[]}
                 setOpen={setCategoryOpen}
                 setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
-                theme="DARK"
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
+                theme={isDark ? "DARK" : "LIGHT"}
+                style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 placeholder={loadingCategories ? "Loading..." : "Category"}
-                placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}
-                textStyle={{ color: '#fff', fontSize: 12 }}
+                placeholderStyle={{ color: colors.icon, fontSize: 12, opacity: 0.6 }}
+                textStyle={{ color: colors.text, fontSize: 12 }}
                 labelStyle={{ fontWeight: '600' }}
                 listMode="SCROLLVIEW"
                 zIndex={3000}
@@ -405,12 +393,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 ] as { label: string; value: string }[]}
                 setOpen={setFrequencyOpen}
                 setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string | null>>}
-                theme="DARK"
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
+                theme={isDark ? "DARK" : "LIGHT"}
+                style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 placeholder="Frequency"
-                placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}
-                textStyle={{ color: '#fff', fontSize: 12 }}
+                placeholderStyle={{ color: colors.icon, fontSize: 12, opacity: 0.6 }}
+                textStyle={{ color: colors.text, fontSize: 12 }}
                 labelStyle={{ fontWeight: '600' }}
                 listMode="SCROLLVIEW"
                 zIndex={2000}
@@ -420,12 +408,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             </View>
           </View>
 
-          <View style={styles.searchWrap}>
-            <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.4)" style={styles.searchIcon} />
+          <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="search-outline" size={18} color={colors.icon} style={styles.searchIcon} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Filter Public Routines…"
-              placeholderTextColor="rgba(255,255,255,0.35)"
+              placeholderTextColor={colors.icon}
               value={search}
               onChangeText={setSearch}
               autoCorrect={false}
@@ -434,34 +422,34 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             />
             {!!search && (
               <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.4)" />
+                <Ionicons name="close-circle" size={18} color={colors.icon} />
               </TouchableOpacity>
             )}
           </View>
 
-          {/* Section: Public Search Results (Visible when searching/filtering) */}
+          {/* Section: Public Search Results */}
           {(search.trim() || categoryId || frequencyType) ? (
             <View style={{ marginBottom: 20 }}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Global Results</Text>
-                {loadingPublic && <ActivityIndicator size="small" color={COLLABORATIVE_PRIMARY} />}
+                <Text style={[styles.sectionTitle, { color: colors.text, opacity: 0.5 }]}>Global Results</Text>
+                {loadingPublic && <ActivityIndicator size="small" color={collaborativePrimary} />}
               </View>
               {publicRoutines.length > 0 ? (
                 publicRoutines.map((item, index) => {
                   const accentColor = getCategoryAccentColor(item.category, item.categoryId ?? null);
                   return (
                     <Animated.View key={`public-${item.id}`} entering={FadeInDown.delay(index * 50)}>
-                      <PublicRoutineCard 
-                        routine={item} 
-                        index={index} 
-                        accentColor={accentColor} 
-                        onJoin={handleJoin} 
+                      <PublicRoutineCard
+                        routine={item}
+                        index={index}
+                        accentColor={accentColor}
+                        onJoin={handleJoin}
                       />
                     </Animated.View>
                   );
                 })
               ) : !loadingPublic ? (
-                <Text style={styles.emptyResultsText}>No routines match your filters.</Text>
+                <Text style={[styles.emptyResultsText, { color: colors.icon }]}>No routines match your filters.</Text>
               ) : null}
             </View>
           ) : null}
@@ -473,8 +461,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               {routines.some(r => r.isPublic) && (
                 <>
                   <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Public Enrollments</Text>
-                    <View style={styles.badge}><Text style={styles.badgeText}>{routines.filter(r => r.isPublic).length}</Text></View>
+                    <Text style={[styles.sectionTitle, { color: colors.text, opacity: 0.5 }]}>Public Enrollments</Text>
+                    <View style={[styles.badge, { backgroundColor: collaborativePrimary }]}><Text style={[styles.badgeText, { color: isDark ? '#000' : '#fff' }]}>{routines.filter(r => r.isPublic).length}</Text></View>
                   </View>
                   {routines
                     .filter(r => r.isPublic)
@@ -506,8 +494,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               {routines.some(r => !r.isPublic) && (
                 <>
                   <View style={[styles.sectionHeader, { marginTop: 20 }]}>
-                    <Text style={styles.sectionTitle}>Private Enrollments</Text>
-                    <View style={styles.badge}><Text style={styles.badgeText}>{routines.filter(r => !r.isPublic).length}</Text></View>
+                    <Text style={[styles.sectionTitle, { color: colors.text, opacity: 0.5 }]}>Private Enrollments</Text>
+                    <View style={[styles.badge, { backgroundColor: collaborativePrimary }]}><Text style={[styles.badgeText, { color: isDark ? '#000' : '#fff' }]}>{routines.filter(r => !r.isPublic).length}</Text></View>
                   </View>
                   {routines
                     .filter(r => !r.isPublic)
@@ -541,16 +529,16 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             <View style={styles.emptyContainer}>
               <View
                 style={{
-                  backgroundColor: 'rgba(232, 121, 249, 0.1)',
+                  backgroundColor: isDark ? 'rgba(232, 121, 249, 0.1)' : 'rgba(219, 39, 119, 0.05)',
                   padding: 30,
                   borderRadius: 100,
                   marginBottom: 20,
                 }}
               >
-                <Ionicons name="people" size={64} color={COLLABORATIVE_PRIMARY} />
+                <Ionicons name="people" size={64} color={collaborativePrimary} />
               </View>
-              <Text style={styles.emptyText}>No group routines found</Text>
-              <Text style={styles.emptySubText}>
+              <Text style={[styles.emptyText, { color: colors.text }]}>No group routines found</Text>
+              <Text style={[styles.emptySubText, { color: colors.icon }]}>
                 Create a new collaborative list or join your friends&apos; routines to see them
                 here!
               </Text>
@@ -558,10 +546,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           )}
 
           <TouchableOpacity
-            style={styles.createBtn}
+            style={[styles.createBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderColor: colors.border }]}
             onPress={() => router.push('/(collaborative)/create-routine')}
           >
-            <Text style={styles.createBtnText}>Create Collaborative List</Text>
+            <Text style={[styles.createBtnText, { color: colors.text }]}>Create Collaborative List</Text>
           </TouchableOpacity>
         </ScrollView>
 
@@ -605,24 +593,20 @@ const styles = StyleSheet.create({
   menuBtn: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   createBtn: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 18,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
     borderStyle: 'dashed',
   },
   createBtnText: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -632,13 +616,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: {
-    color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
     marginTop: 16,
   },
   emptySubText: {
-    color: 'rgba(255,255,255,0.7)',
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
@@ -650,36 +632,36 @@ const styles = StyleSheet.create({
     zIndex: 3000,
   },
   dropdown: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
-    minHeight: 38,
-    height: 38,
+    minHeight: 42,
+    height: 42,
     paddingHorizontal: 10,
+    borderWidth: 1,
   },
   dropdownContainer: {
-    backgroundColor: '#1e1b4b',
-    borderColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
     marginTop: 4,
+    borderWidth: 1,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 14,
     marginBottom: 20,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    color: '#fff',
     fontSize: 14,
     fontWeight: '500',
     padding: 0,
@@ -692,28 +674,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   sectionTitle: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
     textTransform: 'uppercase',
   },
   emptyResultsText: {
-    color: 'rgba(255,255,255,0.4)',
     fontSize: 13,
     textAlign: 'center',
     marginTop: 4,
     fontStyle: 'italic',
   },
   badge: {
-    backgroundColor: COLLABORATIVE_PRIMARY,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
     marginLeft: 10,
   },
   badgeText: {
-    color: '#000',
     fontSize: 12,
     fontWeight: 'bold',
   },

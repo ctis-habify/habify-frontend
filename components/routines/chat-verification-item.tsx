@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 
 import { RoutineLog } from '@/types/routine';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface ChatVerificationItemProps {
   log: RoutineLog;
@@ -30,6 +32,10 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   onPressImage,
   currentUserId 
 }) => {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+
   const [loading, setLoading] = React.useState<'approve' | 'reject' | null>(null);
   const badgeScale = React.useRef(new Animated.Value(1)).current;
   const sparkleOpacity = React.useRef(new Animated.Value(0.7)).current;
@@ -126,7 +132,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={styles.imageWrapper} 
+        style={[styles.imageWrapper, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} 
         activeOpacity={0.9} 
         onPress={() => onPressImage && onPressImage(imageUrl)}
       >
@@ -153,7 +159,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
 
       {!isOwner && isPending ? (
         userHasVoted ? (
-          <View style={styles.votedStatusRow}>
+          <View style={[styles.votedStatusRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
              <Ionicons 
                 name={userHasApproved ? "checkmark-circle" : "close-circle"} 
                 size={16} 
@@ -166,7 +172,15 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
         ) : (
           <View style={styles.actionRow}>
             <TouchableOpacity
-              style={[styles.btn, styles.rejectBtn, !isPending && styles.disabledBtn]}
+              style={[
+                styles.btn, 
+                styles.rejectBtn, 
+                { 
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.12)' : 'rgba(239, 68, 68, 0.08)', 
+                  borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.15)' 
+                },
+                !isPending && styles.disabledBtn
+              ]}
               onPress={handleReject}
               disabled={loading !== null || !isPending}
             >
@@ -175,11 +189,11 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
               ) : (
                 <>
                   <Ionicons 
-                    name={hasRejected ? "close-circle" : "close"} 
-                    size={18} 
-                    color={hasRejected ? "#f87171" : "rgba(248, 113, 113, 0.7)"} 
+                    name={hasRejected ? "close-circle" : "close-outline"} 
+                    size={20} 
+                    color="#f87171" 
                   />
-                  <Text style={[styles.btnText, { color: hasRejected ? "#f87171" : "rgba(248, 113, 113, 0.7)" }]}>
+                  <Text style={[styles.btnText, { color: "#f87171" }]}>
                     {hasRejected ? 'Rejected' : 'Reject'}
                   </Text>
                 </>
@@ -187,20 +201,28 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.btn, styles.approveBtn, !isPending && styles.disabledBtn]}
+              style={[
+                styles.btn, 
+                styles.approveBtn, 
+                { 
+                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)', 
+                  borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.15)' 
+                },
+                !isPending && styles.disabledBtn
+              ]}
               onPress={handleApprove}
               disabled={loading !== null || !isPending}
             >
               {loading === 'approve' ? (
-                <ActivityIndicator size="small" color="#4ade80" />
+                <ActivityIndicator size="small" color="#10b981" />
               ) : (
                 <>
                   <Ionicons 
-                    name={hasApproved ? "checkmark-circle" : "checkmark"} 
-                    size={18} 
-                    color={hasApproved ? "#4ade80" : "rgba(74, 222, 128, 0.7)"} 
+                    name={hasApproved ? "checkmark-circle" : "checkmark-outline"} 
+                    size={20} 
+                    color="#10b981" 
                   />
-                  <Text style={[styles.btnText, { color: hasApproved ? "#4ade80" : "rgba(74, 222, 128, 0.7)" }]}>
+                  <Text style={[styles.btnText, { color: "#10b981" }]}>
                     {hasApproved ? 'Approved' : 'Approve'}
                   </Text>
                 </>
@@ -211,25 +233,25 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
       ) : (
         <View style={styles.ownerSummaryRow}>
           <TouchableOpacity
-            style={styles.summaryBadge}
+            style={[styles.summaryBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => onViewVotes?.(log, 'approvals')}
             activeOpacity={0.7}
             disabled={approvalCount === 0}
           >
             <Ionicons name="checkmark-circle-outline" size={14} color="#4ade80" />
-            <Text style={styles.summaryText}>
+            <Text style={[styles.summaryText, { color: colors.text }]}>
               {approvalCount}
               {requiredApprovals > 0 ? `/${requiredApprovals}` : ''} Approvals
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.summaryBadge}
+            style={[styles.summaryBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => onViewVotes?.(log, 'rejections')}
             activeOpacity={0.7}
             disabled={rejectionCount === 0}
           >
             <Ionicons name="close-circle-outline" size={14} color="#f87171" />
-            <Text style={styles.summaryText}>{rejectionCount} Rejections</Text>
+            <Text style={[styles.summaryText, { color: colors.text }]}>{rejectionCount} Rejections</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -245,7 +267,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
           }
           activeOpacity={0.7}
         >
-            <Text style={styles.progressText}>
+            <Text style={[styles.progressText, { color: colors.icon }]}>
               {approvalCount > 0 &&
                 `${approvalCount}${requiredApprovals > 0 ? `/${requiredApprovals}` : ''} Approvals `}
               {rejectionCount > 0 && `${rejectionCount} Rejections`}
@@ -253,7 +275,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
         </TouchableOpacity>
       )}
       {log.status === 'approved' && approvedNames.length > 0 && (
-        <Text style={styles.approvedByText}>Approved by {approvedNames.join(', ')}</Text>
+        <Text style={[styles.approvedByText, { color: colors.icon }]}>Approved by {approvedNames.join(', ')}</Text>
       )}
     </View>
   );
@@ -269,7 +291,6 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: 'rgba(0,0,0,0.2)',
     marginBottom: 8,
     position: 'relative',
   },
@@ -324,29 +345,22 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.1)',
   },
-  approveBtn: {
-    borderColor: 'rgba(74, 222, 128, 0.2)',
-  },
-  rejectBtn: {
-    borderColor: 'rgba(248, 113, 113, 0.2)',
-  },
+  approveBtn: {},
+  rejectBtn: {},
   btnText: {
     fontSize: 12,
     fontWeight: '700',
   },
   disabledBtn: {
     backgroundColor: 'transparent',
-    borderColor: 'rgba(255,255,255,0.05)',
+    opacity: 0.3,
   },
   progressRow: {
     marginTop: 6,
     paddingHorizontal: 4,
   },
   progressText: {
-    color: 'rgba(255,255,255,0.5)',
     fontSize: 10,
     fontStyle: 'italic',
   },
@@ -361,14 +375,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
     gap: 6,
   },
   summaryText: {
-    color: '#fff',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -377,10 +388,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
     gap: 6,
   },
   votedStatusText: {
@@ -389,9 +398,9 @@ const styles = StyleSheet.create({
   },
   approvedByText: {
     marginTop: 6,
-    color: 'rgba(255,255,255,0.68)',
     fontSize: 11,
     fontStyle: 'italic',
+    opacity: 0.8,
   },
   imageLoadingPlaceholder: {
     ...StyleSheet.absoluteFillObject,
