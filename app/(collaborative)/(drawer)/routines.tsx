@@ -27,6 +27,7 @@ import { CollaborativeScoreBanner } from '@/components/routines/collaborative-sc
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
+import { getCategoryAccentColor } from '@/constants/category-colors';
 import { getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useCollaborativeScore } from '@/hooks/use-collaborative-score';
@@ -437,42 +438,24 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 {loadingPublic && <ActivityIndicator size="small" color={COLLABORATIVE_PRIMARY} />}
               </View>
               {publicRoutines.length > 0 ? (
-                publicRoutines.map((item, index) => (
-                  <Animated.View key={`public-${item.id}`} entering={FadeInDown.delay(index * 50)}>
-                    <PublicRoutineCard 
-                      routine={item} 
-                      index={index} 
-                      accentColor={COLLABORATIVE_PRIMARY} 
-                      onJoin={handleJoin} 
-                    />
-                  </Animated.View>
-                ))
+                publicRoutines.map((item, index) => {
+                  const accentColor = getCategoryAccentColor(item.category, item.categoryId ?? null);
+                  return (
+                    <Animated.View key={`public-${item.id}`} entering={FadeInDown.delay(index * 50)}>
+                      <PublicRoutineCard 
+                        routine={item} 
+                        index={index} 
+                        accentColor={accentColor} 
+                        onJoin={handleJoin} 
+                      />
+                    </Animated.View>
+                  );
+                })
               ) : !loadingPublic ? (
                 <Text style={styles.emptyResultsText}>No routines match your filters.</Text>
               ) : null}
             </View>
           ) : null}
-
-          {/* Section: My Joined Routines */}
-          {/* Stats Summary Bar */}
-          {!loading && routines.length > 0 && !search.trim() && !categoryId && !frequencyType && (
-            <Animated.View entering={FadeInDown.duration(400)} style={styles.statsBar}>
-              <View style={styles.statBox}>
-                <Text style={styles.statNumber}>{routines.length}</Text>
-                <Text style={styles.statLabel}>Total Active</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={styles.statNumber}>{routines.filter(r => r.isPublic).length}</Text>
-                <Text style={styles.statLabel}>Public</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={styles.statNumber}>{routines.filter(r => !r.isPublic).length}</Text>
-                <Text style={styles.statLabel}>Private</Text>
-              </View>
-            </Animated.View>
-          )}
 
           {/* Section: My Joined Routines */}
           {!loading && routines.length > 0 && (
@@ -491,19 +474,22 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                       const lowerSearch = search.toLowerCase();
                       return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
                     })
-                    .map((routine, index) => (
-                      <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
-                        <CollaborativeGroupCard
-                          routine={routine}
-                          accentColor={COLLABORATIVE_PRIMARY}
-                          onPress={handleOpenRoutineView}
-                          onLeave={handleLeaveRoutine}
-                          onDelete={handleDeleteRoutine}
-                          isLeaving={leavingRoutineId === routine.id}
-                          isDeleting={deletingRoutineId === routine.id}
-                        />
-                      </Animated.View>
-                    ))}
+                    .map((routine, index) => {
+                      const accentColor = getCategoryAccentColor(routine.categoryName, null);
+                      return (
+                        <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
+                          <CollaborativeGroupCard
+                            routine={routine}
+                            accentColor={accentColor}
+                            onPress={handleOpenRoutineView}
+                            onLeave={handleLeaveRoutine}
+                            onDelete={handleDeleteRoutine}
+                            isLeaving={leavingRoutineId === routine.id}
+                            isDeleting={deletingRoutineId === routine.id}
+                          />
+                        </Animated.View>
+                      );
+                    })}
                 </>
               )}
 
@@ -521,19 +507,22 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                       const lowerSearch = search.toLowerCase();
                       return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
                     })
-                    .map((routine, index) => (
-                      <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
-                        <CollaborativeGroupCard
-                          routine={routine}
-                          accentColor={COLLABORATIVE_PRIMARY}
-                          onPress={handleOpenRoutineView}
-                          onLeave={handleLeaveRoutine}
-                          onDelete={handleDeleteRoutine}
-                          isLeaving={leavingRoutineId === routine.id}
-                          isDeleting={deletingRoutineId === routine.id}
-                        />
-                      </Animated.View>
-                    ))}
+                    .map((routine, index) => {
+                      const accentColor = getCategoryAccentColor(routine.categoryName, null);
+                      return (
+                        <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
+                          <CollaborativeGroupCard
+                            routine={routine}
+                            accentColor={accentColor}
+                            onPress={handleOpenRoutineView}
+                            onLeave={handleLeaveRoutine}
+                            onDelete={handleDeleteRoutine}
+                            isLeaving={leavingRoutineId === routine.id}
+                            isDeleting={deletingRoutineId === routine.id}
+                          />
+                        </Animated.View>
+                      );
+                    })}
                 </>
               )}
             </>
@@ -706,39 +695,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     fontStyle: 'italic',
-  },
-  statsBar: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 20,
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  statBox: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statNumber: {
-    color: COLLABORATIVE_PRIMARY,
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  statLabel: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 2,
-    textTransform: 'uppercase',
-  },
-  statDivider: {
-    width: 1,
-    height: 25,
-    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   badge: {
     backgroundColor: COLLABORATIVE_PRIMARY,

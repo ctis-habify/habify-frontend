@@ -142,15 +142,15 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                         <Text style={styles.title} numberOfLines={1}>{routineName || 'Unnamed Space'}</Text>
                     </View>
                     {hasCategory && (
-                        <View style={{ marginRight: 8 }}>
-                            <Text style={[styles.categoryText, { color: accentColor, opacity: 0.8 }]}>
+                        <View style={[styles.categoryBadge, { backgroundColor: `${accentColor}22` }]}>
+                            <Text style={[styles.categoryText, { color: accentColor }]}>
                                 {categoryText}
                             </Text>
                         </View>
                     )}
                     <View style={styles.keyPill}>
                         <Ionicons name={isPublic ? "lock-open" : "lock-closed"} size={12} color="#fff" style={{ marginRight: 4 }} />
-                        <Text style={[styles.categoryText, { color: isPublic ? accentColor : '#e2e8f0' }]}>
+                        <Text style={[styles.categoryText, { color: '#ffffff' }]}>
                             {isPublic ? 'PUBLIC' : 'PRIVATE'}
                         </Text>
                     </View>
@@ -315,6 +315,13 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '700',
         textTransform: 'uppercase',
+        letterSpacing: 0.4,
+    },
+    categoryBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        marginRight: 8,
     },
     keyPill: {
         backgroundColor: 'rgba(255,255,255,0.15)',
