@@ -28,12 +28,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/habify-splash-logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#2e1065",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#2e1065"
           }
         }
       ],

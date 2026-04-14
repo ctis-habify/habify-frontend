@@ -1,4 +1,5 @@
 import { Toast } from '@/components/ui/toast';
+import { SplashScreen } from '@/components/splash/splash-screen';
 import { getBackgroundGradient } from '@/constants/theme';
 import { ThemeProvider, useColorScheme } from '@/hooks/use-color-scheme';
 import { useToast } from '@/hooks/use-toast';
@@ -24,9 +25,15 @@ function RootContent(): React.ReactElement {
   const theme = useColorScheme() ?? 'light';
   const [topColor] = getBackgroundGradient(theme);
   const { initialized } = useAuth();
+  const [minimumSplashElapsed, setMinimumSplashElapsed] = React.useState(false);
 
-  if (!initialized) {
-    return <View style={{ flex: 1, backgroundColor: topColor }} />;
+  React.useEffect(() => {
+    const timer = setTimeout(() => setMinimumSplashElapsed(true), 1700);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!initialized || !minimumSplashElapsed) {
+    return <SplashScreen />;
   }
 
   return (
