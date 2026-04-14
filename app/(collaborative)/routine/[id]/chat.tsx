@@ -50,6 +50,11 @@ type RawChatMessage = {
   };
 };
 
+type RoutineParticipant = {
+  id: string;
+  name: string;
+};
+
 const CHAT_CACHE_KEY_PREFIX = 'routine_chat_cache_';
 const PREDEFINED_CATEGORY_ORDER = ['motivation', 'checkin', 'support', 'spicy', 'funny', 'general'] as const;
 
@@ -241,6 +246,8 @@ export default function CollaborativeChatScreen() {
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
   const [predefinedMessages, setPredefinedMessages] = useState<PredefinedRoutineMessage[]>([]);
   const [predefinedLoading, setPredefinedLoading] = useState(false);
+  const [participants, setParticipants] = useState<RoutineParticipant[]>([]);
+  const [taggedParticipant, setTaggedParticipant] = useState<RoutineParticipant | null>(null);
   const [pendingLogs, setPendingLogs] = useState<RoutineLog[]>([]);
   const [isQuickReplyOpen, setIsQuickReplyOpen] = useState(false);
   const [votersModalLog, setVotersModalLog] = useState<RoutineLog | null>(null);
@@ -413,6 +420,53 @@ export default function CollaborativeChatScreen() {
     }
   }, [routineId]);
 
+  const loadParticipants = useCallback(async (): Promise<void> => {
+    if (!routineId) return;
+
+    try {
+      const groupDetail = await routineService.getGroupDetail(routineId);
+      const normalizedParticipants = Array.isArray(groupDetail?.participants)
+        ? groupDetail.participants
+            .map((participant) => {
+              const source =
+                participant && typeof participant === 'object'
+                  ? (participant as Record<string, unknown>)
+                  : {};
+              const user =
+                source.user && typeof source.user === 'object'
+                  ? (source.user as Record<string, unknown>)
+                  : {};
+
+              const id = String(source.userId || source.id || user.id || '').trim();
+              const name = String(
+                source.username ||
+                  source.name ||
+                  user.username ||
+                  user.name ||
+                  '',
+              ).trim();
+
+              if (!id || !name || id === user?.id) {
+                return null;
+              }
+
+              return { id, name } satisfies RoutineParticipant;
+            })
+            .filter((participant): participant is RoutineParticipant => participant !== null)
+        : [];
+
+      setParticipants(normalizedParticipants);
+      setTaggedParticipant((current) =>
+        current && normalizedParticipants.some((participant) => participant.id === current.id)
+          ? current
+          : null,
+      );
+    } catch {
+      setParticipants([]);
+      setTaggedParticipant(null);
+    }
+  }, [routineId, user?.id]);
+
   useEffect(() => {
     const initPage = async () => {
       setIsInitialLoading(true);
@@ -420,6 +474,7 @@ export default function CollaborativeChatScreen() {
         await Promise.all([
           loadChatMessages(true),
           loadPredefinedMessages(),
+          loadParticipants(),
           fetchPendingLogs(),
         ]);
       } finally {
@@ -444,7 +499,7 @@ export default function CollaborativeChatScreen() {
       clearInterval(intervalId);
       sub.remove();
     };
-  }, [loadChatMessages, loadPredefinedMessages, fetchPendingLogs]);
+  }, [loadChatMessages, loadPredefinedMessages, loadParticipants, fetchPendingLogs]);
 
   useEffect(() => {
     if (displayMessages.length === 0) return;
@@ -459,11 +514,13 @@ export default function CollaborativeChatScreen() {
       if (!routineId || !text.trim() || isSendingMessageRef.current) return;
       isSendingMessageRef.current = true;
 
+      const outgoingText = taggedParticipant ? `@${taggedParticipant.name} ${text}` : text;
+
       const senderName = user?.name || user?.email || 'You';
       const optimisticId = `optimistic-${Date.now()}`;
       const optimisticMessage: ChatMessage = {
         id: optimisticId,
-        text,
+        text: outgoingText,
         sender: 'me',
         senderName,
         createdAt: new Date().toISOString(),
@@ -474,8 +531,9 @@ export default function CollaborativeChatScreen() {
       setChatError(null);
 
       try {
-        await routineService.sendRoutineChatMessage(routineId, text);
+        await routineService.sendRoutineChatMessage(routineId, outgoingText);
         setChatMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
+        setTaggedParticipant(null);
         await loadChatMessages();
     } catch (sendError: unknown) {
         setChatMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
@@ -497,7 +555,7 @@ export default function CollaborativeChatScreen() {
         isSendingMessageRef.current = false;
       }
     },
-    [routineId, loadChatMessages, user?.email, user?.name],
+    [routineId, taggedParticipant, loadChatMessages, user?.email, user?.name],
   );
 
 
@@ -754,6 +812,56 @@ export default function CollaborativeChatScreen() {
               <View style={styles.bottomSheetHeader}>
                 <Text style={styles.quickReplyTitle}>✨ Say something...</Text>
               </View>
+
+              {participants.length > 0 ? (
+                <View style={styles.tagSection}>
+                  <Text style={styles.tagSectionLabel}>Tag participant</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.tagScrollContent}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.tagChip,
+                        !taggedParticipant && styles.tagChipSelected,
+                      ]}
+                      onPress={() => setTaggedParticipant(null)}
+                      activeOpacity={0.85}
+                    >
+                      <Text
+                        style={[
+                          styles.tagChipText,
+                          !taggedParticipant && styles.tagChipTextSelected,
+                        ]}
+                      >
+                        No tag
+                      </Text>
+                    </TouchableOpacity>
+
+                    {participants.map((participant) => {
+                      const isSelected = taggedParticipant?.id === participant.id;
+                      return (
+                        <TouchableOpacity
+                          key={participant.id}
+                          style={[styles.tagChip, isSelected && styles.tagChipSelected]}
+                          onPress={() => setTaggedParticipant(participant)}
+                          activeOpacity={0.85}
+                        >
+                          <Text
+                            style={[
+                              styles.tagChipText,
+                              isSelected && styles.tagChipTextSelected,
+                            ]}
+                          >
+                            @{participant.name}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null}
 
               {predefinedLoading ? (
                 <View style={styles.quickReplyStateBox}>
@@ -1123,6 +1231,41 @@ const styles = StyleSheet.create({
     color: '#e7d0ff',
     fontSize: 18,
     fontWeight: '800',
+  },
+  tagSection: {
+    marginBottom: 16,
+    gap: 10,
+  },
+  tagSectionLabel: {
+    color: 'rgba(231, 208, 255, 0.8)',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  tagScrollContent: {
+    gap: 10,
+    paddingRight: 8,
+  },
+  tagChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  tagChipSelected: {
+    backgroundColor: 'rgba(232, 121, 249, 0.2)',
+    borderColor: 'rgba(232, 121, 249, 0.45)',
+  },
+  tagChipText: {
+    color: '#e7d0ff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tagChipTextSelected: {
+    color: '#ffffff',
   },
   quickReplyGrid: {
     flexDirection: 'row',
