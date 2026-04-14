@@ -36,7 +36,7 @@ export function TextInput({
   return (
     <View style={[styles.container, containerStyle]}>
       {label && (
-        <ThemedText type="label" style={[styles.label, { color: colors.icon }]}>
+        <ThemedText type="label" style={[styles.label, { color: error ? colors.error : colors.icon }]}>
           {label}
         </ThemedText>
       )}

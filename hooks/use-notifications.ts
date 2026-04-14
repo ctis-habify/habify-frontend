@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Platform } from 'react-native';
+import { DeviceEventEmitter, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
@@ -75,10 +75,33 @@ export function useNotifications(isAuthenticated: boolean) {
 
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notification) => {
+        const data = notification.request.content.data as Record<string, unknown>;
         const body =
           notification.request.content.body ??
           notification.request.content.title ??
           'New reminder';
+
+        if (
+          typeof data?.type === 'string' &&
+          (data.type === 'streak_bonus' ||
+            (data.type === 'verification_result' && !!data.collaborativeRoutineId))
+        ) {
+          DeviceEventEmitter.emit('COLLABORATIVE_SCORE_REFRESH');
+        }
+
+        if (data?.status === 'streak_bonus_awarded') {
+          notificationService.getRewardReminder(
+            body,
+            notification.request.content.title ?? 'Reward unlocked',
+            typeof data.routineId === 'string'
+              ? data.routineId
+              : typeof data.collaborativeRoutineId === 'string'
+                ? data.collaborativeRoutineId
+                : null,
+            typeof data.notificationId === 'string' ? data.notificationId : undefined,
+          );
+        }
+
         emitToast(body, 'bell');
       },
     );

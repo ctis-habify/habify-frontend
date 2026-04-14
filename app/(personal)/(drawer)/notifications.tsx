@@ -24,13 +24,22 @@ const categoryTitle: Record<NotificationCategory, string> = {
   friend_requests: 'Requests & Invitations',
   unfinished_tasks: 'Unfinished Tasks',
   social_interactions: 'Social Interactions',
+  rewards: 'Rewards',
 };
 
 const categoryIcon: Record<NotificationCategory, keyof typeof Ionicons.glyphMap> = {
   friend_requests: 'person-add-outline',
   unfinished_tasks: 'time-outline',
   social_interactions: 'people-outline',
+  rewards: 'gift-outline',
 };
+
+const categoryOrder: NotificationCategory[] = [
+  'friend_requests',
+  'unfinished_tasks',
+  'social_interactions',
+  'rewards',
+];
 
 export default function NotificationsScreen(): React.ReactElement {
   const navigation = useNavigation();
@@ -178,6 +187,7 @@ export default function NotificationsScreen(): React.ReactElement {
       friend_requests: [],
       unfinished_tasks: [],
       social_interactions: [],
+      rewards: [],
     };
 
     // Add local items
@@ -225,7 +235,7 @@ export default function NotificationsScreen(): React.ReactElement {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#fff" />
         }
       >
-        {(Object.keys(sections) as NotificationCategory[]).map((category) => (
+        {categoryOrder.map((category) => (
           <View
             key={category}
             style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -343,10 +353,19 @@ export default function NotificationsScreen(): React.ReactElement {
                             styles.itemRow,
                             { backgroundColor: colors.card },
                             item.isRead === false && styles.unreadRow,
+                            category === 'rewards' && styles.rewardRow,
                           ]}
                         >
                           {item.isRead === false && <View style={styles.unreadDot} />}
                           <View style={styles.itemContent}>
+                            {category === 'rewards' ? (
+                              <View style={styles.rewardHeader}>
+                                <Ionicons name="trophy" size={16} color="#F59E0B" />
+                                <Text style={[styles.rewardTitle, { color: colors.text }]}>
+                                  {item.title ?? 'Reward unlocked'}
+                                </Text>
+                              </View>
+                            ) : null}
                             <Text style={[styles.itemText, { color: colors.text }]}>{item.message}</Text>
                             <Text style={[styles.timeText, { color: colors.icon }]}>
                               {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -430,6 +449,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 8,
   },
+  rewardRow: {
+    paddingVertical: 12,
+  },
   unreadRow: {
     paddingLeft: 4,
   },
@@ -443,6 +465,15 @@ const styles = StyleSheet.create({
   itemContent: {
     flex: 1,
     gap: 4,
+  },
+  rewardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rewardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   itemText: {
     fontSize: 14,
@@ -511,4 +542,3 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 });
-

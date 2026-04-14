@@ -142,6 +142,14 @@ const normalizeScoreSummary = (value: unknown): CollaborativeScoreSummary => {
   return {
     totalPoints: toNumberOrDefault(source.totalPoints || source.points || source.score, 0),
     currentStreak: toNumberOrDefault(source.currentStreak || source.streak || source.current_streak, 0),
+    nextBonusStreak: toNumberOrDefault(
+      source.nextBonusStreak || source.next_bonus_streak,
+      5,
+    ),
+    nextBonusPoints: toNumberOrDefault(
+      source.nextBonusPoints || source.next_bonus_points,
+      10,
+    ),
     cup:
       getCupAward(source) ||
       getCupAward(source.cup) ||

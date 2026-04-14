@@ -3,17 +3,19 @@ import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native'
 
 interface AuthInputProps extends TextInputProps {
   label: string;
+  error?: string;
 }
 
-export function AuthInput({ label, style, ...props }: AuthInputProps): React.ReactElement {
+export function AuthInput({ label, style, error, ...props }: AuthInputProps): React.ReactElement {
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[styles.input, style]}
+        style={[styles.input, error ? styles.inputError : null, style]}
         placeholderTextColor="rgba(255, 255, 255, 0.4)"
         {...props}
       />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -35,5 +37,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     fontSize: 16,
+  },
+  inputError: {
+    borderWidth: 1.5,
+    borderColor: '#F87171',
+  },
+  errorText: {
+    marginTop: 6,
+    marginLeft: 4,
+    color: '#FCA5A5',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

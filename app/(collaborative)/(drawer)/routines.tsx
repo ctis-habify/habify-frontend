@@ -49,7 +49,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : COLLABORATIVE_GRADIENT;
-  const { points: collabPoints, streak: collabStreak, rank: collabRank, loading: collabScoreLoading } = useCollaborativeScore();
+  const {
+    points: collabPoints,
+    streak: collabStreak,
+    nextBonusStreak,
+    nextBonusPoints,
+    rank: collabRank,
+    loading: collabScoreLoading,
+  } = useCollaborativeScore();
 
   // 2. State
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -358,6 +365,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           <CollaborativeScoreBanner
             points={collabPoints}
             streak={collabStreak}
+            nextBonusStreak={nextBonusStreak}
+            nextBonusPoints={nextBonusPoints}
             rank={collabRank}
             loading={collabScoreLoading}
             accentColor={COLLABORATIVE_PRIMARY}
