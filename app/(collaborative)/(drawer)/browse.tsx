@@ -28,6 +28,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { Toast } from '@/components/ui/toast';
+import { getCategoryAccentColor } from '@/constants/category-colors';
 import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
 import type { Category } from '@/types/category';
@@ -315,7 +316,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                             <PublicRoutineCard
                                 routine={item}
                                 index={index}
-                                accentColor={ACCENT}
+                                accentColor={getCategoryAccentColor(item.category, item.categoryId ?? null)}
                                 onJoin={handleJoin}
                             />
                         )}

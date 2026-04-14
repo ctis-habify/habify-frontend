@@ -2,6 +2,13 @@ import { PublicRoutine, Routine, RoutineList, RoutineLog } from '../types/routin
 import { UserCupAward, createCupAwardFromFirstPlaceCount, normalizeCupTier, normalizeLeaderboardMedal } from '../types/collaborative-score';
 import { api } from './api';
 
+export type PredefinedRoutineMessage = {
+  text: string;
+  category: string;
+  color?: string;
+  order?: number;
+};
+
 export type UpdateRoutinePayload = Partial<{
   routineListId: number;
   routineName: string;
@@ -319,6 +326,43 @@ const normalizeMessageStrings = (value: unknown): string[] => {
     .filter(Boolean);
 };
 
+const normalizePredefinedRoutineMessages = (value: unknown): PredefinedRoutineMessage[] => {
+  const fallback = normalizeMessageStrings(value).map((text, index) => ({
+    text,
+    category: 'general',
+    order: index + 1,
+  }));
+
+  const array = getArrayFromResponse(value);
+  if (array.length === 0) return fallback;
+
+  const normalized = array
+    .map((item, index) => {
+      if (typeof item === 'string') {
+        return {
+          text: item.trim(),
+          category: 'general',
+          order: index + 1,
+        } as PredefinedRoutineMessage;
+      }
+
+      if (!item || typeof item !== 'object') return null;
+      const obj = item as Record<string, unknown>;
+      const text = toStringOrUndefined(obj.text || obj.message || obj.content)?.trim();
+      if (!text) return null;
+
+      return {
+        text,
+        category: toStringOrUndefined(obj.category || obj.group || obj.type)?.toLowerCase() || 'general',
+        color: toStringOrUndefined(obj.color),
+        order: toOptionalNumber(obj.order) ?? index + 1,
+      } as PredefinedRoutineMessage;
+    })
+    .filter((item): item is PredefinedRoutineMessage => !!item);
+
+  return normalized.length > 0 ? normalized : fallback;
+};
+
 export const routineService = {
   // Get all routines for the authenticated user
   async getRoutines(): Promise<Routine[]> {
@@ -448,9 +492,9 @@ export const routineService = {
   },
 
   // ✅ Get Predefined Messages for Collaborative Routine Chat
-  async getRoutinePredefinedMessages(): Promise<string[]> {
+  async getRoutinePredefinedMessages(): Promise<PredefinedRoutineMessage[]> {
     const res = await api.get('/routines/collaborative-chat/predefined');
-    return normalizeMessageStrings(res.data);
+    return normalizePredefinedRoutineMessages(res.data);
   },
 
   // ✅ Get Collaborative Routine Chat Messages

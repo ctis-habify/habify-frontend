@@ -53,14 +53,14 @@ export function RoutineCategoryCard({
       {/* HEADER */}
       <View style={styles.headerRow}>
         <View style={styles.textWrap}>
-          <ThemedText type="default" style={[styles.title, isGlass && { color: '#fff' }]} numberOfLines={1}>
+          <ThemedText type="default" style={[styles.title, isGlass && { color: '#fff' }]} numberOfLines={2}>
             {title}
           </ThemedText>
         </View>
         <View style={styles.headerRight}>
           {!!categoryName && (
             <View style={[styles.categoryBadge, isGlass ? { backgroundColor: 'rgba(255,255,255,0.15)' } : { backgroundColor: `${accentColor}15` }]}>
-              <ThemedText style={[styles.categoryText, isGlass ? { color: '#ffffff' } : { color: accentColor }]}>
+              <ThemedText style={[styles.categoryText, isGlass ? { color: '#ffffff' } : { color: accentColor }]} numberOfLines={1}>
                 {categoryName}
               </ThemedText>
             </View>
@@ -114,8 +114,6 @@ export function RoutineCategoryCard({
         </View>
       </View>
 
-
-
       <View style={styles.divider} />
 
       {/* RUTINLER */}
@@ -166,32 +164,34 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 22,
-    marginBottom: 14,
+    marginBottom: 10,
     zIndex: 10,
   },
   
   textWrap: {
     flex: 1,
-    paddingRight: 16,
+    paddingRight: 10,
+    minWidth: 0,
   },
   
   headerRight: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: -4,
+    alignItems: 'flex-start',
+    gap: 8,
     zIndex: 10,
+    flexShrink: 0,
   },
 
 
 
   title: {
     color: '#111827', 
-    fontSize: 22, 
+    fontSize: 18, 
     fontWeight: '400', 
     letterSpacing: 0.1, 
+    lineHeight: 23,
   },
 
   plusBtn: {
@@ -202,18 +202,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   categoryBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
-    marginRight: 6,
+    maxWidth: 130,
   },
   categoryText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
 
   divider: { height: 4 },

@@ -13,6 +13,7 @@ import { CreateRoutineInListModal } from '@/components/modals/create-routine-in-
 import { CreateRoutineModal } from '@/components/modals/create-routine-modal';
 import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
+import { getCategoryAccentColor } from '@/constants/category-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
 import type { RoutineList } from '@/types/routine';
@@ -176,6 +177,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           {loading && <ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} />}
 
           {!loading && routineLists.map((list, idx) => {
+            const accentColor = getCategoryAccentColor(list.categoryName, list.categoryId ?? null);
 
             const routinesProps = (list.routines || []).map(r => ({
               id: r.id,
@@ -204,6 +206,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                 onPressAddRoutine={() => handleAddRoutine(list.id ?? (list as RoutineList & { routineListId?: number }).routineListId, list.categoryId)}
                 onEditList={() => handleEditList(list)}
                 onDeleteList={() => handleDeleteList(list)}
+                accentColor={accentColor}
                 variant="light"
               />
             );

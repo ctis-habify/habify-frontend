@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,6 +11,8 @@ import {
   FlatList,
   Image,
   Modal,
+  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -22,6 +25,7 @@ import { RoutineCompletedAnimation } from '@/components/animations/routine-compl
 import { ImageFullscreenModal } from '@/components/modals/image-fullscreen-modal';
 import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
+import type { PredefinedRoutineMessage } from '@/services/routine.service';
 import { RoutineLog } from '@/types/routine';
 
 type ChatMessage = {
@@ -47,6 +51,75 @@ type RawChatMessage = {
 };
 
 const CHAT_CACHE_KEY_PREFIX = 'routine_chat_cache_';
+const PREDEFINED_CATEGORY_ORDER = ['motivation', 'checkin', 'support', 'spicy', 'funny', 'general'] as const;
+
+const getCategoryLabel = (category: string): string => {
+  const normalized = category.trim().toLowerCase();
+  if (normalized === 'motivation') return 'Motivation';
+  if (normalized === 'checkin') return 'Check-in';
+  if (normalized === 'support') return 'Support';
+  if (normalized === 'spicy') return 'Spicy';
+  if (normalized === 'funny') return 'Funny';
+  return 'General';
+};
+
+const getCategoryAccentColor = (category: string): string => {
+  const normalized = category.trim().toLowerCase();
+  if (normalized === 'motivation') return '#22c55e';
+  if (normalized === 'checkin') return '#3b82f6';
+  if (normalized === 'support') return '#f59e0b';
+  if (normalized === 'spicy') return '#ef4444';
+  if (normalized === 'funny') return '#e879f9';
+  return '#a78bfa';
+};
+
+const inferCategoryFromMessageText = (text: string): string => {
+  const lower = text.toLowerCase();
+  if (
+    lower.includes('great job') ||
+    lower.includes('streak') ||
+    lower.includes('congratulations') ||
+    lower.includes('motivate') ||
+    lower.includes('best today')
+  ) {
+    return 'motivation';
+  }
+  if (
+    lower.includes('completed my routine') ||
+    lower.includes('check in') ||
+    lower.includes('might be late')
+  ) {
+    return 'checkin';
+  }
+  if (
+    lower.includes('help me') ||
+    lower.includes('encouragement')
+  ) {
+    return 'support';
+  }
+  if (
+    lower.includes('still zero') ||
+    lower.includes('excuses again') ||
+    lower.includes('showing up first') ||
+    lower.includes('team carrying') ||
+    lower.includes('alarm won again')
+  ) {
+    return 'spicy';
+  }
+  if (
+    lower.includes('oops') ||
+    lower.includes('procrastination') ||
+    lower.includes('tomorrow') ||
+    lower.includes('coffee') ||
+    lower.includes('just here for the chat') ||
+    lower.includes('couch') ||
+    lower.includes('almost did it') ||
+    lower.includes('ruin')
+  ) {
+    return 'funny';
+  }
+  return 'general';
+};
 
 const normalizeChatMessages = (
   value: unknown,
@@ -166,7 +239,7 @@ export default function CollaborativeChatScreen() {
     setIsPreviewVisible(true);
   };
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
-  const [predefinedMessages, setPredefinedMessages] = useState<string[]>([]);
+  const [predefinedMessages, setPredefinedMessages] = useState<PredefinedRoutineMessage[]>([]);
   const [predefinedLoading, setPredefinedLoading] = useState(false);
   const [pendingLogs, setPendingLogs] = useState<RoutineLog[]>([]);
   const [isQuickReplyOpen, setIsQuickReplyOpen] = useState(false);
@@ -315,7 +388,24 @@ export default function CollaborativeChatScreen() {
     setPredefinedLoading(true);
     try {
       const messagesFromApi = await routineService.getRoutinePredefinedMessages();
-      setPredefinedMessages(messagesFromApi);
+      const messagesWithFallbackCategory = messagesFromApi.map((item) => ({
+        ...item,
+        category:
+          item.category && item.category.toLowerCase() !== 'general'
+            ? item.category.toLowerCase()
+            : inferCategoryFromMessageText(item.text),
+      }));
+      const sortedWithFallback = [...messagesWithFallbackCategory].sort((a, b) => {
+        const categoryA = a.category?.toLowerCase() || 'general';
+        const categoryB = b.category?.toLowerCase() || 'general';
+        const categoryIndexA = PREDEFINED_CATEGORY_ORDER.indexOf(categoryA as typeof PREDEFINED_CATEGORY_ORDER[number]);
+        const categoryIndexB = PREDEFINED_CATEGORY_ORDER.indexOf(categoryB as typeof PREDEFINED_CATEGORY_ORDER[number]);
+        const aIndex = categoryIndexA === -1 ? PREDEFINED_CATEGORY_ORDER.length : categoryIndexA;
+        const bIndex = categoryIndexB === -1 ? PREDEFINED_CATEGORY_ORDER.length : categoryIndexB;
+        if (aIndex !== bIndex) return aIndex - bIndex;
+        return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER);
+      });
+      setPredefinedMessages(sortedWithFallback);
     } catch (_messageError) {
       setPredefinedMessages([]);
     } finally {
@@ -387,10 +477,21 @@ export default function CollaborativeChatScreen() {
         await routineService.sendRoutineChatMessage(routineId, text);
         setChatMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
         await loadChatMessages();
-      } catch (_sendError) {
+    } catch (sendError: unknown) {
         setChatMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
         await loadChatMessages();
-        setChatError('Could not send message.');
+      let errorMessage = 'Could not send message.';
+      if (axios.isAxiosError(sendError)) {
+        const apiMessage = sendError.response?.data?.message;
+        if (Array.isArray(apiMessage)) {
+          errorMessage = apiMessage.join(', ');
+        } else if (typeof apiMessage === 'string' && apiMessage.trim()) {
+          errorMessage = apiMessage;
+        }
+      } else if (sendError instanceof Error && sendError.message.trim()) {
+        errorMessage = sendError.message;
+      }
+      setChatError(errorMessage);
       } finally {
         setSendingMessage(null);
         isSendingMessageRef.current = false;
@@ -644,17 +745,14 @@ export default function CollaborativeChatScreen() {
 
         {/* Quick Replies Bottom Modal */}
         <Modal visible={isQuickReplyOpen} transparent animationType="slide">
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setIsQuickReplyOpen(false)}
-          >
-            <TouchableOpacity activeOpacity={1} style={styles.quickReplyBottomSheet}>
+          <View style={styles.modalOverlay}>
+            <Pressable style={styles.modalBackdrop} onPress={() => setIsQuickReplyOpen(false)} />
+            <View style={styles.quickReplyBottomSheet}>
+              <TouchableOpacity onPress={() => setIsQuickReplyOpen(false)} style={styles.floatingCloseBtn}>
+                <Ionicons name="close" size={20} color="#e7d0ff" />
+              </TouchableOpacity>
               <View style={styles.bottomSheetHeader}>
                 <Text style={styles.quickReplyTitle}>✨ Say something...</Text>
-                <TouchableOpacity onPress={() => setIsQuickReplyOpen(false)} style={styles.closeBtn}>
-                  <Ionicons name="close" size={20} color="#e7d0ff" />
-                </TouchableOpacity>
               </View>
 
               {predefinedLoading ? (
@@ -662,33 +760,59 @@ export default function CollaborativeChatScreen() {
                   <ActivityIndicator size="small" color="#e879f9" />
                 </View>
               ) : (
-                <View style={styles.quickReplyGrid}>
-                  {predefinedMessages.map((message, index) => (
-                    <TouchableOpacity
-                      key={`${message}-${index}`}
-                      style={[
-                        styles.quickReplyBtn,
-                        sendingMessage === message && styles.quickReplyBtnSending,
-                      ]}
-                      onPress={() => {
-                        handleSendPredefinedMessage(message);
-                        setIsQuickReplyOpen(false);
-                      }}
-                      activeOpacity={0.7}
-                      disabled={sendingMessage !== null}
-                    >
-                      {sendingMessage === message ? (
-                        <ActivityIndicator size="small" color="#e879f9" />
-                      ) : null}
-                      <Text style={styles.quickReplyText} numberOfLines={2}>
-                        {message}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <ScrollView
+                  style={styles.quickReplyScroll}
+                  contentContainerStyle={styles.quickReplyScrollContent}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
+                >
+                  {PREDEFINED_CATEGORY_ORDER.map((categoryKey) => {
+                    const items = predefinedMessages.filter(
+                      (msg) => (msg.category || 'general').toLowerCase() === categoryKey,
+                    );
+                    if (items.length === 0) return null;
+
+                    return (
+                      <View key={categoryKey} style={styles.quickReplyCategorySection}>
+                        <Text style={styles.quickReplyCategoryTitle}>{getCategoryLabel(categoryKey)}</Text>
+                        <View style={styles.quickReplyGrid}>
+                          {items.map((message, index) => {
+                            const accentColor = getCategoryAccentColor(categoryKey);
+                            return (
+                              <TouchableOpacity
+                                key={`${message.text}-${index}`}
+                                style={[
+                                  styles.quickReplyBtn,
+                                  {
+                                    backgroundColor: `${accentColor}22`,
+                                    borderColor: `${accentColor}55`,
+                                  },
+                                  sendingMessage === message.text && styles.quickReplyBtnSending,
+                                ]}
+                                onPress={() => {
+                                  handleSendPredefinedMessage(message.text);
+                                  setIsQuickReplyOpen(false);
+                                }}
+                                activeOpacity={0.7}
+                                disabled={sendingMessage !== null}
+                              >
+                                {sendingMessage === message.text ? (
+                                  <ActivityIndicator size="small" color={accentColor} />
+                                ) : null}
+                                <Text style={[styles.quickReplyText, { color: accentColor }]} numberOfLines={2}>
+                                  {message.text}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </ScrollView>
               )}
-            </TouchableOpacity>
-          </TouchableOpacity>
+            </View>
+          </View>
         </Modal>
 
         {/* Voters Bottom Modal */}
@@ -949,12 +1073,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
   quickReplyBottomSheet: {
     backgroundColor: '#200f4a',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: 40,
+    maxHeight: '78%',
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
@@ -964,6 +1092,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 20,
+  },
+  floatingCloseBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
   },
   bottomSheetHeader: {
     flexDirection: 'row',
@@ -989,6 +1129,24 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
     justifyContent: 'space-between',
+  },
+  quickReplyScroll: {
+    maxHeight: 420,
+  },
+  quickReplyScrollContent: {
+    paddingBottom: 4,
+  },
+  quickReplyCategorySection: {
+    width: '100%',
+    marginBottom: 14,
+  },
+  quickReplyCategoryTitle: {
+    color: '#e7d0ff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   quickReplyBtn: {
     backgroundColor: 'rgba(232, 121, 249, 0.15)',
