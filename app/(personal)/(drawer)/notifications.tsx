@@ -334,7 +334,9 @@ export default function NotificationsScreen(): React.ReactElement {
                 {!loadedSections.reminders ? (
                   <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
                 ) : sections[category].length === 0 ? (
-                  <Text style={[styles.emptyText, { color: colors.icon }]}>No notifications yet.</Text>
+                  <Text style={[styles.emptyText, { color: colors.icon }]}>
+                    {category === 'awards' ? 'No rewards yet.' : 'No notifications yet.'}
+                  </Text>
                 ) : (
                   <ScrollView
                     style={styles.sectionScroll}
