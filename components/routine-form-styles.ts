@@ -117,6 +117,13 @@ export function getRoutineFormStyles(theme: ThemeKey = 'light') {
       color: TEXT_COLOR,
       padding: 0,
     },
+    errorText: {
+      marginTop: 6,
+      marginLeft: 4,
+      color: colors.error,
+      fontSize: 12,
+      fontWeight: '500',
+    },
     addIconBtn: {
       width: 44,
       height: 44,

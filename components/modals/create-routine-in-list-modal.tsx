@@ -30,6 +30,12 @@ type Props = {
   onCreated?: () => void;
 };
 
+type FormErrors = {
+  routineName?: string;
+  frequency?: string;
+  timeRange?: string;
+};
+
 const FREQUENCY_ITEMS = [
   { label: 'Daily', value: 'DAILY' as FrequencyType },
   { label: 'Weekly', value: 'WEEKLY' as FrequencyType },
@@ -54,6 +60,7 @@ export function CreateRoutineInListModal({
   };
 
   const [routineName, setRoutineName] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
   const [routineNameFocused, setRoutineNameFocused] = useState(false);
   const [startTime, setStartTime] = useState(createUtcTime(9, 0));
   const [endTime, setEndTime] = useState(createUtcTime(10, 0));
@@ -86,18 +93,20 @@ export function CreateRoutineInListModal({
   );
 
   const validate = () => {
-    const errors: string[] = [];
-    if (!routineListId) errors.push('Routine list id missing.');
-    if (!routineName.trim()) errors.push('Please enter a routine name.');
-    if (frequency === 'DAILY' && hasSpecificTime && startTime >= endTime)
-      errors.push('Routine end time must be after start time.');
-    if (!frequency) errors.push('Please select a frequency.');
-
-    if (errors.length) {
-      Alert.alert('Warning', errors.join('\n'));
+    if (!routineListId) {
+      Alert.alert('Warning', 'Routine list id missing.');
       return false;
     }
-    return true;
+
+    const nextErrors: FormErrors = {};
+    if (!routineName.trim()) nextErrors.routineName = 'Please enter a routine name.';
+    if (!frequency) nextErrors.frequency = 'Please select a frequency.';
+    if (frequency === 'DAILY' && hasSpecificTime && startTime >= endTime) {
+      nextErrors.timeRange = 'Routine end time must be after start time.';
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleCreate = async () => {
@@ -166,13 +175,22 @@ export function CreateRoutineInListModal({
               <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Routine Name</Text>
               <View
                 style={[
-                  styles.inputContainer,
-                  { borderColor: routineNameFocused ? colors.primary : 'transparent' },
+                styles.inputContainer,
+                  {
+                    borderColor: errors.routineName
+                      ? colors.error
+                      : routineNameFocused
+                        ? colors.primary
+                        : 'transparent',
+                  },
                 ]}
               >
                 <TextInput
                   value={routineName}
-                  onChangeText={setRoutineName}
+                  onChangeText={(value) => {
+                    setRoutineName(value);
+                    setErrors((prev) => ({ ...prev, routineName: undefined }));
+                  }}
                   placeholder="Enter your routine name"
                   placeholderTextColor={colors.icon}
                   style={[styles.textInput]}
@@ -180,6 +198,9 @@ export function CreateRoutineInListModal({
                   onBlur={() => setRoutineNameFocused(false)}
                 />
               </View>
+              {errors.routineName ? (
+                <Text style={styles.errorText}>{errors.routineName}</Text>
+              ) : null}
 
               {/* Frequency */}
               <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Frequency</Text>
@@ -189,10 +210,24 @@ export function CreateRoutineInListModal({
                   value={frequency}
                   items={FREQUENCY_ITEMS}
                   setOpen={setFreqOpen}
-                  setValue={setFrequency}
+                  setValue={(callback) => {
+                    setFrequency((prev) => {
+                      const nextValue =
+                        typeof callback === 'function' ? callback(prev) : callback;
+                      setErrors((current) => ({
+                        ...current,
+                        frequency: undefined,
+                        timeRange: undefined,
+                      }));
+                      return nextValue;
+                    });
+                  }}
                   onOpen={onFreqOpen}
                   placeholder="Select Frequency"
-                  style={dropDownStyle}
+                  style={[
+                    dropDownStyle,
+                    errors.frequency ? { borderColor: colors.error } : null,
+                  ]}
                   textStyle={{ color: colors.text, fontSize: 16 }}
                   dropDownContainerStyle={{
                     backgroundColor: colors.card,
@@ -204,6 +239,9 @@ export function CreateRoutineInListModal({
                   zIndex={2000}
                   zIndexInverse={1000}
                 />
+                {errors.frequency ? (
+                  <Text style={styles.errorText}>{errors.frequency}</Text>
+                ) : null}
               </View>
 
               {/* Time Selection Toggle (Only for DAILY) */}
@@ -212,7 +250,10 @@ export function CreateRoutineInListModal({
                   <Text style={styles.sectionLabel}>Set specific time</Text>
                   <Switch
                     value={hasSpecificTime}
-                    onValueChange={setHasSpecificTime}
+                    onValueChange={(value) => {
+                      setHasSpecificTime(value);
+                      setErrors((prev) => ({ ...prev, timeRange: undefined }));
+                    }}
                     trackColor={{ false: '#767577', true: colors.primary }}
                     thumbColor={hasSpecificTime ? '#fff' : '#f4f3f4'}
                   />
@@ -250,7 +291,10 @@ export function CreateRoutineInListModal({
                                 display="spinner"
                                 timeZoneName="UTC"
                                 onChange={(e, d) => {
-                                  if (d) setStartTime(d);
+                                  if (d) {
+                                    setStartTime(d);
+                                    setErrors((prev) => ({ ...prev, timeRange: undefined }));
+                                  }
                                 }}
                                 textColor={colors.text}
                               />
@@ -266,7 +310,10 @@ export function CreateRoutineInListModal({
                           timeZoneOffsetInMinutes={0}
                           onChange={(e, d) => {
                             setShowStartTimePicker(false);
-                            if (d) setStartTime(d);
+                            if (d) {
+                              setStartTime(d);
+                              setErrors((prev) => ({ ...prev, timeRange: undefined }));
+                            }
                           }}
                         />
                       ))}
@@ -298,7 +345,10 @@ export function CreateRoutineInListModal({
                                 display="spinner"
                                 timeZoneName="UTC"
                                 onChange={(e, d) => {
-                                  if (d) setEndTime(d);
+                                  if (d) {
+                                    setEndTime(d);
+                                    setErrors((prev) => ({ ...prev, timeRange: undefined }));
+                                  }
                                 }}
                                 textColor={colors.text}
                               />
@@ -314,13 +364,19 @@ export function CreateRoutineInListModal({
                           timeZoneOffsetInMinutes={0}
                           onChange={(e, d) => {
                             setShowEndTimePicker(false);
-                            if (d) setEndTime(d);
+                            if (d) {
+                              setEndTime(d);
+                              setErrors((prev) => ({ ...prev, timeRange: undefined }));
+                            }
                           }}
                         />
                       ))}
                   </View>
                 </View>
               )}
+              {errors.timeRange ? (
+                <Text style={styles.errorText}>{errors.timeRange}</Text>
+              ) : null}
 
               <TouchableOpacity
                 style={[styles.createBtn, { marginTop: 40 }]}

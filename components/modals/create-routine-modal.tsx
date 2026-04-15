@@ -31,6 +31,12 @@ interface CreateRoutineModalProps {
   isCollaborativeMode?: boolean;
 }
 
+type FormErrors = {
+  category?: string;
+  routineListTitle?: string;
+  newCategoryName?: string;
+};
+
 export function CreateRoutineModal({
   onClose,
   onCreated,
@@ -64,6 +70,7 @@ export function CreateRoutineModal({
 
   // --- Form states ---
   const [category, setCategory] = useState<number | null>(null);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   // Routine List Title
   const [routineListTitle, setRoutineListTitle] = useState('');
@@ -111,7 +118,7 @@ export function CreateRoutineModal({
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {
-      Alert.alert('Warning', 'Please enter a category name.');
+      setErrors((prev) => ({ ...prev, newCategoryName: 'Please enter a category name.' }));
       return;
     }
 
@@ -123,6 +130,7 @@ export function CreateRoutineModal({
       setCategories((prev) => [...prev, created]);
       setCategory(Number(newId));
       setNewCategoryName('');
+      setErrors((prev) => ({ ...prev, newCategoryName: undefined, category: undefined }));
       setShowNewCategoryInput(false);
     } catch (e: unknown) {
       console.error('Create category failed', e);
@@ -201,15 +209,12 @@ export function CreateRoutineModal({
   };
 
   const validateForm = () => {
-    const errors: string[] = [];
-    if (!category) errors.push('Please select a category.');
-    if (!routineListTitle.trim()) errors.push('Please enter a list title.');
+    const nextErrors: FormErrors = {};
+    if (!category) nextErrors.category = 'Please select a category.';
+    if (!routineListTitle.trim()) nextErrors.routineListTitle = 'Please enter a list title.';
 
-    if (errors.length) {
-      Alert.alert('Warning', errors.join('\n'));
-      return false;
-    }
-    return true;
+    setErrors((prev) => ({ ...prev, ...nextErrors }));
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSave = async () => {
@@ -299,11 +304,21 @@ export function CreateRoutineModal({
                   value={category}
                   items={categoryItems}
                   setOpen={setCatOpen}
-                  setValue={setCategory}
+                  setValue={(callback) => {
+                    setCategory((prev) => {
+                      const nextValue =
+                        typeof callback === 'function' ? callback(prev) : callback;
+                      setErrors((current) => ({ ...current, category: undefined }));
+                      return nextValue;
+                    });
+                  }}
                   onOpen={onCatOpen}
                   loading={loadingCategories}
                   placeholder="Select Category"
-                  style={dropDownStyle}
+                  style={[
+                    dropDownStyle,
+                    errors.category ? { borderColor: colors.error } : null,
+                  ]}
                   textStyle={{ color: colors.text, fontSize: 16 }}
                   placeholderStyle={{ color: colors.icon }}
                   listMode="MODAL"
@@ -318,6 +333,9 @@ export function CreateRoutineModal({
                   zIndex={2000}
                   zIndexInverse={1000}
                 />
+                {errors.category ? (
+                  <Text style={styles.errorText}>{errors.category}</Text>
+                ) : null}
               </View>
 
               {/* Buttons Row */}
@@ -371,7 +389,10 @@ export function CreateRoutineModal({
                 >
                   <TextInput
                     value={newCategoryName}
-                    onChangeText={setNewCategoryName}
+                    onChangeText={(value) => {
+                      setNewCategoryName(value);
+                      setErrors((prev) => ({ ...prev, newCategoryName: undefined }));
+                    }}
                     placeholder="New Category Name"
                     placeholderTextColor={colors.icon}
                     style={[styles.textInput, { flex: 1 }]}
@@ -380,6 +401,9 @@ export function CreateRoutineModal({
                     <Text style={{ color: colors.primary, fontWeight: '600' }}>Save</Text>
                   </TouchableOpacity>
                 </View>
+                {errors.newCategoryName ? (
+                  <Text style={styles.errorText}>{errors.newCategoryName}</Text>
+                ) : null}
               </View>
             )}
 
@@ -388,12 +412,15 @@ export function CreateRoutineModal({
             <View
               style={[
                 styles.inputContainer,
-                { borderColor: titleFocused ? colors.primary : 'transparent' },
+                { borderColor: errors.routineListTitle ? colors.error : titleFocused ? colors.primary : 'transparent' },
               ]}
             >
               <TextInput
                 value={routineListTitle}
-                onChangeText={setRoutineListTitle}
+                onChangeText={(value) => {
+                  setRoutineListTitle(value);
+                  setErrors((prev) => ({ ...prev, routineListTitle: undefined }));
+                }}
                 placeholder="e.g. Morning Routine"
                 placeholderTextColor={colors.icon}
                 style={[styles.textInput]}
@@ -401,6 +428,9 @@ export function CreateRoutineModal({
                 onBlur={() => setTitleFocused(false)}
               />
             </View>
+            {errors.routineListTitle ? (
+              <Text style={styles.errorText}>{errors.routineListTitle}</Text>
+            ) : null}
 
 
 

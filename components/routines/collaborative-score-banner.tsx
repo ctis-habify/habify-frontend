@@ -112,37 +112,45 @@ export function CollaborativeScoreBanner({
   }
 
   return (
-    <View style={styles.wrapper}>
+    <View>
       <View style={styles.container}>
       {/* Points Column */}
         <View style={styles.statColumn}>
-        <View style={styles.iconWrap}>
-          <Ionicons name="diamond-outline" size={20} color={accentColor} />
+          <View style={styles.iconWrap}>
+            <Ionicons name="diamond-outline" size={20} color={accentColor} />
+          </View>
+          <Text style={[styles.statValue, { color: accentColor }]}>{displayPoints}</Text>
+          <Text style={styles.statLabel}>Points</Text>
         </View>
-        <Text style={[styles.statValue, { color: accentColor }]}>{displayPoints}</Text>
-        <Text style={styles.statLabel}>Points</Text>
-      </View>
 
         <View style={styles.divider} />
 
-      {/* Rank Column */}
+        {/* Rank Column */}
         <View style={styles.statColumn}>
-        <View style={styles.iconWrap}>
-          <Ionicons name={rank.icon} size={20} color={rank.color} />
+          <View style={styles.iconWrap}>
+            <Ionicons name={rank.icon} size={20} color={rank.color} />
+          </View>
+          <Text style={[styles.statValue, { color: rank.color }]}>{rank.label}</Text>
+          <Text style={styles.statLabel}>Rank</Text>
         </View>
-        <Text style={[styles.statValue, { color: rank.color }]}>{rank.label}</Text>
-        <Text style={styles.statLabel}>Rank</Text>
-      </View>
 
         <View style={styles.divider} />
 
-      {/* Streak Column */}
+        {/* Streak Column */}
         <View style={styles.statColumn}>
-        <View style={styles.iconWrap}>
-          <Ionicons name="flame" size={20} color="#F97316" />
+          <View style={styles.iconWrap}>
+            <Ionicons name="flame" size={20} color="#F97316" />
+          </View>
+          <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
+          <Text style={styles.statLabel}>Streak</Text>
         </View>
-        <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
-        <Text style={styles.statLabel}>Streak</Text>
+      </View>
+
+      <View style={styles.bonusStrip}>
+        <Ionicons name="gift-outline" size={16} color={accentColor} />
+        <Text style={styles.bonusText}>
+          Next reward: {nextBonusStreak}-day streak for +{nextBonusPoints} points
+        </Text>
       </View>
       </View>
 
@@ -232,5 +240,23 @@ const styles = StyleSheet.create({
     width: 1,
     height: 36,
     backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  bonusStrip: {
+    marginTop: -8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  bonusText: {
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

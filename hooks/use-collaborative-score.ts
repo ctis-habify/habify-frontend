@@ -1,5 +1,6 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import { useAuth } from './use-auth';
 import { collaborativeScoreService } from '../services/collaborative-score.service';
 import {
@@ -62,6 +63,16 @@ export function useCollaborativeScore(): UseCollaborativeScoreResult {
       fetchScore();
     }, [fetchScore]),
   );
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('COLLABORATIVE_SCORE_REFRESH', () => {
+      fetchScore();
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [fetchScore]);
 
   const rank = resolveCollaborativeRank(points);
 

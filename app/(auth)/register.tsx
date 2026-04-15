@@ -14,6 +14,14 @@ import { Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View
 import DropDownPicker from 'react-native-dropdown-picker';
 import { authService } from '../../services/auth.service';
 
+type RegisterErrors = {
+  name?: string;
+  email?: string;
+  birthDate?: string;
+  gender?: string;
+  password?: string;
+};
+
 const GENDER_OPTIONS = [
   { label: 'Male', value: 'male' },
   { label: 'Female', value: 'female' },
@@ -36,6 +44,7 @@ export default function SignupScreen(): React.ReactElement {
   const [gender, setGender] = useState('');
   const [genderOpen, setGenderOpen] = useState(false);
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<RegisterErrors>({});
   const [selectedAvatar, setSelectedAvatar] = useState('avatar1');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,26 +57,28 @@ export default function SignupScreen(): React.ReactElement {
   ];
 
   const validateForm = () => {
-    if (!name || !email || !birthDate || !gender || !password) {
-      Alert.alert('Missing Information', 'Please fill in all fields.');
-      return false;
-    }
-// ... (rest of validateForm logic)
+    const nextErrors: RegisterErrors = {};
+
+    if (!name.trim()) nextErrors.name = 'Name is required.';
+    if (!email.trim()) nextErrors.email = 'Email is required.';
+    if (!birthDate.trim()) nextErrors.birthDate = 'Birth date is required.';
+    if (!gender) nextErrors.gender = 'Gender is required.';
+    if (!password.trim()) nextErrors.password = 'Password is required.';
+
     const emailRegex = /\S+@\S+\.\S+/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.');
-      return false;
+    if (email.trim() && !emailRegex.test(email)) {
+      nextErrors.email = 'Please enter a valid email address.';
     }
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(birthDate)) {
-      Alert.alert('Invalid Date', 'Birth date must be in YYYY-MM-DD format.');
-      return false;
+    if (birthDate.trim() && !dateRegex.test(birthDate)) {
+      nextErrors.birthDate = 'Birth date must be in YYYY-MM-DD format.';
     }
-    if (password.length < 6) {
-      Alert.alert('Weak Password', 'Password must be at least 6 characters.');
-      return false;
+    if (password.trim() && password.length < 6) {
+      nextErrors.password = 'Password must be at least 6 characters.';
     }
-    return true;
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleRegister = async () => {
@@ -124,21 +135,29 @@ export default function SignupScreen(): React.ReactElement {
         <TextInput 
           label="Name Surname"
           value={name}
-          onChangeText={setName}
+          onChangeText={(value) => {
+            setName(value);
+            setErrors((prev) => ({ ...prev, name: undefined }));
+          }}
           placeholder="Name Surname"
           icon="person-outline"
           containerStyle={{ marginBottom: 12 }}
+          error={errors.name}
         />
 
         <TextInput 
           label="Email"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(value) => {
+            setEmail(value);
+            setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
           placeholder="example@gmail.com"
           keyboardType="email-address"
           autoCapitalize="none"
           icon="mail-outline"
           containerStyle={{ marginBottom: 12 }}
+          error={errors.email}
         />
 
         {/* Birth Date Picker */}
@@ -147,15 +166,26 @@ export default function SignupScreen(): React.ReactElement {
           <TouchableOpacity
             style={[
               styles.dateButton,
-              { backgroundColor: colors.surface, borderColor: colors.border },
+              {
+                backgroundColor: colors.surface,
+                borderColor: errors.birthDate ? colors.error : colors.border,
+              },
             ]}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => {
+              setErrors((prev) => ({ ...prev, birthDate: undefined }));
+              setShowDatePicker(true);
+            }}
           >
              <Ionicons name="calendar-outline" size={20} color={colors.icon} style={{ marginRight: 10 }} />
              <Text style={birthDate ? [styles.dateText, { color: colors.text }] : [styles.placeholderText, { color: colors.icon }]}>
                {birthDate || 'YYYY-MM-DD'}
              </Text>
           </TouchableOpacity>
+          {errors.birthDate ? (
+            <ThemedText style={[styles.errorText, { color: colors.error }]}>
+              {errors.birthDate}
+            </ThemedText>
+          ) : null}
 
           {showDatePicker && (
              Platform.OS === 'ios' ? (
@@ -176,6 +206,7 @@ export default function SignupScreen(): React.ReactElement {
                               if (d) {
                                 setDateObject(d);
                                 setBirthDate(d.toISOString().split('T')[0]);
+                                setErrors((prev) => ({ ...prev, birthDate: undefined }));
                               }
                            }}
                          />
@@ -193,6 +224,7 @@ export default function SignupScreen(): React.ReactElement {
                      if (d) {
                        setDateObject(d);
                        setBirthDate(d.toISOString().split('T')[0]);
+                       setErrors((prev) => ({ ...prev, birthDate: undefined }));
                      }
                   }}
                 />
@@ -207,11 +239,21 @@ export default function SignupScreen(): React.ReactElement {
             value={gender}
             items={GENDER_OPTIONS}
             setOpen={setGenderOpen}
-            setValue={setGender}
+            setValue={(callback) => {
+              setGender((prev) => {
+                const nextValue =
+                  typeof callback === 'function' ? callback(prev) : callback;
+                setErrors((current) => ({ ...current, gender: undefined }));
+                return nextValue;
+              });
+            }}
             placeholder="Select Gender"
             style={[
               styles.dropdown,
-              { backgroundColor: colors.surface, borderColor: colors.border },
+              {
+                backgroundColor: colors.surface,
+                borderColor: errors.gender ? colors.error : colors.border,
+              },
             ]}
             dropDownContainerStyle={[
               styles.dropdownContainer,
@@ -222,16 +264,25 @@ export default function SignupScreen(): React.ReactElement {
             listMode="SCROLLVIEW"
             theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
           />
+          {errors.gender ? (
+            <ThemedText style={[styles.errorText, { color: colors.error }]}>
+              {errors.gender}
+            </ThemedText>
+          ) : null}
         </View>
 
         <TextInput 
           label="Password"
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(value) => {
+            setPassword(value);
+            setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
           placeholder="***********"
           secureTextEntry
           icon="lock-closed-outline"
           containerStyle={{ marginBottom: 12 }}
+          error={errors.password}
         />
 
         {/* Avatar Selection */}
@@ -348,5 +399,11 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'flex-end',
     marginBottom: 10,
+  },
+  errorText: {
+    marginTop: 6,
+    marginLeft: 4,
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

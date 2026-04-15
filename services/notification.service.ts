@@ -1,12 +1,13 @@
 import { api } from './api';
 
-type NotificationKind = 'unfinished_tasks' | 'social_interactions';
+type NotificationKind = 'unfinished_tasks' | 'social_interactions' | 'rewards';
 
 const COOLDOWN_MS = 3 * 60 * 1000;
 
 const lastShownAt: Record<NotificationKind, number> = {
   unfinished_tasks: 0,
   social_interactions: 0,
+  rewards: 0,
 };
 
 let lastCollaborativeCount = 0;
@@ -15,11 +16,12 @@ export type NotificationCategory =
   | 'friend_requests'
   | 'unfinished_tasks'
   | 'social_interactions'
-  | 'awards';
+  | 'rewards';
 
 export interface NotificationItem {
   id: string;
   category: NotificationCategory;
+  title?: string;
   message: string;
   createdAt: number;
   isRead?: boolean;
@@ -66,6 +68,10 @@ export const notificationService = {
     return [...notificationFeed].sort((a, b) => b.createdAt - a.createdAt);
   },
 
+  addRealtimeNotification(item: NotificationItem): void {
+    notificationFeed.unshift(item);
+  },
+
   addFriendRequestNotification(friendName: string): void {
     addNotification('friend_requests', `${friendName} sent you a friend request.`);
   },
@@ -93,6 +99,26 @@ export const notificationService = {
     }
 
     return null;
+  },
+
+  getRewardReminder(
+    message: string,
+    title?: string,
+    routineId?: string | null,
+    notificationId?: string,
+  ): string | null {
+    if (!shouldShow('rewards')) return null;
+
+    notificationFeed.unshift({
+      id: notificationId ?? `rewards-${Date.now()}`,
+      category: 'rewards',
+      title,
+      message,
+      createdAt: Date.now(),
+      isRead: false,
+      routineId,
+    });
+    return message;
   },
 
   // ── Backend API methods ──
@@ -141,12 +167,14 @@ export const notificationService = {
       routine_invitation: 'friend_requests',
       task_reminder: 'unfinished_tasks',
       poke: 'social_interactions',
-      streak_bonus: 'awards',
+      verification_result: 'social_interactions',
+      streak_bonus: 'rewards',
     };
 
     return {
       id: n.id,
       category: typeToCategory[n.type] ?? 'social_interactions',
+      title: n.title,
       message: n.body,
       createdAt: new Date(n.createdAt).getTime(),
       isRead: n.isRead,
