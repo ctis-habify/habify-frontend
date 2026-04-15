@@ -1,5 +1,6 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import { useAuth } from './use-auth';
 import { collaborativeScoreService } from '../services/collaborative-score.service';
 import {
@@ -12,6 +13,8 @@ import {
 interface UseCollaborativeScoreResult {
   readonly points: number;
   readonly streak: number;
+  readonly nextBonusStreak: number;
+  readonly nextBonusPoints: number;
   readonly rank: CollaborativeRankInfo;
   readonly cup: UserCupAward | null;
   readonly loading: boolean;
@@ -21,6 +24,8 @@ export function useCollaborativeScore(): UseCollaborativeScoreResult {
   const { user } = useAuth();
   const [points, setPoints] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [nextBonusStreak, setNextBonusStreak] = useState(5);
+  const [nextBonusPoints, setNextBonusPoints] = useState(10);
   const [cup, setCup] = useState<UserCupAward | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,6 +38,8 @@ export function useCollaborativeScore(): UseCollaborativeScoreResult {
       ]);
       setPoints(data.totalPoints ?? 0);
       setStreak(data.currentStreak ?? 0);
+      setNextBonusStreak(data.nextBonusStreak ?? 5);
+      setNextBonusPoints(data.nextBonusPoints ?? 10);
       const currentUserId = user?.id ? String(user.id).trim() : '';
       const currentEntry = leaderboard.find((entry) => entry.userId === currentUserId);
       const fallbackCup = !data.cup && currentEntry
@@ -43,6 +50,8 @@ export function useCollaborativeScore(): UseCollaborativeScoreResult {
       // Gracefully fallback to defaults on error
       setPoints(0);
       setStreak(0);
+      setNextBonusStreak(5);
+      setNextBonusPoints(10);
       setCup(null);
     } finally {
       setLoading(false);
@@ -55,7 +64,17 @@ export function useCollaborativeScore(): UseCollaborativeScoreResult {
     }, [fetchScore]),
   );
 
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('COLLABORATIVE_SCORE_REFRESH', () => {
+      fetchScore();
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [fetchScore]);
+
   const rank = resolveCollaborativeRank(points);
 
-  return { points, streak, rank, cup, loading };
+  return { points, streak, nextBonusStreak, nextBonusPoints, rank, cup, loading };
 }

@@ -11,12 +11,18 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
+type LoginErrors = {
+  email?: string;
+  password?: string;
+};
+
 export default function LoginScreen(): React.ReactElement {
   const router = useRouter();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [remember, setRemember] = useState(false);
   
   const { login, loading, user, initialized } = useAuth();
@@ -28,8 +34,19 @@ export default function LoginScreen(): React.ReactElement {
   }, [initialized, user, router]);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Missing fields', 'Please enter email and password.');
+    const nextErrors: LoginErrors = {};
+
+    if (!email.trim()) {
+      nextErrors.email = 'Email is required.';
+    }
+
+    if (!password.trim()) {
+      nextErrors.password = 'Password is required.';
+    }
+
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -55,20 +72,28 @@ export default function LoginScreen(): React.ReactElement {
         <TextInput 
           label="Email Address"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(value) => {
+            setEmail(value);
+            setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
           placeholder="example@gmail.com"
           keyboardType="email-address"
           autoCapitalize="none"
           icon="mail-outline"
+          error={errors.email}
         />
 
         <TextInput 
           label="Password"
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(value) => {
+            setPassword(value);
+            setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
           placeholder="***********"
           secureTextEntry
           icon="lock-closed-outline"
+          error={errors.password}
         />
         
         <View style={styles.rowBetween}>
