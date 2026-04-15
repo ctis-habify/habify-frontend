@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter, Platform, StatusBar, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { routineService } from '../../../services/routine.service';
@@ -41,6 +42,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   const [collabIds, setCollabIds] = useState<Set<string>>(new Set());
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [contentAnimationKey, setContentAnimationKey] = useState(0);
 
   const goToRoutineDetail = useCallback(
     (routine: Routine) => {
@@ -144,6 +146,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 
   useEffect(() => {
     if (isFocused) {
+      setContentAnimationKey((current) => current + 1);
       load();
     }
     
@@ -165,18 +168,24 @@ export default function TodayRoutinesScreen(): React.ReactElement {
       />
 
       <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <TodayRoutinesList
-          items={items}
-          loading={loading}
-          onRefresh={load}
-          onPressRoutine={goToRoutineDetail}
-          onPressCamera={handleCameraPress}
-        />
+        <Animated.View
+          key={`today-routines-content-${contentAnimationKey}`}
+          entering={FadeInDown.delay(120).duration(560).springify()}
+          style={styles.content}
+        >
+          <TodayRoutinesList
+            items={items}
+            loading={loading}
+            onRefresh={load}
+            onPressRoutine={goToRoutineDetail}
+            onPressCamera={handleCameraPress}
+          />
 
-        <BottomReturnButton
-          label="Return Routine Lists"
-          onPress={() => router.replace('/(personal)/(drawer)/routines')}
-        />
+          <BottomReturnButton
+            label="Return Routine Lists"
+            onPress={() => router.replace('/(personal)/(drawer)/routines')}
+          />
+        </Animated.View>
 
         <Toast 
           visible={toastVisible} 
@@ -191,6 +200,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
-
+  content: { flex: 1 },
 
 });

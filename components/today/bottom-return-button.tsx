@@ -27,10 +27,7 @@ export function BottomReturnButton({ label, onPress }: Props): React.ReactElemen
 
 const styles = StyleSheet.create({
   btn: {
-    position: 'absolute',
-    left: 24,
-    right: 24,
-    bottom: 18,
+    alignSelf: 'stretch',
     height: 54,
     borderRadius: 18, // Matched from routines.tsx
     borderWidth: 1,
@@ -38,7 +35,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed', // Matched
     alignItems: 'center',
     justifyContent: 'center',
-    // Removed Shadows to match the flat/dashed look
+    marginTop: 18,
+    marginHorizontal: 12,
   },
   text: {
     color: '#ffffff',
