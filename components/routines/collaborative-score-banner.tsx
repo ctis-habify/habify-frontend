@@ -9,6 +9,8 @@ import { CollaborativeRankInfo } from '@/types/collaborative-score';
 interface Props {
   readonly points: number;
   readonly streak: number;
+  readonly nextBonusStreak: number;
+  readonly nextBonusPoints: number;
   readonly rank: CollaborativeRankInfo;
   readonly loading: boolean;
   readonly accentColor?: string;
@@ -63,6 +65,8 @@ function useAnimatedCounter(target: number, loading: boolean): number {
 export function CollaborativeScoreBanner({
   points,
   streak,
+  nextBonusStreak,
+  nextBonusPoints,
   rank,
   loading,
   accentColor = ACCENT,
@@ -108,9 +112,10 @@ export function CollaborativeScoreBanner({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.wrapper}>
+      <View style={styles.container}>
       {/* Points Column */}
-      <View style={styles.statColumn}>
+        <View style={styles.statColumn}>
         <View style={styles.iconWrap}>
           <Ionicons name="diamond-outline" size={20} color={accentColor} />
         </View>
@@ -118,10 +123,10 @@ export function CollaborativeScoreBanner({
         <Text style={styles.statLabel}>Points</Text>
       </View>
 
-      <View style={styles.divider} />
+        <View style={styles.divider} />
 
       {/* Rank Column */}
-      <View style={styles.statColumn}>
+        <View style={styles.statColumn}>
         <View style={styles.iconWrap}>
           <Ionicons name={rank.icon} size={20} color={rank.color} />
         </View>
@@ -129,15 +134,23 @@ export function CollaborativeScoreBanner({
         <Text style={styles.statLabel}>Rank</Text>
       </View>
 
-      <View style={styles.divider} />
+        <View style={styles.divider} />
 
       {/* Streak Column */}
-      <View style={styles.statColumn}>
+        <View style={styles.statColumn}>
         <View style={styles.iconWrap}>
           <Ionicons name="flame" size={20} color="#F97316" />
         </View>
         <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
         <Text style={styles.statLabel}>Streak</Text>
+      </View>
+      </View>
+
+      <View style={styles.bonusStrip}>
+        <Ionicons name="gift-outline" size={15} color="#E9D5FF" />
+        <Text style={styles.bonusText}>
+          {nextBonusStreak}-day streak bonus: +{nextBonusPoints} points
+        </Text>
       </View>
     </View>
   );
@@ -146,17 +159,36 @@ export function CollaborativeScoreBanner({
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  wrapper: {
+    marginBottom: 16,
+  },
   container: {
     flexDirection: 'row',
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
     paddingVertical: 16,
     paddingHorizontal: 10,
-    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
     justifyContent: 'space-around',
     alignItems: 'center',
+  },
+  bonusStrip: {
+    marginTop: 10,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bonusText: {
+    color: '#F5EFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   shimmerContainer: {
     justifyContent: 'space-around',

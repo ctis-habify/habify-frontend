@@ -11,7 +11,11 @@ const lastShownAt: Record<NotificationKind, number> = {
 
 let lastCollaborativeCount = 0;
 
-export type NotificationCategory = 'friend_requests' | 'unfinished_tasks' | 'social_interactions';
+export type NotificationCategory =
+  | 'friend_requests'
+  | 'unfinished_tasks'
+  | 'social_interactions'
+  | 'awards';
 
 export interface NotificationItem {
   id: string;
@@ -137,6 +141,7 @@ export const notificationService = {
       routine_invitation: 'friend_requests',
       task_reminder: 'unfinished_tasks',
       poke: 'social_interactions',
+      streak_bonus: 'awards',
     };
 
     return {

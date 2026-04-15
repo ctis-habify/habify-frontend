@@ -38,6 +38,8 @@ export interface CollaborativeRankInfo {
 export interface CollaborativeScoreSummary {
   totalPoints: number;
   currentStreak: number;
+  nextBonusStreak: number;
+  nextBonusPoints: number;
   cup?: UserCupAward | null;
 }
 

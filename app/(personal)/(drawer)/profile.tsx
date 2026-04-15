@@ -33,6 +33,8 @@ export default function ProfileScreen() {
   const {
     cup,
     points: collaborativePoints,
+    nextBonusStreak,
+    nextBonusPoints,
     loading: collaborativeScoreLoading,
   } = useCollaborativeScore();
 
@@ -163,6 +165,9 @@ export default function ProfileScreen() {
             <View style={styles.pointsBadge}>
               <Text style={styles.pointsValue}>{collaborativePoints}</Text>
               <Text style={styles.pointsLabel}>Collaborative Points</Text>
+              <Text style={styles.pointsHint}>
+                Next bonus: {nextBonusStreak} streak / +{nextBonusPoints}
+              </Text>
             </View>
           </View>
         </Animated.View>
@@ -345,6 +350,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
     color: 'rgba(255,255,255,0.72)',
+  },
+  pointsHint: {
+    marginTop: 8,
+    fontSize: 10,
+    textAlign: 'center',
+    color: 'rgba(255,255,255,0.66)',
   },
   loadingIndicator: {
     paddingVertical: 30,

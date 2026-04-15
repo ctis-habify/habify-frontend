@@ -675,7 +675,11 @@ export default function CollaborativeChatScreen() {
   return (
     <LinearGradient colors={['#2e1065', '#200f4a']} style={styles.container}>
       <Animated.View entering={FadeInDown.duration(350)} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} hitSlop={10}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(collaborative)/(drawer)/routines')}
+          style={styles.backButton}
+          hitSlop={10}
+        >
           <Ionicons name="arrow-back" size={20} color="#ffffff" />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
@@ -695,7 +699,7 @@ export default function CollaborativeChatScreen() {
             <Ionicons name="camera-outline" size={20} color="#ffffff" />
         </TouchableOpacity>
         <TouchableOpacity 
-          onPress={() => router.push(`/(collaborative)/routine/${routineId}` as const)} 
+          onPress={() => router.replace(`/(collaborative)/routine/${routineId}` as const)} 
           style={styles.detailsButton}
         >
           <Ionicons name="information-circle-outline" size={20} color="#ffffff" />

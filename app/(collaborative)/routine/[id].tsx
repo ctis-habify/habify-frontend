@@ -610,7 +610,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       <Animated.View entering={FadeInDown.delay(280).duration(320)} style={styles.chatFabWrap}>
         <TouchableOpacity
           style={styles.chatFab}
-          onPress={() => router.push({
+          onPress={() => router.replace({
             pathname: '/(collaborative)/routine/[id]/chat',
             params: { id: routineId, routineName: displayRoutineName }
           } as never)}

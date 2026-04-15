@@ -24,12 +24,14 @@ const categoryTitle: Record<NotificationCategory, string> = {
   friend_requests: 'Requests & Invitations',
   unfinished_tasks: 'Unfinished Tasks',
   social_interactions: 'Social Interactions',
+  awards: 'Awards',
 };
 
 const categoryIcon: Record<NotificationCategory, keyof typeof Ionicons.glyphMap> = {
   friend_requests: 'person-add-outline',
   unfinished_tasks: 'time-outline',
   social_interactions: 'people-outline',
+  awards: 'gift-outline',
 };
 
 export default function NotificationsScreen(): React.ReactElement {
@@ -178,6 +180,7 @@ export default function NotificationsScreen(): React.ReactElement {
       friend_requests: [],
       unfinished_tasks: [],
       social_interactions: [],
+      awards: [],
     };
 
     // Add local items
@@ -324,7 +327,9 @@ export default function NotificationsScreen(): React.ReactElement {
                 {!loadedSections.reminders ? (
                   <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
                 ) : sections[category].length === 0 ? (
-                  <Text style={[styles.emptyText, { color: colors.icon }]}>No notifications yet.</Text>
+                  <Text style={[styles.emptyText, { color: colors.icon }]}>
+                    {category === 'awards' ? 'No rewards yet.' : 'No notifications yet.'}
+                  </Text>
                 ) : (
                   <ScrollView
                     style={styles.sectionScroll}
@@ -511,4 +516,3 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 });
-
