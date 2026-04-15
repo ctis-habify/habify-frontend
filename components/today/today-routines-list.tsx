@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
     marginHorizontal: 12,
-    marginBottom: 55,
+    marginBottom: 0,
     borderRadius: 28,
     marginTop: 10,
     overflow: "hidden",

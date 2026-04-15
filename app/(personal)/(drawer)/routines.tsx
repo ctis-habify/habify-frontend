@@ -198,7 +198,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             activeOpacity={0.85}
             onPress={() => router.push('/(personal)/(drawer)/today-routines')}
           >
-            <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
+            <Text style={styles.sectionTitle}>Click to See Today&apos;s Routines</Text>
           </TouchableOpacity>
           </Animated.View>
 
