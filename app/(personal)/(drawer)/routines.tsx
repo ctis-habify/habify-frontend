@@ -3,9 +3,14 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useRouter } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Animated, {
+  FadeInDown,
+  FadeOutUp,
+  LinearTransition,
+} from 'react-native-reanimated';
 import { ActivityIndicator, Alert, DeviceEventEmitter, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // UI
@@ -43,6 +48,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const [routineLists, setRoutineLists] = useState<RoutineList[]>([]);
   const [selectedListForNewRoutine, setSelectedListForNewRoutine] = useState<{ listId: number; categoryId?: number | null } | null>(null);
   const [editListParams, setEditListParams] = useState<{ listId: number; title: string; categoryId?: number } | null>(null);
+  const [contentAnimationKey, setContentAnimationKey] = useState(0);
 
   const loadLists = useCallback(async () => {
     try {
@@ -74,14 +80,22 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     return () => sub.remove();
   }, [loadLists]);
 
+  useFocusEffect(
+    useCallback(() => {
+      setContentAnimationKey((current) => current + 1);
+    }, []),
+  );
+
   const handleTabSwitch = (tab: string) => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
-    setTimeout(() => {
-      router.replace('/(collaborative)/(drawer)/routines');
-      isSwitchingRef.current = false;
-    }, 90);
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        router.replace('/(collaborative)/(drawer)/routines');
+        isSwitchingRef.current = false;
+      }, 90);
+    });
   };
 
   const handleAddRoutine = (listId: string | number, categoryId?: number | null) => {
@@ -120,10 +134,17 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
         style: 'destructive',
         onPress: async () => {
           try {
-            const t = await getToken();
+            const t = authContextToken || await getToken();
             if (!t) return;
             await routineService.deleteRoutineList(Number(listId), t);
-            loadLists();
+            setRoutineLists((current) =>
+              current.filter((item) => {
+                const currentId =
+                  item.id ?? (item as RoutineList & { routineListId?: number }).routineListId;
+                return Number(currentId) !== Number(listId);
+              }),
+            );
+            await loadLists();
           } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Failed to delete list.';
             Alert.alert('Error', msg);
@@ -164,15 +185,22 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
         </View>
 
         {/* CONTENT */}
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Animated.ScrollView
+          key={`routines-content-${contentAnimationKey}`}
+          entering={FadeInDown.delay(140).duration(560).springify()}
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Today's Routines' Header */}
-          <TouchableOpacity
+          <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
+            <TouchableOpacity
             style={styles.sectionHeader}
             activeOpacity={0.85}
             onPress={() => router.push('/(personal)/(drawer)/today-routines')}
           >
             <Text style={styles.sectionTitle}>Today&apos;s Routines</Text>
           </TouchableOpacity>
+          </Animated.View>
 
           {loading && <ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} />}
 
@@ -196,19 +224,25 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             }));
 
             return (
-              <RoutineCategoryCard
+              <Animated.View
                 key={`list-${list.id ?? idx}-${idx}`}
-                title={list.routineListTitle || list.categoryName || 'List'}
-                subtitle={`${list.routines?.length || 0} routines`}
-                categoryName={list.categoryName}
-                routines={routinesProps}
-                onItemPress={handlePressRoutine}
-                onPressAddRoutine={() => handleAddRoutine(list.id ?? (list as RoutineList & { routineListId?: number }).routineListId, list.categoryId)}
-                onEditList={() => handleEditList(list)}
-                onDeleteList={() => handleDeleteList(list)}
-                accentColor={accentColor}
-                variant="light"
-              />
+                entering={FadeInDown.duration(260).delay(idx * 40)}
+                exiting={FadeOutUp.duration(220)}
+                layout={LinearTransition.duration(260)}
+              >
+                <RoutineCategoryCard
+                  title={list.routineListTitle || list.categoryName || 'List'}
+                  subtitle={`${list.routines?.length || 0} routines`}
+                  categoryName={list.categoryName}
+                  routines={routinesProps}
+                  onItemPress={handlePressRoutine}
+                  onPressAddRoutine={() => handleAddRoutine(list.id ?? (list as RoutineList & { routineListId?: number }).routineListId, list.categoryId)}
+                  onEditList={() => handleEditList(list)}
+                  onDeleteList={() => handleDeleteList(list)}
+                  accentColor={accentColor}
+                  variant="light"
+                />
+              </Animated.View>
             );
           })}
 
@@ -232,14 +266,16 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           )}
 
           {!hasNoData && !loading && (
-             <TouchableOpacity
+             <Animated.View entering={FadeInDown.delay(220).duration(560).springify()}>
+               <TouchableOpacity
                style={[styles.createBtn, { marginTop: 10 }]}
                onPress={() => router.push('/(personal)/create-routine')}
              >
                <Text style={styles.createBtnText}>Create Routine List</Text>
              </TouchableOpacity>
+             </Animated.View>
           )}
-        </ScrollView>
+        </Animated.ScrollView>
         <CreateRoutineInListModal
           visible={selectedListForNewRoutine !== null}
           routineListId={selectedListForNewRoutine?.listId ?? null}
