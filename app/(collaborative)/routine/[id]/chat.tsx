@@ -18,7 +18,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  FadeOutDown,
+  FadeOutUp,
+  LinearTransition,
+} from 'react-native-reanimated';
 
 import { ChatVerificationItem } from '@/components/routines/chat-verification-item';
 import { RoutineCompletedAnimation } from '@/components/animations/routine-completed-animation';
@@ -48,6 +54,11 @@ type RawChatMessage = {
     username?: string;
     email?: string;
   };
+};
+
+type RoutineParticipant = {
+  id: string;
+  name: string;
 };
 
 const CHAT_CACHE_KEY_PREFIX = 'routine_chat_cache_';
@@ -219,6 +230,22 @@ const formatMessageTime = (value?: string): string => {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
+const renderChatMessageText = (text: string) => {
+  const mentionMatch = text.match(/^(.*?)(\s@[^@\s].*)$/);
+  if (!mentionMatch) {
+    return <Text style={styles.chatBubbleText}>{text}</Text>;
+  }
+
+  const [, messageBody, mentionText] = mentionMatch;
+
+  return (
+    <Text style={styles.chatBubbleText}>
+      {messageBody}
+      <Text style={styles.chatMentionText}>{mentionText}</Text>
+    </Text>
+  );
+};
+
 export default function CollaborativeChatScreen() {
   const params = useLocalSearchParams<{ id: string; routineName?: string }>();
   const routineId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -241,6 +268,9 @@ export default function CollaborativeChatScreen() {
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
   const [predefinedMessages, setPredefinedMessages] = useState<PredefinedRoutineMessage[]>([]);
   const [predefinedLoading, setPredefinedLoading] = useState(false);
+  const [participants, setParticipants] = useState<RoutineParticipant[]>([]);
+  const [taggedParticipant, setTaggedParticipant] = useState<RoutineParticipant | null>(null);
+  const [selectedPredefinedMessage, setSelectedPredefinedMessage] = useState<string | null>(null);
   const [pendingLogs, setPendingLogs] = useState<RoutineLog[]>([]);
   const [isQuickReplyOpen, setIsQuickReplyOpen] = useState(false);
   const [votersModalLog, setVotersModalLog] = useState<RoutineLog | null>(null);
@@ -413,6 +443,53 @@ export default function CollaborativeChatScreen() {
     }
   }, [routineId]);
 
+  const loadParticipants = useCallback(async (): Promise<void> => {
+    if (!routineId) return;
+
+    try {
+      const groupDetail = await routineService.getGroupDetail(routineId);
+      const normalizedParticipants = Array.isArray(groupDetail?.participants)
+        ? groupDetail.participants
+            .map((participant) => {
+              const source =
+                participant && typeof participant === 'object'
+                  ? (participant as Record<string, unknown>)
+                  : {};
+              const userInfo =
+                source.user && typeof source.user === 'object'
+                  ? (source.user as Record<string, unknown>)
+                  : {};
+
+              const id = String(source.userId || source.id || userInfo.id || '').trim();
+              const name = String(
+                source.username ||
+                  source.name ||
+                  userInfo.username ||
+                  userInfo.name ||
+                  '',
+              ).trim();
+
+              if (!id || !name || id === user?.id) {
+                return null;
+              }
+
+              return { id, name } satisfies RoutineParticipant;
+            })
+            .filter((participant): participant is RoutineParticipant => participant !== null)
+        : [];
+
+      setParticipants(normalizedParticipants);
+      setTaggedParticipant((current) =>
+        current && normalizedParticipants.some((participant) => participant.id === current.id)
+          ? current
+          : null,
+      );
+    } catch {
+      setParticipants([]);
+      setTaggedParticipant(null);
+    }
+  }, [routineId, user?.id]);
+
   useEffect(() => {
     const initPage = async () => {
       setIsInitialLoading(true);
@@ -420,6 +497,7 @@ export default function CollaborativeChatScreen() {
         await Promise.all([
           loadChatMessages(true),
           loadPredefinedMessages(),
+          loadParticipants(),
           fetchPendingLogs(),
         ]);
       } finally {
@@ -444,7 +522,7 @@ export default function CollaborativeChatScreen() {
       clearInterval(intervalId);
       sub.remove();
     };
-  }, [loadChatMessages, loadPredefinedMessages, fetchPendingLogs]);
+  }, [loadChatMessages, loadPredefinedMessages, loadParticipants, fetchPendingLogs]);
 
   useEffect(() => {
     if (displayMessages.length === 0) return;
@@ -455,15 +533,23 @@ export default function CollaborativeChatScreen() {
   }, [displayMessages.length]);
 
   const handleSendPredefinedMessage = useCallback(
-    async (text: string): Promise<void> => {
+    async (
+      text: string,
+      participantToTag?: RoutineParticipant | null,
+    ): Promise<void> => {
       if (!routineId || !text.trim() || isSendingMessageRef.current) return;
       isSendingMessageRef.current = true;
+
+      const finalTaggedParticipant = participantToTag ?? taggedParticipant;
+      const outgoingText = finalTaggedParticipant
+        ? `${text} @${finalTaggedParticipant.name}`
+        : text;
 
       const senderName = user?.name || user?.email || 'You';
       const optimisticId = `optimistic-${Date.now()}`;
       const optimisticMessage: ChatMessage = {
         id: optimisticId,
-        text,
+        text: outgoingText,
         sender: 'me',
         senderName,
         createdAt: new Date().toISOString(),
@@ -474,8 +560,11 @@ export default function CollaborativeChatScreen() {
       setChatError(null);
 
       try {
-        await routineService.sendRoutineChatMessage(routineId, text);
+        await routineService.sendRoutineChatMessage(routineId, outgoingText);
         setChatMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
+        setTaggedParticipant(null);
+        setSelectedPredefinedMessage(null);
+        setIsQuickReplyOpen(false);
         await loadChatMessages();
     } catch (sendError: unknown) {
         setChatMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
@@ -497,7 +586,7 @@ export default function CollaborativeChatScreen() {
         isSendingMessageRef.current = false;
       }
     },
-    [routineId, loadChatMessages, user?.email, user?.name],
+    [routineId, taggedParticipant, loadChatMessages, user?.email, user?.name],
   );
 
 
@@ -668,7 +757,7 @@ export default function CollaborativeChatScreen() {
                                        imageRegex.test(item.text);
                   
                   if (!isPhotoMessage) {
-                    return <Text style={styles.chatBubbleText}>{item.text}</Text>;
+                    return renderChatMessageText(item.text);
                   }
 
                   const isPrefixed = item.text.startsWith('[PHOTO]:');
@@ -735,7 +824,11 @@ export default function CollaborativeChatScreen() {
         {predefinedMessages.length > 0 && (
           <TouchableOpacity
             style={styles.openReplyBar}
-            onPress={() => setIsQuickReplyOpen(true)}
+            onPress={() => {
+              setSelectedPredefinedMessage(null);
+              setTaggedParticipant(null);
+              setIsQuickReplyOpen(true);
+            }}
             activeOpacity={0.8}
           >
             <Text style={styles.openReplyText}>✨ Type a message...</Text>
@@ -746,13 +839,33 @@ export default function CollaborativeChatScreen() {
         {/* Quick Replies Bottom Modal */}
         <Modal visible={isQuickReplyOpen} transparent animationType="slide">
           <View style={styles.modalOverlay}>
-            <Pressable style={styles.modalBackdrop} onPress={() => setIsQuickReplyOpen(false)} />
+            <Pressable
+              style={styles.modalBackdrop}
+              onPress={() => {
+                setIsQuickReplyOpen(false);
+                setSelectedPredefinedMessage(null);
+                setTaggedParticipant(null);
+              }}
+            />
             <View style={styles.quickReplyBottomSheet}>
-              <TouchableOpacity onPress={() => setIsQuickReplyOpen(false)} style={styles.floatingCloseBtn}>
+              <View style={styles.bottomSheetHandle} />
+              <TouchableOpacity
+                onPress={() => {
+                  setIsQuickReplyOpen(false);
+                  setSelectedPredefinedMessage(null);
+                  setTaggedParticipant(null);
+                }}
+                style={styles.floatingCloseBtn}
+              >
                 <Ionicons name="close" size={20} color="#e7d0ff" />
               </TouchableOpacity>
               <View style={styles.bottomSheetHeader}>
-                <Text style={styles.quickReplyTitle}>✨ Say something...</Text>
+                <View style={styles.bottomSheetTitleWrap}>
+                  <Text style={styles.quickReplyTitle}>Quick replies</Text>
+                  <Text style={styles.quickReplySubtitle}>
+                    Pick a message, then send it to the group or mention one teammate.
+                  </Text>
+                </View>
               </View>
 
               {predefinedLoading ? (
@@ -760,13 +873,120 @@ export default function CollaborativeChatScreen() {
                   <ActivityIndicator size="small" color="#e879f9" />
                 </View>
               ) : (
-                <ScrollView
+                <Animated.ScrollView
+                  layout={LinearTransition.duration(260)}
                   style={styles.quickReplyScroll}
                   contentContainerStyle={styles.quickReplyScrollContent}
                   showsVerticalScrollIndicator={false}
                   nestedScrollEnabled
                 >
-                  {PREDEFINED_CATEGORY_ORDER.map((categoryKey) => {
+                  {selectedPredefinedMessage ? (
+                    <Animated.View
+                      entering={FadeInUp.duration(300).springify().damping(18).stiffness(140)}
+                      exiting={FadeOutDown.duration(240)}
+                      style={styles.selectedMessageCard}
+                    >
+                      <Text style={styles.selectedMessageLabel}>Selected message</Text>
+                      <View style={styles.selectedMessagePreview}>
+                        <Ionicons name="sparkles-outline" size={16} color="#c4b5fd" />
+                        <Text style={styles.selectedMessageText}>{selectedPredefinedMessage}</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.sendToGroupButton,
+                          sendingMessage === selectedPredefinedMessage && styles.quickReplyBtnSending,
+                        ]}
+                        onPress={() => handleSendPredefinedMessage(selectedPredefinedMessage, null)}
+                        activeOpacity={0.85}
+                        disabled={sendingMessage !== null}
+                      >
+                        {sendingMessage === selectedPredefinedMessage && !taggedParticipant ? (
+                          <ActivityIndicator size="small" color="#ffffff" />
+                        ) : null}
+                        <Text style={styles.sendToGroupText}>Send to group</Text>
+                      </TouchableOpacity>
+
+                      {participants.length > 0 ? (
+                        <View style={styles.tagSection}>
+                          <Text style={styles.tagSectionLabel}>Mention a teammate</Text>
+                          <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.tagScrollContent}
+                          >
+                            {participants.map((participant) => {
+                              const isSelected = taggedParticipant?.id === participant.id;
+                              return (
+                                <TouchableOpacity
+                                  key={participant.id}
+                                  style={[styles.tagChip, isSelected && styles.tagChipSelected]}
+                                  onPress={() => setTaggedParticipant(participant)}
+                                  activeOpacity={0.85}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.tagChipText,
+                                      isSelected && styles.tagChipTextSelected,
+                                    ]}
+                                  >
+                                    @{participant.name}
+                                  </Text>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </ScrollView>
+
+                          <TouchableOpacity
+                            style={[
+                              styles.sendTaggedButton,
+                              !taggedParticipant && styles.sendTaggedButtonDisabled,
+                              sendingMessage === selectedPredefinedMessage &&
+                                taggedParticipant &&
+                                styles.quickReplyBtnSending,
+                            ]}
+                            onPress={() =>
+                              taggedParticipant
+                                ? handleSendPredefinedMessage(
+                                    selectedPredefinedMessage,
+                                    taggedParticipant,
+                                  )
+                                : undefined
+                            }
+                            activeOpacity={0.85}
+                            disabled={!taggedParticipant || sendingMessage !== null}
+                          >
+                            {sendingMessage === selectedPredefinedMessage && taggedParticipant ? (
+                              <ActivityIndicator size="small" color="#ffffff" />
+                            ) : null}
+                            <Text style={styles.sendTaggedText}>
+                              {taggedParticipant
+                                ? `Send to @${taggedParticipant.name}`
+                                : 'Select a teammate above'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : null}
+
+                      <TouchableOpacity
+                        style={styles.changeMessageButton}
+                        onPress={() => {
+                          setSelectedPredefinedMessage(null);
+                          setTaggedParticipant(null);
+                        }}
+                        activeOpacity={0.85}
+                        disabled={sendingMessage !== null}
+                      >
+                        <Text style={styles.changeMessageText}>Choose a different message</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
+                  ) : (
+                    <Animated.View
+                      entering={FadeInDown.duration(260)}
+                      exiting={FadeOutUp.duration(280)}
+                      layout={LinearTransition.duration(260)}
+                    >
+                      {PREDEFINED_CATEGORY_ORDER.map((categoryKey) => {
                     const items = predefinedMessages.filter(
                       (msg) => (msg.category || 'general').toLowerCase() === categoryKey,
                     );
@@ -790,8 +1010,8 @@ export default function CollaborativeChatScreen() {
                                   sendingMessage === message.text && styles.quickReplyBtnSending,
                                 ]}
                                 onPress={() => {
-                                  handleSendPredefinedMessage(message.text);
-                                  setIsQuickReplyOpen(false);
+                                  setSelectedPredefinedMessage(message.text);
+                                  setTaggedParticipant(null);
                                 }}
                                 activeOpacity={0.7}
                                 disabled={sendingMessage !== null}
@@ -808,8 +1028,10 @@ export default function CollaborativeChatScreen() {
                         </View>
                       </View>
                     );
-                  })}
-                </ScrollView>
+                      })}
+                    </Animated.View>
+                  )}
+                </Animated.ScrollView>
               )}
             </View>
           </View>
@@ -1017,6 +1239,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  chatMentionText: {
+    color: '#c4b5fd',
+    fontWeight: '800',
+  },
   chatSender: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 11,
@@ -1105,11 +1331,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 20,
   },
+  bottomSheetHandle: {
+    alignSelf: 'center',
+    width: 42,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    marginBottom: 16,
+  },
   bottomSheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 20,
+  },
+  bottomSheetTitleWrap: {
+    gap: 6,
+    paddingRight: 44,
   },
   closeBtn: {
     width: 32,
@@ -1121,8 +1356,121 @@ const styles = StyleSheet.create({
   },
   quickReplyTitle: {
     color: '#e7d0ff',
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '800',
+  },
+  quickReplySubtitle: {
+    color: 'rgba(231, 208, 255, 0.7)',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  selectedMessageCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 8,
+    gap: 14,
+  },
+  selectedMessageLabel: {
+    color: 'rgba(231, 208, 255, 0.72)',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  selectedMessageText: {
+    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '700',
+    lineHeight: 22,
+    flex: 1,
+  },
+  selectedMessagePreview: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  sendToGroupButton: {
+    minHeight: 50,
+    borderRadius: 16,
+    backgroundColor: 'rgba(250, 247, 252, 0.24)',
+    borderWidth: 1,
+    borderColor: 'rgba(236, 230, 243, 0.38)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  sendToGroupText: {
+    color: '#fffcff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  tagSection: {
+    gap: 10,
+    marginTop: 2,
+  },
+  tagSectionLabel: {
+    color: 'rgba(231, 208, 255, 0.72)',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  tagScrollContent: {
+    gap: 10,
+    paddingRight: 8,
+  },
+  tagChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  tagChipSelected: {
+    backgroundColor: 'rgba(247, 243, 251, 0.24)',
+    borderColor: 'rgba(232, 224, 241, 0.36)',
+  },
+  tagChipText: {
+    color: '#e7d0ff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tagChipTextSelected: {
+    color: '#ffffff',
+  },
+  sendTaggedButton: {
+    minHeight: 46,
+    borderRadius: 14,
+    backgroundColor: 'rgba(248, 244, 252, 0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(233, 225, 242, 0.32)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  sendTaggedButtonDisabled: {
+    opacity: 0.55,
+  },
+  sendTaggedText: {
+    color: '#fffaff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  changeMessageButton: {
+    alignSelf: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  changeMessageText: {
+    color: '#c4b5fd',
+    fontSize: 13,
+    fontWeight: '600',
   },
   quickReplyGrid: {
     flexDirection: 'row',
@@ -1134,11 +1482,11 @@ const styles = StyleSheet.create({
     maxHeight: 420,
   },
   quickReplyScrollContent: {
-    paddingBottom: 4,
+    paddingBottom: 12,
   },
   quickReplyCategorySection: {
     width: '100%',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   quickReplyCategoryTitle: {
     color: '#e7d0ff',
