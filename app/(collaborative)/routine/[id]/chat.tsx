@@ -1,37 +1,37 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  DeviceEventEmitter,
-  FlatList,
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    DeviceEventEmitter,
+    FlatList,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, {
-  FadeInDown,
-  FadeInUp,
-  FadeOutDown,
-  FadeOutUp,
-  LinearTransition,
+    FadeInDown,
+    FadeInUp,
+    FadeOutDown,
+    FadeOutUp,
+    LinearTransition,
 } from 'react-native-reanimated';
 
-import { ChatVerificationItem } from '@/components/routines/chat-verification-item';
 import { RoutineCompletedAnimation } from '@/components/animations/routine-completed-animation';
 import { ImageFullscreenModal } from '@/components/modals/image-fullscreen-modal';
+import { ChatVerificationItem } from '@/components/routines/chat-verification-item';
 import { useAuth } from '@/hooks/use-auth';
-import { routineService } from '@/services/routine.service';
 import type { PredefinedRoutineMessage } from '@/services/routine.service';
+import { routineService } from '@/services/routine.service';
 import { RoutineLog } from '@/types/routine';
 
 type ChatMessage = {
@@ -62,7 +62,14 @@ type RoutineParticipant = {
 };
 
 const CHAT_CACHE_KEY_PREFIX = 'routine_chat_cache_';
-const PREDEFINED_CATEGORY_ORDER = ['motivation', 'checkin', 'support', 'spicy', 'funny', 'general'] as const;
+const PREDEFINED_CATEGORY_ORDER = [
+  'motivation',
+  'checkin',
+  'support',
+  'spicy',
+  'funny',
+  'general',
+] as const;
 
 const getCategoryLabel = (category: string): string => {
   const normalized = category.trim().toLowerCase();
@@ -102,10 +109,7 @@ const inferCategoryFromMessageText = (text: string): string => {
   ) {
     return 'checkin';
   }
-  if (
-    lower.includes('help me') ||
-    lower.includes('encouragement')
-  ) {
+  if (lower.includes('help me') || lower.includes('encouragement')) {
     return 'support';
   }
   if (
@@ -145,7 +149,8 @@ const normalizeChatMessages = (
 
       const text = (msg.message || '').trim();
       if (!text) return null;
-      if (currentRoutineId && msg.routineId && String(msg.routineId) !== String(currentRoutineId)) return null;
+      if (currentRoutineId && msg.routineId && String(msg.routineId) !== String(currentRoutineId))
+        return null;
 
       const senderId = msg.userId || msg.user?.id;
       const senderName =
@@ -158,7 +163,11 @@ const normalizeChatMessages = (
       return {
         id: String(msg.id ?? `${senderId || 'msg'}-${index}-${text.slice(0, 8)}`),
         text: text.replace(/^\[SYSTEM\]\s*/i, ''),
-        sender: isSystemMessage ? 'system' : currentUserId && senderId === currentUserId ? 'me' : 'system',
+        sender: isSystemMessage
+          ? 'system'
+          : currentUserId && senderId === currentUserId
+            ? 'me'
+            : 'system',
         senderName: isSystemMessage ? 'System' : senderName,
         createdAt: msg.sentAt,
         isSystemEvent: isSystemMessage,
@@ -281,36 +290,38 @@ export default function CollaborativeChatScreen() {
 
   const displayMessages = useMemo(() => {
     // 1. Create virtual messages for any logs that don't have a corresponding chat message
-    const virtualLogMessages: ChatMessage[] = pendingLogs.map(log => {
-      const imageUrl = log.verificationImageUrl;
-      if (!imageUrl) return null;
-      
-      const logUrl = imageUrl.toLowerCase();
-      const logFileName = logUrl.split('/').pop() || '!!!';
+    const virtualLogMessages: ChatMessage[] = pendingLogs
+      .map((log) => {
+        const imageUrl = log.verificationImageUrl;
+        if (!imageUrl) return null;
 
-      // Check if any existing chat message already contains this log's URL or parts of it
-      const hasMessage = chatMessages.some(m => {
-        const text = m.text.toLowerCase();
-        return text.includes(logUrl) || text.includes(logFileName);
-      });
-      
-      if (hasMessage) return null;
-      
-      return {
-        id: `virtual-log-${log.id}`,
-        text: imageUrl, // Just the URL, our renderer handles it
-        sender: log.userId === user?.id ? 'me' : 'system',
-        senderName: log.userName || 'Member',
-        createdAt: log.createdAt || log.logDate,
-      } as ChatMessage;
-    }).filter((m): m is ChatMessage => m !== null);
+        const logUrl = imageUrl.toLowerCase();
+        const logFileName = logUrl.split('/').pop() || '!!!';
+
+        // Check if any existing chat message already contains this log's URL or parts of it
+        const hasMessage = chatMessages.some((m) => {
+          const text = m.text.toLowerCase();
+          return text.includes(logUrl) || text.includes(logFileName);
+        });
+
+        if (hasMessage) return null;
+
+        return {
+          id: `virtual-log-${log.id}`,
+          text: imageUrl, // Just the URL, our renderer handles it
+          sender: log.userId === user?.id ? 'me' : 'system',
+          senderName: log.userName || 'Member',
+          createdAt: log.createdAt || log.logDate,
+        } as ChatMessage;
+      })
+      .filter((m): m is ChatMessage => m !== null);
 
     const merged = [...chatMessages, ...virtualLogMessages];
-    
+
     return merged.sort((a, b) => {
       const aTime = getMessageTimestamp(a.createdAt);
       const bTime = getMessageTimestamp(b.createdAt);
-      
+
       const at = aTime || 0;
       const bt = bTime || 0;
 
@@ -320,7 +331,7 @@ export default function CollaborativeChatScreen() {
       return at - bt;
     });
   }, [chatMessages, pendingLogs, user?.id]);
-  
+
   const chatListRef = useRef<FlatList<ChatMessage> | null>(null);
   const isSendingMessageRef = useRef(false);
 
@@ -337,58 +348,61 @@ export default function CollaborativeChatScreen() {
     };
   }, [routineId]);
 
-  const loadChatMessages = useCallback(async (isInitial: boolean = false): Promise<void> => {
-    if (!routineId) return;
-    
-    // Always show loading for initial load to ensure fresh data is fetched
-    if (isInitial) {
-      setChatLoading(true);
-    }
-    
-    // Read from cache immediately for initial load to avoid flicker (optional if we cover it, but good to have)
-    const cached = await readCachedChatMessages(routineId);
-    if (isInitial && cached.length > 0) {
-      setChatMessages(cached);
-    }
-    
-    setChatError(null);
-    try {
-      const messages = await routineService.getRoutineChatMessages(routineId);
-      const normalized = sortChatMessagesOldToNew(
-        normalizeChatMessages(messages, user?.id, routineId),
-      );
-      if (normalized.length === 0 && cached.length > 0) {
-        setChatMessages(cached);
-      } else {
-        setChatMessages((prev) => {
-          const merged = mergeChatMessages(prev, normalized);
-          writeCachedChatMessages(routineId, merged);
-          return merged;
-        });
+  const loadChatMessages = useCallback(
+    async (isInitial: boolean = false): Promise<void> => {
+      if (!routineId) return;
+
+      // Always show loading for initial load to ensure fresh data is fetched
+      if (isInitial) {
+        setChatLoading(true);
       }
-    } catch (fetchError) {
-      const message =
-        fetchError && typeof fetchError === 'object' && 'message' in fetchError
-          ? String(fetchError.message)
-          : '';
-      if (cached.length > 0) {
+
+      // Read from cache immediately for initial load to avoid flicker (optional if we cover it, but good to have)
+      const cached = await readCachedChatMessages(routineId);
+      if (isInitial && cached.length > 0) {
         setChatMessages(cached);
       }
-      setChatError(
-        message.toLowerCase().includes('network')
-          ? 'Could not refresh live chat. Showing last saved messages.'
-          : 'Could not load group chat messages.',
-      );
-    } finally {
-      setChatLoading(false);
-    }
-  }, [routineId, user?.id]);
+
+      setChatError(null);
+      try {
+        const messages = await routineService.getRoutineChatMessages(routineId);
+        const normalized = sortChatMessagesOldToNew(
+          normalizeChatMessages(messages, user?.id, routineId),
+        );
+        if (normalized.length === 0 && cached.length > 0) {
+          setChatMessages(cached);
+        } else {
+          setChatMessages((prev) => {
+            const merged = mergeChatMessages(prev, normalized);
+            writeCachedChatMessages(routineId, merged);
+            return merged;
+          });
+        }
+      } catch (fetchError) {
+        const message =
+          fetchError && typeof fetchError === 'object' && 'message' in fetchError
+            ? String(fetchError.message)
+            : '';
+        if (cached.length > 0) {
+          setChatMessages(cached);
+        }
+        setChatError(
+          message.toLowerCase().includes('network')
+            ? 'Could not refresh live chat. Showing last saved messages.'
+            : 'Could not load group chat messages.',
+        );
+      } finally {
+        setChatLoading(false);
+      }
+    },
+    [routineId, user?.id],
+  );
 
   const fetchPendingLogs = useCallback(async () => {
     if (!routineId) return;
     try {
       const logs = await routineService.getRoutineLogs(routineId);
-      const logsWithImages = logs.filter(l => !!l.verificationImageUrl);
+      const logsWithImages = logs.filter((l) => !!l.verificationImageUrl);
       const newlyApprovedByGroup = logsWithImages.find((log) => {
         if (!user?.id || log.userId !== user.id) return false;
         const isApproved = log.status === 'approved' || log.isCompletedByGroup;
@@ -428,8 +442,12 @@ export default function CollaborativeChatScreen() {
       const sortedWithFallback = [...messagesWithFallbackCategory].sort((a, b) => {
         const categoryA = a.category?.toLowerCase() || 'general';
         const categoryB = b.category?.toLowerCase() || 'general';
-        const categoryIndexA = PREDEFINED_CATEGORY_ORDER.indexOf(categoryA as typeof PREDEFINED_CATEGORY_ORDER[number]);
-        const categoryIndexB = PREDEFINED_CATEGORY_ORDER.indexOf(categoryB as typeof PREDEFINED_CATEGORY_ORDER[number]);
+        const categoryIndexA = PREDEFINED_CATEGORY_ORDER.indexOf(
+          categoryA as (typeof PREDEFINED_CATEGORY_ORDER)[number],
+        );
+        const categoryIndexB = PREDEFINED_CATEGORY_ORDER.indexOf(
+          categoryB as (typeof PREDEFINED_CATEGORY_ORDER)[number],
+        );
         const aIndex = categoryIndexA === -1 ? PREDEFINED_CATEGORY_ORDER.length : categoryIndexA;
         const bIndex = categoryIndexB === -1 ? PREDEFINED_CATEGORY_ORDER.length : categoryIndexB;
         if (aIndex !== bIndex) return aIndex - bIndex;
@@ -462,11 +480,7 @@ export default function CollaborativeChatScreen() {
 
               const id = String(source.userId || source.id || userInfo.id || '').trim();
               const name = String(
-                source.username ||
-                  source.name ||
-                  userInfo.username ||
-                  userInfo.name ||
-                  '',
+                source.username || source.name || userInfo.username || userInfo.name || '',
               ).trim();
 
               if (!id || !name || id === user?.id) {
@@ -506,7 +520,7 @@ export default function CollaborativeChatScreen() {
     };
 
     initPage();
-    
+
     // Listen for manual refreshes (e.g. after camera upload)
     const sub = DeviceEventEmitter.addListener('refreshCollaborativeRoutines', () => {
       fetchPendingLogs();
@@ -533,10 +547,7 @@ export default function CollaborativeChatScreen() {
   }, [displayMessages.length]);
 
   const handleSendPredefinedMessage = useCallback(
-    async (
-      text: string,
-      participantToTag?: RoutineParticipant | null,
-    ): Promise<void> => {
+    async (text: string, participantToTag?: RoutineParticipant | null): Promise<void> => {
       if (!routineId || !text.trim() || isSendingMessageRef.current) return;
       isSendingMessageRef.current = true;
 
@@ -566,21 +577,21 @@ export default function CollaborativeChatScreen() {
         setSelectedPredefinedMessage(null);
         setIsQuickReplyOpen(false);
         await loadChatMessages();
-    } catch (sendError: unknown) {
+      } catch (sendError: unknown) {
         setChatMessages((prev) => prev.filter((msg) => msg.id !== optimisticId));
         await loadChatMessages();
-      let errorMessage = 'Could not send message.';
-      if (axios.isAxiosError(sendError)) {
-        const apiMessage = sendError.response?.data?.message;
-        if (Array.isArray(apiMessage)) {
-          errorMessage = apiMessage.join(', ');
-        } else if (typeof apiMessage === 'string' && apiMessage.trim()) {
-          errorMessage = apiMessage;
+        let errorMessage = 'Could not send message.';
+        if (axios.isAxiosError(sendError)) {
+          const apiMessage = sendError.response?.data?.message;
+          if (Array.isArray(apiMessage)) {
+            errorMessage = apiMessage.join(', ');
+          } else if (typeof apiMessage === 'string' && apiMessage.trim()) {
+            errorMessage = apiMessage;
+          }
+        } else if (sendError instanceof Error && sendError.message.trim()) {
+          errorMessage = sendError.message;
         }
-      } else if (sendError instanceof Error && sendError.message.trim()) {
-        errorMessage = sendError.message;
-      }
-      setChatError(errorMessage);
+        setChatError(errorMessage);
       } finally {
         setSendingMessage(null);
         isSendingMessageRef.current = false;
@@ -589,51 +600,50 @@ export default function CollaborativeChatScreen() {
     [routineId, taggedParticipant, loadChatMessages, user?.email, user?.name],
   );
 
-
   const handleCaptureAndUploadImage = useCallback(() => {
     if (!routineId) {
       Alert.alert('Error', 'Routine ID is missing.');
       return;
     }
-    
+
     // Navigate to the custom camera modal
     router.push({
       pathname: '/(collaborative)/camera-modal',
-      params: { routineId }
+      params: { routineId },
     });
   }, [routineId, router]);
 
   const handleApproveLog = async (logId: number) => {
     try {
       await routineService.verifyCollaborativeLog(logId, 'approved');
-      
+
       // Update local state for immediate feedback
-      setPendingLogs(prev => prev.map(l => {
-        if (l.id === logId) {
-          const alreadyApproved = (l.approvals || []).some((item) =>
-            (typeof item === 'string' ? item : item?.id) === user?.id,
-          );
-          const voterObj =
-            user && !alreadyApproved
-              ? { id: user.id, name: user.name || 'You' }
-              : null;
-          const newApprovals = [...(l.approvals || []), ...(voterObj ? [voterObj] : [])];
-          const requiredApprovals = l.requiredApprovals || 0;
-          const isCompletedByGroup =
-            requiredApprovals > 0
-              ? newApprovals.length >= requiredApprovals
-              : l.status === 'approved' || l.isCompletedByGroup === true;
-          return { 
-            ...l, 
-            approvals: newApprovals,
-            approvalCount: newApprovals.length,
-            status: isCompletedByGroup ? 'approved' : 'pending',
-            isCompletedByGroup,
-          };
-        }
-        return l;
-      }));
-      
+      setPendingLogs((prev) =>
+        prev.map((l) => {
+          if (l.id === logId) {
+            const alreadyApproved = (l.approvals || []).some(
+              (item) => (typeof item === 'string' ? item : item?.id) === user?.id,
+            );
+            const voterObj =
+              user && !alreadyApproved ? { id: user.id, name: user.name || 'You' } : null;
+            const newApprovals = [...(l.approvals || []), ...(voterObj ? [voterObj] : [])];
+            const requiredApprovals = l.requiredApprovals || 0;
+            const isCompletedByGroup =
+              requiredApprovals > 0
+                ? newApprovals.length >= requiredApprovals
+                : l.status === 'approved' || l.isCompletedByGroup === true;
+            return {
+              ...l,
+              approvals: newApprovals,
+              approvalCount: newApprovals.length,
+              status: isCompletedByGroup ? 'approved' : 'pending',
+              isCompletedByGroup,
+            };
+          }
+          return l;
+        }),
+      );
+
       Alert.alert('Success', 'Your vote has been recorded.');
       fetchPendingLogs();
     } catch (_e) {
@@ -644,27 +654,27 @@ export default function CollaborativeChatScreen() {
   const handleRejectLog = async (logId: number) => {
     try {
       await routineService.verifyCollaborativeLog(logId, 'rejected');
-      
+
       // Update local state
-      setPendingLogs(prev => prev.map(l => {
-        if (l.id === logId) {
-          const alreadyRejected = (l.rejections || []).some((item) =>
-            (typeof item === 'string' ? item : item?.id) === user?.id,
-          );
-          const voterObj =
-            user && !alreadyRejected
-              ? { id: user.id, name: user.name || 'You' }
-              : null;
-          const newRejections = [...(l.rejections || []), ...(voterObj ? [voterObj] : [])];
-          return { 
-            ...l, 
-            status: 'rejected',
-            rejections: newRejections,
-          };
-        }
-        return l;
-      }));
-      
+      setPendingLogs((prev) =>
+        prev.map((l) => {
+          if (l.id === logId) {
+            const alreadyRejected = (l.rejections || []).some(
+              (item) => (typeof item === 'string' ? item : item?.id) === user?.id,
+            );
+            const voterObj =
+              user && !alreadyRejected ? { id: user.id, name: user.name || 'You' } : null;
+            const newRejections = [...(l.rejections || []), ...(voterObj ? [voterObj] : [])];
+            return {
+              ...l,
+              status: 'rejected',
+              rejections: newRejections,
+            };
+          }
+          return l;
+        }),
+      );
+
       Alert.alert('Rejected', 'The log has been rejected.');
       fetchPendingLogs();
     } catch (_e) {
@@ -675,31 +685,29 @@ export default function CollaborativeChatScreen() {
   return (
     <LinearGradient colors={['#2e1065', '#200f4a']} style={styles.container}>
       <Animated.View entering={FadeInDown.duration(350)} style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.replace('/(collaborative)/(drawer)/routines')}
-          style={styles.backButton}
-          hitSlop={10}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} hitSlop={10}>
           <Ionicons name="arrow-back" size={20} color="#ffffff" />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{params.routineName || 'Group Chat'}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {params.routineName || 'Group Chat'}
+          </Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleCaptureAndUploadImage}
           style={[
-            styles.detailsButton, 
-            { 
-              backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-              borderColor: 'rgba(255, 255, 255, 0.2)', 
+            styles.detailsButton,
+            {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderColor: 'rgba(255, 255, 255, 0.2)',
               marginRight: 4,
-            }
+            },
           ]}
         >
-            <Ionicons name="camera-outline" size={20} color="#ffffff" />
+          <Ionicons name="camera-outline" size={20} color="#ffffff" />
         </TouchableOpacity>
-        <TouchableOpacity 
-          onPress={() => router.replace(`/(collaborative)/routine/${routineId}` as const)} 
+        <TouchableOpacity
+          onPress={() => router.replace(`/(collaborative)/routine/${routineId}` as const)}
           style={styles.detailsButton}
         >
           <Ionicons name="information-circle-outline" size={20} color="#ffffff" />
@@ -756,32 +764,38 @@ export default function CollaborativeChatScreen() {
                 )}
                 {(() => {
                   const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
-                  const isPhotoMessage = item.text.startsWith('[PHOTO]:') || 
-                                       item.text.includes('storage.googleapis.com') || 
-                                       imageRegex.test(item.text);
-                  
+                  const isPhotoMessage =
+                    item.text.startsWith('[PHOTO]:') ||
+                    item.text.includes('storage.googleapis.com') ||
+                    imageRegex.test(item.text);
+
                   if (!isPhotoMessage) {
                     return renderChatMessageText(item.text);
                   }
 
                   const isPrefixed = item.text.startsWith('[PHOTO]:');
                   let imageUrl = isPrefixed ? item.text.replace('[PHOTO]:', '') : item.text;
-                  
+
                   if (!imageUrl.startsWith('http')) {
                     imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
                   }
 
-                  const matchingLog = pendingLogs.find(l => {
+                  const matchingLog = pendingLogs.find((l) => {
                     const logUrl = (l.verificationImageUrl || '').toLowerCase();
                     const msgUrl = imageUrl.toLowerCase();
                     const logFileName = logUrl.split('/').pop() || '!!!';
                     const msgFileName = msgUrl.split('/').pop() || '???';
-                    return logUrl === msgUrl || msgUrl.includes(logUrl) || logUrl.includes(msgUrl) || logFileName === msgFileName;
+                    return (
+                      logUrl === msgUrl ||
+                      msgUrl.includes(logUrl) ||
+                      logUrl.includes(msgUrl) ||
+                      logFileName === msgFileName
+                    );
                   });
 
                   if (matchingLog) {
                     return (
-                      <ChatVerificationItem 
+                      <ChatVerificationItem
                         log={matchingLog}
                         onApprove={handleApproveLog}
                         onReject={handleRejectLog}
@@ -796,15 +810,15 @@ export default function CollaborativeChatScreen() {
                   }
 
                   return (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.chatImageWrapper}
                       onPress={() => handleImagePreview(imageUrl)}
                       activeOpacity={0.9}
                     >
-                      <Image 
-                        source={{ uri: imageUrl }} 
-                        style={styles.chatImage} 
-                        resizeMode="contain" 
+                      <Image
+                        source={{ uri: imageUrl }}
+                        style={styles.chatImage}
+                        resizeMode="contain"
                       />
                     </TouchableOpacity>
                   );
@@ -816,7 +830,7 @@ export default function CollaborativeChatScreen() {
             </View>
           )}
         />
-        
+
         {!!chatError && (
           <View style={styles.chatStateBox}>
             <Ionicons name="warning-outline" size={14} color="#ffd7de" />
@@ -899,7 +913,8 @@ export default function CollaborativeChatScreen() {
                       <TouchableOpacity
                         style={[
                           styles.sendToGroupButton,
-                          sendingMessage === selectedPredefinedMessage && styles.quickReplyBtnSending,
+                          sendingMessage === selectedPredefinedMessage &&
+                            styles.quickReplyBtnSending,
                         ]}
                         onPress={() => handleSendPredefinedMessage(selectedPredefinedMessage, null)}
                         activeOpacity={0.85}
@@ -991,47 +1006,53 @@ export default function CollaborativeChatScreen() {
                       layout={LinearTransition.duration(260)}
                     >
                       {PREDEFINED_CATEGORY_ORDER.map((categoryKey) => {
-                    const items = predefinedMessages.filter(
-                      (msg) => (msg.category || 'general').toLowerCase() === categoryKey,
-                    );
-                    if (items.length === 0) return null;
+                        const items = predefinedMessages.filter(
+                          (msg) => (msg.category || 'general').toLowerCase() === categoryKey,
+                        );
+                        if (items.length === 0) return null;
 
-                    return (
-                      <View key={categoryKey} style={styles.quickReplyCategorySection}>
-                        <Text style={styles.quickReplyCategoryTitle}>{getCategoryLabel(categoryKey)}</Text>
-                        <View style={styles.quickReplyGrid}>
-                          {items.map((message, index) => {
-                            const accentColor = getCategoryAccentColor(categoryKey);
-                            return (
-                              <TouchableOpacity
-                                key={`${message.text}-${index}`}
-                                style={[
-                                  styles.quickReplyBtn,
-                                  {
-                                    backgroundColor: `${accentColor}22`,
-                                    borderColor: `${accentColor}55`,
-                                  },
-                                  sendingMessage === message.text && styles.quickReplyBtnSending,
-                                ]}
-                                onPress={() => {
-                                  setSelectedPredefinedMessage(message.text);
-                                  setTaggedParticipant(null);
-                                }}
-                                activeOpacity={0.7}
-                                disabled={sendingMessage !== null}
-                              >
-                                {sendingMessage === message.text ? (
-                                  <ActivityIndicator size="small" color={accentColor} />
-                                ) : null}
-                                <Text style={[styles.quickReplyText, { color: accentColor }]} numberOfLines={2}>
-                                  {message.text}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
-                      </View>
-                    );
+                        return (
+                          <View key={categoryKey} style={styles.quickReplyCategorySection}>
+                            <Text style={styles.quickReplyCategoryTitle}>
+                              {getCategoryLabel(categoryKey)}
+                            </Text>
+                            <View style={styles.quickReplyGrid}>
+                              {items.map((message, index) => {
+                                const accentColor = getCategoryAccentColor(categoryKey);
+                                return (
+                                  <TouchableOpacity
+                                    key={`${message.text}-${index}`}
+                                    style={[
+                                      styles.quickReplyBtn,
+                                      {
+                                        backgroundColor: `${accentColor}22`,
+                                        borderColor: `${accentColor}55`,
+                                      },
+                                      sendingMessage === message.text &&
+                                        styles.quickReplyBtnSending,
+                                    ]}
+                                    onPress={() => {
+                                      setSelectedPredefinedMessage(message.text);
+                                      setTaggedParticipant(null);
+                                    }}
+                                    activeOpacity={0.7}
+                                    disabled={sendingMessage !== null}
+                                  >
+                                    {sendingMessage === message.text ? (
+                                      <ActivityIndicator size="small" color={accentColor} />
+                                    ) : null}
+                                    <Text
+                                      style={[styles.quickReplyText, { color: accentColor }]}
+                                      numberOfLines={2}
+                                    >
+                                      {message.text}
+                                    </Text>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        );
                       })}
                     </Animated.View>
                   )}
@@ -1056,60 +1077,142 @@ export default function CollaborativeChatScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={{gap: 16}}>
+              <View style={{ gap: 16 }}>
                 {votersModalTab === 'approvals' &&
                   votersModalLog?.approvals &&
                   votersModalLog.approvals.length > 0 && (
-                  <View style={{gap: 8}}>
-                    <Text style={{color: '#4ade80', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1}}>Approvals</Text>
-                    {votersModalLog.approvals.map((voter, index) => {
-                      const id = typeof voter === 'string' ? voter : voter.id;
-                      const name = typeof voter === 'string' ? 'Member' : voter.name;
-                      const avatarUrl = typeof voter === 'string' ? undefined : voter.avatarUrl;
-                      return (
-                        <View key={`approve-${id}-${index}`} style={{flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 12, gap: 10}}>
-                          {avatarUrl ? (
-                            <Image source={{ uri: avatarUrl }} style={{width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.1)'}} />
-                          ) : (
-                            <View style={{width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center'}}>
-                              <Ionicons name="person" size={14} color="#e7d0ff" />
-                            </View>
-                          )}
-                          <Text style={{color: '#fff', fontSize: 15, fontWeight: '600'}}>{name}</Text>
-                        </View>
-                      )
-                    })}
-                  </View>
-                )}
+                    <View style={{ gap: 8 }}>
+                      <Text
+                        style={{
+                          color: '#4ade80',
+                          fontSize: 13,
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: 1,
+                        }}
+                      >
+                        Approvals
+                      </Text>
+                      {votersModalLog.approvals.map((voter, index) => {
+                        const id = typeof voter === 'string' ? voter : voter.id;
+                        const name = typeof voter === 'string' ? 'Member' : voter.name;
+                        const avatarUrl = typeof voter === 'string' ? undefined : voter.avatarUrl;
+                        return (
+                          <View
+                            key={`approve-${id}-${index}`}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              backgroundColor: 'rgba(255,255,255,0.05)',
+                              padding: 10,
+                              borderRadius: 12,
+                              gap: 10,
+                            }}
+                          >
+                            {avatarUrl ? (
+                              <Image
+                                source={{ uri: avatarUrl }}
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
+                                  backgroundColor: 'rgba(255,255,255,0.1)',
+                                }}
+                              />
+                            ) : (
+                              <View
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
+                                  backgroundColor: 'rgba(255,255,255,0.1)',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Ionicons name="person" size={14} color="#e7d0ff" />
+                              </View>
+                            )}
+                            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
+                              {name}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
 
                 {votersModalTab === 'rejections' &&
                   votersModalLog?.rejections &&
                   votersModalLog.rejections.length > 0 && (
-                  <View style={{gap: 8}}>
-                    <Text style={{color: '#f87171', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1}}>Rejections</Text>
-                    {votersModalLog.rejections.map((voter, index) => {
-                      const id = typeof voter === 'string' ? voter : voter.id;
-                      const name = typeof voter === 'string' ? 'Member' : voter.name;
-                      const avatarUrl = typeof voter === 'string' ? undefined : voter.avatarUrl;
-                      return (
-                        <View key={`reject-${id}-${index}`} style={{flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 12, gap: 10}}>
-                          {avatarUrl ? (
-                            <Image source={{ uri: avatarUrl }} style={{width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.1)'}} />
-                          ) : (
-                            <View style={{width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center'}}>
-                              <Ionicons name="person" size={14} color="#e7d0ff" />
-                            </View>
-                          )}
-                          <Text style={{color: '#fff', fontSize: 15, fontWeight: '600'}}>{name}</Text>
-                        </View>
-                      )
-                    })}
-                  </View>
-                )}
-                
+                    <View style={{ gap: 8 }}>
+                      <Text
+                        style={{
+                          color: '#f87171',
+                          fontSize: 13,
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: 1,
+                        }}
+                      >
+                        Rejections
+                      </Text>
+                      {votersModalLog.rejections.map((voter, index) => {
+                        const id = typeof voter === 'string' ? voter : voter.id;
+                        const name = typeof voter === 'string' ? 'Member' : voter.name;
+                        const avatarUrl = typeof voter === 'string' ? undefined : voter.avatarUrl;
+                        return (
+                          <View
+                            key={`reject-${id}-${index}`}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              backgroundColor: 'rgba(255,255,255,0.05)',
+                              padding: 10,
+                              borderRadius: 12,
+                              gap: 10,
+                            }}
+                          >
+                            {avatarUrl ? (
+                              <Image
+                                source={{ uri: avatarUrl }}
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
+                                  backgroundColor: 'rgba(255,255,255,0.1)',
+                                }}
+                              />
+                            ) : (
+                              <View
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
+                                  backgroundColor: 'rgba(255,255,255,0.1)',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Ionicons name="person" size={14} color="#e7d0ff" />
+                              </View>
+                            )}
+                            <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
+                              {name}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+
                 {(votersModalTab === 'approvals' && !votersModalLog?.approvals?.length) ||
                 (votersModalTab === 'rejections' && !votersModalLog?.rejections?.length) ? (
-                   <Text style={{color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 10}}>No votes yet.</Text>
+                  <Text
+                    style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 10 }}
+                  >
+                    No votes yet.
+                  </Text>
                 ) : null}
               </View>
             </TouchableOpacity>

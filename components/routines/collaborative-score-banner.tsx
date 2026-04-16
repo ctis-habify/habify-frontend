@@ -104,7 +104,9 @@ export function CollaborativeScoreBanner({
 
   if (loading) {
     return (
-      <RNAnimated.View style={[styles.container, styles.shimmerContainer, { opacity: shimmerAnim }]}>
+      <RNAnimated.View
+        style={[styles.container, styles.shimmerContainer, { opacity: shimmerAnim }]}
+      >
         <View style={styles.shimmerBar} />
         <View style={[styles.shimmerBar, styles.shimmerBarShort]} />
         <View style={styles.shimmerBar} />
@@ -175,7 +177,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bonusStrip: {
-    marginTop: 10,
+    marginTop: 20, // Kart ile bonus satırı arasında daha fazla boşluk
+    marginBottom: 16,
     borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
@@ -234,19 +237,7 @@ const styles = StyleSheet.create({
     height: 36,
     backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  bonusStrip: {
-    marginTop: -8,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
+  // Yukarıda bonusStrip zaten tanımlı, burada tekrar tanımlamaya gerek yok. Çakışmayı önlemek için bu tanımı kaldırıyoruz.
   bonusText: {
     color: 'rgba(255,255,255,0.82)',
     fontSize: 12,
