@@ -1,4 +1,4 @@
-import { Colors, getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient, BACKGROUND_GRADIENT_DARK } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
@@ -49,6 +49,7 @@ export function CreateRoutineModal({
   const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
+  const isDark = theme === 'dark';
   const styles = useMemo(() => getRoutineFormStyles(theme), [theme]);
   const actionColor = colors.primary;
   const screenColors =
@@ -289,14 +290,14 @@ export function CreateRoutineModal({
             scrollEnabled={!catOpen}
           >
             <View style={styles.headerRow}>
-              <Text style={styles.title}>{isEditMode ? 'Edit List' : 'Create Routine List'}</Text>
-              <TouchableOpacity onPress={handleClose}>
+              <Text style={[styles.title, { color: colors.text }]}>{isEditMode ? 'Edit List' : 'Create Routine List'}</Text>
+              <TouchableOpacity onPress={handleClose} hitSlop={12}>
                 <Ionicons name="close" size={30} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             {/* Category */}
-            <Text style={styles.sectionLabel}>Category</Text>
+            <Text style={[styles.sectionLabel, { color: colors.icon }]}>Category</Text>
             <View style={[styles.row, { zIndex: 9999, alignItems: 'center' }]}>
               <View style={{ flex: 1, marginRight: 10 }}>
                 <DropDownPicker
@@ -317,7 +318,7 @@ export function CreateRoutineModal({
                   placeholder="Select Category"
                   style={[
                     dropDownStyle,
-                    errors.category ? { borderColor: colors.error } : null,
+                    errors.category ? { backgroundColor: colors.surface, borderColor: colors.error } : null,
                   ]}
                   textStyle={{ color: colors.text, fontSize: 16 }}
                   placeholderStyle={{ color: colors.icon }}
@@ -325,6 +326,9 @@ export function CreateRoutineModal({
                   dropDownContainerStyle={{
                     backgroundColor: colors.card,
                     borderColor: colors.border,
+                  }}
+                  modalContentContainerStyle={{
+                      backgroundColor: colors.background
                   }}
                   searchPlaceholder="Search..."
                   searchable={true}
@@ -348,7 +352,9 @@ export function CreateRoutineModal({
                         width: 44,
                         height: 44,
                         borderRadius: 22,
-                        backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+                        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 1,
+                        borderColor: 'rgba(239, 68, 68, 0.2)'
                       },
                     ]}
                     onPress={handleDeleteCategory}
@@ -370,7 +376,12 @@ export function CreateRoutineModal({
                       width: 44,
                       height: 44,
                       borderRadius: 22,
-                      backgroundColor: colors.primary,
+                      backgroundColor: isDark ? colors.secondary : colors.primary,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 8,
+                      elevation: 4
                     },
                   ]}
                   onPress={() => setShowNewCategoryInput((prev) => !prev)}
@@ -385,7 +396,7 @@ export function CreateRoutineModal({
             {showNewCategoryInput && (
               <View style={{ marginTop: 10 }}>
                 <View
-                  style={[styles.inputContainer, { flexDirection: 'row', alignItems: 'center' }]}
+                  style={[styles.inputContainer, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1.5 }]}
                 >
                   <TextInput
                     value={newCategoryName}
@@ -395,10 +406,10 @@ export function CreateRoutineModal({
                     }}
                     placeholder="New Category Name"
                     placeholderTextColor={colors.icon}
-                    style={[styles.textInput, { flex: 1 }]}
+                    style={[styles.textInput, { flex: 1, color: colors.text }]}
                   />
-                  <TouchableOpacity onPress={handleCreateCategory} style={{ paddingHorizontal: 8 }}>
-                    <Text style={{ color: colors.primary, fontWeight: '600' }}>Save</Text>
+                  <TouchableOpacity onPress={handleCreateCategory} style={{ paddingHorizontal: 12 }}>
+                    <Text style={{ color: colors.primary, fontWeight: '800' }}>Save</Text>
                   </TouchableOpacity>
                 </View>
                 {errors.newCategoryName ? (
@@ -408,7 +419,7 @@ export function CreateRoutineModal({
             )}
 
             {/* Routine List Title */}
-            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>List Title</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 24, color: colors.icon }]}>List Title</Text>
             <View
               style={[
                 styles.inputContainer,
@@ -423,7 +434,7 @@ export function CreateRoutineModal({
                 }}
                 placeholder="e.g. Morning Routine"
                 placeholderTextColor={colors.icon}
-                style={[styles.textInput]}
+                style={[styles.textInput, { color: colors.text }]}
                 onFocus={() => setTitleFocused(true)}
                 onBlur={() => setTitleFocused(false)}
               />
@@ -432,19 +443,17 @@ export function CreateRoutineModal({
               <Text style={styles.errorText}>{errors.routineListTitle}</Text>
             ) : null}
 
-
-
             {/* Create Button */}
             <TouchableOpacity
-              style={[styles.createBtn, { marginTop: 40, backgroundColor: actionColor }]}
+              style={[styles.createBtn, { marginTop: 48, backgroundColor: isDark ? colors.secondary : colors.primary, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 6 }]}
               onPress={handleSave}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <ActivityIndicator color={colors.white} />
               ) : (
-                <Text style={{ color: colors.white, fontWeight: 'bold', fontSize: 16 }}>
-                  {isEditMode ? 'Update' : 'Create List'}
+                <Text style={{ color: colors.white, fontWeight: '800', fontSize: 17, letterSpacing: 0.5 }}>
+                  {isEditMode ? 'Update List' : 'Create Routine List'}
                 </Text>
               )}
             </TouchableOpacity>

@@ -1,3 +1,5 @@
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect } from 'react';
@@ -12,13 +14,19 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-const SPLASH_GRADIENT = ['#ffffff', '#f5f3ff', '#ede9fe'] as const;
-
 export function SplashScreen(): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
+  
   const pulse = useSharedValue(0);
   const spin = useSharedValue(0);
   const float = useSharedValue(0);
   const titleIntro = useSharedValue(0);
+
+  const splashGradient = isDark 
+    ? ['#0F172A', '#1E1B4B', '#2E1065'] as const
+    : ['#ffffff', '#f5f3ff', '#ede9fe'] as const;
 
   useEffect(() => {
     pulse.value = withRepeat(withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.quad) }), -1, true);
@@ -70,30 +78,33 @@ export function SplashScreen(): React.ReactElement {
     transform: [{ rotate: `${spin.value * 360}deg` }],
   }));
 
+  const chipBg = isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.12)';
+  const ringColor = isDark ? 'rgba(167, 139, 250, 0.3)' : 'rgba(124, 58, 237, 0.35)';
+
   return (
-    <LinearGradient colors={SPLASH_GRADIENT} style={styles.container}>
+    <LinearGradient colors={splashGradient} style={styles.container}>
       <Animated.View style={[styles.heroCluster, logoCardFloatStyle]}>
-        <Animated.View style={[styles.rotatingRing, ringAnimatedStyle]} />
+        <Animated.View style={[styles.rotatingRing, ringAnimatedStyle, { borderColor: ringColor }]} />
 
         <Animated.View style={[styles.iconOrbit, orbitAnimatedStyle]}>
           <Animated.View style={[styles.orbitItemTop, iconFloatA]}>
-            <View style={styles.routineIconChip}>
-              <Ionicons name="musical-notes" size={14} color="#8b5cf6" />
+            <View style={[styles.routineIconChip, { backgroundColor: chipBg }]}>
+              <Ionicons name="musical-notes" size={14} color={isDark ? '#A78BFA' : '#8b5cf6'} />
             </View>
           </Animated.View>
           <Animated.View style={[styles.orbitItemRight, iconFloatB]}>
-            <View style={styles.routineIconChip}>
-              <Ionicons name="camera" size={14} color="#3b82f6" />
+            <View style={[styles.routineIconChip, { backgroundColor: chipBg }]}>
+              <Ionicons name="camera" size={14} color={isDark ? '#60A5FA' : '#3b82f6'} />
             </View>
           </Animated.View>
           <Animated.View style={[styles.orbitItemBottom, iconFloatC]}>
-            <View style={styles.routineIconChip}>
-              <Ionicons name="barbell" size={14} color="#f59e0b" />
+            <View style={[styles.routineIconChip, { backgroundColor: chipBg }]}>
+              <Ionicons name="barbell" size={14} color={isDark ? '#FBBF24' : '#f59e0b'} />
             </View>
           </Animated.View>
           <Animated.View style={[styles.orbitItemLeft, iconFloatD]}>
-            <View style={styles.routineIconChip}>
-              <Ionicons name="time" size={14} color="#10b981" />
+            <View style={[styles.routineIconChip, { backgroundColor: chipBg }]}>
+              <Ionicons name="time" size={14} color={isDark ? '#34D399' : '#10b981'} />
             </View>
           </Animated.View>
         </Animated.View>
@@ -105,8 +116,8 @@ export function SplashScreen(): React.ReactElement {
         />
       </Animated.View>
 
-      <Animated.Text style={[styles.title, titleAnimatedStyle]}>Habify</Animated.Text>
-      <Animated.Text style={[styles.subtitle, subtitleAnimatedStyle]}>Level up your day!</Animated.Text>
+      <Animated.Text style={[styles.title, titleAnimatedStyle, { color: isDark ? colors.primary : '#5b21b6' }]}>Habify</Animated.Text>
+      <Animated.Text style={[styles.subtitle, subtitleAnimatedStyle, { color: isDark ? colors.secondary : '#7c3aed' }]}>Level up your day!</Animated.Text>
     </LinearGradient>
   );
 }

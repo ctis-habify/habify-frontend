@@ -117,37 +117,49 @@ export function CollaborativeScoreBanner({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border }]}>
-      {/* Points Column */}
-      <View style={styles.statColumn}>
-        <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
-          <Ionicons name="diamond-outline" size={20} color={effectiveAccentColor} />
+    <View style={styles.wrapper}>
+      <View style={[styles.container, { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border }]}>
+        {/* Points Column */}
+        <View style={styles.statColumn}>
+          <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
+            <Ionicons name="diamond-outline" size={20} color={effectiveAccentColor} />
+          </View>
+          <Text style={[styles.statValue, { color: effectiveAccentColor }]}>{displayPoints}</Text>
+          <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Points</Text>
         </View>
-        <Text style={[styles.statValue, { color: effectiveAccentColor }]}>{displayPoints}</Text>
-        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Points</Text>
+
+        <View style={[styles.divider, { backgroundColor: Colors[theme].border }]} />
+
+        {/* Rank Column */}
+        <View style={styles.statColumn}>
+          <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
+            <Ionicons name={rank.icon} size={20} color={rank.color} />
+          </View>
+          <Text style={[styles.statValue, { color: rank.color }]}>{rank.label}</Text>
+          <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Rank</Text>
+        </View>
+
+        <View style={[styles.divider, { backgroundColor: Colors[theme].border }]} />
+
+        {/* Streak Column */}
+        <View style={styles.statColumn}>
+          <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
+            <Ionicons name="flame" size={20} color="#F97316" />
+          </View>
+          <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
+          <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Streak</Text>
+        </View>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: Colors[theme].border }]} />
-
-      {/* Rank Column */}
-      <View style={styles.statColumn}>
-        <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
-          <Ionicons name={rank.icon} size={20} color={rank.color} />
+      {/* Bonus Strip */}
+      {nextBonusStreak > 0 && (
+        <View style={[styles.bonusStrip, { backgroundColor: `${effectiveAccentColor}10`, borderColor: `${effectiveAccentColor}30` }]}>
+          <Ionicons name="gift-outline" size={16} color={effectiveAccentColor} />
+          <Text style={[styles.bonusText, { color: Colors[theme].text }]}>
+            Reach <Text style={{ fontWeight: '800', color: effectiveAccentColor }}>{nextBonusStreak} days</Text> streak to get <Text style={{ fontWeight: '800', color: effectiveAccentColor }}>+{nextBonusPoints} bonus points!</Text>
+          </Text>
         </View>
-        <Text style={[styles.statValue, { color: rank.color }]}>{rank.label}</Text>
-        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Rank</Text>
-      </View>
-
-      <View style={[styles.divider, { backgroundColor: Colors[theme].border }]} />
-
-      {/* Streak Column */}
-      <View style={styles.statColumn}>
-        <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
-          <Ionicons name="flame" size={20} color="#F97316" />
-        </View>
-        <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
-        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Streak</Text>
-      </View>
+      )}
     </View>
   );
 }
@@ -223,11 +235,5 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 36,
-  },
-  // Yukarıda bonusStrip zaten tanımlı, burada tekrar tanımlamaya gerek yok. Çakışmayı önlemek için bu tanımı kaldırıyoruz.
-  bonusText: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 12,
-    fontWeight: '600',
   },
 });

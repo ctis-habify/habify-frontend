@@ -35,7 +35,8 @@ export function RoutineCategoryCard({
   variant,
 }: Props): React.ReactElement {
   const theme = useColorScheme() ?? 'light';
-  const effectiveAccentColor = accentColor || Colors[theme].primary;
+  const colors = Colors[theme];
+  const effectiveAccentColor = accentColor || colors.primary;
   const isGlass = variant === 'glass' || theme === 'dark';
   const [menuVisible, setMenuVisible] = useState(false);
   const optionsAvailable = !!onEditList || !!onDeleteList;
@@ -46,7 +47,7 @@ export function RoutineCategoryCard({
       variant="card" 
       style={[
         styles.card, 
-        { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border },
+        { backgroundColor: colors.card, borderColor: colors.border },
         isGlass && styles.cardGlass,
         { zIndex: menuVisible ? 999 : 1, elevation: menuVisible ? 10 : 4 }
       ]}
@@ -54,7 +55,7 @@ export function RoutineCategoryCard({
       {/* HEADER */}
       <View style={styles.headerRow}>
         <View style={styles.textWrap}>
-          <ThemedText type="default" style={[styles.title, { color: Colors[theme].text }]} numberOfLines={2}>
+          <ThemedText type="default" style={[styles.title, { color: colors.text }]} numberOfLines={2}>
             {title}
           </ThemedText>
         </View>
@@ -84,28 +85,28 @@ export function RoutineCategoryCard({
                 style={styles.iconButton}
                 hitSlop={10}
               >
-                <Ionicons name="ellipsis-vertical" size={20} color={Colors[theme].icon} />
+                <Ionicons name="ellipsis-vertical" size={20} color={colors.icon} />
               </TouchableOpacity>
 
               {menuVisible && (
-                <View style={[styles.menuContainer, { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border, zIndex: 101 }]}>
+                <View style={[styles.menuContainer, { backgroundColor: colors.card, borderColor: colors.border, zIndex: 101 }]}>
                   {!!onEditList && (
                     <TouchableOpacity 
                       style={styles.menuItem} 
                       onPress={() => { setMenuVisible(false); onEditList(); }}
                     >
-                      <Ionicons name="pencil-outline" size={16} color={Colors[theme].text} />
-                      <ThemedText style={[styles.menuText, { color: Colors[theme].text }]}>Edit</ThemedText>
+                      <Ionicons name="pencil-outline" size={16} color={colors.text} />
+                      <ThemedText style={[styles.menuText, { color: colors.text }]}>Edit</ThemedText>
                     </TouchableOpacity>
                   )}
-                  {!!onEditList && !!onDeleteList && <View style={[styles.menuDivider, { backgroundColor: Colors[theme].border }]} />}
+                  {!!onEditList && !!onDeleteList && <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />}
                   {!!onDeleteList && (
                     <TouchableOpacity 
                       style={styles.menuItem} 
                       onPress={() => { setMenuVisible(false); onDeleteList(); }}
                     >
-                      <Ionicons name="trash-outline" size={16} color={Colors[theme].error} />
-                      <ThemedText style={[styles.menuText, { color: Colors[theme].error }]}>Delete</ThemedText>
+                      <Ionicons name="trash-outline" size={16} color={colors.error} />
+                      <ThemedText style={[styles.menuText, { color: colors.error }]}>Delete</ThemedText>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -120,7 +121,7 @@ export function RoutineCategoryCard({
       {/* RUTINLER */}
       {routines.length === 0 ? (
         <View style={styles.emptyListContainer}>
-          <ThemedText type="default" style={[styles.emptyListText, { color: Colors[theme].icon }]}>
+          <ThemedText type="default" style={[styles.emptyListText, { color: colors.icon }]}>
             No routines in this list.
           </ThemedText>
         </View>
@@ -133,7 +134,7 @@ export function RoutineCategoryCard({
               onToggle={(val: boolean) => onRoutineToggle?.(idx, val)}
               onPress={() => onItemPress?.(routine.id)}
             />
-            {idx !== routines.length - 1 && <View style={[styles.lightDivider, { backgroundColor: Colors[theme].border }]} />}
+            {idx !== routines.length - 1 && <View style={[styles.lightDivider, { backgroundColor: colors.border }]} />}
           </View>
         ))
       )}

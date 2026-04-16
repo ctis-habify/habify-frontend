@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
 import { View, ViewStyle } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
@@ -10,14 +11,16 @@ interface LogoProps {
 }
 
 export function Logo({ width = 180, height = 90, style }: LogoProps): React.ReactElement {
-  // "Rhythm & Run" - A horizontal logo combining Soundwaves (Music) and Heartbeat (Sport)
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+
   return (
     <View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>
       <Svg width={width} height={height} viewBox="0 0 200 100" fill="none">
         <Defs>
           <LinearGradient id="logo_grad_wide" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
-            <Stop offset="0" stopColor={Colors.light.primary} />
-            <Stop offset="1" stopColor={Colors.light.secondary} />
+            <Stop offset="0" stopColor={colors.primary} />
+            <Stop offset="1" stopColor={colors.secondary} />
           </LinearGradient>
         </Defs>
 
@@ -36,12 +39,12 @@ export function Logo({ width = 180, height = 90, style }: LogoProps): React.Reac
         <Circle cx="50" cy="55" r="7" fill="url(#logo_grad_wide)" />
 
         {/* 2. Knowledge (Top Center): Open Book */}
-        <Path d="M75 25 Q 85 30 95 25 Q 105 30 115 25 V 40 Q 105 45 95 40 Q 85 45 75 40 Z" stroke="url(#logo_grad_wide)" strokeWidth="2" fill="rgba(255,255,255,0.5)" />
+        <Path d="M75 25 Q 85 30 95 25 Q 105 30 115 25 V 40 Q 105 45 95 40 Q 85 45 75 40 Z" stroke="url(#logo_grad_wide)" strokeWidth="2" fill={theme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)'} />
         <Path d="M95 25 V 40" stroke="url(#logo_grad_wide)" strokeWidth="1" />
 
         {/* 3. Creativity (Bottom Left): Art Palette */}
         <Path d="M55 82 Q 45 92 35 82 Q 30 72 40 67 Q 50 62 60 72 Z" fill="url(#logo_grad_wide)" opacity={0.8} />
-        <Circle cx="40" cy="77" r="2" fill="white" />
+        <Circle cx="40" cy="77" r="2" fill={colors.white} />
 
         {/* 4. Gaming (Top Right): Controller */}
         <Rect x="120" y="20" width="30" height="18" rx="5" stroke="url(#logo_grad_wide)" strokeWidth="2" fill="none" />
@@ -72,9 +75,9 @@ export function Logo({ width = 180, height = 90, style }: LogoProps): React.Reac
 
         {/* Decor: Stars to fill gaps */}
         <Path d="M65 15 L 67 20 L 72 22 L 67 24 L 65 29 L 63 24 L 58 22 L 63 20 Z" fill="#FACC15" opacity={0.8} />
-        <Circle cx="110" cy="15" r="2" fill={Colors.light.primary} />
-        <Circle cx="150" cy="85" r="2" fill={Colors.light.secondary} />
-        <Circle cx="180" cy="20" r="3" fill={Colors.light.secondary} opacity={0.6} />
+        <Circle cx="110" cy="15" r="2" fill={colors.primary} />
+        <Circle cx="150" cy="85" r="2" fill={colors.secondary} />
+        <Circle cx="180" cy="20" r="3" fill={colors.secondary} opacity={0.6} />
       </Svg>
     </View>
   );

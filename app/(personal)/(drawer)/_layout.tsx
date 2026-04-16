@@ -20,11 +20,11 @@ export default function DrawerLayout(): React.ReactElement {
           backgroundColor: colors.background,
         },
         sceneStyle: {
-          backgroundColor: theme === 'dark' ? '#1E1B4B' : '#4c1d95',
+          backgroundColor: colors.surface,
         },
         drawerActiveTintColor: colors.primary,
-        drawerInactiveTintColor: theme === 'dark' ? '#E5E7EB' : colors.text,
-        drawerActiveBackgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(124, 58, 237, 0.1)',
+        drawerInactiveTintColor: colors.textSecondary,
+        drawerActiveBackgroundColor: `${colors.primary}22`, 
         drawerLabelStyle: {
           marginLeft: 0,
           fontWeight: '600',

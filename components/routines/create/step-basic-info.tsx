@@ -98,7 +98,7 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
               onPress={handleCreateCategory}
               style={{ backgroundColor: colors.collaborativePrimary, borderRadius: 12, justifyContent: 'center', paddingHorizontal: 20 }}
               >
-                <Text style={{ color: isDark ? '#000' : '#fff', fontWeight: 'bold' }}>Save</Text>
+                <Text style={{ color: colors.white, fontWeight: 'bold' }}>Save</Text>
               </TouchableOpacity>
           </View>
         )}
@@ -122,6 +122,8 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
           theme={isDark ? "DARK" : "LIGHT"}
           style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
           dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          listItemLabelStyle={{ color: colors.text }}
+          selectedItemLabelStyle={{ color: colors.collaborativePrimary, fontWeight: 'bold' }}
           placeholder={loadingCategories ? "Loading categories..." : "Select a category"}
           placeholderStyle={{ color: colors.icon, opacity: 0.6 }}
           textStyle={{ color: colors.text, fontSize: 15 }}
@@ -137,7 +139,7 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
           searchTextInputStyle={{ 
             color: colors.text, 
             borderColor: colors.border,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'
+            backgroundColor: colors.background
           }}
         />
       </View>
@@ -176,8 +178,8 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
         <Switch 
           value={formState.isPublic}
           onValueChange={(val) => updateForm({ isPublic: val })}
-          trackColor={{ false: isDark ? '#333' : '#ddd', true: colors.collaborativePrimary }}
-          thumbColor="#fff"
+          trackColor={{ false: colors.border, true: colors.collaborativePrimary }}
+          thumbColor={colors.white}
         />
       </View>
     </Animated.View>

@@ -10,24 +10,26 @@ const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
-    text: '#111827', // Gray-900 (Deep dark for maximum readability)
-    textSecondary: '#4B5563', // Gray-600
-    textTertiary: '#9CA3AF', // Gray-400
+    text: '#1E1B4B', // Midnight Indigo
+    textSecondary: '#4F46E5', // Indigo-600
+    textTertiary: '#818CF8', // Indigo-400
     white: '#FFFFFF',
-    background: '#FFFFFF',
+    background: '#F5F3FF', // Lavender-50
     tint: '#7C3AED', 
-    icon: '#4B5563', 
-    tabIconDefault: '#9CA3AF',
+    icon: '#4F46E5', 
+    tabIconDefault: '#94A3B8',
     tabIconSelected: '#7C3AED',
-    primary: '#7C3AED',
-    secondary: '#A78BFA', 
+    primary: '#7C3AED', // Violet-600
+    secondary: '#A78BFA', // Violet-400
     success: '#10B981',
     error: '#EF4444',
-    border: '#E5E7EB',
-    card: '#FFFFFF',
-    surface: '#F9FAFB',
+    border: '#DDD6FE', // Lavender-200
+    card: '#FAF9FF', // Subtle Lavender tint (Avoids pure white)
+    surface: '#EDE9FE', // Lavender-100 (For fields/chips)
     collaborativePrimary: '#DB2777', // Deep Pink
-    collaborativeGradient: ['#FDF4FF', '#FAE8FF'] as const, // Fuchsia-50 -> Fuchsia-100
+    collaborativeGradient: ['#F5F3FF', '#EDE9FE'] as const, // Consistent lavender gradient
+    gold: '#F59E0B',
+    warning: '#F97316',
   },
   dark: {
     text: '#F9FAFB',
@@ -48,6 +50,8 @@ export const Colors = {
     surface: '#1E1B4B',
     collaborativePrimary: '#E879F9', // Fuchsia-400
     collaborativeGradient: ['#2E1065', '#581C87'] as const, // Violet-950 -> Violet-900
+    gold: '#fbbf24',
+    warning: '#fbbf24',
   },
 };
 

@@ -21,14 +21,14 @@ export function SettingsSection({ title, children, delay = 0 }: SettingsSectionP
             style={styles.container}
         >
             {title && (
-                <Text style={[styles.title, { color: isDark ? Colors[theme].textSecondary : Colors[theme].text }]}>
+                <Text style={[styles.title, { color: Colors[theme].textSecondary }]}>
                     {title}
                 </Text>
             )}
             <Animated.View style={[
                 styles.content,
                 {
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.4)',
+                    backgroundColor: Colors[theme].card,
                     borderColor: Colors[theme].border
                 }
             ]}>

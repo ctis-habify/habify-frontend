@@ -5,11 +5,11 @@ import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Routine } from '../../types/routine';
 
-function remainingColor(mins: number) {
-  if (mins <= 30) return '#EF4444'; // Red-500
+function remainingColor(mins: number, colors: any) {
+  if (mins <= 30) return colors.error; 
   if (mins <= 60) return '#F97316'; // Orange-500
   if (mins <= 240) return '#EAB308'; // Yellow-500
-  return '#10B981'; // Green-500
+  return colors.success;
 }
 
 type Props = {
@@ -17,9 +17,6 @@ type Props = {
   onPress: () => void;
   onPressCamera?: (_id: string) => void;
 };
-
-// "YYYY-MM-DD" + "HH:mm[:ss]" -> Date
-
 
 export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.ReactElement {
   const theme = useColorScheme() ?? 'light';
@@ -86,9 +83,7 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
      return () => clearInterval(id);
   }, [updateState]);
 
-
-  
-  const color = useMemo(() => remainingColor(minsLeft), [minsLeft]);
+  const color = useMemo(() => remainingColor(minsLeft, colors), [minsLeft, colors]);
 
   return (
     <Pressable
@@ -96,10 +91,9 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
       style={({ pressed }) => [
         styles.container,
         {
-          backgroundColor: isDark ? colors.card : '#fff',
-          borderColor: isDark ? colors.border : '#f8fafc',
-          shadowOpacity: isDark ? 0 : 0.08,
-          elevation: isDark ? 0 : 4,
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          shadowOpacity: isDark ? 0 : 0.06,
         },
         pressed && styles.pressed,
       ]}
@@ -114,11 +108,11 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
                 <View
                   style={[
                     styles.timeBadge,
-                    { backgroundColor: isDark ? colors.background : '#f8fafc' },
+                    { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
                   ]}
                 >
                    <Ionicons name="time-outline" size={14} color={color} style={{ marginRight: 4 }} />
-                   <Text style={[styles.duration, { color }]}>{label}</Text>
+                   <Text style={[styles.duration, { color: isDark ? colors.white : color }]}>{label}</Text>
                 </View>
               )}
 
@@ -126,11 +120,15 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
                 <View
                   style={[
                     styles.groupBadge,
-                    { backgroundColor: isDark ? 'rgba(2,132,199,0.2)' : '#e0f2fe' },
+                    { 
+                        backgroundColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(14, 165, 233, 0.06)',
+                        borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(14, 165, 233, 0.15)',
+                        borderWidth: 1 
+                    },
                   ]}
                 >
-                  <Ionicons name="people" size={12} color="#0284c7" />
-                  <Text style={styles.groupBadgeText}>Group</Text>
+                  <Ionicons name="people" size={12} color={isDark ? '#38bdf8' : '#0284c7'} />
+                  <Text style={[styles.groupBadgeText, { color: isDark ? '#38bdf8' : '#0284c7' }]}>Group</Text>
                 </View>
               )}
             </View>
@@ -139,7 +137,7 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
 
         <Pressable
           onPress={() => onPressCamera?.(routine.id)}
-          style={[styles.cameraBtn, { backgroundColor: isDark ? colors.background : '#f1f5f9' }]}
+          style={[styles.cameraBtn, { backgroundColor: isDark ? colors.background : colors.surface, borderColor: colors.border, borderWidth: 1 }]}
           hitSlop={10}
         >
           <Ionicons name="camera" size={20} color={colors.primary} />
@@ -154,22 +152,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#fff',
     paddingVertical: 18,
     paddingHorizontal: 20,
+    borderWidth: 1.5,
     
     // Premium Soft Shadow
-    shadowColor: "#64748b",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 16,
     elevation: 4,
-    borderWidth: 1,
-    borderColor: '#f8fafc',
   },
   pressed: {
-    opacity: 0.95,
-    transform: [{ scale: 0.995 }]
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }]
   },
   contentRow: {
     flexDirection: 'row',
@@ -181,9 +177,8 @@ const styles = StyleSheet.create({
     paddingRight: 12 
   },
   name: {
-    color: '#1e293b', // Slate-800
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '700',
     marginBottom: 8,
     letterSpacing: -0.4,
   },
@@ -195,37 +190,34 @@ const styles = StyleSheet.create({
   timeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
   duration: { 
-    fontSize: 13, 
-    fontWeight: '400',
+    fontSize: 12, 
+    fontWeight: '700',
     letterSpacing: 0.2,
   },
   groupBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e0f2fe',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
     gap: 4,
   },
   groupBadgeText: {
-    color: '#0284c7',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  
   cameraBtn: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#f1f5f9', // Slate-100
     alignItems: 'center',
     justifyContent: 'center',
   },

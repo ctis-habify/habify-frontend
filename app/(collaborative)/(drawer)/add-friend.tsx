@@ -123,9 +123,9 @@ export default function AddFriendScreen(): React.ReactElement {
           disabled={!query.trim() || loading}
         >
           {loading ? (
-            <ActivityIndicator size="small" color={isDark ? "#000" : "#fff"} />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
-            <Text style={[styles.searchBtnText, { color: isDark ? '#000' : '#fff' }]}>Search</Text>
+            <Text style={[styles.searchBtnText, { color: colors.white }]}>Search</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -144,7 +144,7 @@ export default function AddFriendScreen(): React.ReactElement {
                 <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatarPlaceholder, { backgroundColor: collaborativePrimary }]}>
-                  <Text style={[styles.avatarLetter, { color: isDark ? '#000' : '#fff' }]}>{user.name.charAt(0).toUpperCase()}</Text>
+                  <Text style={[styles.avatarLetter, { color: colors.white }]}>{user.name.charAt(0).toUpperCase()}</Text>
                 </View>
               )}
             </View>
@@ -165,11 +165,11 @@ export default function AddFriendScreen(): React.ReactElement {
               disabled={sendingId !== null}
             >
               {sendingId === user.id ? (
-                <ActivityIndicator size="small" color={isDark ? "#000" : "#fff"} />
+                <ActivityIndicator size="small" color={colors.white} />
               ) : (
                 <>
-                  <Ionicons name="person-add" size={18} color={isDark ? "#000" : "#fff"} />
-                  <Text style={[styles.sendBtnText, { color: isDark ? '#000' : '#fff' }]}>Add</Text>
+                  <Ionicons name="person-add" size={18} color={colors.white} />
+                  <Text style={[styles.sendBtnText, { color: colors.white }]}>Add</Text>
                 </>
               )}
             </TouchableOpacity>

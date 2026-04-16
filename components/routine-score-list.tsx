@@ -54,7 +54,7 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
     >
       <View style={styles.headerRow}>
-        <Ionicons name="trophy" size={20} color="#FFD700" />
+        <Ionicons name="trophy" size={20} color="#fbbf24" />
         <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Score List</Text>
       </View>
 
@@ -74,16 +74,16 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
                 style={[
                   styles.row, 
                   { backgroundColor: colors.surface, borderColor: colors.border },
-                  isSelf && { backgroundColor: isDark ? `${collaborativePrimary}33` : `${collaborativePrimary}15`, borderColor: collaborativePrimary }
+                  isSelf && { backgroundColor: isDark ? 'rgba(168, 85, 247, 0.2)' : 'rgba(124, 58, 237, 0.08)', borderColor: collaborativePrimary }
                 ]}
               >
                 <View style={styles.rankContainer}>
                   {entry.rank === 1 ? (
-                    <Ionicons name="medal" size={22} color="#FFD700" />
+                    <Ionicons name="medal" size={24} color="#fbbf24" />
                   ) : entry.rank === 2 ? (
-                    <Ionicons name="medal" size={22} color="#C0C0C0" />
+                    <Ionicons name="medal" size={24} color="#94a3b8" />
                   ) : entry.rank === 3 ? (
-                    <Ionicons name="medal" size={22} color="#CD7F32" />
+                    <Ionicons name="medal" size={24} color="#b45309" />
                   ) : (
                     <Text style={[styles.rankText, { color: colors.icon }]}>#{entry.rank}</Text>
                   )}
@@ -92,7 +92,7 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
                 {entry.avatarUrl ? (
                   <Image source={{ uri: entry.avatarUrl }} style={[styles.avatar, { borderColor: colors.border }]} />
                 ) : (
-                  <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                  <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
                     <Text style={[styles.avatarPlaceholderText, { color: colors.text }]}>
                       {displayName.charAt(0).toUpperCase()}
                     </Text>

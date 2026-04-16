@@ -105,7 +105,7 @@ export function EditProfileModal({
                             onPress={onClose} 
                             style={[
                                 styles.closeButton, 
-                                { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
+                                { backgroundColor: Colors[theme].surface }
                             ]}
                         >
                             <Ionicons name="close" size={24} color={Colors[theme].text} />
@@ -120,7 +120,7 @@ export function EditProfileModal({
                                 style={[
                                     styles.input,
                                     {
-                                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                                        backgroundColor: Colors[theme].surface,
                                         color: Colors[theme].text,
                                         borderColor: Colors[theme].border
                                     }
@@ -139,7 +139,7 @@ export function EditProfileModal({
                                 styles.input,
                                 styles.dateField,
                                 {
-                                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                                  backgroundColor: Colors[theme].surface,
                                   borderColor: Colors[theme].border,
                                 },
                               ]}

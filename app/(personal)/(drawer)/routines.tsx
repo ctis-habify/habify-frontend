@@ -37,7 +37,8 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const { token: authContextToken } = useAuth();
-  
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
   const screenGradient = getBackgroundGradient(theme);
   const activeTab = 'Personal';
   const isSwitchingRef = useRef(false);
@@ -165,10 +166,10 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
         <View style={styles.fixedHeader}>
           <View style={styles.headerTopRow}>
             <TouchableOpacity
-              style={[styles.menuBtn, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+              style={[styles.menuBtn, { backgroundColor: colors.surface }]}
               onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             >
-              <Ionicons name="menu" size={24} color={Colors[theme].text} />
+              <Ionicons name="menu" size={24} color={colors.text} />
             </TouchableOpacity>
 
             <View style={{ flex: 1 }}>
@@ -176,7 +177,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                 tabs={['Personal', 'Collaborative']}
                 activeTab={activeTab}
                 onTabPress={handleTabSwitch}
-                activeColor={Colors[theme].tint}
+                activeColor={colors.tint}
               />
             </View>
           </View>
@@ -192,15 +193,15 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           {/* Today's Routines' Header */}
           <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
           <TouchableOpacity
-            style={[styles.sectionHeader, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderColor: Colors[theme].border }]}
+            style={[styles.sectionHeader, { backgroundColor: colors.surface, borderColor: colors.border }]}
             activeOpacity={0.85}
             onPress={() => router.push('/(personal)/(drawer)/today-routines')}
           >
-            <Text style={[styles.sectionTitle, { color: Colors[theme].text }]}>Today&apos;s Routines</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Routines</Text>
           </TouchableOpacity>
           </Animated.View>
 
-          {loading && <ActivityIndicator size="large" color={Colors[theme].textSecondary} style={{ marginTop: 40 }} />}
+          {loading && <ActivityIndicator size="large" color={colors.textSecondary} style={{ marginTop: 40 }} />}
 
           {!loading && routineLists.map((list, idx) => {
             const accentColor = getCategoryAccentColor(list.categoryName, list.categoryId ?? null);
@@ -246,11 +247,11 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
           {hasNoData && (
             <View style={styles.emptyOuter}>
-              <View style={[styles.emptyIconWrapper, { backgroundColor: theme === 'dark' ? 'rgba(249,168,255,0.12)' : 'rgba(0,0,0,0.05)' }]}>
-                <Ionicons name="calendar-outline" size={64} color={Colors[theme].primary} />
+              <View style={[styles.emptyIconWrapper, { backgroundColor: colors.surface }]}>
+                <Ionicons name="calendar-outline" size={64} color={colors.primary} />
               </View>
-              <Text style={[styles.emptyTitle, { color: Colors[theme].text }]}>You haven&apos;t created a routine yet.</Text>
-              <Text style={[styles.emptySub, { color: Colors[theme].textSecondary }]}>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>You haven&apos;t created a routine yet.</Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                 You can create a new list by clicking the button below.
               </Text>
 
@@ -258,13 +259,13 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                 style={[
                    styles.createBtn, 
                    { 
-                     backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)', 
-                     borderColor: Colors[theme].border 
+                     backgroundColor: colors.surface, 
+                     borderColor: colors.border 
                    }
                 ]}
                 onPress={() => router.push('/(personal)/create-routine')}
               >
-                <Text style={[styles.createBtnText, { color: Colors[theme].text }]}>Create Routine List</Text>
+                <Text style={[styles.createBtnText, { color: colors.text }]}>Create Routine List</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -276,13 +277,13 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                   styles.createBtn, 
                   { 
                     marginTop: 10, 
-                    backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)', 
-                    borderColor: Colors[theme].border 
+                    backgroundColor: colors.surface, 
+                    borderColor: colors.border 
                   }
                ]}
                onPress={() => router.push('/(personal)/create-routine')}
              >
-               <Text style={[styles.createBtnText, { color: Colors[theme].text }]}>Create Routine List</Text>
+               <Text style={[styles.createBtnText, { color: colors.text }]}>Create Routine List</Text>
              </TouchableOpacity>
              </Animated.View>
           )}
@@ -300,16 +301,18 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
         {editListParams && (
           <Modal visible={true} transparent animationType="slide" onRequestClose={() => setEditListParams(null)}>
-            <CreateRoutineModal
-              initialRoutineListId={editListParams.listId}
-              initialTitle={editListParams.title}
-              initialCategoryId={editListParams.categoryId}
-              onClose={() => setEditListParams(null)}
-              onCreated={() => {
-                setEditListParams(null);
-                loadLists();
-              }}
-            />
+            <View style={styles.modalOverlay}>
+              <CreateRoutineModal
+                initialRoutineListId={editListParams.listId}
+                initialTitle={editListParams.title}
+                initialCategoryId={editListParams.categoryId}
+                onClose={() => setEditListParams(null)}
+                onCreated={() => {
+                  setEditListParams(null);
+                  loadLists();
+                }}
+              />
+            </View>
           </Modal>
         )}
       </LinearGradient>
@@ -334,11 +337,15 @@ const styles = StyleSheet.create({
   menuBtn: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   scroll: {
     paddingHorizontal: 18,
@@ -362,7 +369,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   emptyIconWrapper: {
-    backgroundColor: 'rgba(249,168,255,0.12)',
     padding: 30,
     borderRadius: 100,
     marginBottom: 20,

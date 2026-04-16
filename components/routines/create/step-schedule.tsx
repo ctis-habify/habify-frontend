@@ -146,7 +146,7 @@ export function StepSchedule({ formState, updateForm }: Props) {
               key={f} 
               style={[
                 styles.segmentBtn, 
-                formState.frequency === f && [styles.segmentBtnActive, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]
+                formState.frequency === f && [styles.segmentBtnActive, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)' }]
               ]}
               onPress={() => updateForm({ frequency: f as 'Daily' | 'Weekly' })}
              >
@@ -161,14 +161,14 @@ export function StepSchedule({ formState, updateForm }: Props) {
       </View>
 
        {formState.frequency === 'Daily' ? (
-         <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(232, 121, 249, 0.1)' : 'rgba(219, 39, 119, 0.05)' }]}>
+         <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(168, 85, 247, 0.15)' : 'rgba(124, 58, 237, 0.04)' }]}>
            <Ionicons name="information-circle-outline" size={20} color={colors.collaborativePrimary} />
            <Text style={[styles.infoText, { color: colors.text }]}>
             Collaborators must complete the routine within the {String(formState.startTime.getHours()).padStart(2, '0')}:{String(formState.startTime.getMinutes()).padStart(2, '0')} - {String(formState.endTime.getHours()).padStart(2, '0')}:{String(formState.endTime.getMinutes()).padStart(2, '0')} window.
            </Text>
          </View>
        ) : (
-         <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(232, 121, 249, 0.1)' : 'rgba(219, 39, 119, 0.05)' }]}>
+         <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(168, 85, 247, 0.15)' : 'rgba(124, 58, 237, 0.04)' }]}>
            <Ionicons name="information-circle-outline" size={20} color={colors.collaborativePrimary} />
            <Text style={[styles.infoText, { color: colors.text }]}>
             Collaborators can complete this routine anytime during the week.

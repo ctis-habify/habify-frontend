@@ -11,6 +11,8 @@ import {
     View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { BrokenHeartAnimation } from '../animations/broken-heart-animation';
 
 interface DeleteRoutineModalProps {
@@ -30,6 +32,9 @@ export function DeleteRoutineModal({
     isLoading,
     onAnimationFinished,
 }: DeleteRoutineModalProps): React.ReactElement {
+    const theme = useColorScheme() ?? 'light';
+    const colors = Colors[theme];
+    const isDark = theme === 'dark';
     const [playAnimation, setPlayAnimation] = useState(false);
 
     const handleConfirm = async () => {
@@ -64,10 +69,10 @@ export function DeleteRoutineModal({
                         style={styles.modalContainer}
                     >
                         <LinearGradient
-                            colors={['#3b1a83', '#2e1065', '#200f4a']}
+                            colors={isDark ? ['#1e1b4b', '#312e81', '#1e1b4b'] : ['#4f46e5', '#4338ca', '#3730a3']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
-                            style={styles.card}
+                            style={[styles.card, { borderColor: colors.border }]}
                         >
                             {playAnimation ? (
                                 <View style={styles.animationContainer}>
@@ -76,41 +81,41 @@ export function DeleteRoutineModal({
                                         size={120}
                                         onAnimationComplete={handleAnimationComplete}
                                     />
-                                    <Text style={styles.leavingText}>Deleting...</Text>
+                                    <Text style={[styles.leavingText, { color: colors.error }]}>Deleting...</Text>
                                 </View>
                             ) : (
                                 <>
-                                    <View style={styles.iconContainer}>
-                                        <Ionicons name="trash-outline" size={36} color="#ef4444" />
+                                    <View style={[styles.iconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.2)' }]}>
+                                        <Ionicons name="trash-outline" size={36} color={colors.white} />
                                     </View>
 
-                                    <Text style={styles.title}>Delete Routine</Text>
+                                    <Text style={[styles.title, { color: colors.white }]}>Delete Routine</Text>
 
-                                    <Text style={styles.message}>
-                                        Are you sure you want to delete <Text style={styles.highlight}>{routineName || 'this routine'}</Text>?
+                                    <Text style={[styles.message, { color: 'rgba(255,255,255,0.9)' }]}>
+                                        Are you sure you want to delete <Text style={[styles.highlight, { color: isDark ? '#c084fc' : '#fff' }]}>{routineName || 'this routine'}</Text>?
                                     </Text>
-                                    <Text style={styles.subtext}>
+                                    <Text style={[styles.subtext, { color: 'rgba(255,255,255,0.7)' }]}>
                                         This action is permanent and will remove the routine and all its data for everyone.
                                     </Text>
 
                                     <View style={styles.buttonRow}>
                                         <TouchableOpacity
-                                            style={styles.cancelBtn}
+                                            style={[styles.cancelBtn, { backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }]}
                                             onPress={onClose}
                                             disabled={isLoading}
                                         >
-                                            <Text style={styles.cancelBtnText}>Cancel</Text>
+                                            <Text style={[styles.cancelBtnText, { color: colors.white }]}>Cancel</Text>
                                         </TouchableOpacity>
 
                                         <TouchableOpacity
-                                            style={styles.deleteBtn}
+                                            style={[styles.deleteBtn, { backgroundColor: colors.error }]}
                                             onPress={handleConfirm}
                                             disabled={isLoading}
                                         >
                                             {isLoading ? (
-                                                <ActivityIndicator color="#ffffff" size="small" />
+                                                <ActivityIndicator color={colors.white} size="small" />
                                             ) : (
-                                                <Text style={styles.deleteBtnText}>Delete Routine</Text>
+                                                <Text style={[styles.deleteBtnText, { color: colors.white }]}>Delete Routine</Text>
                                             )}
                                         </TouchableOpacity>
                                     </View>
@@ -127,7 +132,7 @@ export function DeleteRoutineModal({
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.6)',
+        backgroundColor: 'rgba(0,0,0,0.75)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 24,
@@ -140,51 +145,48 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         padding: 24,
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(232, 121, 249, 0.2)',
+        borderWidth: 1.5,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 10,
+            height: 12,
         },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
+        shadowOpacity: 0.4,
+        shadowRadius: 24,
         elevation: 10,
         minHeight: 280,
         justifyContent: 'center',
     },
     iconContainer: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        width: 68,
+        height: 68,
+        borderRadius: 34,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 20,
     },
     title: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#ffffff',
+        fontSize: 24,
+        fontWeight: '800',
         marginBottom: 12,
+        letterSpacing: -0.5,
     },
     message: {
         fontSize: 16,
-        color: 'rgba(255,255,255,0.9)',
         textAlign: 'center',
         marginBottom: 8,
-        lineHeight: 22,
+        lineHeight: 24,
+        fontWeight: '500',
     },
     highlight: {
-        color: '#E879F9',
-        fontWeight: '700',
+        fontWeight: '800',
     },
     subtext: {
         fontSize: 13,
-        color: 'rgba(255,255,255,0.6)',
         textAlign: 'center',
-        marginBottom: 28,
-        lineHeight: 18,
+        marginBottom: 32,
+        lineHeight: 20,
+        fontWeight: '400',
     },
     buttonRow: {
         flexDirection: 'row',
@@ -195,31 +197,27 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: 14,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.1)',
         alignItems: 'center',
         justifyContent: 'center',
     },
     cancelBtnText: {
-        color: '#ffffff',
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     deleteBtn: {
         flex: 1,
         paddingVertical: 14,
         borderRadius: 16,
-        backgroundColor: '#ef4444',
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#ef4444',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.2,
         shadowRadius: 8,
     },
     deleteBtnText: {
-        color: '#ffffff',
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '800',
     },
     animationContainer: {
         alignItems: 'center',
@@ -227,9 +225,9 @@ const styles = StyleSheet.create({
         height: 200,
     },
     leavingText: {
-        marginTop: 20,
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#ef4444',
+        marginTop: 24,
+        fontSize: 20,
+        fontWeight: '800',
+        letterSpacing: 0.5,
     }
 });

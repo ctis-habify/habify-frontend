@@ -46,9 +46,9 @@ export default function CreateCollaborativeRoutineScreen() {
         <View style={styles.header}>
             <TouchableOpacity 
                 onPress={() => router.back()} 
-                style={[styles.backBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+                style={[styles.backBtn, { backgroundColor: Colors[theme].surface }]}
             >
-                <Ionicons name="arrow-back" size={24} color={isDark ? "#fff" : Colors[theme].text} />
+                <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: Colors[theme].text }]}>Create Collaborative Routine</Text>
             <View style={{ width: 40 }} />
@@ -87,8 +87,8 @@ export default function CreateCollaborativeRoutineScreen() {
                 {/* Footer Buttons */}
                 <View style={styles.footer}>
                      {step > 0 && (
-                         <TouchableOpacity onPress={prevStep} style={[styles.backStepBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: Colors[theme].border }]}>
-                             <Text style={[styles.backStepText, { color: Colors[theme].text, opacity: 0.6 }]}>Back</Text>
+                         <TouchableOpacity onPress={prevStep} style={[styles.backStepBtn, { backgroundColor: Colors[theme].surface, borderColor: Colors[theme].border }]}>
+                             <Text style={[styles.backStepText, { color: Colors[theme].textSecondary }]}>Back</Text>
                          </TouchableOpacity>
                      )}
                      
@@ -98,7 +98,7 @@ export default function CreateCollaborativeRoutineScreen() {
                         style={{ flex: 1, marginLeft: step > 0 ? 15 : 0 }}
                     >
                         <View
-                            style={[styles.nextStepBtn, { backgroundColor: collaborativePrimary, shadowColor: collaborativePrimary }]}
+                            style={[styles.nextStepBtn, { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }]}
                         >
                             {isSubmitting ? (
                                 <ActivityIndicator color="#fff" />
@@ -156,10 +156,10 @@ const styles = StyleSheet.create({
         paddingVertical: 16, paddingHorizontal: 32,
         borderRadius: 20,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        shadowOpacity: 0.4, 
-        shadowRadius: 12,
+        shadowOpacity: 0.3, 
+        shadowRadius: 10,
         elevation: 8,
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+        borderWidth: 1, 
     },
-    nextStepText: { color: '#fff', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
+    nextStepText: { fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
 });

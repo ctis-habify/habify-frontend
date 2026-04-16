@@ -692,7 +692,7 @@ export default function CollaborativeChatScreen() {
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
       <Animated.View entering={FadeInDown.duration(350)} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderColor: colors.border }]} hitSlop={10}>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]} hitSlop={10}>
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
@@ -703,7 +703,7 @@ export default function CollaborativeChatScreen() {
           style={[
             styles.detailsButton, 
             { 
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)', 
+              backgroundColor: colors.surface, 
               borderColor: colors.border, 
               marginRight: 4,
             },
@@ -712,8 +712,11 @@ export default function CollaborativeChatScreen() {
             <Ionicons name="camera-outline" size={20} color={colors.text} />
         </TouchableOpacity>
         <TouchableOpacity 
-          onPress={() => router.push(`/(collaborative)/routine/${routineId}` as const)} 
-          style={[styles.detailsButton, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)', borderColor: colors.border }]}
+          onPress={() => router.push({
+            pathname: '/(collaborative)/routine/[id]',
+            params: { id: routineId }
+          } as never)} 
+          style={[styles.detailsButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           <Ionicons name="information-circle-outline" size={20} color={colors.text} />
           <Text style={[styles.detailsButtonText, { color: colors.text }]}>Details</Text>
@@ -754,14 +757,14 @@ export default function CollaborativeChatScreen() {
                 style={[
                   styles.chatBubble,
                   item.isSystemEvent
-                    ? [styles.chatBubbleEvent, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]
+                    ? [styles.chatBubbleEvent, { backgroundColor: colors.surface, borderColor: colors.border }]
                     : item.sender === 'me'
                       ? [styles.chatBubbleMine, { backgroundColor: collaborativePrimary }]
-                      : [styles.chatBubbleSystem, { backgroundColor: isDark ? '#1e1b4b' : '#f3f4f6' }],
+                      : [styles.chatBubbleSystem, { backgroundColor: colors.card }],
                 ]}
               >
                 {!item.isSystemEvent ? (
-                  <Text style={[styles.chatSender, { color: item.sender === 'me' ? (isDark ? '#000' : '#fff') : colors.text, opacity: 0.7 }]}>
+                  <Text style={[styles.chatSender, { color: item.sender === 'me' ? colors.white : colors.text, opacity: 0.8 }]}>
                     {item.sender === 'me' ? 'You' : item.senderName}
                   </Text>
                 ) : (
@@ -776,7 +779,7 @@ export default function CollaborativeChatScreen() {
 
                   if (!isPhotoMessage) {
                     return renderChatMessageText(item.text);
-                    //return <Text style={[styles.chatBubbleText, { color: item.sender === 'me' ? (isDark ? '#000' : '#fff') : colors.text }]}>{item.text}</Text>;
+                    //return <Text style={[styles.chatBubbleText, { color: item.sender === 'me' ? colors.white : colors.text }]}>{item.text}</Text>;
                   }
 
                   const isPrefixed = item.text.startsWith('[PHOTO]:');
@@ -830,7 +833,7 @@ export default function CollaborativeChatScreen() {
                   );
                 })()}
                 {!!item.createdAt && (
-                  <Text style={[styles.chatTime, { color: item.sender === 'me' ? (isDark ? '#000' : '#fff') : colors.icon, opacity: 0.6 }]}>{formatMessageTime(item.createdAt)}</Text>
+                  <Text style={[styles.chatTime, { color: item.sender === 'me' ? colors.white : colors.textSecondary, opacity: 0.7 }]}>{formatMessageTime(item.createdAt)}</Text>
                 )}
               </View>
             </View>
@@ -1351,7 +1354,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   chatMentionText: {
     color: '#c4b5fd',
@@ -1394,7 +1396,7 @@ const styles = StyleSheet.create({
   chatImageWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     marginVertical: 4,
   },
   chatImage: {
@@ -1418,7 +1420,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.6)', // Standard modal overlay
   },
   quickReplyBottomSheet: {
     position: 'absolute',
@@ -1450,10 +1452,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
+    borderWidth: 1,
   },
   bottomSheetHandle: {
     alignSelf: 'center',
@@ -1669,9 +1670,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   votersTabActive: {
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
@@ -1700,7 +1700,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   voterLetter: {
-    color: '#fff',
+    color: Colors.light.text, // Always bright text for avatar circles if they follow brand colors
     fontSize: 15,
     fontWeight: '800',
   },

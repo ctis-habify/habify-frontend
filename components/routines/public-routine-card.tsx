@@ -105,13 +105,13 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
                 {/* Action */}
                 <View style={styles.actionRow}>
                     {isAlreadyMember ? (
-                        <View style={[styles.joinedBadge, { backgroundColor: isDark ? 'rgba(74, 222, 128, 0.15)' : 'rgba(74, 222, 128, 0.08)', borderColor: 'rgba(74, 222, 128, 0.3)' }]}>
+                        <View style={[styles.joinedBadge, { backgroundColor: isDark ? 'rgba(74, 222, 128, 0.2)' : 'rgba(74, 222, 128, 0.06)', borderColor: 'rgba(74, 222, 128, 0.25)' }]}>
                             <Ionicons name="checkmark-circle" size={16} color="#4ade80" />
                             <Text style={[styles.joinedText, { color: '#4ade80' }]}>Joined</Text>
                         </View>
                     ) : (
                         <TouchableOpacity
-                            style={[styles.joinBtn, { backgroundColor: isDark ? `${effectiveAccentColor}33` : `${effectiveAccentColor}11`, borderColor: `${effectiveAccentColor}60` }]}
+                            style={[styles.joinBtn, { backgroundColor: isDark ? `${effectiveAccentColor}22` : `${effectiveAccentColor}0D`, borderColor: `${effectiveAccentColor}4D` }]}
                             onPress={handleJoin}
                             activeOpacity={0.75}
                             disabled={joining}

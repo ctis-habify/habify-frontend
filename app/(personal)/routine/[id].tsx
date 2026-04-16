@@ -47,6 +47,7 @@ export default function EditRoutineScreen(): React.ReactElement {
   const { token } = useAuth(); 
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
+  const isDark = theme === 'dark';
   const screenColors = getBackgroundGradient(theme);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -192,7 +193,7 @@ export default function EditRoutineScreen(): React.ReactElement {
     <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+        <TouchableOpacity onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: Colors[theme].surface }]}>
           <Ionicons name="close" size={24} color={Colors[theme].text} />
         </TouchableOpacity>
       </View>
@@ -253,9 +254,9 @@ export default function EditRoutineScreen(): React.ReactElement {
                 {showStartTimePicker && (
                   Platform.OS === 'ios' ? (
                     <Modal visible={showStartTimePicker} transparent animationType="fade">
-                      <View style={styles.modalOverlay}>
+                      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)' }]}>
                         <View style={[styles.iosPickerContainer, { backgroundColor: colors.card }]}>
-                          <View style={[styles.pickerHeader, { borderBottomColor: colors.border, backgroundColor: theme === 'dark' ? colors.card : '#f8f9fa' }]}>
+                          <View style={[styles.pickerHeader, { borderBottomColor: colors.border, backgroundColor: theme === 'dark' ? colors.card : colors.surface }]}>
                             <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
                               <ThemedText style={[styles.doneButton, { color: colors.primary }]}>Done</ThemedText>
                             </TouchableOpacity>
@@ -303,9 +304,9 @@ export default function EditRoutineScreen(): React.ReactElement {
                 {showEndTimePicker && (
                   Platform.OS === 'ios' ? (
                     <Modal visible={showEndTimePicker} transparent animationType="fade">
-                      <View style={styles.modalOverlay}>
+                      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)' }]}>
                         <View style={[styles.iosPickerContainer, { backgroundColor: colors.card }]}>
-                          <View style={[styles.pickerHeader, { borderBottomColor: colors.border, backgroundColor: theme === 'dark' ? colors.card : '#f8f9fa' }]}>
+                          <View style={[styles.pickerHeader, { borderBottomColor: colors.border, backgroundColor: theme === 'dark' ? colors.card : colors.surface }]}>
                             <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
                               <ThemedText style={[styles.doneButton, { color: colors.primary }]}>Done</ThemedText>
                             </TouchableOpacity>
@@ -364,14 +365,34 @@ export default function EditRoutineScreen(): React.ReactElement {
               setOpen={setFreqOpen}
               setValue={setFrequencyType}
               placeholder="Select Frequency"
+              theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
               style={{
-                backgroundColor: Colors[theme].background,
+                backgroundColor: Colors[theme].surface,
                 borderColor: Colors[theme].border,
                 borderRadius: 12,
               }}
               dropDownContainerStyle={{
-                backgroundColor: Colors[theme].background,
+                backgroundColor: Colors[theme].surface,
                 borderColor: Colors[theme].border,
+              }}
+              listItemLabelStyle={{
+                color: Colors[theme].text,
+              }}
+              selectedItemLabelStyle={{
+                color: Colors[theme].primary,
+                fontWeight: 'bold',
+              }}
+              textStyle={{
+                color: Colors[theme].text,
+              }}
+              placeholderStyle={{
+                color: Colors[theme].textSecondary,
+              }}
+              arrowIconStyle={{
+                tintColor: Colors[theme].icon,
+              }}
+              tickIconStyle={{
+                tintColor: Colors[theme].primary,
               }}
               listMode="SCROLLVIEW"
             />
@@ -486,7 +507,6 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   iosPickerContainer: {
     paddingBottom: 40,

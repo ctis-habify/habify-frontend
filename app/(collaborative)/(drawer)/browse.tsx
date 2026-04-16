@@ -192,7 +192,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
         if (loading) return null;
         return (
             <View style={styles.emptyContainer}>
-                <View style={[styles.emptyIconWrap, { backgroundColor: isDark ? 'rgba(232, 121, 249, 0.1)' : 'rgba(219, 39, 119, 0.05)' }]}>
+                <View style={[styles.emptyIconWrap, { backgroundColor: `${collaborativePrimary}15` }]}>
                     <Ionicons name="search" size={52} color={collaborativePrimary} />
                 </View>
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -214,10 +214,10 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity
-                        style={[styles.menuBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+                        style={[styles.menuBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}
                         onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
                     >
-                        <Ionicons name="menu" size={24} color={isDark ? "#fff" : colors.text} />
+                        <Ionicons name="menu" size={24} color={colors.text} />
                     </TouchableOpacity>
 
                     <View style={{ flex: 1 }}>
@@ -226,11 +226,11 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                     </View>
 
                     <TouchableOpacity
-                        style={[styles.menuBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+                        style={[styles.menuBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}
                         onPress={goBack}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="arrow-back" size={24} color={isDark ? "#fff" : colors.text} />
+                        <Ionicons name="arrow-back" size={24} color={colors.text} />
                     </TouchableOpacity>
                 </View>
 

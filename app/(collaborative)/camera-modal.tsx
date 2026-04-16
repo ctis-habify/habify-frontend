@@ -132,19 +132,19 @@ export default function CollaborativeCameraModal(): React.ReactElement {
         <Image source={{ uri: photoUri }} style={styles.previewImage} />
         
         {isUploading && (
-          <View style={styles.loadingOverlay}>
+          <View style={[styles.loadingOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.7)' }]}>
             <ActivityIndicator size="large" color={colors.collaborativePrimary} />
-            <Text style={styles.loadingText}>{loadingText}</Text>
+            <Text style={[styles.loadingText, { color: colors.white }]}>{loadingText}</Text>
           </View>
         )}
 
         <View style={styles.bottomControls}>
           <TouchableOpacity
-            style={[styles.btn, styles.cancelBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.2)' }]}
+            style={[styles.btn, styles.cancelBtn, { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderColor: 'rgba(255, 255, 255, 0.2)', borderWidth: 1 }]}
             onPress={() => setPhotoUri(null)}
             disabled={isUploading}
           >
-            <Text style={[styles.cancelText, { color: '#fff' }]}>Retake</Text>
+            <Text style={[styles.cancelText, { color: colors.white }]}>Retake</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -152,8 +152,8 @@ export default function CollaborativeCameraModal(): React.ReactElement {
             onPress={handleUpload}
             disabled={isUploading}
           >
-            <Ionicons name="send" size={20} color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.btnText}>Post to Chat</Text>
+            <Ionicons name="send" size={20} color={colors.white} style={{ marginRight: 8 }} />
+            <Text style={[styles.btnText, { color: colors.white }]}>Post to Chat</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -170,17 +170,17 @@ export default function CollaborativeCameraModal(): React.ReactElement {
         {/* Top Bar: Close & Flip */}
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-            <Ionicons name="close" size={28} color="white" />
+            <Ionicons name="close" size={28} color={colors.white} />
           </TouchableOpacity>
           <TouchableOpacity onPress={toggleCameraFacing} style={styles.iconBtn}>
-            <Ionicons name="camera-reverse" size={28} color="white" />
+            <Ionicons name="camera-reverse" size={28} color={colors.white} />
           </TouchableOpacity>
         </View>
 
         {/* Bottom Bar: Shutter */}
         <View style={styles.bottomBar}>
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
-            <View style={styles.shutterInner} />
+            <View style={[styles.shutterInner, { backgroundColor: colors.white }]} />
           </TouchableOpacity>
         </View>
       </View>
@@ -205,11 +205,11 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40, 
+    paddingTop: 44,
   },
   iconBtn: {
     padding: 10,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     borderRadius: 30,
   },
   bottomBar: {
@@ -217,19 +217,18 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   shutterBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 5,
-    borderColor: 'white',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 6,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   shutterInner: {
-    width: 65,
-    height: 65,
-    borderRadius: 35,
-    backgroundColor: 'white',
+    width: 66,
+    height: 66,
+    borderRadius: 33,
   },
   previewImage: { flex: 1, resizeMode: 'contain' },
   bottomControls: {
@@ -250,19 +249,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   cancelBtn: {},
-  cancelText: { fontWeight: '600' },
+  cancelText: { fontWeight: '700' },
   uploadBtn: {},
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  btnText: { fontWeight: '800', fontSize: 16 },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    color: 'white',
-    marginTop: 10,
+    color: '#FFFFFF',
+    marginTop: 12,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

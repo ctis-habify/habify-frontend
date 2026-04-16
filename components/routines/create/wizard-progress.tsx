@@ -18,7 +18,7 @@ export function WizardProgress({ currentStep, steps }: Props) {
   return (
     <View style={styles.progressContainer}>
       {/* Track - Contains Background and Fill */}
-      <View style={[styles.progressTrackBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+      <View style={[styles.progressTrackBackground, { backgroundColor: colors.border }]}>
         <Animated.View style={[
           styles.progressTrackFill, 
           { 
@@ -39,8 +39,8 @@ export function WizardProgress({ currentStep, steps }: Props) {
               <View style={[
                 styles.progressNode,
                 { 
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border
                 },
                 (isActive || isCompleted) && [
                   styles.progressNodeActiveGlass, 
@@ -52,18 +52,18 @@ export function WizardProgress({ currentStep, steps }: Props) {
                 ]
               ]}>
                 {isCompleted ? (
-                  <Ionicons name="checkmark" size={16} color={isDark ? "#000" : "#fff"} />
+                  <Ionicons name="checkmark" size={16} color={colors.white} />
                 ) : (
                   <Text style={[
                     styles.stepNum, 
-                    { color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' },
-                    (isActive || isCompleted) && [styles.stepNumActive, { color: isDark ? '#000' : '#fff' }]
+                    { color: colors.textTertiary },
+                    (isActive || isCompleted) && [styles.stepNumActive, { color: colors.white }]
                   ]}>{i + 1}</Text>
                 )}
               </View>
               <Text style={[
                 styles.stepLabel,
-                { color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' },
+                { color: colors.icon },
                 isActive && [styles.stepLabelActive, { color: colors.text }],
                 isCompleted && [styles.stepLabelCompleted, { color: colors.collaborativePrimary }]
               ]}>{label}</Text>

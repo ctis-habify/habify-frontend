@@ -264,10 +264,10 @@ export default function FriendsScreen(): React.ReactElement {
             <Ionicons
               name="person-add-outline"
               size={18}
-              color={segment === 'add' ? (isDark ? '#000' : '#fff') : colors.icon}
+              color={segment === 'add' ? colors.white : colors.icon}
             />
             <Text
-              style={[styles.segmentLabel, { color: colors.icon }, segment === 'add' && { color: isDark ? '#000' : '#fff' }]}
+              style={[styles.segmentLabel, { color: colors.icon }, segment === 'add' && { color: colors.white }]}
               numberOfLines={1}
             >
               Add Friends
@@ -284,10 +284,10 @@ export default function FriendsScreen(): React.ReactElement {
             <Ionicons
               name="paper-plane-outline"
               size={18}
-              color={segment === 'sent' ? (isDark ? '#000' : '#fff') : colors.icon}
+              color={segment === 'sent' ? colors.white : colors.icon}
             />
             <Text
-              style={[styles.segmentLabel, { color: colors.icon }, segment === 'sent' && { color: isDark ? '#000' : '#fff' }]}
+              style={[styles.segmentLabel, { color: colors.icon }, segment === 'sent' && { color: colors.white }]}
               numberOfLines={1}
             >
               Sent
@@ -304,10 +304,10 @@ export default function FriendsScreen(): React.ReactElement {
             <Ionicons
               name="people"
               size={18}
-              color={segment === 'list' ? (isDark ? '#000' : '#fff') : colors.icon}
+              color={segment === 'list' ? colors.white : colors.icon}
             />
             <Text
-              style={[styles.segmentLabel, { color: colors.icon }, segment === 'list' && { color: isDark ? '#000' : '#fff' }]}
+              style={[styles.segmentLabel, { color: colors.icon }, segment === 'list' && { color: colors.white }]}
               numberOfLines={1}
             >
               Friends
@@ -389,7 +389,7 @@ export default function FriendsScreen(): React.ReactElement {
                       {user.avatarUrl ? (
                         <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
                       ) : (
-                        <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
                           <Text style={[styles.avatarLetter, { color: colors.text }]}>{user.name.charAt(0).toUpperCase()}</Text>
                         </View>
                       )}
@@ -417,11 +417,11 @@ export default function FriendsScreen(): React.ReactElement {
                         disabled={sendingId !== null}
                       >
                         {sendingId === user.id ? (
-                          <ActivityIndicator size="small" color={isDark ? "#000" : "#fff"} />
+                          <ActivityIndicator size="small" color={colors.white} />
                         ) : (
                           <>
-                            <Ionicons name="person-add" size={18} color={isDark ? "#000" : "#fff"} />
-                            <Text style={[styles.sendBtnText, { color: isDark ? '#000' : '#fff' }]}>Add</Text>
+                            <Ionicons name="person-add" size={18} color={colors.white} />
+                            <Text style={[styles.sendBtnText, { color: colors.white }]}>Add</Text>
                           </>
                         )}
                       </TouchableOpacity>
@@ -463,7 +463,7 @@ export default function FriendsScreen(): React.ReactElement {
                     {item.toUser.avatarUrl ? (
                       <Image source={{ uri: item.toUser.avatarUrl }} style={styles.avatar} />
                     ) : (
-                      <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                      <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.avatarLetter, { color: colors.text }]}>
                           {item.toUser.name.charAt(0).toUpperCase()}
                         </Text>
@@ -479,8 +479,8 @@ export default function FriendsScreen(): React.ReactElement {
                         @{item.toUser.username}
                       </Text>
                     )}
-                    <View style={[styles.pendingBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-                      <Text style={[styles.pendingBadgeText, { color: colors.text, opacity: 0.7 }]}>Pending</Text>
+                    <View style={[styles.pendingBadge, { backgroundColor: colors.surface }]}>
+                      <Text style={[styles.pendingBadgeText, { color: colors.textTertiary }]}>Pending</Text>
                     </View>
                   </View>
                 </Animated.View>
@@ -513,13 +513,13 @@ export default function FriendsScreen(): React.ReactElement {
                 entering={FadeInDown.delay(50).duration(300).springify()}
               >
                 <LinearGradient
-                  colors={[collaborativePrimary, isDark ? '#D946EF' : '#C026D3']}
+                  colors={[collaborativePrimary, colors.tint]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={[styles.friendsCountPill, { shadowColor: collaborativePrimary }]}
                 >
-                  <Ionicons name="heart" size={16} color={isDark ? "#000" : "#fff"} />
-                  <Text style={[styles.friendsCountText, { color: isDark ? '#000' : '#fff' }]}>{friendsList.length} friend{friendsList.length !== 1 ? 's' : ''}</Text>
+                  <Ionicons name="heart" size={16} color={colors.white} />
+                  <Text style={[styles.friendsCountText, { color: colors.white }]}>{friendsList.length} friend{friendsList.length !== 1 ? 's' : ''}</Text>
                 </LinearGradient>
               </Animated.View>
             <FlatList
@@ -535,7 +535,7 @@ export default function FriendsScreen(): React.ReactElement {
                     {item.avatarUrl ? (
                       <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
                     ) : (
-                      <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                      <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.avatarLetter, { color: colors.text }]}>
                           {item.name.charAt(0).toUpperCase()}
                         </Text>
@@ -726,7 +726,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(232, 121, 249, 0.15)',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,

@@ -56,7 +56,7 @@ export default function FriendProfileScreen(): React.ReactElement {
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity 
             onPress={() => router.back()} 
-            style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+            style={[styles.backButton, { backgroundColor: colors.surface }]}
           >
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -64,7 +64,7 @@ export default function FriendProfileScreen(): React.ReactElement {
           <View style={{ width: 44 }} />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator color={colors.textSecondary} size="large" />
+          <ActivityIndicator color={colors.primary} size="large" />
         </View>
       </LinearGradient>
     );
@@ -76,7 +76,7 @@ export default function FriendProfileScreen(): React.ReactElement {
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity 
             onPress={() => router.back()} 
-            style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+            style={[styles.backButton, { backgroundColor: colors.surface }]}
           >
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -84,11 +84,11 @@ export default function FriendProfileScreen(): React.ReactElement {
           <View style={{ width: 44 }} />
         </View>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={colors.textTertiary} />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || 'User not found.'}</Text>
           <TouchableOpacity 
             onPress={() => router.back()} 
-            style={[styles.errorButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)' }]}
+            style={[styles.errorButton, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}
           >
             <Text style={[styles.errorButtonText, { color: colors.text }]}>Go Back</Text>
           </TouchableOpacity>
@@ -102,7 +102,7 @@ export default function FriendProfileScreen(): React.ReactElement {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity 
           onPress={() => router.back()} 
-          style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -113,41 +113,41 @@ export default function FriendProfileScreen(): React.ReactElement {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View
           entering={FadeInDown.delay(100).duration(600).springify()}
-          style={[styles.profileCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)', borderColor: colors.border }]}
+          style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
-          <View style={[styles.avatarContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)' }]}>
+          <View style={[styles.avatarContainer, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
             <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
           </View>
 
           <Text style={[styles.nameText, { color: colors.text }]}>{displayName}</Text>
           {displayEmail ? (
-            <Text style={[styles.emailText, { color: colors.textSecondary }]}>{displayEmail}</Text>
+            <Text style={[styles.emailText, { color: colors.icon }]}>{displayEmail}</Text>
           ) : null}
 
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.text }]}>{age}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Age</Text>
+              <Text style={[styles.statLabel, { color: colors.icon }]}>Age</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.text }]}>{user.totalXp || 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total XP</Text>
+              <Text style={[styles.statLabel, { color: colors.icon }]}>Total XP</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.text }]}>{user.currentStreak || 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Streak</Text>
+              <Text style={[styles.statLabel, { color: colors.icon }]}>Streak</Text>
             </View>
           </View>
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(200).duration(600).springify()}
-          style={[styles.infoCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)', borderColor: colors.border }]}
+          style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
+            <Ionicons name="calendar-outline" size={20} color={colors.icon} />
             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Member since</Text>
             <Text style={[styles.infoValue, { color: colors.text }]}>
               {new Date(user.createdAt).toLocaleDateString('en-US', {
@@ -157,8 +157,8 @@ export default function FriendProfileScreen(): React.ReactElement {
             </Text>
           </View>
           {user.gender && user.gender !== 'na' ? (
-            <View style={[styles.infoRow, { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16 }]}>
-              <Ionicons name="person-outline" size={20} color={colors.textSecondary} />
+            <View style={[styles.infoRow, { borderTopWidth: 1.5, borderTopColor: colors.border, paddingTop: 16 }]}>
+              <Ionicons name="person-outline" size={20} color={colors.icon} />
               <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Gender</Text>
               <Text style={[styles.infoValue, { color: colors.text }]}>
                 {user.gender.charAt(0).toUpperCase() + user.gender.slice(1)}

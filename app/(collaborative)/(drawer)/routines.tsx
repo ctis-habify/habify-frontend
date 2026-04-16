@@ -48,7 +48,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const colors = Colors[theme];
   const collaborativePrimary = colors.collaborativePrimary;
   const screenGradient = getBackgroundGradient(theme, 'collaborative');
-  const { points: collabPoints, streak: collabStreak, rank: collabRank, loading: collabScoreLoading } = useCollaborativeScore();
+  const { 
+    points: collabPoints, 
+    streak: collabStreak, 
+    nextBonusStreak, 
+    nextBonusPoints, 
+    rank: collabRank, 
+    loading: collabScoreLoading 
+  } = useCollaborativeScore();
 
   // 2. State
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -320,7 +327,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         <View style={styles.fixedHeader}>
           <View style={styles.headerTopRow}>
             <TouchableOpacity
-              style={[styles.menuBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+              style={[styles.menuBtn, { backgroundColor: colors.surface }]}
               onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             >
               <Ionicons name="menu" size={24} color={colors.text} />
@@ -371,7 +378,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
                 theme={isDark ? "DARK" : "LIGHT"}
                 style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: colors.shadow }]}
                 placeholder={loadingCategories ? "Loading..." : "Category"}
                 placeholderStyle={{ color: colors.icon, fontSize: 12, opacity: 0.6 }}
                 textStyle={{ color: colors.text, fontSize: 12 }}
@@ -395,7 +402,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string | null>>}
                 theme={isDark ? "DARK" : "LIGHT"}
                 style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: colors.shadow }]}
                 placeholder="Frequency"
                 placeholderStyle={{ color: colors.icon, fontSize: 12, opacity: 0.6 }}
                 textStyle={{ color: colors.text, fontSize: 12 }}
@@ -462,7 +469,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 <>
                   <View style={styles.sectionHeader}>
                     <Text style={[styles.sectionTitle, { color: colors.text, opacity: 0.5 }]}>Public Enrollments</Text>
-                    <View style={[styles.badge, { backgroundColor: collaborativePrimary }]}><Text style={[styles.badgeText, { color: isDark ? '#000' : '#fff' }]}>{routines.filter(r => r.isPublic).length}</Text></View>
+                    <View style={[styles.badge, { backgroundColor: collaborativePrimary }]}><Text style={[styles.badgeText, { color: colors.white }]}>{routines.filter(r => r.isPublic).length}</Text></View>
                   </View>
                   {routines
                     .filter(r => r.isPublic)
@@ -495,7 +502,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 <>
                   <View style={[styles.sectionHeader, { marginTop: 20 }]}>
                     <Text style={[styles.sectionTitle, { color: colors.text, opacity: 0.5 }]}>Private Enrollments</Text>
-                    <View style={[styles.badge, { backgroundColor: collaborativePrimary }]}><Text style={[styles.badgeText, { color: isDark ? '#000' : '#fff' }]}>{routines.filter(r => !r.isPublic).length}</Text></View>
+                    <View style={[styles.badge, { backgroundColor: collaborativePrimary }]}><Text style={[styles.badgeText, { color: colors.white }]}>{routines.filter(r => !r.isPublic).length}</Text></View>
                   </View>
                   {routines
                     .filter(r => !r.isPublic)
@@ -529,7 +536,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             <View style={styles.emptyContainer}>
               <View
                 style={{
-                  backgroundColor: isDark ? 'rgba(232, 121, 249, 0.1)' : 'rgba(219, 39, 119, 0.05)',
+                  backgroundColor: `${collaborativePrimary}22`,
                   padding: 30,
                   borderRadius: 100,
                   marginBottom: 20,
@@ -546,7 +553,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           )}
 
           <TouchableOpacity
-            style={[styles.createBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderColor: colors.border }]}
+            style={[styles.createBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => router.push('/(collaborative)/create-routine')}
           >
             <Text style={[styles.createBtnText, { color: colors.text }]}>Create Collaborative List</Text>
@@ -643,7 +650,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderWidth: 1,
     elevation: 5,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,

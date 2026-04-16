@@ -31,7 +31,7 @@ export function FriendItem({ friend, onPress }: FriendItemProps): React.ReactEle
                 {friend.avatar ? (
                     <Image source={{ uri: friend.avatar }} style={styles.avatar} />
                 ) : (
-                    <View style={[styles.placeholderAvatar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderColor: colors.border }]}>
+                    <View style={[styles.placeholderAvatar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                         <Text style={[styles.initials, { color: colors.text }]}>
                             {friend.name.charAt(0).toUpperCase()}
                         </Text>
@@ -41,7 +41,7 @@ export function FriendItem({ friend, onPress }: FriendItemProps): React.ReactEle
             <View style={styles.info}>
                 <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{friend.name}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+            <Ionicons name="chevron-forward" size={18} color={isDark ? colors.icon : '#CBD5E1'} />
         </TouchableOpacity>
     );
 }

@@ -57,7 +57,7 @@ export function SettingsItem({
                         value={value as boolean}
                         onValueChange={onToggle}
                         trackColor={{ false: Colors[theme].border, true: Colors[theme].primary }}
-                        thumbColor={isDark ? '#fff' : '#f4f4f4'}
+                        thumbColor={Colors[theme].white}
                         ios_backgroundColor={Colors[theme].border}
                     />
                 );
@@ -88,7 +88,7 @@ export function SettingsItem({
                 {icon && (
                     <View style={[
                         styles.iconContainer, 
-                        { backgroundColor: destructive ? 'rgba(239, 68, 68, 0.1)' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)') }
+                        { backgroundColor: destructive ? 'rgba(239, 68, 68, 0.15)' : Colors[theme].surface }
                     ]}>
                         <Ionicons name={icon} size={18} color={iconColor} />
                     </View>

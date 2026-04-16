@@ -45,7 +45,7 @@ export function StepGamification({ formState, updateForm }: Props) {
          <View style={[styles.counterRow, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
              <TouchableOpacity 
                 onPress={() => updateForm({ lives: Math.max(0, formState.lives - 1) })} 
-                style={[styles.counterBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+                style={[styles.counterBtn, { backgroundColor: colors.card }]}
              >
                  <Ionicons name="remove" size={24} color={colors.text} />
              </TouchableOpacity>
@@ -55,12 +55,12 @@ export function StepGamification({ formState, updateForm }: Props) {
              </View>
              <TouchableOpacity 
                 onPress={() => updateForm({ lives: Math.min(10, formState.lives + 1) })} 
-                style={[styles.counterBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+                style={[styles.counterBtn, { backgroundColor: colors.card }]}
              >
                  <Ionicons name="add" size={24} color={colors.text} />
              </TouchableOpacity>
          </View>
-         <Text style={[styles.subLabel, { color: colors.text, opacity: 0.5 }]}>Participants fail if they miss more than {formState.lives} times.</Text>
+         <Text style={[styles.subLabel, { color: colors.textSecondary, opacity: 0.7 }]}>Participants fail if they miss more than {formState.lives} times.</Text>
       </View>
 
       {/* Reward Condition */}
@@ -79,7 +79,7 @@ export function StepGamification({ formState, updateForm }: Props) {
         <>
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <Text style={[styles.stepTitle, { fontSize: 18, marginTop: 4, color: colors.text }]}>Entry Requirements</Text>
-          <Text style={[styles.stepSub, { fontSize: 14, marginBottom: 20, color: colors.text, opacity: 0.7 }]}>Who can join this routine?</Text>
+          <Text style={[styles.stepSub, { fontSize: 14, marginBottom: 20, color: colors.textSecondary, opacity: 0.7 }]}>Who can join this routine?</Text>
 
           {/* Age Requirement */}
           <View style={styles.fieldContainer}>
@@ -109,6 +109,8 @@ export function StepGamification({ formState, updateForm }: Props) {
                 theme={isDark ? "DARK" : "LIGHT"}
                 style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                listItemLabelStyle={{ color: colors.text }}
+                selectedItemLabelStyle={{ color: colors.collaborativePrimary, fontWeight: 'bold' }}
                 textStyle={{ color: colors.text }}
                 listMode="SCROLLVIEW"
                 zIndex={2000}

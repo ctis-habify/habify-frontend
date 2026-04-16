@@ -90,7 +90,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     borderRadius: 12,
-    backgroundColor: Colors.light.surface,
     paddingHorizontal: 12,
     height: 52,
   },

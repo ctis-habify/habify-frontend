@@ -194,19 +194,19 @@ export default function CameraModal(): React.ReactElement {
         )}
         
         {isUploading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#ffffff" />
-            <Text style={[styles.loadingText, { color: '#ffffff' }]}>{loadingText}</Text>
+          <View style={[styles.loadingOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.7)' }]}>
+            <ActivityIndicator size="large" color={colors.white} />
+            <Text style={[styles.loadingText, { color: colors.white }]}>{loadingText}</Text>
           </View>
         )}
 
         <View style={styles.bottomControls}>
           <TouchableOpacity
-            style={[styles.btn, styles.cancelBtn]}
+            style={[styles.btn, styles.cancelBtn, { backgroundColor: `${colors.white}22`, borderColor: `${colors.white}33`, borderWidth: 1 }]}
             onPress={() => setPhotoUri(null)}
             disabled={isUploading}
           >
-            <Text style={styles.cancelText}>Retake</Text>
+            <Text style={[styles.cancelText, { color: colors.white }]}>Retake</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -231,11 +231,11 @@ export default function CameraModal(): React.ReactElement {
       <View style={styles.cameraUi}>
         {/* Top Bar: Close & Flip */}
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-            <Ionicons name="close" size={28} color="white" />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.45)' }]}>
+            <Ionicons name="close" size={28} color={colors.white} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={toggleCameraFacing} style={styles.iconBtn}>
-            <Ionicons name="camera-reverse" size={28} color="white" />
+          <TouchableOpacity onPress={toggleCameraFacing} style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.45)' }]}>
+            <Ionicons name="camera-reverse" size={28} color={colors.white} />
           </TouchableOpacity>
         </View>
 
@@ -243,18 +243,18 @@ export default function CameraModal(): React.ReactElement {
         <View style={styles.bottomBar}>
           <TouchableOpacity 
             onPress={() => setPhotoUri('mock-photo')} 
-            style={[styles.iconBtn, { marginBottom: 10, backgroundColor: 'rgba(255,165,0,0.6)' }]}
+            style={[styles.iconBtn, { marginBottom: 10, backgroundColor: isDark ? 'rgba(251, 191, 36, 0.45)' : 'rgba(251, 191, 36, 0.35)' }]}
           >
-            <Ionicons name="bug" size={24} color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>PASS</Text>
+            <Ionicons name="bug" size={24} color={colors.white} />
+            <Text style={{ color: colors.white, fontSize: 10, fontWeight: 'bold' }}>PASS</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             onPress={() => setPhotoUri('mock-photo-fail')} 
-            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: 'rgba(255,0,0,0.6)' }]}
+            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: isDark ? 'rgba(239, 68, 68, 0.45)' : 'rgba(239, 68, 68, 0.35)' }]}
           >
-            <Ionicons name="bug" size={24} color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>FAIL</Text>
+            <Ionicons name="bug" size={24} color={colors.white} />
+            <Text style={{ color: colors.white, fontSize: 10, fontWeight: 'bold' }}>FAIL</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: 42,
     borderWidth: 6,
-    borderColor: 'white',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     width: 66,
     height: 66,
     borderRadius: 33,
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
   },
 
   previewImage: { flex: 1, resizeMode: 'cover' },
@@ -368,20 +368,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
-  cancelBtn: { backgroundColor: '#374151' },
+  cancelBtn: { backgroundColor: 'rgba(255, 255, 255, 0.2)' },
   cancelText: { color: '#fff', fontWeight: '800', fontSize: 16 },
   uploadBtn: {},
   btnText: { fontWeight: '800', fontSize: 16 },
 
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,
   },
   loadingText: {
-    color: 'white',
+    color: '#fff',
     fontSize: 18,
     fontWeight: '700',
   },

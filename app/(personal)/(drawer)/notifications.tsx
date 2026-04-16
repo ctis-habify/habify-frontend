@@ -18,7 +18,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const COLLABORATIVE_PRIMARY = '#E879F9';
+// Removed hardcoded COLLABORATIVE_PRIMARY
 
 const categoryTitle: Record<NotificationCategory, string> = {
   friend_requests: 'Requests & Invitations',
@@ -220,7 +220,7 @@ export default function NotificationsScreen(): React.ReactElement {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={[styles.menuButton, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+          style={[styles.menuButton, { backgroundColor: Colors[theme].surface }]}
         >
           <Ionicons name="menu" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -255,7 +255,7 @@ export default function NotificationsScreen(): React.ReactElement {
                   <View style={{ gap: 10, marginTop: 8 }}>
                     {/* Render Friend Requests */}
                     {pendingRequests.map((item) => (
-                      <View key={`fr-${item.id}`} style={[styles.actionRow, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderColor: colors.border }]}>
+                      <View key={`fr-${item.id}`} style={[styles.actionRow, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
                         <View style={styles.actionAvatarWrap}>
                           {item.fromUser.avatarUrl ? (
                             <Image source={{ uri: item.fromUser.avatarUrl }} style={styles.actionAvatar} />
@@ -290,12 +290,12 @@ export default function NotificationsScreen(): React.ReactElement {
 
                     {/* Render Routine Invitations */}
                     {routineInvitations.map((item) => (
-                      <View key={`ri-${item.id}`} style={[styles.actionRow, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderColor: colors.border }]}>
+                      <View key={`ri-${item.id}`} style={[styles.actionRow, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
                         <View style={styles.actionAvatarWrap}>
                           {item.fromUserAvatarUrl ? (
                             <Image source={{ uri: item.fromUserAvatarUrl }} style={styles.actionAvatar} />
                           ) : (
-                            <View style={[styles.actionAvatarPlaceholder, { backgroundColor: COLLABORATIVE_PRIMARY }]}>
+                            <View style={[styles.actionAvatarPlaceholder, { backgroundColor: colors.collaborativePrimary }]}>
                               <Text style={[styles.actionAvatarLetter, { color: colors.white }]}>{item.fromUserName ? item.fromUserName.charAt(0).toUpperCase() : '?'}</Text>
                             </View>
                           )}

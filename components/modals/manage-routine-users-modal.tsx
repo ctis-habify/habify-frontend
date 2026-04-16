@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { friendService, UserSearchResult } from '@/services/friend.service';
 import { routineService } from '@/services/routine.service';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,6 +45,10 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
     onClose,
     routineId,
 }) => {
+    const theme = useColorScheme() ?? 'light';
+    const colors = Colors[theme];
+    const isDark = theme === 'dark';
+
     const [friendsList, setFriendsList] = useState<UserSearchResult[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(false);
@@ -144,24 +149,24 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         const identifier = userIdProp || item.id;
 
         return (
-            <View key={`${isMember ? 'member' : 'friend'}-${key}-${index}`} style={styles.row}>
+            <View key={`${isMember ? 'member' : 'friend'}-${key}-${index}`} style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.avatarWrap}>
                     {resolvedAvatarUrl ? (
                         <Image source={{ uri: resolvedAvatarUrl }} style={styles.avatar} />
                     ) : (
-                        <View style={styles.avatarPlaceholder}>
-                            <Text style={styles.avatarLetter}>
+                        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+                            <Text style={[styles.avatarLetter, { color: colors.white }]}>
                                 {displayName.charAt(0).toUpperCase()}
                             </Text>
                         </View>
                     )}
                 </View>
                 <View style={styles.info}>
-                    <Text style={styles.name} numberOfLines={1}>
+                    <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
                         {displayName}
                     </Text>
                     {'username' in user && user.username && (
-                        <Text style={styles.meta} numberOfLines={1}>
+                        <Text style={[styles.meta, { color: colors.icon }]} numberOfLines={1}>
                             @{user.username}
                         </Text>
                     )}
@@ -170,32 +175,33 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                     <TouchableOpacity
                         style={[
                             styles.inviteBtn,
+                            { backgroundColor: isDark ? colors.secondary : colors.primary },
                             invitingId === identifier && styles.inviteBtnDisabled,
                         ]}
                         onPress={() => handleInvite(item as UserSearchResult)}
                         disabled={invitingId !== null}
                     >
                         {invitingId === identifier ? (
-                            <ActivityIndicator size="small" color="#fff" />
+                            <ActivityIndicator size="small" color={colors.white} />
                         ) : (
                             <>
-                                <Ionicons name="paper-plane" size={16} color="#fff" />
-                                <Text style={styles.inviteBtnText}>Invite</Text>
+                                <Ionicons name="paper-plane" size={16} color={colors.white} />
+                                <Text style={[styles.inviteBtnText, { color: colors.white }]}>Invite</Text>
                             </>
                         )}
                     </TouchableOpacity>
                 )}
                 {isMember && (item as Participant).role !== 'creator' && (
                     <TouchableOpacity
-                        style={[styles.iconBtn, styles.deleteBtn, actioningId === identifier && styles.btnDisabled]}
+                        style={[styles.iconBtn, styles.deleteBtn, actioningId === identifier && styles.btnDisabled, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)' }]}
                         onPress={() => handleDelete(item as Participant)}
                         disabled={actioningId !== null}
                         hitSlop={8}
                     >
                         {actioningId === identifier ? (
-                            <ActivityIndicator size="small" color="#fff" />
+                            <ActivityIndicator size="small" color={colors.error} />
                         ) : (
-                            <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                            <Ionicons name="trash-outline" size={20} color={colors.error} />
                         )}
                     </TouchableOpacity>
                 )}
@@ -214,25 +220,25 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
     return (
         <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
             <View style={styles.overlay}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>Manage Users</Text>
-                        <TouchableOpacity onPress={onClose} hitSlop={12} style={styles.closeBtn}>
-                            <Ionicons name="close" size={24} color={Colors.light.text} />
+                <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+                    <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.title, { color: colors.text }]}>Manage Users</Text>
+                        <TouchableOpacity onPress={onClose} hitSlop={12} style={[styles.closeBtn, { backgroundColor: colors.surface }]}>
+                            <Ionicons name="close" size={24} color={colors.icon} />
                         </TouchableOpacity>
                     </View>
 
                     {loading ? (
                         <View style={styles.centered}>
-                            <ActivityIndicator size="large" color={COLLABORATIVE_PRIMARY} />
+                            <ActivityIndicator size="large" color={colors.primary} />
                         </View>
                     ) : (
                         <ScrollView contentContainerStyle={styles.scrollContent}>
                             {participants.length > 0 && (
                                 <View style={styles.section}>
                                     <View style={styles.sectionHeader}>
-                                        <Ionicons name="people" size={20} color={COLLABORATIVE_PRIMARY} />
-                                        <Text style={styles.sectionTitle}>Current Members</Text>
+                                        <Ionicons name="people" size={20} color={colors.primary} />
+                                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Current Members</Text>
                                     </View>
                                     {participants.map((p, index) => renderUserRow(p, true, index))}
                                 </View>
@@ -240,12 +246,12 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
 
                             <View style={styles.section}>
                                 <View style={styles.sectionHeader}>
-                                    <Ionicons name="person-add" size={20} color="#38bdf8" />
-                                    <Text style={styles.sectionTitle}>Invite Friends</Text>
+                                    <Ionicons name="person-add" size={20} color={isDark ? colors.secondary : colors.primary} />
+                                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Invite Friends</Text>
                                 </View>
                                 {friendsToInvite.length === 0 ? (
                                     <View style={styles.emptyContainer}>
-                                        <Text style={styles.emptySubtitle}>
+                                        <Text style={[styles.emptySubtitle, { color: colors.icon }]}>
                                             No more friends to invite.
                                         </Text>
                                     </View>
@@ -264,33 +270,30 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.6)',
         justifyContent: 'flex-end',
     },
     modalContainer: {
-        backgroundColor: Colors.light.background,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        height: '80%',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        height: '85%',
         paddingBottom: 20,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 18,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.light.border,
+        paddingHorizontal: 24,
+        paddingVertical: 20,
+        borderBottomWidth: 1.5,
     },
     title: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: Colors.light.text,
+        fontSize: 22,
+        fontWeight: '800',
+        letterSpacing: -0.5,
     },
     closeBtn: {
-        backgroundColor: Colors.light.surface,
-        padding: 6,
+        padding: 8,
         borderRadius: 20,
     },
     centered: {
@@ -300,114 +303,105 @@ const styles = StyleSheet.create({
         paddingHorizontal: 32,
     },
     scrollContent: {
-        padding: 20,
+        padding: 24,
         paddingBottom: 40,
     },
     section: {
-        marginBottom: 24,
+        marginBottom: 28,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
-        gap: 8,
+        marginBottom: 16,
+        gap: 10,
     },
     sectionTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: Colors.light.text,
+        fontSize: 17,
+        fontWeight: '800',
+        letterSpacing: -0.2,
     },
     emptyContainer: {
-        padding: 16,
+        padding: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 16,
+        borderWidth: 1.5,
+        borderStyle: 'dashed',
+        borderColor: 'rgba(0,0,0,0.05)',
     },
     emptySubtitle: {
         fontSize: 14,
-        color: Colors.light.icon,
         textAlign: 'center',
     },
     row: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.light.card,
-        borderRadius: 16,
-        padding: 12,
-        marginBottom: 10,
-        borderWidth: 1,
-        borderColor: Colors.light.border,
+        borderRadius: 18,
+        padding: 14,
+        marginBottom: 12,
+        borderWidth: 1.5,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
-        shadowRadius: 8,
+        shadowRadius: 10,
         elevation: 2,
     },
     avatarWrap: {
-        marginRight: 12,
+        marginRight: 14,
     },
     avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 52,
+        height: 52,
+        borderRadius: 26,
     },
     avatarPlaceholder: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: COLLABORATIVE_PRIMARY,
+        width: 52,
+        height: 52,
+        borderRadius: 26,
         alignItems: 'center',
         justifyContent: 'center',
     },
     avatarLetter: {
-        color: '#fff',
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 22,
+        fontWeight: '800',
     },
     info: {
         flex: 1,
     },
     name: {
         fontSize: 16,
-        fontWeight: '600',
-        color: Colors.light.text,
+        fontWeight: '700',
     },
     meta: {
         fontSize: 13,
-        color: Colors.light.icon,
-        marginTop: 2,
+        marginTop: 4,
+        fontWeight: '500',
+        opacity: 0.8,
     },
     inviteBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        backgroundColor: '#38bdf8',
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 12,
+        gap: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 14,
     },
     inviteBtnDisabled: {
-        opacity: 0.7,
+        opacity: 0.6,
     },
     inviteBtnText: {
-        color: '#fff',
-        fontWeight: '600',
+        fontWeight: '800',
         fontSize: 14,
     },
     iconBtn: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
     },
-    deleteBtn: {
-        backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    },
+    deleteBtn: {},
     btnDisabled: {
         opacity: 0.5,
     },

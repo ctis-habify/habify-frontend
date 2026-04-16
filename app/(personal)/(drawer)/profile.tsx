@@ -94,7 +94,7 @@ export default function ProfileScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={[styles.menuButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+          style={[styles.menuButton, { backgroundColor: Colors[theme].surface }]}
         >
           <Ionicons name="menu" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -105,10 +105,10 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View
           entering={FadeInDown.delay(100).duration(600).springify()}
-          style={[styles.profileCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)', borderColor: colors.border }]}
+          style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <View
-            style={[styles.avatarContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)' }, avatarUrl ? { backgroundColor: 'transparent' } : {}]}
+            style={[styles.avatarContainer, { backgroundColor: colors.surface }, avatarUrl ? { backgroundColor: 'transparent' } : {}]}
           >
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
@@ -140,7 +140,7 @@ export default function ProfileScreen() {
 
         <Animated.View
           entering={FadeInDown.delay(180).duration(600).springify()}
-          style={[styles.achievementCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)', borderColor: colors.border }]}
+          style={[styles.achievementCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <View style={styles.achievementHeader}>
             <Text style={[styles.achievementTitle, { color: colors.text }]}>Collaborative Cup</Text>
@@ -165,7 +165,7 @@ export default function ProfileScreen() {
               </Text>
             </View>
 
-            <View style={[styles.pointsBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', borderColor: colors.border }]}>
+            <View style={[styles.pointsBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.pointsValue, { color: colors.text }]}>{collaborativePoints}</Text>
               <Text style={[styles.pointsLabel, { color: colors.textTertiary }]}>Points</Text>
               <Text style={styles.pointsHint}>

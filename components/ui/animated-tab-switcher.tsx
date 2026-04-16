@@ -83,7 +83,7 @@ export function AnimatedTabSwitcher({
 
   // Defaults
   const effectiveActiveColor = activeColor || colors.primary;
-  const effectiveInactiveColor = inactiveColor || (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)');
+  const effectiveInactiveColor = inactiveColor || colors.textSecondary;
 
   const activeIndex = Math.max(0, tabs.indexOf(activeTab));
   const activeIndexSV = useSharedValue(activeIndex);
@@ -118,8 +118,8 @@ export function AnimatedTabSwitcher({
       style={[
         styles.container, 
         { 
-            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', 
-            borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' 
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)', 
+            borderColor: colors.border
         }
       ]} 
       onLayout={onContainerLayout}
@@ -128,7 +128,7 @@ export function AnimatedTabSwitcher({
         <Animated.View 
             style={[
                 styles.indicator, 
-                { backgroundColor: colors.card },
+                { backgroundColor: colors.surface, shadowColor: colors.text },
                 indicatorStyle
             ]} 
         />

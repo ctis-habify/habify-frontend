@@ -110,7 +110,7 @@ export default function SettingsScreen(): React.ReactElement {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={[styles.menuButton, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+          style={[styles.menuButton, { backgroundColor: Colors[colorScheme].surface }]}
         >
           <Ionicons name="menu" size={24} color={Colors[colorScheme].text} />
         </TouchableOpacity>
@@ -210,8 +210,8 @@ export default function SettingsScreen(): React.ReactElement {
         animationType="fade"
         onRequestClose={handleClosePrivacy}
       >
-        <View style={styles.privacyOverlay}>
-          <View style={[styles.privacyModal, { backgroundColor: Colors[colorScheme].card }]}>
+        <View style={[styles.privacyOverlay, { backgroundColor: colorScheme === 'dark' ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.privacyModal, { backgroundColor: Colors[colorScheme].card, borderColor: Colors[colorScheme].border, borderWidth: 1 }]}>
             <View style={styles.privacyHeader}>
               <Ionicons
                 name="shield-checkmark-outline"
@@ -267,7 +267,6 @@ const styles = StyleSheet.create({
   },
   privacyOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -277,11 +276,9 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '100%',
     maxHeight: '75%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 8,
   },
   privacyHeader: {
     flexDirection: 'row',

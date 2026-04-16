@@ -23,10 +23,11 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 
-const MEDAL_COLORS: Record<number, { bg: string; border: string; text: string }> = {
-  1: { bg: '#FEF3C7', border: '#F59E0B', text: '#92400E' },  // Gold
-  2: { bg: '#F1F5F9', border: '#94A3B8', text: '#475569' },  // Silver
-  3: { bg: '#FFF7ED', border: '#EA580C', text: '#9A3412' },  // Bronze
+const getMedalColors = (rank: number, isDark: boolean, colors: any) => {
+  if (rank === 1) return { bg: isDark ? 'rgba(251, 191, 36, 0.2)' : '#FEF3C7', border: '#F59E0B', text: isDark ? '#FCD34D' : '#92400E' };
+  if (rank === 2) return { bg: isDark ? 'rgba(148, 163, 184, 0.2)' : '#F1F5F9', border: '#94A3B8', text: isDark ? '#CBD5E1' : '#475569' };
+  if (rank === 3) return { bg: isDark ? 'rgba(234, 88, 12, 0.2)' : '#FFF7ED', border: '#EA580C', text: isDark ? '#FB923C' : '#9A3412' };
+  return null;
 };
 
 const MEDAL_ICONS: Record<number, string> = {
@@ -52,24 +53,24 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
   const colors = Colors[theme];
   const isDark = theme === 'dark';
   
-  const medal = MEDAL_COLORS[item.rank];
-  const rankInfo = resolveCollaborativeRank(item.totalPoints);
-  const isTopThree = item.rank <= 3;
-  const displayCup = item.cup || createLeaderboardCupAward(item.rank, item.totalPoints);
+    const medal = getMedalColors(item.rank, isDark, colors);
+    const rankInfo = resolveCollaborativeRank(item.totalPoints);
+    const isTopThree = item.rank <= 3;
+    const displayCup = item.cup || createLeaderboardCupAward(item.rank, item.totalPoints);
 
-  return (
-    <Animated.View
-      entering={ZoomIn.delay(index * 40).duration(280).springify()}
-      style={[
-        styles.row,
-        { backgroundColor: colors.card, borderColor: colors.border },
-        isTopThree && medal && {
-          borderColor: medal.border,
-          borderWidth: 1.5,
-          backgroundColor: medal.bg,
-        },
-      ]}
-    >
+    return (
+      <Animated.View
+        entering={ZoomIn.delay(index * 40).duration(280).springify()}
+        style={[
+          styles.row,
+          { backgroundColor: colors.card, borderColor: colors.border },
+          isTopThree && medal && {
+            borderColor: medal.border,
+            borderWidth: 1.5,
+            backgroundColor: medal.bg,
+          },
+        ]}
+      >
       {/* Rank */}
       <View style={[
         styles.rankBadge,
@@ -161,13 +162,13 @@ export default function LeaderboardScreen(): React.ReactElement {
       {/* Subtitle pill */}
       <Animated.View style={styles.subtitleWrap} entering={FadeIn.delay(80).duration(320)}>
         <LinearGradient
-          colors={[collaborativePrimary, isDark ? '#D946EF' : '#C026D3']}
+          colors={[collaborativePrimary, colors.tint]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.subtitlePill, { shadowColor: collaborativePrimary }]}
         >
-          <Ionicons name="people" size={16} color={isDark ? "#000" : "#fff"} />
-          <Text style={[styles.subtitleText, { color: isDark ? '#000' : '#fff' }]}>
+          <Ionicons name="people" size={16} color={colors.white} />
+          <Text style={[styles.subtitleText, { color: colors.white }]}>
             {loading ? 'Loading…' : `${entries.length} participant${entries.length !== 1 ? 's' : ''}`}
           </Text>
         </LinearGradient>
@@ -298,7 +299,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarLetter: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: '700',
   },

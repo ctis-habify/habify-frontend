@@ -17,9 +17,9 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
   const isDark = theme === 'dark';
   
   const getLevel = (pts: number) => {
-    if (pts >= 100) return { label: "Pro", icon: "trophy-outline" as const, color: "#FFD700" }; 
-    if (pts >= 50) return { label: "Good", icon: "star-outline" as const, color: "#FF8C00" }; 
-    return { label: "Beginner", icon: "leaf-outline" as const, color: "#4CAF50" }; 
+    if (pts >= 100) return { label: "Pro", icon: "trophy-outline" as const, color: "#fbbf24" }; 
+    if (pts >= 50) return { label: "Good", icon: "star-outline" as const, color: "#f97316" }; 
+    return { label: "Beginner", icon: "leaf-outline" as const, color: "#10b981" }; 
   };
 
   const level = getLevel(points);
@@ -27,9 +27,7 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
-      {/* ... header row ... */}
       <View style={styles.headerRow}>
-        
         <View>
           <Text style={[styles.dateText, { color: colors.icon }]}>{today}</Text>
           <Text style={[styles.title, { color: colors.text }]}>Today's Routine</Text>
@@ -39,14 +37,14 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
           style={[
             styles.levelBadge,
             {
-              backgroundColor: isDark ? colors.surface : '#fff',
-              borderColor: isDark ? colors.border : 'rgba(0,0,0,0.05)',
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
             },
           ]}
         >
-            <Ionicons name={level.icon} size={24} color={level.color} style={{ marginRight: 8 }} />
+            <Ionicons name={level.icon} size={22} color={level.color} style={{ marginRight: 8 }} />
             <Text style={[styles.levelText, { color: level.color }]}>
-                {points} Points
+                {points} XP
             </Text>
         </View>
       </View>
@@ -65,50 +63,48 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingTop: 24,
+    paddingBottom: 12,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
   },
-
   dateText: {
-    fontSize: 13,
-    fontWeight: "400",
+    fontSize: 12,
+    fontWeight: "600",
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    letterSpacing: 1,
+    marginBottom: 6,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "400",
-    letterSpacing: -0.5,
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.8,
   },
   levelBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    borderRadius: 20,
+    borderWidth: 1.5,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 3,
   },
   levelText: {
-    fontSize: 16,
-    fontWeight: "400",
+    fontSize: 15,
+    fontWeight: "800",
   },
   divider: {
     height: 1,
     marginBottom: 10,
+    opacity: 0.5,
   },
   loadingWrap: { paddingVertical: 10 },
 });

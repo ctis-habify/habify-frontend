@@ -29,19 +29,20 @@ export function Button({
   icon 
 }: ButtonProps): React.ReactElement {
   const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
   const colors = Colors[theme];
 
   const isOutline = variant === 'outline';
   
   const getColors = (): [string, string] | undefined => {
-    if (disabled) return ['#9CA3AF', '#6B7280'];
+    if (disabled) return [isDark ? 'rgba(255, 255, 255, 0.2)' : '#D1D5DB', isDark ? 'rgba(255, 255, 255, 0.1)' : '#9CA3AF'];
     switch (variant) {
       case 'primary':
         return [colors.primary, colors.secondary];
       case 'secondary':
         return [colors.secondary, colors.primary];
       case 'destructive':
-        return [colors.error, '#DC2626'];
+        return [colors.error, '#B91C1C'];
       default:
         return undefined;
     }
@@ -68,11 +69,11 @@ export function Button({
           end={{ x: 1, y: 1 }}
           style={styles.contentContainer}
         >
-          <Content title={title} isLoading={isLoading} textStyle={textStyle} variant={variant} icon={icon} theme={theme} />
+          <Content title={title} isLoading={isLoading} textStyle={textStyle} variant={variant} icon={icon} theme={theme} isDark={isDark} />
         </LinearGradient>
       ) : (
         <View style={styles.contentContainer}>
-          <Content title={title} isLoading={isLoading} textStyle={textStyle} variant={variant} icon={icon} theme={theme} />
+          <Content title={title} isLoading={isLoading} textStyle={textStyle} variant={variant} icon={icon} theme={theme} isDark={isDark} />
         </View>
       )}
     </TouchableOpacity>
@@ -86,6 +87,7 @@ function Content({
   variant,
   icon,
   theme,
+  isDark,
 }: {
   title: string,
   isLoading: boolean,
@@ -93,9 +95,10 @@ function Content({
   variant: ButtonVariant,
   icon?: React.ReactNode,
   theme: 'light' | 'dark',
+  isDark: boolean;
 }): React.ReactElement {
   const colors = Colors[theme];
-  const textColor = variant === 'outline' || variant === 'ghost' ? colors.primary : '#FFFFFF';
+  const textColor = variant === 'outline' || variant === 'ghost' ? colors.primary : colors.white;
   
   return (
     <>
@@ -131,7 +134,6 @@ const styles = StyleSheet.create({
   outlineButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: Colors.light.primary,
   },
   disabledButton: {
     opacity: 0.6,
