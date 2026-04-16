@@ -6,13 +6,29 @@ import {
   ActivityIndicator,
   Alert,
   DeviceEventEmitter,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import {
+  Gesture,
+  GestureDetector,
+} from 'react-native-gesture-handler';
+import Animated, {
+    FadeInDown,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withDelay,
+    withTiming,
+    ZoomIn,
+    Easing,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
@@ -28,6 +44,8 @@ import { notificationService } from '@/services/notification.service';
 import { LeaderboardEntry, UserCupAward, createLeaderboardCupAward } from '@/types/collaborative-score';
 import { Routine } from '@/types/routine';
 import { RoutineScoreList, RoutineLeaderboardEntry } from '@/components/routine-score-list';
+import { ThrobbingHeart } from '@/components/animations/throbbing-heart';
+import { AnimatedFlame } from '@/components/animations/animated-flame';
 
 type GroupParticipant = {
   id?: string;
@@ -507,11 +525,11 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                   <Text style={styles.metaPillText}>{displayFrequency}</Text>
                 </View>
                 <View style={styles.metaPill}>
-                  <Ionicons name="heart" size={13} color="#ff8ca0" />
+                  <ThrobbingHeart lives={displayLives} size={13} />
                   <Text style={styles.metaPillText}>Lives {displayLives}</Text>
                 </View>
                 <View style={styles.metaPill}>
-                  <Ionicons name="flame" size={13} color="#ffbb8a" />
+                  <AnimatedFlame streak={displayStreak} size={13} />
                   <Text style={styles.metaPillText}>Streak {displayStreak}</Text>
                 </View>
               </View>
@@ -539,35 +557,15 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                         key={`${name}-${index}`}
                         entering={FadeInDown.delay(180 + index * 60).duration(280)}
                       >
-                        <TouchableOpacity
-                          style={[
-                            styles.participantChip,
-                            isSelf && styles.participantChipSelf,
-                            isPoking && styles.participantChipPoking,
-                          ]}
-                          onPress={isSelf ? undefined : () => handlePoke(participant)}
-                          disabled={isSelf || !!pokingUserId}
-                          activeOpacity={isSelf ? 1 : 0.7}
-                        >
-                          {isPoking ? (
-                            <ActivityIndicator size="small" color="#E879F9" />
-                          ) : (
-                            <>
-                              {!isSelf && (
-                                <Text style={styles.pokeIcon}>👈</Text>
-                              )}
-                              <View style={styles.participantNameRow}>
-                                <Text style={[
-                                  styles.participantChipText,
-                                  isSelf && styles.participantChipTextSelf,
-                                ]} numberOfLines={1}>
-                                  {name}{isSelf ? ' (You)' : ''}
-                                </Text>
-                                <CupIndicator cup={participantCup} compact />
-                              </View>
-                            </>
-                          )}
-                        </TouchableOpacity>
+                        <ParticipantChip
+                          participant={participant}
+                          isSelf={isSelf}
+                          isPoking={isPoking}
+                          onPoke={handlePoke}
+                          disabled={!!pokingUserId}
+                          name={name}
+                          participantCup={participantCup}
+                        />
                       </Animated.View>
                     );
                   })}
@@ -607,18 +605,11 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
         ) : null}
       </ScrollView>
 
-      <Animated.View entering={FadeInDown.delay(280).duration(320)} style={styles.chatFabWrap}>
-        <TouchableOpacity
-          style={styles.chatFab}
-          onPress={() => router.replace({
-            pathname: '/(collaborative)/routine/[id]/chat',
-            params: { id: routineId, routineName: displayRoutineName }
-          } as never)}
-        >
-          <Ionicons name="chatbubble-ellipses-outline" size={18} color="#ffffff" />
-          <Text style={styles.chatFabText}>Chat</Text>
-        </TouchableOpacity>
-      </Animated.View>
+      <ChatFab
+        routineId={routineId}
+        displayRoutineName={displayRoutineName}
+        router={router}
+      />
 
       <LeaveRoutineModal
         visible={isLeaveModalVisible}
@@ -651,6 +642,165 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       />
 
     </LinearGradient >
+  );
+}
+
+function ParticipantChip({
+  participant,
+  isSelf,
+  isPoking,
+  onPoke,
+  disabled,
+  name,
+  participantCup
+}: {
+  participant: GroupParticipant;
+  isSelf: boolean;
+  isPoking: boolean;
+  onPoke: (p: GroupParticipant) => void;
+  disabled: boolean;
+  name: string;
+  participantCup: UserCupAward | null;
+}) {
+  const rippleScale = useSharedValue(0);
+  const rippleOpacity = useSharedValue(0);
+  const rippleX = useSharedValue(0);
+  const rippleY = useSharedValue(0);
+
+  const handlePress = (event: any) => {
+    if (isSelf || disabled) return;
+
+    // Get touch coordinates
+    const { locationX, locationY } = event.nativeEvent;
+    rippleX.value = locationX;
+    rippleY.value = locationY;
+
+    // Trigger ripple
+    rippleScale.value = 0;
+    rippleOpacity.value = 0.4;
+    rippleScale.value = withTiming(2.5, { duration: 400 });
+    rippleOpacity.value = withTiming(0, { duration: 400 });
+
+    onPoke(participant);
+  };
+
+  const rippleStyle = useAnimatedStyle(() => ({
+    top: rippleY.value - 10,
+    left: rippleX.value - 10,
+    transform: [{ scale: rippleScale.value }],
+    opacity: rippleOpacity.value,
+  }));
+
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.participantChip,
+        isSelf && styles.participantChipSelf,
+        isPoking && styles.participantChipPoking,
+        pressed && !isSelf && { opacity: 0.85 }
+      ]}
+      onPress={handlePress}
+      disabled={isSelf || disabled}
+    >
+      <Animated.View style={[styles.ripple, rippleStyle]} />
+      {isPoking ? (
+        <ActivityIndicator size="small" color="#E879F9" />
+      ) : (
+        <>
+          {!isSelf && <Text style={styles.pokeIcon}>👈</Text>}
+          <View style={styles.participantNameRow}>
+            <Text
+              style={[
+                styles.participantChipText,
+                isSelf && styles.participantChipTextSelf,
+              ]}
+              numberOfLines={1}
+            >
+              {name}
+              {isSelf ? ' (You)' : ''}
+            </Text>
+            <CupIndicator cup={participantCup} compact />
+          </View>
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+function ChatFab({
+  routineId,
+  displayRoutineName,
+  router,
+}: {
+  routineId: string;
+  displayRoutineName: string;
+  router: any;
+}) {
+  const glowScale = useSharedValue(0);
+  const glowOpacity = useSharedValue(0);
+  const jiggleRotation = useSharedValue(0);
+
+  // Optional: Link this to routine-specific unread message state when available
+  const hasUnread = false; 
+
+  React.useEffect(() => {
+    if (hasUnread) {
+      jiggleRotation.value = withRepeat(
+        withSequence(
+          withDelay(2000, withTiming(10, { duration: 100 })),
+          withTiming(-10, { duration: 100 }),
+          withTiming(8, { duration: 100 }),
+          withTiming(-8, { duration: 100 }),
+          withTiming(0, { duration: 100 })
+        ),
+        -1,
+        false
+      );
+    }
+  }, [hasUnread, jiggleRotation]);
+
+  const longPressGesture = Gesture.LongPress()
+    .onStart(() => {
+      glowScale.value = 0;
+      glowOpacity.value = 0.6;
+      glowScale.value = withTiming(4, { duration: 600, easing: Easing.out(Easing.quad) });
+      glowOpacity.value = withTiming(0, { duration: 600 });
+    });
+
+  const animatedFabStyle = useAnimatedStyle(() => ({
+    transform: [{ rotateZ: `${jiggleRotation.value}deg` }],
+  }));
+
+  const animatedGlowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: glowScale.value }],
+    opacity: glowOpacity.value,
+  }));
+
+  return (
+    <Animated.View
+      entering={ZoomIn.springify().damping(12).delay(400)}
+      style={styles.chatFabWrap}
+    >
+      <GestureDetector gesture={longPressGesture}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={styles.chatFab}
+          onPress={() =>
+            router.replace({
+              pathname: '/(collaborative)/routine/[id]/chat',
+              params: { id: routineId, routineName: displayRoutineName },
+            } as never)
+          }
+        >
+          <Animated.View style={[styles.glowRing, animatedGlowStyle]} />
+          <Animated.View style={[styles.chatFabInner, animatedFabStyle]}>
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color="#ffffff" />
+            <Text style={styles.chatFabText}>Chat</Text>
+          </Animated.View>
+          {hasUnread && <View style={styles.unreadDot} />}
+        </TouchableOpacity>
+      </GestureDetector>
+    </Animated.View>
   );
 }
 
@@ -822,6 +972,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    overflow: 'hidden',
   },
   participantChipSelf: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -904,5 +1055,28 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '700',
+  },
+  unreadDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#EF4444',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  glowRing: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(232, 121, 249, 0.4)',
+  },
+  chatFabInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });

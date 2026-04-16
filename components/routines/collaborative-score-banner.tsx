@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated as RNAnimated, StyleSheet, Text, View } from 'react-native';
 
 import { CollaborativeRankInfo } from '@/types/collaborative-score';
+import { AnimatedFlame } from '@/components/animations/animated-flame';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -139,7 +140,7 @@ export function CollaborativeScoreBanner({
         {/* Streak Column */}
         <View style={styles.statColumn}>
           <View style={styles.iconWrap}>
-            <Ionicons name="flame" size={20} color="#F97316" />
+            <AnimatedFlame streak={streak} size={20} />
           </View>
           <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
           <Text style={styles.statLabel}>Streak</Text>
