@@ -152,14 +152,6 @@ export function CollaborativeScoreBanner({
           Next reward: {nextBonusStreak}-day streak for +{nextBonusPoints} points
         </Text>
       </View>
-      </View>
-
-      <View style={styles.bonusStrip}>
-        <Ionicons name="gift-outline" size={15} color="#E9D5FF" />
-        <Text style={styles.bonusText}>
-          {nextBonusStreak}-day streak bonus: +{nextBonusPoints} points
-        </Text>
-      </View>
     </View>
   );
 }
