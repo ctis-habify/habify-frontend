@@ -13,7 +13,7 @@ export default function AppLayout(): React.ReactElement {
       <Stack.Screen
         name="routine/[id]/chat"
         options={{
-          animation: 'slide_from_left',
+          animation: 'slide_from_right',
           gestureEnabled: true,
         }}
       />
