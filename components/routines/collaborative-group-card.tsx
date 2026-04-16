@@ -14,6 +14,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { Routine } from '@/types/routine';
 import { DeleteRoutineModal } from '../modals/delete-routine-modal';
 import { ManageRoutineUsersModal } from '../modals/manage-routine-users-modal';
+import { ThrobbingHeart } from '../animations/throbbing-heart';
+import { AnimatedFlame } from '../animations/animated-flame';
 
 interface CollaborativeGroupCardProps {
     routine: Routine | null;
@@ -164,13 +166,13 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                 {/* Stats Bar */}
                 <View style={styles.statsBar}>
                     <View style={styles.statItem}>
-                        <Ionicons name="heart" size={16} color="#ef4444" />
+                        <ThrobbingHeart lives={lives} size={16} />
                         <Text style={styles.statLabel}>Lives: </Text>
                         <Text style={styles.statValue}>{lives}</Text>
                     </View>
                     <View style={[styles.divider, { height: '60%' }]} />
                     <View style={styles.statItem}>
-                        <Ionicons name="flame" size={16} color="#f97316" />
+                        <AnimatedFlame streak={streak} size={16} />
                         <Text style={styles.statLabel}>Streak: </Text>
                         <Text style={styles.statValue}>{streak}</Text>
                     </View>

@@ -1,6 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+    FadeInDown,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withTiming,
+    interpolateColor,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 
 import { CupIndicator } from '@/components/cup-indicator';
@@ -24,6 +32,101 @@ type RoutineScoreListProps = {
   loading: boolean;
 };
 
+function LeaderboardRow({
+  entry,
+  index,
+  currentUserId,
+}: {
+  entry: RoutineLeaderboardEntry;
+  index: number;
+  currentUserId: string;
+}) {
+  const isSelf = !!currentUserId && currentUserId === entry.userId;
+  const displayName = entry.name || entry.username || 'Unnamed User';
+  const displayCup = entry.cup || null;
+
+  const flashValue = useSharedValue(0); // 0: normal, -1: red, 1: green
+  const prevRank = React.useRef(entry.rank);
+
+  React.useEffect(() => {
+    if (prevRank.current !== entry.rank) {
+      if (entry.rank < prevRank.current) {
+        // Rank improved (Up) -> Flash Green
+        flashValue.value = withSequence(
+          withTiming(1, { duration: 400 }),
+          withTiming(0, { duration: 800 })
+        );
+      } else if (entry.rank > prevRank.current) {
+        // Rank dropped (Down) -> Flash Red
+        flashValue.value = withSequence(
+          withTiming(-1, { duration: 400 }),
+          withTiming(0, { duration: 800 })
+        );
+      }
+      prevRank.current = entry.rank;
+    }
+  }, [entry.rank, flashValue]);
+
+  const animatedRowStyle = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      flashValue.value,
+      [-1, 0, 1],
+      [
+        'rgba(239, 68, 68, 0.4)',
+        isSelf ? 'rgba(232, 121, 249, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+        'rgba(34, 197, 94, 0.4)',
+      ]
+    );
+
+    return {
+      backgroundColor,
+    };
+  });
+
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(350 + index * 60).duration(280)}
+      style={[styles.row, isSelf && styles.rowSelf, animatedRowStyle]}
+    >
+      <View style={styles.rankContainer}>
+        {entry.rank === 1 ? (
+          <Ionicons name="medal" size={20} color="#FFD700" />
+        ) : entry.rank === 2 ? (
+          <Ionicons name="medal" size={20} color="#C0C0C0" />
+        ) : entry.rank === 3 ? (
+          <Ionicons name="medal" size={20} color="#CD7F32" />
+        ) : (
+          <Text style={styles.rankText}>#{entry.rank}</Text>
+        )}
+      </View>
+
+      {entry.avatarUrl ? (
+        <Image source={{ uri: entry.avatarUrl }} style={styles.avatar} />
+      ) : (
+        <View style={styles.avatarPlaceholder}>
+          <Text style={styles.avatarPlaceholderText}>
+            {displayName.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.nameContainer}>
+        <View style={styles.nameRow}>
+          <Text style={[styles.nameText, isSelf && styles.nameTextSelf]} numberOfLines={1}>
+            {displayName} {isSelf ? '(You)' : ''}
+          </Text>
+          <CupIndicator cup={displayCup} compact showLabel={false} transparent />
+        </View>
+      </View>
+
+      <View style={styles.scoreContainer}>
+        <Text style={styles.scoreText}>{entry.score}</Text>
+        <Text style={styles.ptsText}>pts</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 const COLLABORATIVE_PRIMARY = '#E879F9';
 
 export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
@@ -46,55 +149,14 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
         <Text style={styles.secondaryValue}>No scores available yet.</Text>
       ) : (
         <View style={styles.listContainer}>
-          {leaderboard.map((entry, index) => {
-            const isSelf = !!currentUserId && currentUserId === entry.userId;
-            const displayName = entry.name || entry.username || 'Unnamed User';
-            const displayCup = entry.cup || null;
-
-            return (
-              <Animated.View
-                key={entry.userId}
-                entering={FadeInDown.delay(350 + index * 60).duration(280)}
-                style={[styles.row, isSelf && styles.rowSelf]}
-              >
-                <View style={styles.rankContainer}>
-                  {entry.rank === 1 ? (
-                    <Ionicons name="medal" size={20} color="#FFD700" />
-                  ) : entry.rank === 2 ? (
-                    <Ionicons name="medal" size={20} color="#C0C0C0" />
-                  ) : entry.rank === 3 ? (
-                    <Ionicons name="medal" size={20} color="#CD7F32" />
-                  ) : (
-                    <Text style={styles.rankText}>#{entry.rank}</Text>
-                  )}
-                </View>
-
-                {entry.avatarUrl ? (
-                  <Image source={{ uri: entry.avatarUrl }} style={styles.avatar} />
-                ) : (
-                  <View style={styles.avatarPlaceholder}>
-                    <Text style={styles.avatarPlaceholderText}>
-                      {displayName.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                )}
-
-                <View style={styles.nameContainer}>
-                  <View style={styles.nameRow}>
-                    <Text style={[styles.nameText, isSelf && styles.nameTextSelf]} numberOfLines={1}>
-                      {displayName} {isSelf ? '(You)' : ''}
-                    </Text>
-                    <CupIndicator cup={displayCup} compact showLabel={false} transparent />
-                  </View>
-                </View>
-
-                <View style={styles.scoreContainer}>
-                  <Text style={styles.scoreText}>{entry.score}</Text>
-                  <Text style={styles.ptsText}>pts</Text>
-                </View>
-              </Animated.View>
-            );
-          })}
+          {leaderboard.map((entry, index) => (
+            <LeaderboardRow
+              key={entry.userId}
+              entry={entry}
+              index={index}
+              currentUserId={currentUserId}
+            />
+          ))}
         </View>
       )}
     </Animated.View>

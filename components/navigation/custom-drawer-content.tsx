@@ -13,6 +13,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUnreadCount } from '@/hooks/use-unread-count';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withTiming,
+    Easing,
+} from 'react-native-reanimated';
 
 export function CustomDrawerContent(props: DrawerContentComponentProps): React.ReactElement {
   const router = useRouter();
@@ -164,16 +172,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
         <DrawerItem
           label="Notifications"
           icon={({ size, color }) => (
-            <View>
-              <Ionicons name="notifications-outline" size={size} color={color} />
-              {unreadCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Text>
-                </View>
-              )}
-            </View>
+            <NotificationIcon size={size} color={color} unreadCount={unreadCount} />
           )}
           onPress={() => router.push('/(personal)/(drawer)/notifications')}
           focused={pathname.includes('/(personal)/(drawer)/notifications')}
@@ -220,6 +219,62 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
       </View>
     </View>
   );
+}
+
+function NotificationIcon({ size, color, unreadCount }: { size: number; color: string; unreadCount: number }) {
+    const rotation = useSharedValue(0);
+    const badgeScale = useSharedValue(1);
+
+    React.useEffect(() => {
+        if (unreadCount > 0) {
+            // Shake animation
+            rotation.value = withRepeat(
+                withSequence(
+                    withTiming(-15, { duration: 100, easing: Easing.linear }),
+                    withTiming(15, { duration: 100, easing: Easing.linear }),
+                    withTiming(0, { duration: 100, easing: Easing.linear }),
+                ),
+                1, // Play once on mount/update if count > 0
+                false
+            );
+
+            // Badge pulse
+            badgeScale.value = withRepeat(
+                withSequence(
+                    withTiming(1.2, { duration: 400 }),
+                    withTiming(1, { duration: 400 }),
+                ),
+                -1, // Infinite pulse
+                true
+            );
+        } else {
+            rotation.value = 0;
+            badgeScale.value = 1;
+        }
+    }, [unreadCount, rotation, badgeScale]);
+
+    const animatedIconStyle = useAnimatedStyle(() => ({
+        transform: [{ rotateZ: `${rotation.value}deg` }],
+    }));
+
+    const animatedBadgeStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: badgeScale.value }],
+    }));
+
+    return (
+        <View>
+            <Animated.View style={animatedIconStyle}>
+                <Ionicons name="notifications-outline" size={size} color={color} />
+            </Animated.View>
+            {unreadCount > 0 && (
+                <Animated.View style={[styles.badge, animatedBadgeStyle]}>
+                    <Text style={styles.badgeText}>
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                </Animated.View>
+            )}
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
