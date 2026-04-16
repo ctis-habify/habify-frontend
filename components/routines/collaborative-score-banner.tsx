@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
 import { Animated as RNAnimated, StyleSheet, Text, View } from 'react-native';
 
-import { CollaborativeRankInfo } from '@/types/collaborative-score';
 import { AnimatedFlame } from '@/components/animations/animated-flame';
+import { CollaborativeRankInfo } from '@/types/collaborative-score';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -115,7 +115,7 @@ export function CollaborativeScoreBanner({
   return (
     <View>
       <View style={styles.container}>
-      {/* Points Column */}
+        {/* Points Column */}
         <View style={styles.statColumn}>
           <View style={styles.iconWrap}>
             <Ionicons name="diamond-outline" size={20} color={accentColor} />
