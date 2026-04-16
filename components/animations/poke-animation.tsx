@@ -13,6 +13,7 @@ import Animated, {
 
 interface PokeAnimationProps {
     play: boolean;
+    triggerKey?: number; // Used to re-trigger animation even if 'play' is already true
     targetName?: string;
     onComplete?: () => void;
 }
@@ -106,6 +107,7 @@ function Particle({ config, play }: { config: ParticleConfig; play: boolean }) {
 
 export const PokeAnimation: React.FC<PokeAnimationProps> = ({
     play,
+    triggerKey,
     targetName,
     onComplete,
 }) => {
@@ -128,51 +130,48 @@ export const PokeAnimation: React.FC<PokeAnimationProps> = ({
 
     useEffect(() => {
         if (play) {
+            // Reset shared values for a fresh start on every poke
+            overlayOpacity.value = 0;
+            flashOpacity.value = 0;
+            emojiScale.value = 0;
+            emojiRotation.value = 0;
+            textOpacity.value = 0;
+            textTranslateY.value = 20;
+
             // Overlay fade in
-            overlayOpacity.value = withTiming(1, { duration: 200 });
+            overlayOpacity.value = withTiming(1, { duration: 150 });
 
             // Screen flash
-            flashOpacity.value = withDelay(
-                150,
-                withSequence(
-                    withTiming(0.3, { duration: 100 }),
-                    withTiming(0, { duration: 200 }),
-                ),
+            flashOpacity.value = withSequence(
+                withTiming(0.25, { duration: 80 }),
+                withTiming(0, { duration: 150 }),
             );
 
             // Emoji spring bounce
-            emojiScale.value = withDelay(
-                100,
-                withSequence(
-                    withSpring(1.3, { damping: 6, stiffness: 180 }),
-                    withDelay(100, withSpring(1, { damping: 12, stiffness: 200 })),
-                ),
+            emojiScale.value = withSequence(
+                withSpring(1.4, { damping: 5, stiffness: 220 }),
+                withSpring(1, { damping: 12, stiffness: 200 }),
             );
 
             // Emoji wiggle
-            emojiRotation.value = withDelay(
-                300,
-                withSequence(
-                    withTiming(-15, { duration: 80 }),
-                    withTiming(15, { duration: 80 }),
-                    withTiming(-10, { duration: 80 }),
-                    withTiming(10, { duration: 80 }),
-                    withTiming(0, { duration: 80 }),
-                ),
+            emojiRotation.value = withSequence(
+                withTiming(-12, { duration: 60 }),
+                withTiming(12, { duration: 60 }),
+                withTiming(0, { duration: 60 }),
             );
 
             // Text fade in
-            textOpacity.value = withDelay(400, withTiming(1, { duration: 300 }));
+            textOpacity.value = withDelay(250, withTiming(1, { duration: 200 }));
             textTranslateY.value = withDelay(
-                400,
+                250,
                 withSpring(0, { damping: 15, stiffness: 200 }),
             );
 
-            // Auto-dismiss
-            const fadeOutDelay = 1400;
+            // Auto-dismiss: Reduced delay for infinite poking
+            const fadeOutDelay = 800; 
             overlayOpacity.value = withDelay(
                 fadeOutDelay,
-                withTiming(0, { duration: 400, easing: Easing.out(Easing.ease) }, (finished) => {
+                withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) }, (finished) => {
                     if (finished && onComplete) {
                         runOnJS(onComplete)();
                     }
@@ -181,10 +180,10 @@ export const PokeAnimation: React.FC<PokeAnimationProps> = ({
 
             emojiScale.value = withDelay(
                 fadeOutDelay,
-                withTiming(0, { duration: 300 }),
+                withTiming(0, { duration: 250 }),
             );
 
-            textOpacity.value = withDelay(fadeOutDelay, withTiming(0, { duration: 300 }));
+            textOpacity.value = withDelay(fadeOutDelay, withTiming(0, { duration: 250 }));
         } else {
             emojiScale.value = 0;
             emojiRotation.value = 0;
@@ -193,7 +192,7 @@ export const PokeAnimation: React.FC<PokeAnimationProps> = ({
             textOpacity.value = 0;
             textTranslateY.value = 20;
         }
-    }, [play, emojiScale, emojiRotation, overlayOpacity, flashOpacity, textOpacity, textTranslateY, onComplete]);
+    }, [play, triggerKey, emojiScale, emojiRotation, overlayOpacity, flashOpacity, textOpacity, textTranslateY, onComplete]);
 
     const overlayStyle = useAnimatedStyle(() => ({
         opacity: overlayOpacity.value,
