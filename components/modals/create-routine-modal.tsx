@@ -321,16 +321,22 @@ export function CreateRoutineModal({
                   ]}
                   textStyle={{ color: colors.text, fontSize: 16 }}
                   placeholderStyle={{ color: colors.icon }}
-                  listMode="MODAL"
+                  listMode="SCROLLVIEW"
                   dropDownContainerStyle={{
                     backgroundColor: colors.card,
-                    borderColor: colors.border,
+                    borderColor: colors.primary,
+                    borderRadius: 12,
+                    elevation: 5,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 5,
                   }}
                   searchPlaceholder="Search..."
                   searchable={true}
                   closeAfterSelecting={true}
                   theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
-                  zIndex={2000}
+                  zIndex={5000}
                   zIndexInverse={1000}
                 />
                 {errors.category ? (
