@@ -46,6 +46,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
 }) => {
     const [friendsList, setFriendsList] = useState<UserSearchResult[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
+    const [invitedUserIds, setInvitedUserIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(false);
     const [invitingId, setInvitingId] = useState<string | null>(null);
     const [actioningId, setActioningId] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
             ]);
             setFriendsList(friendsRes || []);
             setParticipants(groupRes?.participants || []);
+            setInvitedUserIds(new Set()); // Reset on fresh fetch
         } catch {
             setFriendsList([]);
             setParticipants([]);
@@ -77,6 +79,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         setInvitingId(user.id);
         try {
             await routineService.sendRoutineInvite(routineId, user.id);
+            setInvitedUserIds(prev => new Set(prev).add(user.id));
             Alert.alert('Success', `Invited ${user.name} to the routine!`);
         } catch (e: unknown) {
             const msg =
@@ -203,8 +206,9 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         );
     };
 
-    // Filter out friends that are already participants
+    // Filter out friends that are already participants or have been invited
     const friendsToInvite = friendsList.filter(friend =>
+        !invitedUserIds.has(friend.id) &&
         !participants.some(p => {
             const participantId = p.userId || p.user?.id || p.id;
             return participantId === friend.id;
