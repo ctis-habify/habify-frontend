@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -723,6 +724,7 @@ export default function CollaborativeChatScreen() {
           <Ionicons name="information-circle-outline" size={20} color="#ffffff" />
           <Text style={styles.detailsButtonText}>Details</Text>
         </TouchableOpacity>
+        <HomeButton color="#ffffff" style={styles.backButton} />
       </Animated.View>
 
       <View style={styles.chatContainer}>

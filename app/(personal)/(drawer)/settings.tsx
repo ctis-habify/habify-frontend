@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { EditProfileModal } from '@/components/settings/edit-profile-modal';
 import { SettingsItem } from '@/components/settings/settings-item';
 import { SettingsSection } from '@/components/settings/settings-section';
@@ -171,7 +172,7 @@ export default function SettingsScreen(): React.ReactElement {
           <Ionicons name="menu" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
-        <View style={{ width: 44 }} />
+        <HomeButton color="#fff" style={styles.menuButton} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

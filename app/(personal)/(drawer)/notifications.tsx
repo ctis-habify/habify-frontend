@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { SwipeableNotificationRow } from '@/components/ui/swipeable-notification-row';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -236,7 +237,7 @@ export default function NotificationsScreen(): React.ReactElement {
           <Ionicons name="menu" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <View style={{ width: 44 }} />
+        <HomeButton color="#fff" style={styles.menuButton} />
       </View>
 
       <ScrollView

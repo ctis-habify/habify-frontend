@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -492,6 +493,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             )}
           </TouchableOpacity>
         )}
+        <HomeButton color="#ffffff" style={styles.backButton} />
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

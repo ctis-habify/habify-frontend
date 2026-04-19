@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -221,13 +222,16 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                         <Text style={styles.headerSubtitle}>Discover & join public groups</Text>
                     </View>
 
-                    <TouchableOpacity
-                        style={styles.menuBtn}
-                        onPress={goBack}
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="arrow-back" size={24} color="#fff" />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <HomeButton color="#fff" style={styles.menuBtn} />
+                        <TouchableOpacity
+                            style={styles.menuBtn}
+                            onPress={goBack}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="arrow-back" size={24} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Filters */}

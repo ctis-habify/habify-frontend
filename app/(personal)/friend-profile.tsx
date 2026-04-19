@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserProfile } from '@/hooks/use-user-profile';
@@ -75,7 +76,7 @@ export default function FriendProfileScreen(): React.ReactElement {
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
-          <View style={{ width: 44 }} />
+          <HomeButton color="#fff" style={styles.backButton} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator color="rgba(255,255,255,0.7)" size="large" />
@@ -92,7 +93,7 @@ export default function FriendProfileScreen(): React.ReactElement {
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
-          <View style={{ width: 44 }} />
+          <HomeButton color="#fff" style={styles.backButton} />
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color="rgba(255,255,255,0.5)" />
@@ -112,7 +113,7 @@ export default function FriendProfileScreen(): React.ReactElement {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{displayName}</Text>
-        <View style={{ width: 44 }} />
+        <HomeButton color="#fff" style={styles.backButton} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>

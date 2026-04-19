@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { CupIndicator } from '@/components/cup-indicator';
 import { FriendList } from '@/components/profile/FriendList';
 import { getBackgroundGradient } from '@/constants/theme';
@@ -104,7 +105,7 @@ export default function ProfileScreen() {
           <Ionicons name="menu" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
-        <View style={{ width: 44 }} />
+        <HomeButton color="#fff" style={styles.menuButton} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
