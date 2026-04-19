@@ -111,17 +111,20 @@ export default function TodayRoutinesScreen(): React.ReactElement {
       const currentTimeInSeconds = currentHours * 3600 + currentMinutes * 60 + currentSeconds;
 
       const filtered = normalized.filter(r => {
-        // Show if not completed today
-        if (r.isCompleted || r.isDone) return false;
+        // Show if not completed today and not failed
+        if (r.isCompleted || r.isDone || r.isFailed) return false;
 
-        // Time-based filtering: hide if not started yet
+        // Time-based filtering: hide if not started yet OR if deadline passed (Failed)
         if (r.startTime) {
           const [sh, sm, ss] = r.startTime.split(':').map(Number);
           const startInSeconds = (sh || 0) * 3600 + (sm || 0) * 60 + (ss || 0);
-          
-          if (currentTimeInSeconds < startInSeconds) {
-            return false;
-          }
+          if (currentTimeInSeconds < startInSeconds) return false;
+        }
+
+        if (r.endTime) {
+          const [eh, em, es] = r.endTime.split(':').map(Number);
+          const endInSeconds = (eh || 0) * 3600 + (em || 0) * 60 + (es || 0);
+          if (currentTimeInSeconds > endInSeconds) return false;
         }
 
         return true; 

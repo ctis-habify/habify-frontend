@@ -173,7 +173,7 @@ export function useNotifications(isAuthenticated: boolean) {
           router.push(`/(collaborative)/routine/${data.collaborativeRoutineId}/chat`);
         } else {
           // If it's a social notification or other, go to notifications list
-          router.push('/(personal)/notifications');
+          router.push('/(personal)/(drawer)/notifications');
         }
       },
     );
