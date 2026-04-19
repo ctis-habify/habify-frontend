@@ -161,9 +161,16 @@ export function useNotifications(isAuthenticated: boolean) {
         const data = response.notification.request.content.data as Record<string, unknown>;
         
         if (data?.routineId && typeof data.routineId === 'string') {
-          router.push(`/(personal)/routine/${data.routineId}`);
+          if (data.type === 'streak_bonus') {
+            router.push(`/(personal)/routine/${data.routineId}`);
+          } else {
+            router.push({
+              pathname: '/(personal)/camera-modal',
+              params: { routineId: data.routineId }
+            });
+          }
         } else if (data?.collaborativeRoutineId && typeof data.collaborativeRoutineId === 'string') {
-          router.push(`/(collaborative)/routine/${data.collaborativeRoutineId}`);
+          router.push(`/(collaborative)/routine/${data.collaborativeRoutineId}/chat`);
         } else {
           // If it's a social notification or other, go to notifications list
           router.push('/(personal)/notifications');

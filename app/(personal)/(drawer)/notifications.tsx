@@ -120,9 +120,16 @@ export default function NotificationsScreen(): React.ReactElement {
   const handleNotificationPress = useCallback(
     (item: NotificationItem) => {
       if (item.routineId) {
-        router.push(`/(personal)/routine/${item.routineId}`);
+        if (item.category === 'rewards') {
+          router.push(`/(personal)/routine/${item.routineId}`);
+        } else {
+          router.push({
+            pathname: '/(personal)/camera-modal',
+            params: { routineId: item.routineId },
+          });
+        }
       } else if (item.collaborativeRoutineId) {
-        router.push(`/(collaborative)/routine/${item.collaborativeRoutineId}`);
+        router.push(`/(collaborative)/routine/${item.collaborativeRoutineId}/chat`);
       }
     },
     [router],
