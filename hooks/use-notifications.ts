@@ -2,17 +2,65 @@ import { useEffect, useRef, useCallback } from 'react';
 import { DeviceEventEmitter, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 import { notificationService } from '../services/notification.service';
 import { emitToast } from './use-toast';
 
+const USER_KEY = 'habify_user';
+
+interface QuietModeSettings {
+  enabled: boolean;
+  start: string; // HH:mm
+  end: string;   // HH:mm
+}
+
+async function getQuietModeSettings(): Promise<QuietModeSettings | null> {
+  try {
+    const storedUser = await SecureStore.getItemAsync(USER_KEY);
+    if (!storedUser) return null;
+    const user = JSON.parse(storedUser);
+    return {
+      enabled: !!user.quietModeEnabled,
+      start: user.quietModeStart || '22:00',
+      end: user.quietModeEnd || '08:00',
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isNowInQuietRange(start: string, end: string): boolean {
+  const now = new Date();
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  const [startH, startM] = start.split(':').map(Number);
+  const startTime = startH * 60 + startM;
+  
+  const [endH, endM] = end.split(':').map(Number);
+  const endTime = endH * 60 + endM;
+
+  if (startTime < endTime) {
+    // Normal range (e.g., 09:00 - 17:00)
+    return currentTime >= startTime && currentTime < endTime;
+  } else {
+    // Overnight range (e.g., 22:00 - 08:00)
+    return currentTime >= startTime || currentTime < endTime;
+  }
+}
+
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
+  handleNotification: async () => {
+    const quietSettings = await getQuietModeSettings();
+    const shouldSuppress = quietSettings?.enabled && isNowInQuietRange(quietSettings.start, quietSettings.end);
+
+    return {
+      shouldShowBanner: !shouldSuppress,
+      shouldShowList: true, // Still keep in the list so users can see them later
+      shouldPlaySound: !shouldSuppress,
+      shouldSetBadge: !shouldSuppress,
+    };
+  },
 });
 
 async function registerForPushNotificationsAsync(): Promise<string | null> {

@@ -621,11 +621,13 @@ export const routineService = {
   },
 
   // ✅ Browse Public Collaborative Routines (with optional search)
-  async browsePublicRoutines(search?: string, categoryId?: number, frequencyType?: string): Promise<PublicRoutine[]> {
+  async browsePublicRoutines(search?: string, categoryId?: number, frequencyType?: string, creatorId?: string, memberId?: string): Promise<PublicRoutine[]> {
     const params: any = {};
     if (search) params.search = search;
     if (categoryId) params.categoryId = categoryId;
     if (frequencyType) params.frequencyType = frequencyType;
+    if (creatorId) params.creatorId = creatorId;
+    if (memberId) params.memberId = memberId;
     const res = await api.get('/routines/collaborative/public', { params });
     return res.data;
   },
