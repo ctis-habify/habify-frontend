@@ -1,7 +1,9 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { CupIndicator } from '@/components/cup-indicator';
 import { Colors } from '@/constants/theme';
 import { collaborativeScoreService } from '@/services/collaborative-score.service';
 import { LeaderboardEntry, createLeaderboardCupAward, resolveCollaborativeRank } from '@/types/collaborative-score';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -117,6 +119,7 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
 
 export default function LeaderboardScreen(): React.ReactElement {
   const router = useRouter();
+  const navigation = useNavigation();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -142,11 +145,14 @@ export default function LeaderboardScreen(): React.ReactElement {
     <View style={styles.container}>
       {/* Header */}
       <Animated.View style={styles.header} entering={FadeInDown.duration(400).springify()}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={Colors.light.text} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Leaderboard</Text>
-        <Ionicons name="trophy" size={22} color={COLLABORATIVE_PRIMARY} style={{ marginLeft: 8 }} />
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={styles.backBtn} hitSlop={12}>
+            <Ionicons name="menu" size={26} color={Colors.light.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Leaderboard</Text>
+          <Ionicons name="trophy" size={22} color={COLLABORATIVE_PRIMARY} style={{ marginLeft: 8 }} />
+        </View>
+        <HomeButton color={Colors.light.text} />
       </Animated.View>
 
       {/* Subtitle pill */}
@@ -196,12 +202,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     paddingTop: 56,
     backgroundColor: Colors.light.card,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.border,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backBtn: {
     marginRight: 12,
