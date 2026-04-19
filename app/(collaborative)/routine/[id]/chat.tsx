@@ -266,6 +266,7 @@ export default function CollaborativeChatScreen() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [headerTitle, setHeaderTitle] = useState(params.routineName || 'Group Chat');
 
   // Image Preview State
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -504,6 +505,9 @@ export default function CollaborativeChatScreen() {
         : [];
 
       setParticipants(normalizedParticipants);
+      if (groupDetail?.routineName) {
+        setHeaderTitle(groupDetail.routineName);
+      }
       setTaggedParticipant((current) =>
         current && normalizedParticipants.some((participant) => participant.id === current.id)
           ? current
@@ -701,7 +705,7 @@ export default function CollaborativeChatScreen() {
         </TouchableOpacity>
         <View style={styles.titleContainer}>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {params.routineName || 'Group Chat'}
+            {headerTitle}
           </Text>
         </View>
         <TouchableOpacity
