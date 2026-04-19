@@ -40,6 +40,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Routine[]>([]);
+  const [streak, setStreak] = useState(0);
   const [collabIds, setCollabIds] = useState<Set<string>>(new Set());
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -97,12 +98,11 @@ export default function TodayRoutinesScreen(): React.ReactElement {
       }
 
       const res = await routineService.getTodayRoutines();
+      const castedRes = res as any;
 
-      // Normalize et (res is unknown usually, but service says Routine[] | {routines: Routine[]})
-      const incoming = (typeof res === 'object' && res !== null && 'routines' in res) 
-        ? (res as { routines: Routine[] }).routines 
-        : res;
-      const normalized: Routine[] = Array.isArray(incoming) ? incoming : [];
+      const incoming = castedRes?.routines ?? (Array.isArray(res) ? res : []);
+      const normalized: Routine[] = incoming;
+      setStreak(castedRes?.streak ?? 0);
 
       const now = new Date();
       const currentHours = now.getHours();
@@ -111,17 +111,20 @@ export default function TodayRoutinesScreen(): React.ReactElement {
       const currentTimeInSeconds = currentHours * 3600 + currentMinutes * 60 + currentSeconds;
 
       const filtered = normalized.filter(r => {
-        // Show if not completed today
-        if (r.isCompleted || r.isDone) return false;
+        // Show if not completed today and not failed
+        if (r.isCompleted || r.isDone || r.isFailed) return false;
 
-        // Time-based filtering: hide if not started yet
+        // Time-based filtering: hide if not started yet OR if deadline passed (Failed)
         if (r.startTime) {
           const [sh, sm, ss] = r.startTime.split(':').map(Number);
           const startInSeconds = (sh || 0) * 3600 + (sm || 0) * 60 + (ss || 0);
-          
-          if (currentTimeInSeconds < startInSeconds) {
-            return false;
-          }
+          if (currentTimeInSeconds < startInSeconds) return false;
+        }
+
+        if (r.endTime) {
+          const [eh, em, es] = r.endTime.split(':').map(Number);
+          const endInSeconds = (eh || 0) * 3600 + (em || 0) * 60 + (es || 0);
+          if (currentTimeInSeconds > endInSeconds) return false;
         }
 
         return true; 
@@ -179,6 +182,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         >
           <TodayRoutinesList
             items={items}
+            streak={streak}
             loading={loading}
             onRefresh={load}
             onPressRoutine={goToRoutineDetail}

@@ -1,4 +1,6 @@
 import { Toast } from '@/components/ui/toast';
+import { OfflineBanner } from '@/components/ui/offline-banner';
+
 import { SplashScreen } from '@/components/splash/splash-screen';
 import { getBackgroundGradient } from '@/constants/theme';
 import { ThemeProvider, useColorScheme } from '@/hooks/use-color-scheme';
@@ -52,7 +54,9 @@ function RootContent(): React.ReactElement {
         <Stack.Screen name="(collaborative)" />
       </Stack>
       <GlobalToast />
+      <OfflineBanner />
     </View>
+
   );
 }
 

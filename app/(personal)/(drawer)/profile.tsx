@@ -59,6 +59,14 @@ export default function ProfileScreen() {
 
   const age = calculateAge(user?.birthDate);
 
+  const getStatus = (pts: number) => {
+    if (pts >= 100) return { label: 'Pro', color: '#FFD700' };
+    if (pts >= 50) return { label: 'Good', color: '#FF8C00' };
+    return { label: 'Beginner', color: '#4CAF50' };
+  };
+
+  const status = getStatus(user?.totalXp || 0);
+
   const handlePressFriend = useCallback(
     (friendId: string): void => {
       router.push({ pathname: '/(personal)/friend-profile', params: { userId: friendId } });
@@ -130,8 +138,8 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user?.currentStreak || 0}</Text>
-              <Text style={styles.statLabel}>Streak</Text>
+              <Text style={[styles.statValue, { color: status.color }]}>{status.label}</Text>
+              <Text style={styles.statLabel}>Status</Text>
             </View>
           </View>
         </Animated.View>
