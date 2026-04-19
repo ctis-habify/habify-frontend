@@ -21,6 +21,10 @@ export function Toast({ visible, message, icon = 'check', onHide, duration = 350
 
   useEffect(() => {
     if (visible) {
+      // If a new message comes while one is already showing, reset and restart
+      opacity.stopAnimation();
+      opacity.setValue(0);
+
       Animated.sequence([
         Animated.timing(opacity, {
           toValue: 1,
@@ -33,11 +37,16 @@ export function Toast({ visible, message, icon = 'check', onHide, duration = 350
           duration: 300,
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        onHide?.();
+      ]).start((result) => {
+        // Only call onHide if the animation actually finished (not interrupted by a new message)
+        if (result.finished) {
+          onHide?.();
+        }
       });
+    } else {
+      opacity.setValue(0);
     }
-  }, [visible, duration, opacity, onHide]);
+  }, [visible, message, duration, opacity, onHide]);
 
   if (!visible) return null;
 
