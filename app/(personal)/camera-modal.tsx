@@ -77,23 +77,8 @@ export default function CameraModal(): React.ReactElement {
 
       // 2. Prepare file blob
 
-      let blob;
-      if (photoUri === 'mock-photo') {
-        const asset = require('../../img/true.jpg');
-        const assetSource = Image.resolveAssetSource(asset);
-
-        const assetResponse = await fetch(assetSource.uri);
-        blob = await assetResponse.blob();
-      } else if (photoUri === 'mock-photo-fail') {
-        const asset = require('../../img/false.png');
-        const assetSource = Image.resolveAssetSource(asset);
-
-        const assetResponse = await fetch(assetSource.uri);
-        blob = await assetResponse.blob();
-      } else {
-        const photoResponse = await fetch(photoUri);
-        blob = await photoResponse.blob();
-      }
+      const photoResponse = await fetch(photoUri);
+      blob = await photoResponse.blob();
 
 
       // 3. Upload to GCS via PUT
@@ -193,21 +178,9 @@ export default function CameraModal(): React.ReactElement {
 
   // --- RENDER: PREVIEW MODE (Photo Taken) ---
   if (photoUri) {
-    const isMock = photoUri.startsWith('mock-photo');
     return (
       <View style={styles.container}>
-        {(photoUri === 'mock-photo') ? (
-          <Image source={require('../../img/true.jpg')} style={styles.previewImage} />
-        ) : (photoUri === 'mock-photo-fail') ? (
-          <Image source={require('../../img/false.png')} style={styles.previewImage} />
-        ) : (
-          <Image source={{ uri: photoUri }} style={styles.previewImage} />
-        )}
-        
-        {isMock && (
-          <View style={{ position: 'absolute', top: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 8, borderRadius: 8, zIndex: 20 }}>
-          </View>
-        )}
+        <Image source={{ uri: photoUri }} style={styles.previewImage} />
 
         
         {isUploading && (
@@ -258,21 +231,6 @@ export default function CameraModal(): React.ReactElement {
 
         {/* Bottom Bar: Shutter */}
         <View style={styles.bottomBar}>
-          <TouchableOpacity 
-            onPress={() => setPhotoUri('mock-photo')} 
-            style={[styles.iconBtn, { marginBottom: 10, backgroundColor: 'rgba(255,165,0,0.6)' }]}
-          >
-            <Ionicons name="bug" size={24} color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>PASS</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            onPress={() => setPhotoUri('mock-photo-fail')} 
-            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: 'rgba(255,0,0,0.6)' }]}
-          >
-            <Ionicons name="bug" size={24} color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>FAIL</Text>
-          </TouchableOpacity>
 
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
             <View style={styles.shutterInner} />

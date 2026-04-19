@@ -6,6 +6,7 @@ import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 import { notificationService } from '../services/notification.service';
 import { emitToast } from './use-toast';
+import { useRouter } from 'expo-router';
 
 const USER_KEY = 'habify_user';
 
@@ -102,6 +103,7 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
 }
 
 export function useNotifications(isAuthenticated: boolean) {
+  const router = useRouter();
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
@@ -155,9 +157,17 @@ export function useNotifications(isAuthenticated: boolean) {
     );
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
-      (_response) => {
-        // User tapped a notification – could navigate to a specific screen.
-        // For now we do nothing; the notifications screen shows all reminders.
+      (response) => {
+        const data = response.notification.request.content.data as Record<string, unknown>;
+        
+        if (data?.routineId && typeof data.routineId === 'string') {
+          router.push(`/(personal)/routine/${data.routineId}`);
+        } else if (data?.collaborativeRoutineId && typeof data.collaborativeRoutineId === 'string') {
+          router.push(`/(collaborative)/routine/${data.collaborativeRoutineId}`);
+        } else {
+          // If it's a social notification or other, go to notifications list
+          router.push('/(personal)/notifications');
+        }
       },
     );
 

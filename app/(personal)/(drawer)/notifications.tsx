@@ -13,7 +13,7 @@ import { RoutineInvitationItem } from '@/types/routine-invitation';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useNavigation } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,6 +43,7 @@ const categoryOrder: NotificationCategory[] = [
 
 export default function NotificationsScreen(): React.ReactElement {
   const navigation = useNavigation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
@@ -114,6 +115,16 @@ export default function NotificationsScreen(): React.ReactElement {
       notificationService.deleteNotification(item.id).catch(() => { });
     },
     [],
+  );
+  const handleNotificationPress = useCallback(
+    (item: NotificationItem) => {
+      if (item.routineId) {
+        router.push(`/(personal)/routine/${item.routineId}`);
+      } else if (item.collaborativeRoutineId) {
+        router.push(`/(collaborative)/routine/${item.collaborativeRoutineId}`);
+      }
+    },
+    [router],
   );
 
   const handleAccept = useCallback(
@@ -350,7 +361,9 @@ export default function NotificationsScreen(): React.ReactElement {
                         key={item.id}
                         onDelete={() => handleDeleteNotification(item)}
                       >
-                        <View
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleNotificationPress(item)}
                           style={[
                             styles.itemRow,
                             { backgroundColor: colors.card },
@@ -375,7 +388,7 @@ export default function NotificationsScreen(): React.ReactElement {
                               {new Date(item.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                             </Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
                       </SwipeableNotificationRow>
                     ))}
                   </ScrollView>
