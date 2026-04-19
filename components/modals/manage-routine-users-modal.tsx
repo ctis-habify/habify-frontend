@@ -145,6 +145,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         const resolvedAvatarUrl = getAvatarUrl(avatarUrl ?? undefined);
 
         const identifier = userIdProp || item.id;
+        const isInvited = !!identifier && invitedUserIds.has(identifier);
 
         return (
             <View key={`${isMember ? 'member' : 'friend'}-${key}-${index}`} style={styles.row}>
@@ -173,13 +174,19 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                     <TouchableOpacity
                         style={[
                             styles.inviteBtn,
+                            isInvited && styles.invitedBtn,
                             invitingId === identifier && styles.inviteBtnDisabled,
                         ]}
-                        onPress={() => handleInvite(item as UserSearchResult)}
-                        disabled={invitingId !== null}
+                        onPress={() => !isInvited && handleInvite(item as UserSearchResult)}
+                        disabled={invitingId !== null || isInvited}
                     >
                         {invitingId === identifier ? (
                             <ActivityIndicator size="small" color="#fff" />
+                        ) : isInvited ? (
+                            <>
+                                <Ionicons name="checkmark-circle" size={16} color="rgba(0,0,0,0.4)" />
+                                <Text style={styles.invitedBtnText}>Invited</Text>
+                            </>
                         ) : (
                             <>
                                 <Ionicons name="paper-plane" size={16} color="#fff" />
@@ -206,9 +213,8 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         );
     };
 
-    // Filter out friends that are already participants or have been invited
+    // Filter out friends that are already participants
     const friendsToInvite = friendsList.filter(friend =>
-        !invitedUserIds.has(friend.id) &&
         !participants.some(p => {
             const participantId = p.userId || p.user?.id || p.id;
             return participantId === friend.id;
@@ -398,6 +404,16 @@ const styles = StyleSheet.create({
     },
     inviteBtnText: {
         color: '#fff',
+        fontWeight: '600',
+        fontSize: 14,
+    },
+    invitedBtn: {
+        backgroundColor: 'rgba(0,0,0,0.04)',
+        borderColor: 'rgba(0,0,0,0.1)',
+        borderWidth: 1,
+    },
+    invitedBtnText: {
+        color: 'rgba(0,0,0,0.4)',
         fontWeight: '600',
         fontSize: 14,
     },
