@@ -372,6 +372,30 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             accentColor={COLLABORATIVE_PRIMARY}
           />
 
+          {/* Discovery Entry Point */}
+          <TouchableOpacity 
+            style={styles.discoveryCard}
+            onPress={() => router.push('/(collaborative)/(drawer)/browse')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['rgba(232, 121, 249, 0.15)', 'rgba(232, 121, 249, 0.05)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.discoveryGradient}
+            >
+              <View style={styles.discoveryContent}>
+                <View style={styles.discoveryTextWrap}>
+                  <Text style={styles.discoveryTitle}>Browse All Routines</Text>
+                  <Text style={styles.discoverySubtitle}>Discover public groups & join new habits</Text>
+                </View>
+                <View style={styles.discoveryIconBox}>
+                  <Ionicons name="search" size={20} color={COLLABORATIVE_PRIMARY} />
+                </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
           {/* Filters & Search Integrated */}
           <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
             <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
@@ -716,5 +740,43 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  discoveryCard: {
+    marginVertical: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 121, 249, 0.2)',
+  },
+  discoveryGradient: {
+    padding: 16,
+  },
+  discoveryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  discoveryTextWrap: {
+    flex: 1,
+  },
+  discoveryTitle: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  discoverySubtitle: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  discoveryIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(232, 121, 249, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
   },
 });
