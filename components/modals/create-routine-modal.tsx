@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -290,9 +291,12 @@ export function CreateRoutineModal({
           >
             <View style={styles.headerRow}>
               <Text style={styles.title}>{isEditMode ? 'Edit List' : 'Create Routine List'}</Text>
-              <TouchableOpacity onPress={handleClose}>
-                <Ionicons name="close" size={30} color={colors.text} />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <HomeButton color={colors.text} />
+                <TouchableOpacity onPress={handleClose}>
+                  <Ionicons name="close" size={30} color={colors.text} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Category */}

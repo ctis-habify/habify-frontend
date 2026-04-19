@@ -1,9 +1,11 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Colors } from '@/constants/theme';
 import {
     FriendRequestSentItem,
     friendService,
     UserSearchResult,
 } from '@/services/friend.service';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -138,6 +140,7 @@ function EmptyStateIllustration({ type }: { type: 'friends' | 'sent' | 'search' 
 
 export default function FriendsScreen(): React.ReactElement {
   const router = useRouter();
+  const navigation = useNavigation();
   const [segment, setSegment] = useState<SegmentTab>('add');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
@@ -239,10 +242,13 @@ export default function FriendsScreen(): React.ReactElement {
   return (
     <View style={styles.container}>
       <Animated.View style={styles.header} entering={FadeInDown.duration(400).springify()}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={Colors.light.text} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Friends</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={styles.backBtn} hitSlop={12}>
+            <Ionicons name="menu" size={26} color={Colors.light.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Friends</Text>
+        </View>
+        <HomeButton color={Colors.light.text} />
       </Animated.View>
 
       <Animated.View
@@ -570,12 +576,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     paddingTop: 56,
     backgroundColor: Colors.light.card,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.border,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backBtn: {
     marginRight: 12,

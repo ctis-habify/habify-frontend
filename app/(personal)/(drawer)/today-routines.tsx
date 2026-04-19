@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -168,6 +169,9 @@ export default function TodayRoutinesScreen(): React.ReactElement {
       />
 
       <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={styles.header}>
+          <HomeButton color="#fff" style={styles.menuButton} />
+        </View>
         <Animated.View
           key={`today-routines-content-${contentAnimationKey}`}
           entering={FadeInDown.delay(120).duration(560).springify()}
@@ -200,6 +204,19 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'flex-end',
+  },
+  menuButton: {
+    width: 44,
+    height: 44,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   content: { flex: 1 },
 
 });

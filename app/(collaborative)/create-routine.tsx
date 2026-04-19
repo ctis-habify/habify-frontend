@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -46,7 +47,7 @@ export default function CreateCollaborativeRoutineScreen() {
                 <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Create Collaborative Routine</Text>
-            <View style={{ width: 40 }} />
+            <HomeButton color="#fff" style={styles.backBtn} />
         </View>
     );
 
