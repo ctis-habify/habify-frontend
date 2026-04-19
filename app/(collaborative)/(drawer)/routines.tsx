@@ -278,20 +278,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     loadCats();
   }, []);
 
-  // Debounced search
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      if (search.trim() || categoryId || frequencyType) {
-        fetchPublicRoutines(search.trim(), categoryId, frequencyType);
-      } else {
-        setPublicRoutines([]);
-      }
-    }, 350);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [search, categoryId, frequencyType, fetchPublicRoutines]);
+  // Debounced search logic for global results is removed as per user request to only filter joined routines.
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
@@ -448,7 +435,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             <Ionicons name="search-outline" size={18} color="rgba(255,255,255,0.4)" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Filter Public Routines…"
+              placeholder="Search your routines…"
               placeholderTextColor="rgba(255,255,255,0.35)"
               value={search}
               onChangeText={setSearch}
@@ -463,32 +450,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             )}
           </View>
 
-          {/* Section: Public Search Results (Visible when searching/filtering) */}
-          {(search.trim() || categoryId || frequencyType) ? (
-            <View style={{ marginBottom: 20 }}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Global Results</Text>
-                {loadingPublic && <ActivityIndicator size="small" color={COLLABORATIVE_PRIMARY} />}
-              </View>
-              {publicRoutines.length > 0 ? (
-                publicRoutines.map((item, index) => {
-                  const accentColor = getCategoryAccentColor(item.category, item.categoryId ?? null);
-                  return (
-                    <Animated.View key={`public-${item.id}`} entering={FadeInDown.delay(index * 50)}>
-                      <PublicRoutineCard 
-                        routine={item} 
-                        index={index} 
-                        accentColor={accentColor} 
-                        onJoin={handleJoin} 
-                      />
-                    </Animated.View>
-                  );
-                })
-              ) : !loadingPublic ? (
-                <Text style={styles.emptyResultsText}>No routines match your filters.</Text>
-              ) : null}
-            </View>
-          ) : null}
 
           {/* Section: My Joined Routines */}
           {!loading && routines.length > 0 && (
@@ -503,9 +464,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                   {routines
                     .filter(r => r.isPublic)
                     .filter((routine): routine is Routine => {
-                      if (!search) return true;
                       const lowerSearch = search.toLowerCase();
-                      return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
+                      const matchesSearch = !search || routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch);
+                      const selectedCat = categories.find(c => c.categoryId === categoryId);
+                      const matchesCategory = !categoryId || routine.categoryName === selectedCat?.name;
+                      const matchesFreq = !frequencyType || routine.frequencyType?.toLowerCase() === frequencyType.toLowerCase();
+                      return matchesSearch && matchesCategory && matchesFreq;
                     })
                     .map((routine, index) => {
                       const accentColor = getCategoryAccentColor(routine.categoryName, null);
@@ -536,9 +500,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                   {routines
                     .filter(r => !r.isPublic)
                     .filter((routine): routine is Routine => {
-                      if (!search) return true;
                       const lowerSearch = search.toLowerCase();
-                      return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
+                      const matchesSearch = !search || routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch);
+                      const selectedCat = categories.find(c => c.categoryId === categoryId);
+                      const matchesCategory = !categoryId || routine.categoryName === selectedCat?.name;
+                      const matchesFreq = !frequencyType || routine.frequencyType?.toLowerCase() === frequencyType.toLowerCase();
+                      return matchesSearch && matchesCategory && matchesFreq;
                     })
                     .map((routine, index) => {
                       const accentColor = getCategoryAccentColor(routine.categoryName, null);
