@@ -362,7 +362,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['rgba(232, 121, 249, 0.15)', 'rgba(232, 121, 249, 0.05)']}
+              colors={isDark ? ['#E879F9', '#A21CAF'] : ['#F472B6', '#DB2777']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.discoveryGradient}
@@ -373,7 +373,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                   <Text style={styles.discoverySubtitle}>Discover public groups & join new habits</Text>
                 </View>
                 <View style={styles.discoveryIconBox}>
-                  <Ionicons name="search" size={20} color={collaborativePrimary} />
+                  <Ionicons name="search" size={20} color="#fff" />
                 </View>
               </View>
             </LinearGradient>
@@ -706,11 +706,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   discoveryCard: {
-    marginVertical: 16,
+    marginTop: 4,
+    marginBottom: 16,
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(232, 121, 249, 0.2)',
+    borderColor: 'transparent',
   },
   discoveryGradient: {
     padding: 16,
@@ -730,15 +731,16 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   discoverySubtitle: {
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(255,255,255,0.9)',
     fontSize: 13,
     marginTop: 2,
+    fontWeight: '500',
   },
   discoveryIconBox: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: 'rgba(232, 121, 249, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,

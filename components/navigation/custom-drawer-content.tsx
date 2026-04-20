@@ -112,7 +112,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
             </TouchableOpacity>
           </View>
           <Text style={[styles.username, { color: colors.text }]}>{displayName}</Text>
-          <Text style={[styles.email, { color: colors.icon }]}>{displayEmail}</Text>
+          <Text style={[styles.email, { color: isDark ? colors.icon : colors.text, opacity: 0.7 }]}>{displayEmail}</Text>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -326,14 +326,12 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 14,
     marginTop: 4,
-    fontWeight: '400',
-    opacity: 0.8,
+    fontWeight: '500',
   },
   divider: {
     height: 1,
     marginVertical: 12,
     marginHorizontal: 24,
-    opacity: 0.5,
   },
   footer: {
     marginTop: 'auto',

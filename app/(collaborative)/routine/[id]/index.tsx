@@ -9,10 +9,12 @@ import {
   DeviceEventEmitter,
   Pressable,
   ScrollView,
+  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from 'react-native';
 import {
   Gesture,
@@ -504,7 +506,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             )}
           </TouchableOpacity>
         )}
-        <HomeButton color="#ffffff" style={styles.backButton} />
+        <HomeButton color={colors.text} style={[styles.backButton, { backgroundColor: colors.surface }]} />
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -706,6 +708,7 @@ function ParticipantChip({
   }));
 
   const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
   const colors = Colors[theme];
   const collaborativePrimary = colors.collaborativePrimary;
 
@@ -723,7 +726,7 @@ function ParticipantChip({
     >
       <Animated.View style={[styles.ripple, rippleStyle]} />
       {isPoking ? (
-        <ActivityIndicator size="small" color="#E879F9" />
+        <ActivityIndicator size="small" color={isDark ? "#E879F9" : collaborativePrimary} />
       ) : (
         <>
           {!isSelf && <Text style={styles.pokeIcon}>👈</Text>}
@@ -758,10 +761,27 @@ function ChatFab({
   router: any;
   accentColor: string;
 }) {
+  const floatY = useSharedValue(0);
+  const pulseScale = useSharedValue(1);
   const glowScale = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
   const jiggleRotation = useSharedValue(0);
   const pressScale = useSharedValue(1);
+
+  React.useEffect(() => {
+    // Continuous floating animation
+    floatY.value = withRepeat(
+      withTiming(-6, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+    // Continuous subtle pulse
+    pulseScale.value = withRepeat(
+      withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+  }, [floatY, pulseScale]);
 
   // Optional: Link this to routine-specific unread message state when available
   const hasUnread = false; 
@@ -790,6 +810,13 @@ function ChatFab({
       glowOpacity.value = withTiming(0, { duration: 600 });
     });
 
+  const animatedWrapperStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: floatY.value },
+      { scale: pulseScale.value }
+    ],
+  }));
+
   const animatedFabStyle = useAnimatedStyle(() => ({
     transform: [
       { rotateZ: `${jiggleRotation.value}deg` },
@@ -807,32 +834,34 @@ function ChatFab({
       entering={ZoomIn.duration(650).springify().damping(35).delay(500)}
       style={styles.chatFabWrap}
     >
-      <GestureDetector gesture={longPressGesture}>
-        <TouchableOpacity
-          activeOpacity={0.9}
-          style={[styles.chatFab, { backgroundColor: accentColor }]}
-          onPressIn={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            pressScale.value = withSpring(0.94, { damping: 20, stiffness: 200 });
-          }}
-          onPressOut={() => {
-            pressScale.value = withSpring(1, { damping: 20, stiffness: 200 });
-          }}
-          onPress={() =>
-            router.replace({
-              pathname: '/(collaborative)/routine/[id]/chat',
-              params: { id: routineId, routineName: displayRoutineName },
-            } as never)
-          }
-        >
-          <Animated.View style={[styles.glowRing, animatedGlowStyle]} />
-          <Animated.View style={[styles.chatFabInner, animatedFabStyle]}>
-            <Ionicons name="chatbubble-ellipses-outline" size={18} color="#ffffff" />
-            <Text style={[styles.chatFabText, { color: '#ffffff' }]}>Chat</Text>
-          </Animated.View>
-          {hasUnread && <View style={styles.unreadDot} />}
-        </TouchableOpacity>
-      </GestureDetector>
+      <Animated.View style={[{ flex: 1 }, animatedWrapperStyle]}>
+        <GestureDetector gesture={longPressGesture}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={[styles.chatFab, { backgroundColor: accentColor }]}
+            onPressIn={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              pressScale.value = withSpring(0.94, { damping: 20, stiffness: 200 });
+            }}
+            onPressOut={() => {
+              pressScale.value = withSpring(1, { damping: 20, stiffness: 200 });
+            }}
+            onPress={() =>
+              router.replace({
+                pathname: '/(collaborative)/routine/[id]/chat',
+                params: { id: routineId, routineName: displayRoutineName },
+              } as never)
+            }
+          >
+            <Animated.View style={[styles.glowRing, animatedGlowStyle]} />
+            <Animated.View style={[styles.chatFabInner, animatedFabStyle]}>
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color="#ffffff" />
+              <Text style={[styles.chatFabText, { color: '#ffffff' }]}>Chat</Text>
+            </Animated.View>
+            {hasUnread && <View style={styles.unreadDot} />}
+          </TouchableOpacity>
+        </GestureDetector>
+      </Animated.View>
     </Animated.View>
   );
 }

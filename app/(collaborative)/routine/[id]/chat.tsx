@@ -911,9 +911,9 @@ export default function CollaborativeChatScreen() {
                   setSelectedPredefinedMessage(null);
                   setTaggedParticipant(null);
                 }}
-                style={styles.floatingCloseBtn}
+                style={[styles.floatingCloseBtn, { backgroundColor: colors.surface }]}
               >
-                <Ionicons name="close" size={20} color="#e7d0ff" />
+                <Ionicons name="close" size={20} color={isDark ? '#e7d0ff' : colors.primary} />
               </TouchableOpacity>
               <View style={styles.bottomSheetHeader}>
                 <View style={styles.bottomSheetTitleWrap}>
@@ -944,7 +944,7 @@ export default function CollaborativeChatScreen() {
                     >
                       <Text style={styles.selectedMessageLabel}>Selected message</Text>
                       <View style={styles.selectedMessagePreview}>
-                        <Ionicons name="sparkles-outline" size={16} color="#c4b5fd" />
+                        <Ionicons name="sparkles-outline" size={16} color={isDark ? "#c4b5fd" : colors.primary} />
                         <Text style={styles.selectedMessageText}>{selectedPredefinedMessage}</Text>
                       </View>
 
@@ -1223,12 +1223,12 @@ export default function CollaborativeChatScreen() {
                                   width: 28,
                                   height: 28,
                                   borderRadius: 14,
-                                  backgroundColor: 'rgba(255,255,255,0.1)',
+                                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                 }}
                               >
-                                <Ionicons name="person" size={14} color="#e7d0ff" />
+                                <Ionicons name="person" size={14} color={isDark ? "#e7d0ff" : colors.primary} />
                               </View>
                             )}
                             <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
@@ -1387,7 +1387,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chatMentionText: {
-    color: '#c4b5fd',
+    color: '#8B5CF6', // Medium-Dark Violet (Visible on both)
     fontWeight: '800',
   },
   chatSender: {

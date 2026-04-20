@@ -214,7 +214,7 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                         )}
                         {!!(genderRequirement && genderRequirement !== 'na') && (
                             <View style={[styles.conditionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                                <Ionicons name="person" size={16} color="#f472b6" />
+                                <Ionicons name="person" size={16} color={isDark ? "#f472b6" : "#db2777"} />
                                 <Text style={[styles.footerText, { color: colors.text }]} numberOfLines={1}>
                                     {genderRequirement.toUpperCase()}
                                 </Text>
@@ -258,8 +258,8 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                             onPress={handleManageUsers}
                             activeOpacity={0.7}
                         >
-                            <Ionicons name="people" size={18} color="#38bdf8" />
-                            <Text style={[styles.actionBtnText, { color: '#38bdf8' }]}>Manage</Text>
+                            <Ionicons name="people" size={18} color={isDark ? "#38bdf8" : "#0284c7"} />
+                            <Text style={[styles.actionBtnText, { color: isDark ? "#38bdf8" : "#0284c7" }]}>Manage</Text>
                         </TouchableOpacity>
                     )}
 

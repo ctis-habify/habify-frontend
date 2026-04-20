@@ -243,23 +243,6 @@ export default function CameraModal(): React.ReactElement {
 
         {/* Bottom Bar: Shutter */}
         <View style={styles.bottomBar}>
-          <TouchableOpacity 
-            onPress={() => setPhotoUri('mock-photo')} 
-            style={[styles.iconBtn, { marginBottom: 10, backgroundColor: isDark ? 'rgba(251, 191, 36, 0.45)' : 'rgba(251, 191, 36, 0.35)' }]}
-          >
-            <Ionicons name="bug" size={24} color={colors.white} />
-            <Text style={{ color: colors.white, fontSize: 10, fontWeight: 'bold' }}>PASS</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            onPress={() => setPhotoUri('mock-photo-fail')} 
-            style={[styles.iconBtn, { marginBottom: 20, backgroundColor: isDark ? 'rgba(239, 68, 68, 0.45)' : 'rgba(239, 68, 68, 0.35)' }]}
-          >
-            <Ionicons name="bug" size={24} color={colors.white} />
-            <Text style={{ color: colors.white, fontSize: 10, fontWeight: 'bold' }}>FAIL</Text>
-          </TouchableOpacity>
-
-
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
             <View style={styles.shutterInner} />
           </TouchableOpacity>

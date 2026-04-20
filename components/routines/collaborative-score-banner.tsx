@@ -168,7 +168,7 @@ export function CollaborativeScoreBanner({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: 16,
+    marginBottom: 4,
   },
   container: {
     flexDirection: 'row',
@@ -180,8 +180,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bonusStrip: {
-    marginTop: 20, // Kart ile bonus satırı arasında daha fazla boşluk
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 4,
     borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
