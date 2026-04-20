@@ -41,7 +41,7 @@ const ConfettiPiece = ({ index, delay }: { index: number; delay: number }) => {
       Animated.timing(anim, {
         toValue: 1,
         duration: duration,
-        easing: Easing.out(Easing.exp),
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       })
     ]).start();
