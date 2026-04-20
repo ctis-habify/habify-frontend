@@ -279,6 +279,8 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     livesFromParams ??
     detailNumber(routineDetail, ['lives']) ??
     0;
+  const displayMissedCount = detailNumber(routineDetail, ['missedCount']) ?? 0;
+  const displayRemainingLives = displayLives > 0 ? Math.max(0, displayLives - displayMissedCount) : 0;
   const displayMaxLives =
     detailNumber(routineDetail, ['maxLives']) ??
     detailNumber(routineDetail, ['rules.lives']) ??
@@ -367,7 +369,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     rows.push(
       { label: 'Frequency', value: displayFrequency },
       { label: 'Visibility', value: displayVisibility },
-      { label: 'Lives', value: `${displayLives}/${displayMaxLives}` },
+      { label: 'Lives', value: displayLives > 0 ? `${displayRemainingLives}/${displayMaxLives}` : '0' },
       { label: 'Streak', value: String(displayStreak) },
     );
 
@@ -543,12 +545,10 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                   <Text style={[styles.metaPillText, { color: colors.text }]}>{displayFrequency}</Text>
                 </View>
                 <View style={[styles.metaPill, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
-                  <ThrobbingHeart lives={displayLives} size={13} />
-<<<<<<< Updated upstream:app/(collaborative)/routine/[id]/index.tsx
-                  <Text style={[styles.metaPillText, { color: colors.text }]}>Lives {displayLives}</Text>
-=======
-                  <Text style={styles.metaPillText}>Lives {displayLives}/{displayMaxLives}</Text>
->>>>>>> Stashed changes:app/(collaborative)/routine/[id].tsx
+                  <ThrobbingHeart lives={displayRemainingLives} size={13} />
+                  <Text style={[styles.metaPillText, { color: colors.text }]}>
+                    {displayLives > 0 ? `${displayRemainingLives}/${displayLives}` : '0'}
+                  </Text>
                 </View>
                 <View style={[styles.metaPill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                   <AnimatedFlame streak={displayStreak} size={13} />
