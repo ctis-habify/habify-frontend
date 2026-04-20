@@ -342,6 +342,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -10,
+    backgroundColor: '#ef4444',
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -349,9 +350,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 2,
+    borderColor: '#fff',
   },
   badgeText: {
     fontSize: 10,
     fontWeight: '800',
+    color: '#fff',
   },
 });

@@ -1447,7 +1447,8 @@ const styles = StyleSheet.create({
   },
   openReplyBar: {
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 14,
+    paddingBottom: 34,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
