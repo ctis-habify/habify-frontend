@@ -11,7 +11,6 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import { Alert, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import { authService } from '../../services/auth.service';
 
 type RegisterErrors = {
@@ -42,7 +41,6 @@ export default function SignupScreen(): React.ReactElement {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [gender, setGender] = useState('');
-  const [genderOpen, setGenderOpen] = useState(false);
   const [password, setPassword] = useState('');
   const AVATARS = [
     { id: 'avatar1', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix' },
@@ -251,38 +249,54 @@ export default function SignupScreen(): React.ReactElement {
           )}
         </View>
 
-        <View style={{ marginBottom: 12, zIndex: 5000 }}>
+        <View style={{ marginBottom: 12 }}>
           <ThemedText type="label" style={[styles.dropdownLabel, { color: colors.icon }]}>Gender</ThemedText>
-          <DropDownPicker
-            open={genderOpen}
-            value={gender}
-            items={GENDER_OPTIONS}
-            setOpen={setGenderOpen}
-            setValue={(callback) => {
-              setGender((prev) => {
-                const nextValue =
-                  typeof callback === 'function' ? callback(prev) : callback;
-                setErrors((current) => ({ ...current, gender: undefined }));
-                return nextValue;
-              });
-            }}
-            placeholder="Select Gender"
-            style={[
-              styles.dropdown,
-              {
-                backgroundColor: colors.surface,
-                borderColor: errors.gender ? colors.error : colors.border,
-              },
-            ]}
-            dropDownContainerStyle={[
-              styles.dropdownContainer,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            placeholderStyle={[styles.placeholderStyle, { color: colors.icon }]}
-            textStyle={[styles.dropdownText, { color: colors.text }]}
-            listMode="SCROLLVIEW"
-            theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
-          />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {GENDER_OPTIONS.map((option) => {
+              const isSelected = gender === option.value;
+              let iconName: any = 'male';
+              let activeColor = colors.primary;
+              
+              if (option.value === 'female') {
+                iconName = 'female';
+                activeColor = '#F472B6'; // Pink for female
+              } else if (option.value === 'other') {
+                iconName = 'male-female';
+                activeColor = '#10B981'; // Emerald for other
+              }
+
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  onPress={() => {
+                    setGender(option.value);
+                    setErrors((prev) => ({ ...prev, gender: undefined }));
+                  }}
+                  style={[
+                    styles.segmentedButton,
+                    {
+                      backgroundColor: isSelected ? activeColor : colors.surface,
+                      borderColor: isSelected ? activeColor : colors.border,
+                    },
+                    errors.gender && !isSelected && { borderColor: colors.error }
+                  ]}
+                >
+                  <Ionicons 
+                    name={iconName} 
+                    size={20} 
+                    color={isSelected ? '#fff' : colors.icon} 
+                    style={{ marginRight: 8 }} 
+                  />
+                  <Text style={[
+                    styles.segmentedButtonText, 
+                    { color: isSelected ? '#fff' : colors.text }
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
           {errors.gender ? (
             <ThemedText style={[styles.errorText, { color: colors.error }]}>
               {errors.gender}
@@ -410,6 +424,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+  },
+  segmentedButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  segmentedButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   pickerHeader: {
     width: '100%',

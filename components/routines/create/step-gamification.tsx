@@ -4,7 +4,6 @@ import type { CreateRoutineFormState } from '@/types/create-routine';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 
 interface Props {
@@ -23,7 +22,6 @@ export function StepGamification({ formState, updateForm }: Props) {
   const theme = useColorScheme() ?? 'light';
   const isDark = theme === 'dark';
   const colors = Colors[theme];
-  const [genderOpen, setGenderOpen] = useState(false);
 
   const inputStyle = [
     styles.input, 
@@ -95,27 +93,69 @@ export function StepGamification({ formState, updateForm }: Props) {
           </View>
 
           {/* Gender Requirement */}
-          <View style={[styles.fieldContainer, { zIndex: 3000 }]}>
-            <Text style={[styles.label, { color: colors.text }]}>Gender Requirement</Text>
-            <DropDownPicker
-                open={genderOpen}
-                value={formState.genderRequirement}
-                items={GENDER_OPTIONS}
-                setOpen={setGenderOpen}
-                setValue={(valFn) => {
-                    const val = valFn instanceof Function ? valFn(formState.genderRequirement) : valFn;
-                    updateForm({ genderRequirement: val });
-                }}
-                theme={isDark ? "DARK" : "LIGHT"}
-                style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                listItemLabelStyle={{ color: colors.text }}
-                selectedItemLabelStyle={{ color: colors.collaborativePrimary, fontWeight: 'bold' }}
-                textStyle={{ color: colors.text }}
-                listMode="SCROLLVIEW"
-                zIndex={2000}
-                zIndexInverse={2000}
-            />
+          <View style={[styles.fieldContainer]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+               <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: colors.collaborativePrimary + '20', alignItems: 'center', justifyContent: 'center' }}>
+                 <Ionicons name="people" size={16} color={colors.collaborativePrimary} />
+               </View>
+               <Text style={[styles.label, { marginBottom: 0, color: colors.text }]}>Gender Requirement</Text>
+            </View>
+            
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {GENDER_OPTIONS.map((option) => {
+                const isSelected = formState.genderRequirement === option.value;
+                let iconName: any = 'body-outline';
+                let activeColor = colors.collaborativePrimary;
+                
+                if (option.value === 'female') {
+                  iconName = 'female';
+                  activeColor = '#F472B6';
+                } else if (option.value === 'male') {
+                  iconName = 'male';
+                  activeColor = '#3B82F6';
+                } else if (option.value === 'other') {
+                  iconName = 'male-female';
+                  activeColor = '#10B981';
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    onPress={() => updateForm({ genderRequirement: option.value })}
+                    style={[
+                      styles.segmentedButton,
+                      {
+                        width: '48.5%', // 2 columns
+                        backgroundColor: isSelected ? activeColor : colors.surface,
+                        borderColor: isSelected ? activeColor : colors.border,
+                        height: 50,
+                      },
+                      isSelected && {
+                        shadowColor: activeColor,
+                        shadowOpacity: 0.35,
+                        shadowRadius: 10,
+                        shadowOffset: { width: 0, height: 4 },
+                        elevation: 6
+                      }
+                    ]}
+                  >
+                    <Ionicons 
+                      name={iconName} 
+                      size={18} 
+                      color={isSelected ? '#fff' : colors.icon} 
+                      style={{ marginRight: 8 }} 
+                    />
+                    <Text style={{ 
+                      fontSize: 13, 
+                      fontWeight: isSelected ? '700' : '500', 
+                      color: isSelected ? '#fff' : colors.text 
+                    }}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
           {/* Completion XP Reward */}
@@ -154,9 +194,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 16,
   },
-  dropdownContainer: {
+  segmentedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 16,
-    marginTop: 8,
+    borderWidth: 1.5,
   },
   divider: { height: 1, marginVertical: 12 },
   counterRow: {
