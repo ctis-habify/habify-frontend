@@ -20,11 +20,15 @@ export function AuthLayout({ children }: AuthLayoutProps): React.ReactElement {
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"} 
-          style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}
+          style={{ flex: 1, width: '100%' }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
         >
           <ScrollView 
+            style={{ flex: 1, width: '100%' }}
             contentContainerStyle={styles.scrollContainer} 
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
           >
             <View
               style={[

@@ -5,9 +5,9 @@ import { SplashScreen } from '@/components/splash/splash-screen';
 import { getBackgroundGradient } from '@/constants/theme';
 import { ThemeProvider, useColorScheme } from '@/hooks/use-color-scheme';
 import { useToast } from '@/hooks/use-toast';
-import { Stack } from 'expo-router';
+import { Stack, Head } from 'expo-router';
 import * as React from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../hooks/use-auth';
 import { useNotifications } from '../hooks/use-notifications';
@@ -40,6 +40,20 @@ function RootContent(): React.ReactElement {
 
   return (
     <View style={{ flex: 1, backgroundColor: topColor }}>
+      {Platform.OS === 'web' && (
+        <Head>
+          <style>{`
+            input:-webkit-autofill,
+            input:-webkit-autofill:hover, 
+            input:-webkit-autofill:focus, 
+            input:-webkit-autofill:active {
+              -webkit-box-shadow: 0 0 0 1000px #1E1B4B inset !important;
+              -webkit-text-fill-color: #F9FAFB !important;
+              transition: background-color 5000s ease-in-out 0s;
+            }
+          `}</style>
+        </Head>
+      )}
       <NotificationSetup />
       <Stack
         screenOptions={{
