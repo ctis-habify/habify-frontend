@@ -7,6 +7,9 @@ import { CircularCheckbox } from '@/components/ui/circular-checkbox';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+import { AnimatedFlame } from '../animations/animated-flame';
+import { ThrobbingHeart } from '../animations/throbbing-heart';
+
 export type RoutineRowProps = {
   id: string;
   name: string;
@@ -25,6 +28,7 @@ export type RoutineRowProps = {
   collaborativeKey?: string;
   creatorId?: string;
   isDark?: boolean;
+  lives?: number;
 };
 
 // Helpers moved outside
@@ -55,7 +59,7 @@ const getHoursFromLabel = (label?: string) => {
   return 0;
 };
 
-const getBadgeColor = (label?: string, hours?: number, colors: any) => {
+const getBadgeColor = (label: string | undefined, hours: number | undefined, colors: any) => {
   if (!label || hours === undefined) return colors.textTertiary;
   if (label.startsWith('Starts')) return colors.primary;
   if (hours <= 1) return colors.error;
@@ -79,6 +83,7 @@ export const RoutineRow = React.memo(({
   startTime,
   endTime,
   collaborativeKey,
+  lives = 0,
 }: RoutineRowProps): React.ReactElement => {
    
   const theme = useColorScheme() ?? 'light';
@@ -195,6 +200,22 @@ export const RoutineRow = React.memo(({
         {name}
       </Text>
 
+      {/* LIVES BADGE */}
+      {lives > 0 && (
+        <View style={[
+          styles.badge, 
+          { 
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(220, 38, 38, 0.06)',
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            gap: 4 
+          }
+        ]}>
+          <ThrobbingHeart lives={lives} size={12} />
+          <Text style={[styles.badgeText, { color: isDark ? '#f87171' : '#dc2626' }]}>{lives}</Text>
+        </View>
+      )}
+
       {/* COLLABORATIVE BADGE */}
       {!!collaborativeKey && (
          <View style={[
@@ -222,7 +243,7 @@ export const RoutineRow = React.memo(({
              gap: 4 
            }
          ]}>
-          <Ionicons name="flame" size={12} color={isDark ? '#fbbf24' : '#d97706'} />
+          <AnimatedFlame streak={streak} size={12} />
           <Text style={[styles.badgeText, { color: isDark ? '#fbbf24' : '#d97706' }]}>{streak}</Text>
         </View>
       )}

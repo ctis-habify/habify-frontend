@@ -172,13 +172,13 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                 {/* Stats Bar */}
                 <View style={[styles.statsBar, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.03)' }]}>
                     <View style={styles.statItem}>
-                        <Ionicons name="heart" size={16} color={colors.error} />
+                        <ThrobbingHeart lives={lives} size={16} />
                         <Text style={[styles.statLabel, { color: colors.icon }]}>Lives: </Text>
                         <Text style={[styles.statValue, { color: colors.text }]}>{lives}</Text>
                     </View>
                     <View style={[styles.divider, { height: '60%', backgroundColor: colors.border }]} />
                     <View style={styles.statItem}>
-                        <Ionicons name="flame" size={16} color={colors.warning} />
+                        <AnimatedFlame streak={streak} size={16} />
                         <Text style={[styles.statLabel, { color: colors.icon }]}>Streak: </Text>
                         <Text style={[styles.statValue, { color: colors.text }]}>{streak}</Text>
                     </View>

@@ -19,13 +19,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import Animated, {
-    FadeInDown,
-    FadeInUp,
-    FadeOutDown,
-    FadeOutUp,
-    LinearTransition,
-} from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp, LinearTransition } from "react-native-reanimated";
 
 import { RoutineCompletedAnimation } from '@/components/animations/routine-completed-animation';
 import { ImageFullscreenModal } from '@/components/modals/image-fullscreen-modal';
@@ -40,7 +34,7 @@ import { RoutineLog } from '@/types/routine';
 type ChatMessage = {
   id: string;
   text: string;
-  sender: 'me' | 'system';
+  sender: 'me' | 'system' | 'other';
   senderName: string;
   createdAt?: string;
   isSystemEvent?: boolean;
@@ -149,11 +143,10 @@ const normalizeChatMessages = (
   return value
     .map((item, index) => {
       const msg = (item || {}) as RawChatMessage;
-
       const text = (msg.message || '').trim();
+
+      // Skip empty messages
       if (!text) return null;
-      if (currentRoutineId && msg.routineId && String(msg.routineId) !== String(currentRoutineId))
-        return null;
 
       const senderId = msg.userId || msg.user?.id;
       const senderName =
@@ -168,9 +161,9 @@ const normalizeChatMessages = (
         text: text.replace(/^\[SYSTEM\]\s*/i, ''),
         sender: isSystemMessage
           ? 'system'
-          : currentUserId && senderId === currentUserId
+          : currentUserId && String(senderId) === String(currentUserId)
             ? 'me'
-            : 'system',
+            : 'other',
         senderName: isSystemMessage ? 'System' : senderName,
         createdAt: msg.sentAt,
         isSystemEvent: isSystemMessage,
@@ -242,16 +235,16 @@ const formatMessageTime = (value?: string): string => {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
-const renderChatMessageText = (text: string) => {
+const renderChatMessageText = (text: string, color?: string) => {
   const mentionMatch = text.match(/^(.*?)(\s@[^@\s].*)$/);
   if (!mentionMatch) {
-    return <Text style={styles.chatBubbleText}>{text}</Text>;
+    return <Text style={[styles.chatBubbleText, color ? { color } : {}]}>{text}</Text>;
   }
 
   const [, messageBody, mentionText] = mentionMatch;
 
   return (
-    <Text style={styles.chatBubbleText}>
+    <Text style={[styles.chatBubbleText, color ? { color } : {}]}>
       {messageBody}
       <Text style={styles.chatMentionText}>{mentionText}</Text>
     </Text>
@@ -386,7 +379,7 @@ export default function CollaborativeChatScreen() {
       try {
         const messages = await routineService.getRoutineChatMessages(routineId);
         const normalized = sortChatMessagesOldToNew(
-          normalizeChatMessages(messages, user?.id, routineId),
+          normalizeChatMessages(messages, user?.id),
         );
         if (normalized.length === 0 && cached.length > 0) {
           setChatMessages(cached);
@@ -742,142 +735,162 @@ export default function CollaborativeChatScreen() {
       </Animated.View>
 
       <View style={styles.chatContainer}>
-        <FlatList
-          ref={chatListRef}
-          data={displayMessages}
-          keyExtractor={(item) => item.id}
-          style={styles.chatList}
-          contentContainerStyle={styles.chatListContent}
-          ListEmptyComponent={
-            chatLoading ? (
-              <View style={styles.chatStateBox}>
-                <ActivityIndicator size="small" color={colors.text} />
-                <Text style={[styles.chatStateText, { color: colors.text }]}>Loading group chat...</Text>
-              </View>
-            ) : (
-              <View style={styles.chatStateBox}>
-                <Ionicons name="chatbubble-outline" size={14} color={colors.icon} />
-                <Text style={[styles.chatStateText, { color: colors.text, opacity: 0.6 }]}>No messages yet.</Text>
-              </View>
-            )
-          }
-          renderItem={({ item }) => (
-            <View
-              style={
-                item.isSystemEvent
-                   ? styles.chatRowSystemEvent
-                  : item.sender === 'me'
-                    ? styles.chatRowMine
-                    : styles.chatRowOther
-              }
-            >
-              <View
-                style={[
-                  styles.chatBubble,
-                  item.isSystemEvent
-                    ? [styles.chatBubbleEvent, { backgroundColor: colors.surface, borderColor: colors.border }]
-                    : item.sender === 'me'
-                      ? [styles.chatBubbleMine, { backgroundColor: collaborativePrimary }]
-                      : [styles.chatBubbleSystem, { backgroundColor: colors.card }],
-                ]}
-              >
-                {!item.isSystemEvent ? (
-                  <Text style={[styles.chatSender, { color: item.sender === 'me' ? colors.white : colors.text, opacity: 0.8 }]}>
-                    {item.sender === 'me' ? 'You' : item.senderName}
-                  </Text>
-                ) : (
-                  <Text style={[styles.chatSystemLabel, { color: colors.icon }]}>System</Text>
-                )}
-                {(() => {
-                  const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
-                  const isPhotoMessage =
-                    item.text.startsWith('[PHOTO]:') ||
-                    item.text.includes('storage.googleapis.com') ||
-                    imageRegex.test(item.text);
-
-                  if (!isPhotoMessage) {
-                    return renderChatMessageText(item.text);
-                    //return <Text style={[styles.chatBubbleText, { color: item.sender === 'me' ? colors.white : colors.text }]}>{item.text}</Text>;
-                  }
-
-                  const isPrefixed = item.text.startsWith('[PHOTO]:');
-                  let imageUrl = isPrefixed ? item.text.replace('[PHOTO]:', '') : item.text;
-
-                  if (!imageUrl.startsWith('http')) {
-                    imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
-                  }
-
-                  const matchingLog = pendingLogs.find((l) => {
-                    const logUrl = (l.verificationImageUrl || '').toLowerCase();
-                    const msgUrl = imageUrl.toLowerCase();
-                    const logFileName = logUrl.split('/').pop() || '!!!';
-                    const msgFileName = msgUrl.split('/').pop() || '???';
-                    return (
-                      logUrl === msgUrl ||
-                      msgUrl.includes(logUrl) ||
-                      logUrl.includes(msgUrl) ||
-                      logFileName === msgFileName
-                    );
-                  });
-
-                  if (matchingLog) {
-                    return (
-                      <ChatVerificationItem
-                        log={matchingLog}
-                        onApprove={handleApproveLog}
-                        onReject={handleRejectLog}
-                        onViewVotes={(log, tab) => {
-                          setVotersModalTab(tab);
-                          setVotersModalLog(log);
-                        }}
-                        onPressImage={handleImagePreview}
-                        currentUserId={user?.id}
-                      />
-                    );
-                  }
-
-                  return (
-                    <TouchableOpacity
-                      style={styles.chatImageWrapper}
-                      onPress={() => handleImagePreview(imageUrl)}
-                      activeOpacity={0.9}
-                    >
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.chatImage}
-                        resizeMode="contain"
-                      />
-                    </TouchableOpacity>
-                  );
-                })()}
-                {!!item.createdAt && (
-                  <Text style={[styles.chatTime, { color: item.sender === 'me' ? colors.white : colors.textSecondary, opacity: 0.7 }]}>{formatMessageTime(item.createdAt)}</Text>
-                )}
-              </View>
-            </View>
-          )}
-        />
-
-        {!!chatError && (
-          <View style={styles.chatStateBox}>
-            <Ionicons name="warning-outline" size={14} color={colors.error} />
-            <Text style={[styles.chatStateText, { color: colors.error }]}>{chatError}</Text>
+        {isInitialLoading ? (
+          <View style={styles.centeredBlock}>
+            <ActivityIndicator color={collaborativePrimary} size="large" />
+            <Text style={[styles.loadingText, { color: colors.text, opacity: 0.6 }]}>
+              Loading group chat...
+            </Text>
           </View>
-        )}
-
-        {predefinedMessages.length > 0 && (
-          <TouchableOpacity
-            style={[styles.openReplyBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}
-            onPress={() => {
-              setSelectedPredefinedMessage(null);
-              setTaggedParticipant(null);
-              setIsQuickReplyOpen(true);
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.openReplyText, { color: colors.text, opacity: 0.6 }]}>✨ Type a message...</Text>
-            <Ionicons name="chatbubbles" size={20} color={collaborativePrimary} />
-          </TouchableOpacity>
+        ) : (
+          <>
+            <FlatList
+              ref={chatListRef}
+              data={displayMessages}
+              keyExtractor={(item) => item.id}
+              style={styles.chatList}
+              contentContainerStyle={styles.chatListContent}
+              ListEmptyComponent={
+                chatLoading ? (
+                  <View style={styles.chatStateBox}>
+                    <ActivityIndicator size="small" color={colors.text} />
+                    <Text style={[styles.chatStateText, { color: colors.text }]}>Loading group chat...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.chatStateBox}>
+                    <Ionicons name="chatbubble-outline" size={14} color={colors.icon} />
+                    <Text style={[styles.chatStateText, { color: colors.text, opacity: 0.6 }]}>No messages yet.</Text>
+                  </View>
+                )
+              }
+              renderItem={({ item, index }) => (
+                <Animated.View
+                  entering={FadeInDown.delay(Math.min(index, 6) * 15).duration(500).springify().damping(28)}
+                  exiting={FadeOutUp}
+                  layout={LinearTransition.springify().damping(24).stiffness(140).duration(500)}
+                  style={
+                    item.isSystemEvent
+                       ? styles.chatRowSystemEvent
+                      : item.sender === 'me'
+                        ? styles.chatRowMine
+                        : styles.chatRowOther
+                  }
+                >
+                  <View
+                    style={[
+                      styles.chatBubble,
+                      item.isSystemEvent
+                        ? [styles.chatBubbleEvent, { backgroundColor: colors.surface, borderColor: colors.border }]
+                        : item.sender === 'me'
+                          ? [styles.chatBubbleMine, { backgroundColor: collaborativePrimary }]
+                          : [styles.chatBubbleOther, { backgroundColor: colors.card }],
+                    ]}
+                  >
+                    {!item.isSystemEvent ? (
+                      <Text style={[styles.chatSender, { color: item.sender === 'me' ? colors.white : colors.text, opacity: 0.8 }]}>
+                        {item.sender === 'me' ? 'You' : item.senderName}
+                      </Text>
+                    ) : (
+                      <Text style={[styles.chatSystemLabel, { color: colors.icon }]}>System</Text>
+                    )}
+                    
+                    {(() => {
+                      const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
+                      const isPhotoMessage =
+                        item.text.startsWith('[PHOTO]:') ||
+                        item.text.includes('storage.googleapis.com') ||
+                        imageRegex.test(item.text);
+    
+                      if (!isPhotoMessage) {
+                        return renderChatMessageText(item.text, item.sender === 'me' ? colors.white : colors.text);
+                      }
+    
+                      const isPrefixed = item.text.startsWith('[PHOTO]:');
+                      let imageUrl = (isPrefixed ? item.text.replace('[PHOTO]:', '') : item.text).trim();
+    
+                      if (!imageUrl.startsWith('http')) {
+                        imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
+                      }
+    
+                      const matchingLog = pendingLogs.find((l) => {
+                        const logUrl = (l.verificationImageUrl || '').toLowerCase().trim();
+                        const msgUrl = imageUrl.toLowerCase().trim();
+                        const logFileName = logUrl.split('/').pop() || '!!!';
+                        const msgFileName = msgUrl.split('/').pop() || '???';
+                        return (
+                          logUrl === msgUrl ||
+                          msgUrl.includes(logUrl) ||
+                          logUrl.includes(msgUrl) ||
+                          (logFileName !== '!!!' && logFileName === msgFileName)
+                        );
+                      });
+    
+                      if (matchingLog) {
+                        return (
+                          <ChatVerificationItem
+                            log={matchingLog}
+                            onApprove={handleApproveLog}
+                            onReject={handleRejectLog}
+                            onViewVotes={(log, tab) => {
+                              setVotersModalTab(tab);
+                              setVotersModalLog(log);
+                            }}
+                            onPressImage={handleImagePreview}
+                            currentUserId={user?.id}
+                          />
+                        );
+                      }
+    
+                      return (
+                        <View style={styles.chatImageWrapper}>
+                          <View style={styles.imageLoadingPlaceholder}>
+                            <ActivityIndicator color={colors.primary} size="small" />
+                          </View>
+                          <TouchableOpacity
+                            onPress={() => handleImagePreview(imageUrl)}
+                            activeOpacity={0.9}
+                            style={{ zIndex: 2 }}
+                          >
+                            <Image
+                              source={{ uri: imageUrl }}
+                              style={styles.chatImage}
+                              resizeMode="cover"
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })()}
+    
+                    {!!item.createdAt && (
+                      <Text style={[styles.chatTime, { color: item.sender === 'me' ? colors.white : colors.textSecondary, opacity: 0.7 }]}>{formatMessageTime(item.createdAt)}</Text>
+                    )}
+                  </View>
+                </Animated.View>
+              )}
+            />
+    
+            {!!chatError && (
+              <View style={styles.chatStateBox}>
+                <Ionicons name="warning-outline" size={14} color={colors.error} />
+                <Text style={[styles.chatStateText, { color: colors.error }]}>{chatError}</Text>
+              </View>
+            )}
+    
+            {predefinedMessages.length > 0 && (
+              <TouchableOpacity
+                style={[styles.openReplyBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}
+                onPress={() => {
+                  setSelectedPredefinedMessage(null);
+                  setTaggedParticipant(null);
+                  setIsQuickReplyOpen(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.openReplyText, { color: colors.text, opacity: 0.6 }]}>✨ Type a message...</Text>
+                <Ionicons name="chatbubbles" size={20} color={collaborativePrimary} />
+              </TouchableOpacity>
+            )}
+          </>
         )}
 
         <Modal visible={isQuickReplyOpen} transparent animationType="slide">
@@ -925,7 +938,7 @@ export default function CollaborativeChatScreen() {
                 >
                   {selectedPredefinedMessage ? (
                     <Animated.View
-                      entering={FadeInUp.duration(300).springify().damping(18).stiffness(140)}
+                      entering={FadeInUp.duration(600).springify().damping(28).stiffness(100)}
                       exiting={FadeOutDown.duration(240)}
                       style={styles.selectedMessageCard}
                     >
@@ -1363,7 +1376,7 @@ const styles = StyleSheet.create({
   chatBubbleMine: {
     borderBottomRightRadius: 4,
   },
-  chatBubbleSystem: {
+  chatBubbleOther: {
     borderBottomLeftRadius: 4,
   },
   chatBubbleEvent: {
@@ -1416,10 +1429,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'rgba(0,0,0,0.4)',
     marginVertical: 4,
+    width: 200,
+    height: 250,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chatImage: {
     width: 200,
     height: 250,
+  },
+  imageLoadingPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   openReplyBar: {
     paddingHorizontal: 16,
@@ -1731,5 +1755,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     fontSize: 14,
+  },
+  centeredBlock: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

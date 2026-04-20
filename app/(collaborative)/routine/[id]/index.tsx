@@ -616,32 +616,13 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           </View>
         ) : null}
       </ScrollView>
-
       <ChatFab
         routineId={routineId}
         displayRoutineName={displayRoutineName}
         router={router}
+        accentColor={collaborativePrimary}
       />
-      <Animated.View entering={FadeInDown.delay(280).duration(320)} style={styles.chatFabWrap}>
-        <TouchableOpacity
-          style={[
-            styles.chatFab, 
-            { 
-                backgroundColor: collaborativePrimary,
-                shadowOpacity: 0.35,
-                shadowRadius: 14,
-                shadowOffset: { width: 0, height: 8 },
-            }
-          ]}
-          onPress={() => router.push({
-            pathname: '/(collaborative)/routine/[id]/chat',
-            params: { id: routineId, routineName: displayRoutineName }
-          } as never)}
-        >
-          <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.white} />
-          <Text style={[styles.chatFabText, { color: colors.white }]}>Chat</Text>
-        </TouchableOpacity>
-      </Animated.View>
+
 
       <LeaveRoutineModal
         visible={isLeaveModalVisible}
@@ -770,14 +751,17 @@ function ChatFab({
   routineId,
   displayRoutineName,
   router,
+  accentColor,
 }: {
   routineId: string;
   displayRoutineName: string;
   router: any;
+  accentColor: string;
 }) {
   const glowScale = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
   const jiggleRotation = useSharedValue(0);
+  const pressScale = useSharedValue(1);
 
   // Optional: Link this to routine-specific unread message state when available
   const hasUnread = false; 
@@ -807,7 +791,10 @@ function ChatFab({
     });
 
   const animatedFabStyle = useAnimatedStyle(() => ({
-    transform: [{ rotateZ: `${jiggleRotation.value}deg` }],
+    transform: [
+      { rotateZ: `${jiggleRotation.value}deg` },
+      { scale: pressScale.value }
+    ],
   }));
 
   const animatedGlowStyle = useAnimatedStyle(() => ({
@@ -817,13 +804,20 @@ function ChatFab({
 
   return (
     <Animated.View
-      entering={ZoomIn.springify().damping(12).delay(400)}
+      entering={ZoomIn.duration(650).springify().damping(35).delay(500)}
       style={styles.chatFabWrap}
     >
       <GestureDetector gesture={longPressGesture}>
         <TouchableOpacity
-          activeOpacity={0.8}
-          style={styles.chatFab}
+          activeOpacity={0.9}
+          style={[styles.chatFab, { backgroundColor: accentColor }]}
+          onPressIn={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            pressScale.value = withSpring(0.94, { damping: 20, stiffness: 200 });
+          }}
+          onPressOut={() => {
+            pressScale.value = withSpring(1, { damping: 20, stiffness: 200 });
+          }}
           onPress={() =>
             router.replace({
               pathname: '/(collaborative)/routine/[id]/chat',
@@ -834,7 +828,7 @@ function ChatFab({
           <Animated.View style={[styles.glowRing, animatedGlowStyle]} />
           <Animated.View style={[styles.chatFabInner, animatedFabStyle]}>
             <Ionicons name="chatbubble-ellipses-outline" size={18} color="#ffffff" />
-            <Text style={styles.chatFabText}>Chat</Text>
+            <Text style={[styles.chatFabText, { color: '#ffffff' }]}>Chat</Text>
           </Animated.View>
           {hasUnread && <View style={styles.unreadDot} />}
         </TouchableOpacity>
@@ -1055,6 +1049,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
   },
   chatFabText: {
     fontSize: 14,
@@ -1082,5 +1080,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  ripple: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(232, 121, 249, 0.4)',
   },
 });

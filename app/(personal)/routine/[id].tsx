@@ -425,7 +425,7 @@ export default function EditRoutineScreen(): React.ReactElement {
       <Toast 
         visible={toastVisible} 
         message={toastMessage} 
-        onHide={() => setToastVisible(false)} 
+        onClose={() => setToastVisible(false)} 
       />
     </LinearGradient>
   );

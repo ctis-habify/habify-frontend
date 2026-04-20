@@ -5,12 +5,9 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   DeviceEventEmitter,
   Platform,
   RefreshControl,
-  Animated as RNAnimated,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -18,13 +15,21 @@ import {
   View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  FadeInDown,
+  FadeOutUp,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
 
 // Themes & Components
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
 import { CollaborativeScoreBanner } from '@/components/routines/collaborative-score-banner';
-import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { Toast } from '@/components/ui/toast';
 import { getCategoryAccentColor } from '@/constants/category-colors';
@@ -83,31 +88,21 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const isSwitchingRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fadeAnim = useRef(new RNAnimated.Value(0)).current;
-  const translateXAnim = useRef(new RNAnimated.Value(-14)).current;
-  const scaleAnim = useRef(new RNAnimated.Value(0.985)).current;
+  // ── Animation Setup ──────────────
+  const opacity = useSharedValue(0);
+  const translateX = useSharedValue(40);
+  const scale = useSharedValue(0.97);
 
-  useEffect(() => {
-    RNAnimated.parallel([
-      RNAnimated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 260,
-        useNativeDriver: true,
-      }),
-      RNAnimated.timing(translateXAnim, {
-        toValue: 0,
-        duration: 260,
-        useNativeDriver: true,
-      }),
-      RNAnimated.spring(scaleAnim, {
-        toValue: 1,
-        stiffness: 160,
-        damping: 18,
-        mass: 1,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, scaleAnim, translateXAnim]);
+  const ENTER_SPRING = { damping: 35, stiffness: 80, mass: 1.0 };
+
+  const pageStyle = useAnimatedStyle(() => ({
+    flex: 1,
+    opacity: opacity.value,
+    transform: [
+      { translateX: translateX.value },
+      { scale: scale.value },
+    ],
+  }));
 
   // 3. Callbacks (Memoized)
   const showToast = useCallback((message: string) => {
@@ -132,6 +127,20 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       }
     },
     [routines.length, showToast],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      opacity.value = 0;
+      translateX.value = 40;
+      scale.value = 0.97;
+
+      opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+      translateX.value = withSpring(0, ENTER_SPRING);
+      scale.value = withSpring(1, ENTER_SPRING);
+
+      loadLists();
+    }, [loadLists]),
   );
 
   const fetchPublicRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string) => {
@@ -278,7 +287,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
 
   useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
+    const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message: string) => {
       setTimeout(() => {
         showToast(message);
       }, 500);
@@ -295,22 +304,11 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     };
   }, [showToast, loadLists]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadLists();
-    }, [loadLists]),
-  );
+  // Focus re-trigger is handled by useFocusEffect at the top
 
   // 5. Render
   return (
-    <RNAnimated.View
-      style={{
-        flex: 1,
-        opacity: fadeAnim,
-        backgroundColor: screenGradient[0],
-        transform: [{ translateX: translateXAnim }, { scale: scaleAnim }],
-      }}
-    >
+    <Animated.View style={[{ backgroundColor: screenGradient[0] }, pageStyle]}>
       <LinearGradient colors={screenGradient} style={styles.container}>
         {/* FIXED HEADER SECTION */}
         <View style={styles.fixedHeader}>
@@ -333,9 +331,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           </View>
         </View>
 
-        <ScrollView
+        <Animated.ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
+          layout={LinearTransition.springify().damping(28).stiffness(120).duration(650)}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -473,7 +472,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                     .map((routine, index) => {
                       const accentColor = getCategoryAccentColor(routine.categoryName, null);
                       return (
-                        <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
+                        <Animated.View 
+                          key={routine.id} 
+                          entering={FadeInDown.delay(index * 80).duration(800).springify().damping(28).stiffness(100)}
+                          exiting={FadeOutUp}
+                          layout={LinearTransition.springify().damping(28).stiffness(120).duration(650)}
+                        >
                           <CollaborativeGroupCard
                             routine={routine}
                             accentColor={accentColor}
@@ -509,7 +513,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                     .map((routine, index) => {
                       const accentColor = getCategoryAccentColor(routine.categoryName, null);
                       return (
-                        <Animated.View key={routine.id} entering={FadeInDown.delay(index * 50)}>
+                        <Animated.View 
+                          key={routine.id} 
+                          entering={FadeInDown.delay(index * 80).duration(800).springify().damping(28).stiffness(100)}
+                          exiting={FadeOutUp}
+                          layout={LinearTransition.springify().damping(28).stiffness(120).duration(650)}
+                        >
                           <CollaborativeGroupCard
                             routine={routine}
                             accentColor={accentColor}
@@ -553,7 +562,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           >
             <Text style={[styles.createBtnText, { color: colors.text }]}>Create Collaborative List</Text>
           </TouchableOpacity>
-        </ScrollView>
+        </Animated.ScrollView>
 
         <LeaveRoutineModal
           visible={isLeaveModalVisible}
@@ -566,10 +575,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         <Toast
           visible={toastVisible}
           message={toastMessage}
-          onHide={() => setToastVisible(false)}
+          onClose={() => setToastVisible(false)}
         />
       </LinearGradient>
-    </RNAnimated.View>
+    </Animated.View>
   );
 }
 

@@ -3,6 +3,9 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { AnimatedFlame } from '../animations/animated-flame';
+import { ThrobbingHeart } from '../animations/throbbing-heart';
 import type { Routine } from '../../types/routine';
 
 function remainingColor(mins: number, colors: any) {
@@ -131,6 +134,20 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
                   <Text style={[styles.groupBadgeText, { color: isDark ? '#38bdf8' : '#0284c7' }]}>Group</Text>
                 </View>
               )}
+
+              {(routine.streak ?? 0) > 0 && (
+                <View style={[styles.statBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(217, 119, 6, 0.05)' }]}>
+                  <AnimatedFlame streak={routine.streak} size={12} />
+                  <Text style={[styles.statBadgeText, { color: isDark ? '#fbbf24' : '#d97706' }]}>{routine.streak}</Text>
+                </View>
+              )}
+
+              {(routine.lives ?? 0) > 0 && (
+                <View style={[styles.statBadge, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(220, 38, 38, 0.05)' }]}>
+                  <ThrobbingHeart lives={routine.lives ?? 0} size={12} />
+                  <Text style={[styles.statBadgeText, { color: isDark ? '#f87171' : '#dc2626' }]}>{routine.lives}</Text>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -220,5 +237,17 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  statBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  statBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

@@ -5,7 +5,16 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter, Platform, StatusBar, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  FadeInDown,
+  FadeOutUp,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { routineService } from '../../../services/routine.service';
@@ -39,13 +48,28 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   const colors = Colors[theme];
   const screenColors = getBackgroundGradient(theme);
 
+  // ── Animation Setup ──────────────
+  const opacity = useSharedValue(0);
+  const translateX = useSharedValue(40);
+  const scale = useSharedValue(0.97);
+
+  const ENTER_SPRING = { damping: 35, stiffness: 80, mass: 1.0 };
+
+  const pageStyle = useAnimatedStyle(() => ({
+    flex: 1,
+    opacity: opacity.value,
+    transform: [
+      { translateX: translateX.value },
+      { scale: scale.value },
+    ],
+  }));
+
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Routine[]>([]);
   const [streak, setStreak] = useState(0);
   const [collabIds, setCollabIds] = useState<Set<string>>(new Set());
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [contentAnimationKey, setContentAnimationKey] = useState(0);
 
   const goToRoutineDetail = useCallback(
     (routine: Routine) => {
@@ -149,38 +173,49 @@ export default function TodayRoutinesScreen(): React.ReactElement {
     }
   }, [authContextToken]);
 
+  const triggerEntrance = useCallback(() => {
+    opacity.value = 0;
+    translateX.value = 40;
+    scale.value = 0.97;
+
+    opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+    translateX.value = withSpring(0, ENTER_SPRING);
+    scale.value = withSpring(1, ENTER_SPRING);
+  }, []);
+
   useEffect(() => {
     if (isFocused) {
-      setContentAnimationKey((current) => current + 1);
+      triggerEntrance();
       load();
     }
-    
+  }, [isFocused, triggerEntrance, load]);
+
+  useEffect(() => {
     // Also listen for cross-screen events like successful AI verification in camera-modal
     const sub = DeviceEventEmitter.addListener('refreshPersonalRoutines', () => {
       load();
     });
     
     return () => sub.remove();
-  }, [isFocused, load]);
+  }, [load]);
+
+  // Handled by useEffect above
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle={theme === 'dark' ? 'light-content' : 'dark-content'} />
 
-      <LinearGradient
-        colors={screenColors}
-        style={StyleSheet.absoluteFill}
-      />
+      <Animated.View style={[{ flex: 1, backgroundColor: screenColors[0] }, pageStyle]}>
+        <LinearGradient
+          colors={screenColors}
+          style={StyleSheet.absoluteFill}
+        />
 
       <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.header}>
           <HomeButton color="#fff" style={styles.menuButton} />
         </View>
-        <Animated.View
-          key={`today-routines-content-${contentAnimationKey}`}
-          entering={FadeInDown.delay(120).duration(560).springify()}
-          style={styles.content}
-        >
+        <View style={styles.content}>
           <TodayRoutinesList
             items={items}
             streak={streak}
@@ -194,16 +229,17 @@ export default function TodayRoutinesScreen(): React.ReactElement {
             label="Return Routine Lists"
             onPress={() => router.replace('/(personal)/(drawer)/routines')}
           />
-        </Animated.View>
+        </View>
 
         <Toast 
           visible={toastVisible} 
           message={toastMessage} 
-          onHide={() => setToastVisible(false)} 
+          onClose={() => setToastVisible(false)} 
         />
       </View>
-    </View>
-  );
+    </Animated.View>
+  </View>
+);
 }
 
 const styles = StyleSheet.create({

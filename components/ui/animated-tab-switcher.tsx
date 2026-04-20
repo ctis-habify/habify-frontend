@@ -104,8 +104,7 @@ export function AnimatedTabSwitcher({
 
   const indicatorStyle = useAnimatedStyle(() => {
     const tabPixelWidth = containerWidthSV.value * tabWidth;
-    const maxShift = Math.max(0, tabPixelWidth - 8);
-    const translateX = Math.min(activeIndexSV.value * tabPixelWidth, maxShift);
+    const translateX = activeIndexSV.value * tabPixelWidth;
 
     return {
       width: Math.max(0, tabPixelWidth - 8),

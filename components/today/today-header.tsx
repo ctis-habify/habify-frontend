@@ -3,6 +3,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeInDown, FadeInLeft } from "react-native-reanimated";
 
    
 type Props = {
@@ -29,12 +30,18 @@ export function TodayHeader({points, streak, loading}: Props): React.ReactElemen
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
       <View style={styles.headerRow}>
-        <View style={{ flex: 1 }}>
+        <Animated.View 
+          entering={FadeInLeft.delay(100).duration(500)}
+          style={{ flex: 1 }}
+        >
           <Text style={[styles.dateText, { color: colors.icon }]}>{today}</Text>
           <Text style={[styles.title, { color: colors.text }]}>Today's Routine</Text>
-        </View>
+        </Animated.View>
 
-        <View style={styles.badgesRow}>
+        <Animated.View 
+          entering={FadeInDown.delay(200).duration(500).springify()}
+          style={styles.badgesRow}
+        >
           {/* Points Badge */}
           <View
             style={[
@@ -67,7 +74,7 @@ export function TodayHeader({points, streak, loading}: Props): React.ReactElemen
               {streak}
             </Text>
           </View>
-        </View>
+        </Animated.View>
 
       </View>
 

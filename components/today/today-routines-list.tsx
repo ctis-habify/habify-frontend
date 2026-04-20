@@ -15,6 +15,7 @@ import type { Routine } from "../../types/routine";
 import { ThemedView } from "../themed-view";
 import { RoutineCard } from "./routine-card";
 import { TodayHeader } from "./today-header";
+import Animated, { FadeInDown, FadeOutUp, LinearTransition } from "react-native-reanimated";
 
 type Props = {
   items: Routine[];
@@ -46,12 +47,18 @@ export function TodayRoutinesList({ items, streak, loading, onRefresh, onPressRo
     }
   }, [authUser?.id]);
 
-  const renderItem = useCallback(({ item }: { item: Routine }) => (
-    <RoutineCard 
-      routine={item} 
-      onPress={() => onPressRoutine(item)} 
-      onPressCamera={onPressCamera}
-    />
+  const renderItem = useCallback(({ item, index }: { item: Routine; index: number }) => (
+    <Animated.View 
+      entering={FadeInDown.delay(index * 80).duration(800).springify().damping(28).stiffness(100)}
+      exiting={FadeOutUp}
+      layout={LinearTransition.springify().damping(28).stiffness(120).duration(700)}
+    >
+      <RoutineCard 
+        routine={item} 
+        onPress={() => onPressRoutine(item)} 
+        onPressCamera={onPressCamera}
+      />
+    </Animated.View>
   ), [onPressRoutine, onPressCamera]);
 
   // 3. Effects

@@ -169,16 +169,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
         <DrawerItem
           label="Notifications"
           icon={({ size, color }) => (
-            <View>
-              <Ionicons name="notifications-outline" size={size} color={color} />
-              {unreadCount > 0 && (
-                <View style={[styles.badge, { backgroundColor: colors.error, borderColor: colors.background }]}>
-                  <Text style={[styles.badgeText, { color: colors.white }]}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Text>
-                </View>
-              )}
-            </View>
+            <NotificationIcon size={size} color={color} unreadCount={unreadCount} />
           )}
           onPress={() => router.push('/(personal)/(drawer)/notifications')}
           focused={pathname.includes('/(personal)/(drawer)/notifications')}

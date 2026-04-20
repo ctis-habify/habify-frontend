@@ -8,7 +8,7 @@ type Props = {
   visible: boolean;
   message: string;
   icon?: 'check' | 'bell' | 'warning';
-  onHide?: () => void;
+  onClose?: () => void;
   duration?: number;
 };
 
@@ -24,7 +24,7 @@ const getIconConfig = (icon: string, colors: any) => {
   }
 };
 
-export function Toast({ visible, message, icon = 'check', onHide, duration = 3500 }: Props): React.ReactElement | null {
+export function Toast({ visible, message, icon = 'check', onClose, duration = 3500 }: Props): React.ReactElement | null {
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const opacity = useRef(new Animated.Value(0)).current;
@@ -50,13 +50,13 @@ export function Toast({ visible, message, icon = 'check', onHide, duration = 350
       ]).start((result) => {
         // Only call onHide if the animation actually finished (not interrupted by a new message)
         if (result.finished) {
-          onHide?.();
+          onClose?.();
         }
       });
     } else {
       opacity.setValue(0);
     }
-  }, [visible, message, duration, opacity, onHide]);
+  }, [visible, message, duration, opacity, onClose]);
 
   if (!visible) return null;
 

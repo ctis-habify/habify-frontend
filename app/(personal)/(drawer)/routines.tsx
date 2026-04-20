@@ -7,9 +7,14 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Animated, {
+  Easing,
   FadeInDown,
   FadeOutUp,
   LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { ActivityIndicator, Alert, DeviceEventEmitter, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -41,13 +46,28 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const isDark = theme === 'dark';
   const screenGradient = getBackgroundGradient(theme);
   const activeTab = 'Personal';
+  // ── Animation Setup ──────────────
+  const opacity = useSharedValue(0);
+  const translateX = useSharedValue(40);
+  const scale = useSharedValue(0.97);
+
+  const ENTER_SPRING = { damping: 35, stiffness: 80, mass: 1.0 };
+
+  const pageStyle = useAnimatedStyle(() => ({
+    flex: 1,
+    opacity: opacity.value,
+    transform: [
+      { translateX: translateX.value },
+      { scale: scale.value },
+    ],
+  }));
+
   const isSwitchingRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [routineLists, setRoutineLists] = useState<RoutineList[]>([]);
   const [selectedListForNewRoutine, setSelectedListForNewRoutine] = useState<{ listId: number; categoryId?: number | null } | null>(null);
   const [editListParams, setEditListParams] = useState<{ listId: number; title: string; categoryId?: number } | null>(null);
-  const [contentAnimationKey, setContentAnimationKey] = useState(0);
 
   const loadLists = useCallback(async () => {
     try {
@@ -69,6 +89,20 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     }
   }, [authContextToken]);
 
+  useFocusEffect(
+    useCallback(() => {
+      opacity.value = 0;
+      translateX.value = 40;
+      scale.value = 0.97;
+
+      opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+      translateX.value = withSpring(0, ENTER_SPRING);
+      scale.value = withSpring(1, ENTER_SPRING);
+
+      loadLists();
+    }, [loadLists]),
+  );
+
   useEffect(() => {
     loadLists();
     
@@ -79,11 +113,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     return () => sub.remove();
   }, [loadLists]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setContentAnimationKey((current) => current + 1);
-    }, []),
-  );
+  // Focus re-trigger is handled by useFocusEffect above
 
   const handleTabSwitch = (tab: string) => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
@@ -136,8 +166,8 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             const t = authContextToken || await getToken();
             if (!t) return;
             await routineService.deleteRoutineList(Number(listId), t);
-            setRoutineLists((current) =>
-              current.filter((item) => {
+            setRoutineLists((current: RoutineList[]) =>
+              current.filter((item: RoutineList) => {
                 const currentId =
                   item.id ?? (item as RoutineList & { routineListId?: number }).routineListId;
                 return Number(currentId) !== Number(listId);
@@ -160,8 +190,8 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const hasNoData = !loading && routineLists.length === 0;
 
   return (
-    <View style={{ flex: 1, backgroundColor: screenGradient[0] }}>
-      <LinearGradient colors={screenGradient} style={styles.container}>
+      <Animated.View style={[{ flex: 1, backgroundColor: screenGradient[0] }, pageStyle]}>
+        <LinearGradient colors={screenGradient} style={styles.container}>
         {/* HEADER */}
         <View style={styles.fixedHeader}>
           <View style={styles.headerTopRow}>
@@ -185,10 +215,9 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
         {/* CONTENT */}
         <Animated.ScrollView
-          key={`routines-content-${contentAnimationKey}`}
-          entering={FadeInDown.delay(140).duration(560).springify()}
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
+          layout={LinearTransition.springify().damping(18)}
         >
           {/* Today's Routines' Header */}
           <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
@@ -225,9 +254,9 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             return (
               <Animated.View
                 key={`list-${list.id ?? idx}-${idx}`}
-                entering={FadeInDown.duration(260).delay(idx * 40)}
-                exiting={FadeOutUp.duration(220)}
-                layout={LinearTransition.duration(260)}
+                entering={FadeInDown.delay(idx * 80).duration(800).springify().damping(28).stiffness(100)}
+                exiting={FadeOutUp}
+                layout={LinearTransition.springify().damping(28).stiffness(120).duration(650)}
               >
                 <RoutineCategoryCard
                   title={list.routineListTitle || list.categoryName || 'List'}
@@ -316,7 +345,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           </Modal>
         )}
       </LinearGradient>
-    </View>
+    </Animated.View>
   );
 }
 
