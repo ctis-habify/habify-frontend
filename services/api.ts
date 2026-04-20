@@ -22,7 +22,6 @@ const resolveBaseUrl = (): string => {
 
 const BASE_URL = resolveBaseUrl();
 
-
 export const api = axios.create({
   baseURL: BASE_URL,
 });

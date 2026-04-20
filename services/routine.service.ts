@@ -20,6 +20,8 @@ export type UpdateRoutinePayload = Partial<{
   startDate: string;
   isReminderEnabled: boolean;
   reminderTime: string;
+  description: string;
+  lives: number;
 }>;
 
 const getArrayFromResponse = (data: unknown): any[] => {
@@ -410,6 +412,15 @@ export const routineService = {
       }
       throw err;
     }
+  },
+  
+  // ✅ Get Calendar Logs (Unified for Personal & Collaborative)
+  async getCalendarLogs(routineId: string, startDate: string, endDate: string, token: string): Promise<{date: string, isDone: boolean}[]> {
+    const res = await api.get(`/routines/${routineId}/calendar`, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { startDate, endDate },
+    });
+    return getArrayFromResponse(res.data);
   },
   async createRoutineList(categoryId: number, title: string): Promise<RoutineList> {
     const res = await api.post('/routine-lists', {

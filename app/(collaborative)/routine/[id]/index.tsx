@@ -1,5 +1,6 @@
 import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -9,46 +10,44 @@ import {
   DeviceEventEmitter,
   Pressable,
   ScrollView,
-  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  ViewStyle,
+  View
 } from 'react-native';
 import {
   Gesture,
   GestureDetector,
 } from 'react-native-gesture-handler';
 import Animated, {
-    FadeInDown,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withDelay,
-    withTiming,
-    ZoomIn,
-    Easing,
+  Easing,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+  ZoomIn,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 
+import { AnimatedFlame } from '@/components/animations/animated-flame';
+import { PokeAnimation } from '@/components/animations/poke-animation';
+import { ThrobbingHeart } from '@/components/animations/throbbing-heart';
+import { CupIndicator } from '@/components/cup-indicator';
 import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
-import { PokeAnimation } from '@/components/animations/poke-animation';
-import { CupIndicator } from '@/components/cup-indicator';
+import { RoutineLeaderboardEntry, RoutineScoreList } from '@/components/routine-score-list';
+import { RoutineHistory } from '@/components/routines/routine-history';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { collaborativeScoreService } from '@/services/collaborative-score.service';
-import { routineService } from '@/services/routine.service';
 import { notificationService } from '@/services/notification.service';
-import { LeaderboardEntry, UserCupAward, createLeaderboardCupAward } from '@/types/collaborative-score';
+import { routineService } from '@/services/routine.service';
+import { createLeaderboardCupAward, LeaderboardEntry, UserCupAward } from '@/types/collaborative-score';
 import { Routine } from '@/types/routine';
-import { RoutineScoreList, RoutineLeaderboardEntry } from '@/components/routine-score-list';
-import { ThrobbingHeart } from '@/components/animations/throbbing-heart';
-import { AnimatedFlame } from '@/components/animations/animated-flame';
 
 type GroupParticipant = {
   id?: string;
@@ -556,6 +555,8 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                 </View>
               </View>
 
+              <RoutineHistory routineId={routineId as string} themeColor={collaborativePrimary} createdAt={routineDetail?.startDate} />
+
               <Text style={[styles.sectionTitle, styles.spacingTop, { color: collaborativePrimary }]}>Enrolled Users</Text>
               <Text style={[styles.pokeHint, { color: colors.text, opacity: 0.6 }]}>Tap a member to poke them 👈</Text>
               {participantNames.length === 0 ? (
@@ -596,7 +597,17 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(220).duration(420)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Routine Details</Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Routine Details</Text>
+                {isCreator && (
+                  <TouchableOpacity 
+                    onPress={() => router.push(`/(personal)/routine/${routineId}`)}
+                    style={[styles.editIconBtn, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}
+                  >
+                    <Ionicons name="pencil" size={16} color={collaborativePrimary} />
+                  </TouchableOpacity>
+                )}
+              </View>
               {detailRows.map((row, index) => (
                 <Animated.View
                   key={`${row.label}-${index}`}
@@ -968,6 +979,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  editIconBtn: {
+    padding: 6,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   spacingTop: {
     marginTop: 14,
