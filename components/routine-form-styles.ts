@@ -213,6 +213,25 @@ export function getRoutineFormStyles(theme: ThemeKey = 'light') {
       fontWeight: '700',
       fontSize: 17,
     },
+    headerButtons: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    flexOneMarRight: {
+      flex: 1,
+      marginRight: 10,
+    },
+    categoryActionButtons: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    marginTopTen: {
+      marginTop: 10,
+    },
+    paddingHorTwelve: {
+      paddingHorizontal: 12,
+    },
   });
 }
 

@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import {
   Gesture,
   GestureDetector,
@@ -62,6 +63,8 @@ type GroupParticipant = {
     username?: string;
     cup?: UserCupAward | null;
   };
+  lives?: number;
+  missedCount?: number;
 };
 
 type CollaborativeRoutineDetail = Routine & {
@@ -219,6 +222,11 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       setLeaderboard(leaderboardData);
       setGlobalLeaderboard(globalLeaderboardData);
       setLogs(routineLogs);
+
+      // Automated Elimination & Cleanup Logic
+      if (detail) {
+        await checkAndHandleEliminations(detail, leaderboardData);
+      }
     } catch (fetchError) {
       setError(getErrorMessage(fetchError));
     } finally {
@@ -226,6 +234,59 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       setLoadingLeaderboard(false);
     }
   }, [getErrorMessage, routineId]);
+
+  const checkAndHandleEliminations = async (detail: CollaborativeRoutineDetail, leaderboardData: RoutineLeaderboardEntry[]) => {
+    if (!routineId || !detail) return;
+
+    const participants = detail.participants || [];
+    const maxLives = detail.maxLives || detail.lives || 0;
+    
+    // 1. Identify members to remove (lives - missedCount <= 0)
+    // We assume the data is available in the participant object or we use global detail if single-user health is tracked differently.
+    // Based on user request, it's participant-specific.
+    const toRemove = participants.filter(p => {
+      const pLives = p.lives ?? maxLives;
+      const pMissed = p.missedCount ?? 0;
+      return pLives - pMissed <= 0;
+    });
+
+    if (toRemove.length > 0) {
+      console.log(`[Elimination] Removing ${toRemove.length} members with 0 lives.`);
+      
+      for (const p of toRemove) {
+        const uid = p.userId || p.user?.id || p.id;
+        if (!uid) continue;
+
+        try {
+          await routineService.removeMemberFromRoutine(routineId, uid);
+          
+          if (uid === currentUserId) {
+             Alert.alert("Eliminated!", "You have run out of lives and have been removed from the group. 💔");
+             router.replace('/(collaborative)/(drawer)/routines');
+             return; // Stop here as we are redirected
+          }
+        } catch (err) {
+          console.error(`Failed to remove member ${uid}:`, err);
+        }
+      }
+    }
+
+    // 2. Check if group is empty
+    const remainingCount = participants.length - toRemove.length;
+    if (remainingCount <= 0 && !isDeletingRoutine) {
+      console.log(`[Elimination] Group is empty. Deleting routine ${routineId}.`);
+      try {
+        const t = await SecureStore.getItemAsync('habify_access_token');
+        if (t) {
+          await routineService.deleteRoutine(routineId, t);
+          Alert.alert("Group Deleted", "Everyone has been eliminated. The group has been deleted. 💨");
+          router.replace('/(collaborative)/(drawer)/routines');
+        }
+      } catch (err) {
+        console.error("Failed to delete empty group:", err);
+      }
+    }
+  };
 
   useEffect(() => {
     loadRoutineDetail();

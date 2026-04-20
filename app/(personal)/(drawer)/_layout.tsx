@@ -61,6 +61,13 @@ export default function DrawerLayout(): React.ReactElement {
         }}
       />
       <Drawer.Screen
+        name="analytics"
+        options={{
+          drawerLabel: "Analytics & Data",
+          drawerIcon: ({ color, size }) => <Ionicons name="bar-chart-outline" size={size} color={color} />,
+        }}
+      />
+      <Drawer.Screen
         name="notifications"
         options={{
           drawerItemStyle: { display: 'none' },

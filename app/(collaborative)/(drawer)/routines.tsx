@@ -5,6 +5,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   DeviceEventEmitter,
   Platform,
   RefreshControl,
@@ -27,6 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // Themes & Components
+import { EliminationModal } from '@/components/modals/elimination-modal';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
 import { CollaborativeGroupCard } from '@/components/routines/collaborative-group-card';
 import { CollaborativeScoreBanner } from '@/components/routines/collaborative-score-banner';
@@ -83,6 +85,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [frequencyOpen, setFrequencyOpen] = useState(false);
+  const [eliminationModalVisible, setEliminationModalVisible] = useState(false);
+  const [eliminatedRoutineNames, setEliminatedRoutineNames] = useState<string[]>([]);
 
   const activeTab = 'Collaborative';
   const isSwitchingRef = useRef(false);
@@ -116,8 +120,29 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       setIsRefreshing(refresh);
       try {
         const list = await routineService.getCollaborativeRoutines();
-        setRoutines([...list].reverse());
-        const socialReminder = notificationService.getSocialInteractionReminder(list.length);
+        
+        // --- Batch Lazy Elimination Cleanup ---
+        const eliminatedNames: string[] = [];
+        const healthyRoutines = list.filter(r => {
+          const health = (r.lives ?? 0) - (r.missedCount ?? 0);
+          if (health <= 0) {
+            eliminatedNames.push(r.routineName || 'Unnamed Routine');
+            // Silent cleanup in background
+            routineService.leaveRoutine(r.id).catch(err => 
+              console.error(`[Cleanup] Failed to leave routine ${r.id}:`, err)
+            );
+            return false;
+          }
+          return true;
+        });
+
+        if (eliminatedNames.length > 0) {
+          setEliminatedRoutineNames(eliminatedNames);
+          setEliminationModalVisible(true);
+        }
+
+        setRoutines([...healthyRoutines].reverse());
+        const socialReminder = notificationService.getSocialInteractionReminder(healthyRoutines.length);
         if (socialReminder) showToast(socialReminder);
       } catch (e: unknown) {
         showToast(e instanceof Error ? e.message : 'Failed to load collaborative routines');
@@ -576,6 +601,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           visible={toastVisible}
           message={toastMessage}
           onClose={() => setToastVisible(false)}
+        />
+        
+        <EliminationModal
+          visible={eliminationModalVisible}
+          routines={eliminatedRoutineNames}
+          onClose={() => setEliminationModalVisible(false)}
         />
       </LinearGradient>
     </Animated.View>
