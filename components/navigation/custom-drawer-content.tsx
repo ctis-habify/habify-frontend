@@ -155,9 +155,10 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           labelStyle={{ marginLeft: 0, fontWeight: '700' }}
         />
         <DrawerItem
-          label="Analytics (Soon)"
+          label="Analytics & Data"
           icon={({ size, color }) => <Ionicons name="bar-chart-outline" size={size} color={color} />}
-          onPress={() => handleComingSoon('Analytics')}
+          onPress={() => router.push('/(personal)/(drawer)/analytics')}
+          focused={pathname.includes('/(personal)/(drawer)/analytics')}
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}

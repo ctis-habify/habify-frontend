@@ -288,6 +288,18 @@ export default function SettingsScreen(): React.ReactElement {
             label="Privacy Policy"
             onPress={handleOpenPrivacy}
           />
+          <SettingsItem
+            icon="infinite-outline"
+            label="Data Preservation"
+            value="Indefinite"
+            type="info"
+          />
+          <View style={[styles.policyInfoCard, { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.05)' : 'rgba(52, 211, 153, 0.05)', borderColor: isDark ? 'rgba(52, 211, 153, 0.1)' : 'rgba(52, 211, 153, 0.2)' }]}>
+             <Ionicons name="information-circle" size={16} color="#10b981" />
+             <Text style={[styles.policyInfoText, { color: isDark ? '#34d399' : '#059669' }]}>
+               Your streaks, history, and analytics are preserved indefinitely to support your growth.
+             </Text>
+          </View>
         </SettingsSection>
 
         {/* Log Out */}
@@ -531,5 +543,22 @@ const styles = StyleSheet.create({
   },
   timeSeparator: {
     paddingHorizontal: 12,
+  },
+  policyInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    marginHorizontal: 12,
+    borderWidth: 1.2,
+    gap: 12,
+  },
+  policyInfoText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
   },
 });
