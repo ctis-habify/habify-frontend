@@ -18,6 +18,7 @@ import { TodayHeader } from "./today-header";
 
 type Props = {
   items: Routine[];
+  streak: number;
   loading: boolean;
   onRefresh: () => void;
   onPressRoutine: (_routine: Routine) => void;
@@ -27,7 +28,7 @@ type Props = {
 // Helper for keyExtractor
 const keyExtractor = (item: Routine) => item.id;
 
-export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, onPressCamera }: Props): React.ReactElement {
+export function TodayRoutinesList({ items, streak, loading, onRefresh, onPressRoutine, onPressCamera }: Props): React.ReactElement {
   // 1. State
   const { user: authUser } = useAuth();
   const theme = useColorScheme() ?? 'light';
@@ -62,8 +63,8 @@ export function TodayRoutinesList({ items, loading, onRefresh, onPressRoutine, o
   
   // 4. Memos
   const header = useMemo(() => {
-    return <TodayHeader loading={loading} points={points} />;
-  }, [loading, points]);
+    return <TodayHeader loading={loading} points={points} streak={streak} />;
+  }, [loading, points, streak]);
 
   // 5. Render
   return (

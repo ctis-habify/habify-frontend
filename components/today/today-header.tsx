@@ -7,11 +7,12 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
    
 type Props = {
   points: number;
+  streak: number;
   loading: boolean;
   onMenuPress?: () => void;
 };
 
-export function TodayHeader({points, loading}: Props): React.ReactElement {
+export function TodayHeader({points, streak, loading}: Props): React.ReactElement {
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const isDark = theme === 'dark';
@@ -28,25 +29,46 @@ export function TodayHeader({points, loading}: Props): React.ReactElement {
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
       <View style={styles.headerRow}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={[styles.dateText, { color: colors.icon }]}>{today}</Text>
           <Text style={[styles.title, { color: colors.text }]}>Today's Routine</Text>
         </View>
-        
-        <View
-          style={[
-            styles.levelBadge,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-            <Ionicons name={level.icon} size={22} color={level.color} style={{ marginRight: 8 }} />
+
+        <View style={styles.badgesRow}>
+          {/* Points Badge */}
+          <View
+            style={[
+              styles.levelBadge,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                marginRight: 8,
+              },
+            ]}
+          >
+            <Ionicons name={level.icon} size={20} color={level.color} style={{ marginRight: 6 }} />
             <Text style={[styles.levelText, { color: level.color }]}>
-                {points} XP
+              {points} XP
             </Text>
+          </View>
+
+          {/* Streak Badge */}
+          <View
+            style={[
+              styles.streakBadge,
+              {
+                backgroundColor: isDark ? 'rgba(249, 115, 22, 0.15)' : 'rgba(249, 115, 22, 0.08)',
+                borderColor: 'rgba(249, 115, 22, 0.25)',
+              },
+            ]}
+          >
+            <Ionicons name="flame" size={20} color="#f97316" style={{ marginRight: 6 }} />
+            <Text style={[styles.streakText, { color: '#f97316' }]}>
+              {streak}
+            </Text>
+          </View>
         </View>
+
       </View>
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -98,8 +120,26 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   levelText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    justifyContent: 'center',
+  },
+  streakText: {
+    fontSize: 14,
+    fontWeight: "800",
+
   },
   divider: {
     height: 1,

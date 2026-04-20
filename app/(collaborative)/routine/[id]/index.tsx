@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -184,6 +185,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [isDeletingRoutine, setIsDeletingRoutine] = useState(false);
   const [pokingUserId, setPokingUserId] = useState<string | null>(null);
   const [pokeAnimationVisible, setPokeAnimationVisible] = useState(false);
+  const [pokeTrigger, setPokeTrigger] = useState(0);
   const [pokedName, setPokedName] = useState('');
   
   const [leaderboard, setLeaderboard] = useState<RoutineLeaderboardEntry[]>([]);
@@ -402,21 +404,19 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
 
     const targetName = participant.user?.name || participant.name || participant.user?.username || participant.username || 'User';
 
-    setPokingUserId(targetUserId);
+    // Optimistic Trigger: Show animation and haptics instantly
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    setPokedName(targetName);
+    setPokeTrigger(prev => prev + 1);
+    setPokeAnimationVisible(true);
+
     try {
+      // Background Request: Don't wait for completion to enable subsequent pokes
       await notificationService.sendPoke(targetUserId, routineId);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setPokedName(targetName);
-      setPokeAnimationVisible(true);
     } catch (err: unknown) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      const message =
-        err && typeof err === 'object' && 'response' in err
-          ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Could not send poke.')
-          : 'Could not send poke. Please try again.';
-      Alert.alert('Poke Failed', message);
-    } finally {
-      setPokingUserId(null);
+      // Revert if critical? No, poking is social. Just log?
+      console.warn('Poke request failed:', err);
+      // Optional: Show error only if they aren't spamming
     }
   }, [routineId]);
 
@@ -504,6 +504,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             )}
           </TouchableOpacity>
         )}
+        <HomeButton color="#ffffff" style={styles.backButton} />
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -571,9 +572,9 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                         <ParticipantChip
                           participant={participant}
                           isSelf={isSelf}
-                          isPoking={isPoking}
+                          isPoking={false} // No longer blocking
                           onPoke={handlePoke}
-                          disabled={!!pokingUserId}
+                          disabled={false}
                           name={name}
                           participantCup={participantCup}
                         />
@@ -668,6 +669,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
 
       <PokeAnimation
         play={pokeAnimationVisible}
+        triggerKey={pokeTrigger}
         targetName={pokedName}
         onComplete={() => setPokeAnimationVisible(false)}
       />

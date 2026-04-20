@@ -108,6 +108,7 @@ export default function CameraModal(): React.ReactElement {
       }
 
 
+
       // 3. Upload to GCS via PUT
 
       await verificationService.uploadToGcs(signedUrl, blob);
@@ -192,6 +193,7 @@ export default function CameraModal(): React.ReactElement {
         ) : (
           <Image source={{ uri: photoUri }} style={styles.previewImage} />
         )}
+
         
         {isUploading && (
           <View style={[styles.loadingOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.7)' }]}>
@@ -256,6 +258,7 @@ export default function CameraModal(): React.ReactElement {
             <Ionicons name="bug" size={24} color={colors.white} />
             <Text style={{ color: colors.white, fontSize: 10, fontWeight: 'bold' }}>FAIL</Text>
           </TouchableOpacity>
+
 
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
             <View style={styles.shutterInner} />

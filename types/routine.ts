@@ -125,4 +125,7 @@ export interface PublicRoutine {
   frequencyType: string;
   memberCount: number;
   isAlreadyMember: boolean;
+  ageRequirement: number | null;
+  genderRequirement: string | null;
+  xpRequirement: number | null;
 }

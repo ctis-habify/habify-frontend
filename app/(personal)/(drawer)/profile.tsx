@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { CupIndicator } from '@/components/cup-indicator';
 import { FriendList } from '@/components/profile/FriendList';
 import { getBackgroundGradient, Colors } from '@/constants/theme';
@@ -61,6 +62,14 @@ export default function ProfileScreen() {
 
   const age = calculateAge(user?.birthDate);
 
+  const getStatus = (pts: number) => {
+    if (pts >= 100) return { label: 'Pro', color: '#FFD700' };
+    if (pts >= 50) return { label: 'Good', color: '#FF8C00' };
+    return { label: 'Beginner', color: '#4CAF50' };
+  };
+
+  const status = getStatus(user?.totalXp || 0);
+
   const handlePressFriend = useCallback(
     (friendId: string): void => {
       router.push({ pathname: '/(personal)/friend-profile', params: { userId: friendId } });
@@ -99,7 +108,8 @@ export default function ProfileScreen() {
           <Ionicons name="menu" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
-        <View style={{ width: 44 }} />
+        <HomeButton color={colors.text} style={[styles.menuButton, { backgroundColor: Colors[theme].surface }]} />
+
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -132,8 +142,9 @@ export default function ProfileScreen() {
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{user?.currentStreak || 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Streak</Text>
+              <Text style={[styles.statValue, { color: status.color }]}>{status.label}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Status</Text>
+
             </View>
           </View>
         </Animated.View>

@@ -13,6 +13,9 @@ export interface AuthUser {
   birthDate?: string;
   totalXp?: number;
   currentStreak?: number;
+  quietModeEnabled?: boolean;
+  quietModeStart?: string; // HH:mm
+  quietModeEnd?: string;   // HH:mm
 }
 
 interface AuthContextValue {

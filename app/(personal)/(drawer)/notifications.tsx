@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { SwipeableNotificationRow } from '@/components/ui/swipeable-notification-row';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -13,7 +14,7 @@ import { RoutineInvitationItem } from '@/types/routine-invitation';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useNavigation } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,6 +44,7 @@ const categoryOrder: NotificationCategory[] = [
 
 export default function NotificationsScreen(): React.ReactElement {
   const navigation = useNavigation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
@@ -114,6 +116,23 @@ export default function NotificationsScreen(): React.ReactElement {
       notificationService.deleteNotification(item.id).catch(() => { });
     },
     [],
+  );
+  const handleNotificationPress = useCallback(
+    (item: NotificationItem) => {
+      if (item.routineId) {
+        if (item.category === 'rewards') {
+          router.push(`/(personal)/routine/${item.routineId}`);
+        } else {
+          router.push({
+            pathname: '/(personal)/camera-modal',
+            params: { routineId: item.routineId },
+          });
+        }
+      } else if (item.collaborativeRoutineId) {
+        router.push(`/(collaborative)/routine/${item.collaborativeRoutineId}/chat`);
+      }
+    },
+    [router],
   );
 
   const handleAccept = useCallback(
@@ -225,7 +244,8 @@ export default function NotificationsScreen(): React.ReactElement {
           <Ionicons name="menu" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
-        <View style={{ width: 44 }} />
+        <HomeButton color={colors.text} style={[styles.menuButton, { backgroundColor: Colors[theme].surface }]} />
+
       </View>
 
       <ScrollView
@@ -334,7 +354,9 @@ export default function NotificationsScreen(): React.ReactElement {
                 {!loadedSections.reminders ? (
                   <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
                 ) : sections[category].length === 0 ? (
-                  <Text style={[styles.emptyText, { color: colors.textTertiary }]}>No notifications yet.</Text>
+                  <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
+                    {category === 'rewards' ? 'No rewards yet.' : 'No notifications yet.'}
+                  </Text>
                 ) : (
                   <ScrollView
                     style={styles.sectionScroll}
@@ -348,7 +370,9 @@ export default function NotificationsScreen(): React.ReactElement {
                         key={item.id}
                         onDelete={() => handleDeleteNotification(item)}
                       >
-                        <View
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleNotificationPress(item)}
                           style={[
                             styles.itemRow,
                             { backgroundColor: colors.card },
@@ -373,7 +397,7 @@ export default function NotificationsScreen(): React.ReactElement {
                               {new Date(item.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                             </Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
                       </SwipeableNotificationRow>
                     ))}
                   </ScrollView>

@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
@@ -196,6 +197,7 @@ export default function EditRoutineScreen(): React.ReactElement {
         <TouchableOpacity onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: Colors[theme].surface }]}>
           <Ionicons name="close" size={24} color={Colors[theme].text} />
         </TouchableOpacity>
+        <HomeButton color={Colors.light.icon} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -433,11 +435,11 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
+    justifyContent: 'space-between',
+    paddingTop: 58,
+    paddingHorizontal: 16,
+    paddingBottom: 15,
   },
   closeBtn: {
     padding: 8,

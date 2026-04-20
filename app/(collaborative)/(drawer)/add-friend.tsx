@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Colors } from '@/constants/theme';
 import { friendService, UserSearchResult } from '@/services/friend.service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -85,10 +86,14 @@ export default function AddFriendScreen(): React.ReactElement {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Add Friend</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>Add Friend</Text>
+        </View>
+        <HomeButton color={colors.text} />
+      </View>
       </View>
 
       <View style={styles.searchRow}>
@@ -187,10 +192,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     paddingTop: 56,
     borderBottomWidth: 1,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backBtn: {
     marginRight: 12,

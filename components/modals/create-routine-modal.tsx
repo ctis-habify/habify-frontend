@@ -1,4 +1,6 @@
 import { Colors, getBackgroundGradient, BACKGROUND_GRADIENT_DARK } from '@/constants/theme';
+import { HomeButton } from '@/components/navigation/home-button';
+
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
@@ -291,9 +293,13 @@ export function CreateRoutineModal({
           >
             <View style={styles.headerRow}>
               <Text style={[styles.title, { color: colors.text }]}>{isEditMode ? 'Edit List' : 'Create Routine List'}</Text>
-              <TouchableOpacity onPress={handleClose} hitSlop={12}>
-                <Ionicons name="close" size={30} color={colors.text} />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <HomeButton color={colors.text} />
+                <TouchableOpacity onPress={handleClose} hitSlop={12}>
+                  <Ionicons name="close" size={30} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+
             </View>
 
             {/* Category */}
@@ -322,10 +328,16 @@ export function CreateRoutineModal({
                   ]}
                   textStyle={{ color: colors.text, fontSize: 16 }}
                   placeholderStyle={{ color: colors.icon }}
-                  listMode="MODAL"
+                  listMode="SCROLLVIEW"
                   dropDownContainerStyle={{
                     backgroundColor: colors.card,
-                    borderColor: colors.border,
+                    borderColor: colors.primary,
+                    borderRadius: 12,
+                    elevation: 5,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 5,
                   }}
                   modalContentContainerStyle={{
                       backgroundColor: colors.background
@@ -334,7 +346,7 @@ export function CreateRoutineModal({
                   searchable={true}
                   closeAfterSelecting={true}
                   theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
-                  zIndex={2000}
+                  zIndex={5000}
                   zIndexInverse={1000}
                 />
                 {errors.category ? (

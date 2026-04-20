@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -59,12 +60,16 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     // Filters
     const [categoryId, setCategoryId] = useState<number | ''>('');
     const [frequencyType, setFrequencyType] = useState<string>('');
+    const [gender, setGender] = useState<string>('');
+    const [age, setAge] = useState<string>('');
+    const [xp, setXp] = useState<string>('');
     
     // Dropdown options
     const [categories, setCategories] = useState<Category[]>([]);
     const [loadingCategories, setLoadingCategories] = useState(false);
     const [categoryOpen, setCategoryOpen] = useState(false);
     const [frequencyOpen, setFrequencyOpen] = useState(false);
+    const [genderOpen, setGenderOpen] = useState(false);
 
     // Incremented on every focus so FlatList items remount and re-trigger entering animations
     const [listKey, setListKey] = useState(0);
@@ -76,10 +81,17 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     const translateX = useSharedValue(40);   // slide in from the right
     const scale = useSharedValue(0.97);
 
-    const fetchRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string) => {
+    const fetchRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string, gen?: string, ageVal?: string, xpVal?: string) => {
         setLoading(true);
         try {
-            const data = await routineService.browsePublicRoutines(q || undefined, catId || undefined, freq || undefined);
+            const data = await routineService.browsePublicRoutines(
+                q || undefined, 
+                catId || undefined, 
+                freq || undefined, 
+                gen || undefined, 
+                ageVal ? parseInt(ageVal, 10) : undefined, 
+                xpVal ? parseInt(xpVal, 10) : undefined
+            );
             setRoutines(data);
         } catch (e) {
             console.error('Failed to load public routines', e);
@@ -102,7 +114,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
             scale.value = withSpring(1, ENTER_SPRING);
 
             // Re-fetch on every focus so the backend filter (joined routines excluded) applies
-            fetchRoutines(search.trim() || undefined, categoryId, frequencyType);
+            fetchRoutines(search.trim() || undefined, categoryId, frequencyType, gender, age, xp);
 
             // Remount FlatList items so their entering animations fire fresh each visit
             setListKey((k) => k + 1);
@@ -156,7 +168,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
             }
         };
         loadCats();
-        fetchRoutines(search.trim() || undefined, categoryId, frequencyType);
+        fetchRoutines(search.trim() || undefined, categoryId, frequencyType, gender, age, xp);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -164,12 +176,12 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
-            fetchRoutines(search.trim(), categoryId, frequencyType);
+            fetchRoutines(search.trim(), categoryId, frequencyType, gender, age, xp);
         }, 350);
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
-    }, [search, categoryId, frequencyType, fetchRoutines]);
+    }, [search, categoryId, frequencyType, gender, age, xp, fetchRoutines]);
 
     const handleJoin = useCallback(
         async (id: string) => {
@@ -225,18 +237,21 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                         <Text style={[styles.headerSubtitle, { color: colors.text }]}>Discover & join public groups</Text>
                     </View>
 
-                    <TouchableOpacity
-                        style={[styles.menuBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}
-                        onPress={goBack}
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="arrow-back" size={24} color={colors.text} />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <HomeButton color={colors.text} style={[styles.menuBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]} />
+                        <TouchableOpacity
+                            style={[styles.menuBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}
+                            onPress={goBack}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="arrow-back" size={24} color={colors.text} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Filters */}
-                <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 1000 }) }]}>
-                    <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 1000 }) }}>
+                <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
+                    <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
                         <DropDownPicker
                             open={categoryOpen}
                             value={categoryId}
@@ -253,10 +268,13 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                             listMode="SCROLLVIEW"
                             zIndex={3000}
                             zIndexInverse={1000}
-                            onOpen={() => setFrequencyOpen(false)}
+                            onOpen={() => {
+                                setFrequencyOpen(false);
+                                setGenderOpen(false);
+                            }}
                         />
                     </View>
-                    <View style={{ flex: 1, ...(Platform.OS === 'ios' && { zIndex: 900 }) }}>
+                    <View style={{ flex: 1, ...(Platform.OS === 'ios' && { zIndex: 2000 }) }}>
                         <DropDownPicker
                             open={frequencyOpen}
                             value={frequencyType}
@@ -277,7 +295,61 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                             listMode="SCROLLVIEW"
                             zIndex={2000}
                             zIndexInverse={2000}
-                            onOpen={() => setCategoryOpen(false)}
+                            onOpen={() => {
+                                setCategoryOpen(false);
+                                setGenderOpen(false);
+                            }}
+                        />
+                    </View>
+                </View>
+
+                {/* Second Row of Filters */}
+                <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 1000 }), marginTop: -8 }]}>
+                    <View style={{ flex: 1.2, ...(Platform.OS === 'ios' && { zIndex: 1000 }) }}>
+                        <DropDownPicker
+                            open={genderOpen}
+                            value={gender}
+                            items={[
+                                { label: 'All Genders', value: '' },
+                                { label: 'Female Only', value: 'female' },
+                                { label: 'Male Only', value: 'male' }
+                            ] as { label: string; value: string }[]}
+                            setOpen={setGenderOpen}
+                            setValue={setGender as React.Dispatch<React.SetStateAction<string>>}
+                            theme="DARK"
+                            style={styles.dropdown}
+                            dropDownContainerStyle={styles.dropdownContainer}
+                            placeholder="Gender"
+                            placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
+                            textStyle={{ color: '#fff', fontSize: 13 }}
+                            labelStyle={{ fontWeight: '600' }}
+                            listMode="SCROLLVIEW"
+                            zIndex={1000}
+                            zIndexInverse={3000}
+                            onOpen={() => {
+                                setCategoryOpen(false);
+                                setFrequencyOpen(false);
+                            }}
+                        />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 8 }}>
+                        <TextInput
+                            style={styles.numericInput}
+                            placeholder="Min Age"
+                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            keyboardType="numeric"
+                            value={age}
+                            onChangeText={setAge}
+                        />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 8 }}>
+                        <TextInput
+                            style={styles.numericInput}
+                            placeholder="Min XP"
+                            placeholderTextColor="rgba(255,255,255,0.3)"
+                            keyboardType="numeric"
+                            value={xp}
+                            onChangeText={setXp}
                         />
                     </View>
                 </View>
@@ -397,6 +469,16 @@ const styles = StyleSheet.create({
     dropdownContainer: {
         borderRadius: 12,
         marginTop: 4,
+    },
+    numericInput: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        borderRadius: 12,
+        height: 40,
+        paddingHorizontal: 10,
+        color: '#fff',
+        fontSize: 13,
     },
     list: {
         paddingHorizontal: 18,

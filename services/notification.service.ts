@@ -26,6 +26,7 @@ export interface NotificationItem {
   createdAt: number;
   isRead?: boolean;
   routineId?: string | null;
+  collaborativeRoutineId?: string | null;
 }
 
 export interface BackendNotification {
@@ -178,7 +179,8 @@ export const notificationService = {
       message: n.body,
       createdAt: new Date(n.createdAt).getTime(),
       isRead: n.isRead,
-      routineId: n.routineId ?? n.collaborativeRoutineId,
+      routineId: n.routineId,
+      collaborativeRoutineId: n.collaborativeRoutineId,
     };
   },
 };

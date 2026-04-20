@@ -274,19 +274,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     loadCats();
   }, []);
 
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      if (search.trim() || categoryId || frequencyType) {
-        fetchPublicRoutines(search.trim(), categoryId, frequencyType);
-      } else {
-        setPublicRoutines([]);
-      }
-    }, 350);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [search, categoryId, frequencyType, fetchPublicRoutines]);
+  // Debounced search logic for global results is removed as per user request to only filter joined routines.
+
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message) => {
@@ -367,6 +356,30 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             accentColor={collaborativePrimary}
           />
 
+          {/* Discovery Entry Point */}
+          <TouchableOpacity 
+            style={styles.discoveryCard}
+            onPress={() => router.push('/(collaborative)/(drawer)/browse')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['rgba(232, 121, 249, 0.15)', 'rgba(232, 121, 249, 0.05)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.discoveryGradient}
+            >
+              <View style={styles.discoveryContent}>
+                <View style={styles.discoveryTextWrap}>
+                  <Text style={styles.discoveryTitle}>Browse All Routines</Text>
+                  <Text style={styles.discoverySubtitle}>Discover public groups & join new habits</Text>
+                </View>
+                <View style={styles.discoveryIconBox}>
+                  <Ionicons name="search" size={20} color={COLLABORATIVE_PRIMARY} />
+                </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
           {/* Filters & Search Integrated */}
           <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
             <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
@@ -419,8 +432,9 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             <Ionicons name="search-outline" size={18} color={colors.icon} style={styles.searchIcon} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Filter Public Routines…"
+              placeholder="Search your routines…"
               placeholderTextColor={colors.icon}
+
               value={search}
               onChangeText={setSearch}
               autoCorrect={false}
@@ -434,32 +448,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             )}
           </View>
 
-          {/* Section: Public Search Results */}
-          {(search.trim() || categoryId || frequencyType) ? (
-            <View style={{ marginBottom: 20 }}>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text, opacity: 0.5 }]}>Global Results</Text>
-                {loadingPublic && <ActivityIndicator size="small" color={collaborativePrimary} />}
-              </View>
-              {publicRoutines.length > 0 ? (
-                publicRoutines.map((item, index) => {
-                  const accentColor = getCategoryAccentColor(item.category, item.categoryId ?? null);
-                  return (
-                    <Animated.View key={`public-${item.id}`} entering={FadeInDown.delay(index * 50)}>
-                      <PublicRoutineCard
-                        routine={item}
-                        index={index}
-                        accentColor={accentColor}
-                        onJoin={handleJoin}
-                      />
-                    </Animated.View>
-                  );
-                })
-              ) : !loadingPublic ? (
-                <Text style={[styles.emptyResultsText, { color: colors.icon }]}>No routines match your filters.</Text>
-              ) : null}
-            </View>
-          ) : null}
+
 
           {/* Section: My Joined Routines */}
           {!loading && routines.length > 0 && (
@@ -474,9 +463,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                   {routines
                     .filter(r => r.isPublic)
                     .filter((routine): routine is Routine => {
-                      if (!search) return true;
                       const lowerSearch = search.toLowerCase();
-                      return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
+                      const matchesSearch = !search || routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch);
+                      const selectedCat = categories.find(c => c.categoryId === categoryId);
+                      const matchesCategory = !categoryId || routine.categoryName === selectedCat?.name;
+                      const matchesFreq = !frequencyType || routine.frequencyType?.toLowerCase() === frequencyType.toLowerCase();
+                      return matchesSearch && matchesCategory && matchesFreq;
                     })
                     .map((routine, index) => {
                       const accentColor = getCategoryAccentColor(routine.categoryName, null);
@@ -507,9 +499,12 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                   {routines
                     .filter(r => !r.isPublic)
                     .filter((routine): routine is Routine => {
-                      if (!search) return true;
                       const lowerSearch = search.toLowerCase();
-                      return !!(routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch));
+                      const matchesSearch = !search || routine.routineName?.toLowerCase().includes(lowerSearch) || routine.categoryName?.toLowerCase().includes(lowerSearch);
+                      const selectedCat = categories.find(c => c.categoryId === categoryId);
+                      const matchesCategory = !categoryId || routine.categoryName === selectedCat?.name;
+                      const matchesFreq = !frequencyType || routine.frequencyType?.toLowerCase() === frequencyType.toLowerCase();
+                      return matchesSearch && matchesCategory && matchesFreq;
                     })
                     .map((routine, index) => {
                       const accentColor = getCategoryAccentColor(routine.categoryName, null);
@@ -700,5 +695,43 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  discoveryCard: {
+    marginVertical: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(232, 121, 249, 0.2)',
+  },
+  discoveryGradient: {
+    padding: 16,
+  },
+  discoveryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  discoveryTextWrap: {
+    flex: 1,
+  },
+  discoveryTitle: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  discoverySubtitle: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  discoveryIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(232, 121, 249, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
   },
 });

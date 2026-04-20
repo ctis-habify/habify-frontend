@@ -40,6 +40,9 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
         frequencyType,
         memberCount,
         isAlreadyMember,
+        ageRequirement,
+        genderRequirement,
+        xpRequirement,
     } = routine;
 
     const handleJoin = async () => {
@@ -57,6 +60,18 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
         const d = new Date(startDate);
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }, [startDate]);
+
+    const genderIcon = React.useMemo(() => {
+        if (genderRequirement === 'female') return 'woman-outline';
+        if (genderRequirement === 'male') return 'man-outline';
+        return 'people-outline';
+    }, [genderRequirement]);
+
+    const genderLabel = React.useMemo(() => {
+        if (genderRequirement === 'female') return 'Female Only';
+        if (genderRequirement === 'male') return 'Male Only';
+        return '';
+    }, [genderRequirement]);
 
     return (
         <Animated.View entering={FadeInDown.delay(200 + index * 100).springify()}>
@@ -101,6 +116,36 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
                         <Text style={[styles.metaText, { color: Colors[theme].icon }]}>{memberCount} members</Text>
                     </View>
                 </View>
+
+                {/* Requirements Row */}
+                {(!!genderLabel || !!ageRequirement || !!xpRequirement) && (
+                    <View style={[styles.metaRow, { marginBottom: 12 }]}>
+                        {!!genderLabel && (
+                            <>
+                                <View style={styles.metaItem}>
+                                    <Ionicons name={genderIcon as any} size={14} color="#F472B6" />
+                                    <Text style={[styles.metaText, { color: '#F472B6', fontWeight: '600' }]}>{genderLabel}</Text>
+                                </View>
+                                {(!!ageRequirement || !!xpRequirement) && <View style={styles.metaDot} />}
+                            </>
+                        )}
+                        {!!ageRequirement && (
+                            <>
+                                <View style={styles.metaItem}>
+                                    <Ionicons name="alert-circle-outline" size={14} color="#60A5FA" />
+                                    <Text style={[styles.metaText, { color: '#60A5FA', fontWeight: '600' }]}>{ageRequirement}+ Age</Text>
+                                </View>
+                                {!!xpRequirement && <View style={styles.metaDot} />}
+                            </>
+                        )}
+                        {!!xpRequirement && (
+                            <View style={styles.metaItem}>
+                                <Ionicons name="star-outline" size={14} color="#FBBF24" />
+                                <Text style={[styles.metaText, { color: '#FBBF24', fontWeight: '600' }]}>{xpRequirement} XP</Text>
+                            </View>
+                        )}
+                    </View>
+                )}
 
                 {/* Action */}
                 <View style={styles.actionRow}>

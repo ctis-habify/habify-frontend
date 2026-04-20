@@ -51,6 +51,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
 
     const [friendsList, setFriendsList] = useState<UserSearchResult[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
+    const [invitedUserIds, setInvitedUserIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(false);
     const [invitingId, setInvitingId] = useState<string | null>(null);
     const [actioningId, setActioningId] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
             ]);
             setFriendsList(friendsRes || []);
             setParticipants(groupRes?.participants || []);
+            setInvitedUserIds(new Set()); // Reset on fresh fetch
         } catch {
             setFriendsList([]);
             setParticipants([]);
@@ -82,6 +84,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         setInvitingId(user.id);
         try {
             await routineService.sendRoutineInvite(routineId, user.id);
+            setInvitedUserIds(prev => new Set(prev).add(user.id));
             Alert.alert('Success', `Invited ${user.name} to the routine!`);
         } catch (e: unknown) {
             const msg =
@@ -147,6 +150,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         const resolvedAvatarUrl = getAvatarUrl(avatarUrl ?? undefined);
 
         const identifier = userIdProp || item.id;
+        const isInvited = !!identifier && invitedUserIds.has(identifier);
 
         return (
             <View key={`${isMember ? 'member' : 'friend'}-${key}-${index}`} style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -172,17 +176,23 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                     )}
                 </View>
                 {!isMember && (
-                    <TouchableOpacity
                         style={[
                             styles.inviteBtn,
-                            { backgroundColor: isDark ? colors.secondary : colors.primary },
+                            isInvited 
+                                ? [styles.invitedBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', borderColor: colors.border }] 
+                                : { backgroundColor: isDark ? colors.secondary : colors.primary },
                             invitingId === identifier && styles.inviteBtnDisabled,
                         ]}
-                        onPress={() => handleInvite(item as UserSearchResult)}
-                        disabled={invitingId !== null}
+                        onPress={() => !isInvited && handleInvite(item as UserSearchResult)}
+                        disabled={invitingId !== null || isInvited}
                     >
                         {invitingId === identifier ? (
                             <ActivityIndicator size="small" color={colors.white} />
+                        ) : isInvited ? (
+                            <>
+                                <Ionicons name="checkmark-circle" size={16} color={colors.icon} />
+                                <Text style={[styles.invitedBtnText, { color: colors.icon }]}>Invited</Text>
+                            </>
                         ) : (
                             <>
                                 <Ionicons name="paper-plane" size={16} color={colors.white} />
@@ -391,6 +401,16 @@ const styles = StyleSheet.create({
     },
     inviteBtnText: {
         fontWeight: '800',
+        fontSize: 14,
+    },
+    invitedBtn: {
+        backgroundColor: 'rgba(0,0,0,0.04)',
+        borderColor: 'rgba(0,0,0,0.1)',
+        borderWidth: 1,
+    },
+    invitedBtnText: {
+        color: 'rgba(0,0,0,0.4)',
+        fontWeight: '600',
         fontSize: 14,
     },
     iconBtn: {

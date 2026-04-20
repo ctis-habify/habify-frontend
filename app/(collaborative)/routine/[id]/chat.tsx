@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -272,6 +273,7 @@ export default function CollaborativeChatScreen() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [headerTitle, setHeaderTitle] = useState(params.routineName || 'Group Chat');
 
   // Image Preview State
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -296,26 +298,15 @@ export default function CollaborativeChatScreen() {
   const lastApprovedLogIdsRef = useRef<Set<number>>(new Set());
 
   const displayMessages = useMemo(() => {
-    // 1. Create virtual messages for any logs that don't have a corresponding chat message
+    // 1. First, create all virtual messages from logs (these are high-quality and have buttons)
     const virtualLogMessages: ChatMessage[] = pendingLogs
       .map((log) => {
         const imageUrl = log.verificationImageUrl;
         if (!imageUrl) return null;
 
-        const logUrl = imageUrl.toLowerCase();
-        const logFileName = logUrl.split('/').pop() || '!!!';
-
-        // Check if any existing chat message already contains this log's URL or parts of it
-        const hasMessage = chatMessages.some((m) => {
-          const text = m.text.toLowerCase();
-          return text.includes(logUrl) || text.includes(logFileName);
-        });
-
-        if (hasMessage) return null;
-
         return {
           id: `virtual-log-${log.id}`,
-          text: imageUrl, // Just the URL, our renderer handles it
+          text: imageUrl, 
           sender: log.userId === user?.id ? 'me' : 'system',
           senderName: log.userName || 'Member',
           createdAt: log.createdAt || log.logDate,
@@ -323,7 +314,28 @@ export default function CollaborativeChatScreen() {
       })
       .filter((m): m is ChatMessage => m !== null);
 
-    const merged = [...chatMessages, ...virtualLogMessages];
+    // 2. Filter chat messages to remove any that are actually covered by the virtualLogMessages
+    const filteredChatMessages = chatMessages.filter((m) => {
+      const text = m.text.toLowerCase();
+      const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
+      const isPhoto = text.startsWith('[photo]:') || text.includes('storage.googleapis.com') || imageRegex.test(text);
+      
+      if (!isPhoto) return true;
+
+      // Extract filename for comparison
+      const msgFileName = text.split('/').pop()?.split('?')[0] || '???';
+      
+      // If this photo message exists in our pending logs, skip this raw message
+      const isAlreadyInLogs = pendingLogs.some(log => {
+        const logUrl = (log.verificationImageUrl || '').toLowerCase();
+        const logFileName = logUrl.split('/').pop()?.split('?')[0] || '!!!';
+        return logUrl.includes(msgFileName) || (logFileName.length > 5 && msgFileName.includes(logFileName));
+      });
+
+      return !isAlreadyInLogs;
+    });
+
+    const merged = [...filteredChatMessages, ...virtualLogMessages];
 
     return merged.sort((a, b) => {
       const aTime = getMessageTimestamp(a.createdAt);
@@ -500,6 +512,9 @@ export default function CollaborativeChatScreen() {
         : [];
 
       setParticipants(normalizedParticipants);
+      if (groupDetail?.routineName) {
+        setHeaderTitle(groupDetail.routineName);
+      }
       setTaggedParticipant((current) =>
         current && normalizedParticipants.some((participant) => participant.id === current.id)
           ? current
@@ -696,7 +711,9 @@ export default function CollaborativeChatScreen() {
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>{params.routineName || 'Group Chat'}</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+            {headerTitle}
+          </Text>
         </View>
         <TouchableOpacity
           onPress={handleCaptureAndUploadImage}
@@ -721,6 +738,7 @@ export default function CollaborativeChatScreen() {
           <Ionicons name="information-circle-outline" size={20} color={colors.text} />
           <Text style={[styles.detailsButtonText, { color: colors.text }]}>Details</Text>
         </TouchableOpacity>
+        <HomeButton color={colors.text} style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]} />
       </Animated.View>
 
       <View style={styles.chatContainer}>

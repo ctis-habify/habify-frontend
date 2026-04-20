@@ -1,3 +1,4 @@
+import { HomeButton } from '@/components/navigation/home-button';
 import { Colors } from '@/constants/theme';
 import {
     FriendRequestSentItem,
@@ -5,6 +6,7 @@ import {
     UserSearchResult,
 } from '@/services/friend.service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -136,6 +138,7 @@ function EmptyStateIllustration({ type, color }: { type: 'friends' | 'sent' | 's
 
 export default function FriendsScreen(): React.ReactElement {
   const router = useRouter();
+  const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const collaborativePrimary = colors.collaborativePrimary;
@@ -242,10 +245,14 @@ export default function FriendsScreen(): React.ReactElement {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]} entering={FadeInDown.duration(400).springify()}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Friends</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={styles.backBtn} hitSlop={12}>
+            <Ionicons name="menu" size={26} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>Friends</Text>
+        </View>
+        <HomeButton color={colors.text} />
+      </Animated.View>
       </Animated.View>
 
       <Animated.View
@@ -572,10 +579,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     paddingTop: 56,
     borderBottomWidth: 1,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backBtn: {
     marginRight: 12,
