@@ -24,6 +24,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (_email: string, _password: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string, newPassword: string) => Promise<void>;
   initialized: boolean;
   updateUser: (data: Partial<AuthUser>) => Promise<void>;
 }
@@ -146,12 +147,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }): React.React
     await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updatedUser));
   };
 
+  const resetPassword = async (email: string, newPassword: string) => {
+    setLoading(true);
+    try {
+      await authService.resetPassword(email, newPassword);
+    } catch (error: unknown) {
+      console.error('Reset password failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value: AuthContextValue = {
     user,
     token,
     loading,
     login,
     logout,
+    resetPassword,
     updateUser,
     initialized,
   };

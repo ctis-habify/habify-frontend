@@ -106,7 +106,7 @@ export default function LoginScreen(): React.ReactElement {
             />
             <ThemedText style={[styles.rememberText, { color: colors.icon }]}>Remember me</ThemedText>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
             <ThemedText style={[styles.forgotText, { color: colors.primary }]}>Forgot?</ThemedText>
           </TouchableOpacity>
         </View>
