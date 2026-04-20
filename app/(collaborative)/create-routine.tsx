@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -23,6 +24,7 @@ import { useCreateRoutine } from '@/hooks/use-create-routine';
 export default function CreateCollaborativeRoutineScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
+    const insets = useSafeAreaInsets();
     const theme = useColorScheme() ?? 'light';
     const isDark = theme === 'dark';
     const screenGradient = getBackgroundGradient(theme, 'collaborative');
@@ -43,14 +45,18 @@ export default function CreateCollaborativeRoutineScreen() {
     } = useCreateRoutine(categoryIdParam);
 
     const renderHeader = () => (
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 40) }]}>
             <TouchableOpacity 
                 onPress={() => router.back()} 
-                style={[styles.backBtn, { backgroundColor: Colors[theme].surface, position: 'absolute', left: 20, top: 30, zIndex: 10 }]}
+                style={[styles.backBtn, { backgroundColor: Colors[theme].surface }]}
             >
                 <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: Colors[theme].text }]}>Create Collaborative Routine</Text>
+            <View style={{ flex: 1, alignItems: 'center', paddingRight: 40 }}>
+                <Text style={[styles.headerTitle, { color: Colors[theme].text }]} numberOfLines={1}>
+                    Create Collaborative Routine
+                </Text>
+            </View>
         </View>
     );
 
@@ -117,23 +123,21 @@ export default function CreateCollaborativeRoutineScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     header: {
-        paddingTop: 60,
         paddingHorizontal: 20,
         paddingBottom: 20,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
     },
     backBtn: {
         width: 40, height: 40,
         borderRadius: 20,
         alignItems: 'center', justifyContent: 'center',
+        zIndex: 10,
     },
     headerTitle: {
         fontSize: 18, 
         fontWeight: '700',
         textAlign: 'center',
-        top: -20,
     },
     scrollContent: {
         paddingHorizontal: 24,
@@ -163,5 +167,5 @@ const styles = StyleSheet.create({
         elevation: 8,
         borderWidth: 1, 
     },
-    nextStepText: { fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 },
+    nextStepText: { fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5, color: '#FFFFFF' },
 });

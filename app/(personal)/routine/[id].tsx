@@ -23,13 +23,21 @@ import {
   View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
 import { RoutineHistory } from '../../../components/routines/routine-history';
 import { routineService } from '../../../services/routine.service';
 
 const FREQUENCY_ITEMS = [
-  { label: 'Daily', value: 'DAILY' },
-  { label: 'Weekly', value: 'WEEKLY' },
+  { 
+    label: 'Daily', 
+    value: 'DAILY',
+    icon: () => <Ionicons name="sunny" size={20} color="#F59E0B" /> 
+  },
+  { 
+    label: 'Weekly', 
+    value: 'WEEKLY',
+    icon: () => <Ionicons name="calendar-outline" size={20} color="#3B82F6" /> 
+  },
 ];
 
 const parseTime = (timeStr: string) => {
@@ -330,15 +338,15 @@ export default function EditRoutineScreen(): React.ReactElement {
           />
         </Animated.View>
 
-        {/* 4. Edit Modal */}
         <Modal
           visible={isEditModalVisible}
-          animationType="slide"
+          animationType="none"
           transparent
           onRequestClose={() => setIsEditModalVisible(false)}
         >
-          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
-            <View style={[styles.editModalContainer, { backgroundColor: colors.background }]}>
+          <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)} style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+            <TouchableOpacity style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }} activeOpacity={1} onPress={() => setIsEditModalVisible(false)} />
+            <Animated.View entering={FadeInUp.duration(350)} style={[styles.editModalContainer, { backgroundColor: colors.background }]} pointerEvents="box-none">
               <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                 <ThemedText type="subtitle">Edit Routine</ThemedText>
                 <TouchableOpacity onPress={() => setIsEditModalVisible(false)} style={styles.modalCloseBtn}>
@@ -349,9 +357,14 @@ export default function EditRoutineScreen(): React.ReactElement {
               <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                 {/* Time Row */}
                 {frequency_type?.toUpperCase() !== 'WEEKLY' && (
-                  <View style={styles.row}>
-                    <View style={styles.halfInput}>
-                      <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Start Time</ThemedText>
+                  <View style={[styles.row, { gap: 12 }]}>
+                    <View style={[styles.halfInput, { flex: 1 }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 8 }}>
+                         <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#10B98120', alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="time-outline" size={16} color="#10B981" />
+                         </View>
+                         <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Start Time</ThemedText>
+                      </View>
                       <TouchableOpacity
                         style={[styles.timeBox, { backgroundColor: colors.surface, borderColor: colors.border }]}
                         onPress={() => setShowStartTimePicker(true)}
@@ -399,7 +412,12 @@ export default function EditRoutineScreen(): React.ReactElement {
                     </View>
 
                     <View style={styles.halfInput}>
-                      <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>End Time</ThemedText>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 8 }}>
+                         <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#EF444420', alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="time-outline" size={16} color="#EF4444" />
+                         </View>
+                         <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>End Time</ThemedText>
+                      </View>
                       <TouchableOpacity
                         style={[styles.timeBox, { backgroundColor: colors.surface, borderColor: colors.border }]}
                         onPress={() => setShowEndTimePicker(true)}
@@ -449,39 +467,59 @@ export default function EditRoutineScreen(): React.ReactElement {
                 )}
 
                 {/* Name */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 20, marginBottom: 8 }}>
+                   <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#8B5CF620', alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="text-outline" size={16} color="#8B5CF6" />
+                   </View>
+                   <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Routine Name</ThemedText>
+                </View>
                 <TextInput
-                  label="Name"
                   value={routine_name}
                   onChangeText={setName}
                   placeholder="Routine Name"
                 />
 
                 {/* Frequency */}
-                <View style={{ zIndex: 3000, marginTop: 20, marginBottom: 20 }}>
-                  <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Frequency</ThemedText>
-                  <DropDownPicker
-                    open={freqOpen}
-                    value={frequency_type}
-                    items={FREQUENCY_ITEMS}
-                    setOpen={setFreqOpen}
-                    setValue={setFrequencyType}
-                    placeholder="Select Frequency"
-                    theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
-                    style={{
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                      borderRadius: 12,
-                    }}
-                    dropDownContainerStyle={{
-                      backgroundColor: colors.surface,
-                      borderColor: colors.border,
-                    }}
-                    listMode="SCROLLVIEW"
-                  />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                     <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#F59E0B20', alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="repeat" size={16} color="#F59E0B" />
+                     </View>
+                     <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Frequency</ThemedText>
+                  </View>
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 10, marginBottom: 15 }}>
+                  <TouchableOpacity
+                    style={[
+                      {
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: 16,
+                        borderWidth: 2, borderColor: frequency_type === 'DAILY' ? '#F59E0B' : 'transparent',
+                        backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                      },
+                      frequency_type === 'DAILY' && { backgroundColor: '#F59E0B20' }
+                    ]}
+                    onPress={() => setFrequencyType('DAILY')}
+                  >
+                    <Ionicons name="sunny" size={20} color={frequency_type === 'DAILY' ? '#F59E0B' : colors.text} />
+                    <ThemedText style={{ fontSize: 16, fontWeight: '600', color: frequency_type === 'DAILY' ? '#F59E0B' : colors.text }}>Daily</ThemedText>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      {
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: 16,
+                        borderWidth: 2, borderColor: frequency_type === 'WEEKLY' ? '#3B82F6' : 'transparent',
+                        backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                      },
+                      frequency_type === 'WEEKLY' && { backgroundColor: '#3B82F620' }
+                    ]}
+                    onPress={() => setFrequencyType('WEEKLY')}
+                  >
+                    <Ionicons name="calendar-outline" size={20} color={frequency_type === 'WEEKLY' ? '#3B82F6' : colors.text} />
+                    <ThemedText style={{ fontSize: 16, fontWeight: '600', color: frequency_type === 'WEEKLY' ? '#3B82F6' : colors.text }}>Weekly</ThemedText>
+                  </TouchableOpacity>
                 </View>
 
                 {/* Save Button */}
-                <View style={{ marginTop: 12, marginBottom: 8 }}>
+                <View style={{ marginTop: 24, marginBottom: 16 }}>
                   <Button
                     title="Save Changes"
                     onPress={handleSave}
@@ -499,8 +537,8 @@ export default function EditRoutineScreen(): React.ReactElement {
                   style={{ marginBottom: 40 }}
                 />
               </ScrollView>
-            </View>
-          </View>
+            </Animated.View>
+          </Animated.View>
         </Modal>
 
       </ScrollView>
@@ -679,10 +717,17 @@ const styles = StyleSheet.create({
 
   // Edit Modal Styles
   editModalContainer: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    width: '90%',
+    maxWidth: 400,
+    borderRadius: 36,
     paddingTop: 20,
     maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 6,
+    overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -713,7 +758,8 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   iosPickerContainer: {
     paddingBottom: 40,

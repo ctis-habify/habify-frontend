@@ -6,6 +6,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   DeviceEventEmitter,
   Platform,
@@ -157,14 +158,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
   useFocusEffect(
     useCallback(() => {
-      opacity.value = 0;
-      translateX.value = 40;
-      scale.value = 0.97;
-
-      opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-      translateX.value = withSpring(0, ENTER_SPRING);
-      scale.value = withSpring(1, ENTER_SPRING);
-
+      // Only trigger entrance animation if we're not already visible to avoid 'double flash'
+      if (opacity.value === 0) {
+        translateX.value = 40;
+        scale.value = 0.97;
+        opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+        translateX.value = withSpring(0, ENTER_SPRING);
+        scale.value = withSpring(1, ENTER_SPRING);
+      }
       loadLists();
     }, [loadLists]),
   );
@@ -476,6 +477,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               </TouchableOpacity>
             )}
           </View>
+ 
+          {/* Loading State Overlay to prevent 'Double Pass' feeling */}
+          {loading && (
+             <View style={{ paddingVertical: 100, alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator size="large" color={collaborativePrimary} />
+                <Text style={{ marginTop: 15, color: colors.text, opacity: 0.5, fontWeight: '500' }}>Loading routines...</Text>
+             </View>
+          )}
 
 
 

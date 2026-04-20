@@ -1,21 +1,21 @@
 import { routineService } from '@/services/routine.service';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    Platform,
-    ScrollView,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Platform,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import Animated, { FadeInUp, FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -37,8 +37,16 @@ type FormErrors = {
 };
 
 const FREQUENCY_ITEMS = [
-  { label: 'Daily', value: 'DAILY' as FrequencyType },
-  { label: 'Weekly', value: 'WEEKLY' as FrequencyType },
+  {
+    label: 'Daily',
+    value: 'DAILY' as FrequencyType,
+    icon: () => <Ionicons name="sunny" size={20} color="#F59E0B" />
+  },
+  {
+    label: 'Weekly',
+    value: 'WEEKLY' as FrequencyType,
+    icon: () => <Ionicons name="calendar-outline" size={20} color="#3B82F6" />
+  },
 ];
 
 export function CreateRoutineInListModal({
@@ -154,12 +162,13 @@ export function CreateRoutineInListModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <LinearGradient colors={screenColors} style={styles.screen}>
-        <View style={styles.outerWrapper}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)} style={[styles.screen, { backgroundColor: 'rgba(0, 0, 0, 0.6)' }]}>
+        <TouchableOpacity style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }} activeOpacity={1} onPress={onClose} />
+        <Animated.View entering={FadeInUp.duration(350)} style={styles.outerWrapper} pointerEvents="box-none">
           <View style={styles.sheet}>
             <ScrollView
-              contentContainerStyle={[styles.content, { paddingBottom: 60 }]}
+              contentContainerStyle={styles.content}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
               nestedScrollEnabled
@@ -172,7 +181,12 @@ export function CreateRoutineInListModal({
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Routine Name</Text>
+              <View style={[styles.detailLabelRow, { marginTop: 10 }]}>
+                <View style={[styles.iconBox, { backgroundColor: '#8B5CF620' }]}>
+                  <Ionicons name="text-outline" size={16} color="#8B5CF6" />
+                </View>
+                <Text style={styles.sectionLabel}>Routine Name</Text>
+              </View>
               <View
                 style={[
                 styles.inputContainer,
@@ -203,51 +217,56 @@ export function CreateRoutineInListModal({
               ) : null}
 
               {/* Frequency */}
-              <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Frequency</Text>
-              <View style={{ ...(Platform.OS === 'ios' && { zIndex: 2000 }) }}>
-                <DropDownPicker
-                  open={freqOpen}
-                  value={frequency}
-                  items={FREQUENCY_ITEMS}
-                  setOpen={setFreqOpen}
-                  setValue={(callback) => {
-                    setFrequency((prev) => {
-                      const nextValue =
-                        typeof callback === 'function' ? callback(prev) : callback;
-                      setErrors((current) => ({
-                        ...current,
-                        frequency: undefined,
-                        timeRange: undefined,
-                      }));
-                      return nextValue;
-                    });
-                  }}
-                  onOpen={onFreqOpen}
-                  placeholder="Select Frequency"
-                  style={[
-                    dropDownStyle,
-                    errors.frequency ? { borderColor: colors.error } : null,
-                  ]}
-                  textStyle={{ color: colors.text, fontSize: 16 }}
-                  dropDownContainerStyle={{
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                  }}
-                  placeholderStyle={{ color: colors.icon }}
-                  listMode="SCROLLVIEW"
-                  theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
-                  zIndex={2000}
-                  zIndexInverse={1000}
-                />
-                {errors.frequency ? (
-                  <Text style={styles.errorText}>{errors.frequency}</Text>
-                ) : null}
+              <View style={styles.detailLabelRow}>
+                <View style={[styles.iconBox, { backgroundColor: '#F59E0B20' }]}>
+                  <Ionicons name="repeat" size={16} color="#F59E0B" />
+                </View>
+                <Text style={styles.sectionLabel}>Frequency</Text>
               </View>
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 10, marginBottom: 15 }}>
+                <TouchableOpacity
+                  style={[
+                    {
+                      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: 16,
+                      borderWidth: 2, borderColor: frequency === 'DAILY' ? '#F59E0B' : 'transparent',
+                      backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    },
+                    frequency === 'DAILY' && { backgroundColor: '#F59E0B20' }
+                  ]}
+                  onPress={() => { setFrequency('DAILY'); setErrors((prev) => ({...prev, frequency: undefined, timeRange: undefined })); }}
+                >
+                  <Ionicons name="sunny" size={20} color={frequency === 'DAILY' ? '#F59E0B' : colors.text} />
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: frequency === 'DAILY' ? '#F59E0B' : colors.text }}>Daily</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    {
+                      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: 16,
+                      borderWidth: 2, borderColor: frequency === 'WEEKLY' ? '#3B82F6' : 'transparent',
+                      backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    },
+                    frequency === 'WEEKLY' && { backgroundColor: '#3B82F620' }
+                  ]}
+                  onPress={() => { setFrequency('WEEKLY'); setErrors((prev) => ({...prev, frequency: undefined, timeRange: undefined })); }}
+                >
+                  <Ionicons name="calendar-outline" size={20} color={frequency === 'WEEKLY' ? '#3B82F6' : colors.text} />
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: frequency === 'WEEKLY' ? '#3B82F6' : colors.text }}>Weekly</Text>
+                </TouchableOpacity>
+              </View>
+              {errors.frequency ? (
+                <Text style={styles.errorText}>{errors.frequency}</Text>
+              ) : null}
 
               {/* Time Selection Toggle (Only for DAILY) */}
               {frequency === 'DAILY' && (
-                <View style={[styles.rowSpace, { marginTop: 20, alignItems: 'center' }]}>
-                  <Text style={styles.sectionLabel}>Set specific time</Text>
+                <View style={styles.rowSpace}>
+                  <View style={[styles.detailLabelRow, { marginTop: 0 }]}>
+                    <View style={[styles.iconBox, { backgroundColor: '#10B98120' }]}>
+                      <Ionicons name="time-outline" size={16} color="#10B981" />
+                    </View>
+                    <Text style={styles.sectionLabel}>Set specific time</Text>
+                  </View>
                   <Switch
                     value={hasSpecificTime}
                     onValueChange={setHasSpecificTime}
@@ -376,22 +395,22 @@ export function CreateRoutineInListModal({
               ) : null}
 
               <TouchableOpacity
-                style={[styles.createBtn, { marginTop: 40 }]}
+                style={styles.createBtn}
                 onPress={handleCreate}
                 disabled={isSubmitting || !routineListId}
               >
                 {isSubmitting ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={{ color: colors.white, fontWeight: '800', fontSize: 16 }}>
+                  <Text style={{ color: colors.white, fontWeight: '600', fontSize: 17, letterSpacing: 0.5 }}>
                     Create New Routine
                   </Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
           </View>
-        </View>
-      </LinearGradient>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }

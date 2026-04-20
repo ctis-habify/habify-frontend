@@ -8,14 +8,15 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
-import DropDownPicker from 'react-native-dropdown-picker';
+import Animated, { FadeInUp, FadeIn, FadeOut } from 'react-native-reanimated';
 
-import { HomeButton } from '@/components/navigation/home-button';
+
 import { Colors, getBackgroundGradient, BACKGROUND_GRADIENT_DARK } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -261,125 +262,74 @@ export function CreateRoutineModal({
   };
 
   return (
-    <LinearGradient colors={screenColors} style={styles.screen}>
-      <View style={styles.outerWrapper}>
+    <Modal visible={true} transparent animationType="none" onRequestClose={handleClose}>
+      <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(300)} style={[styles.screen, { backgroundColor: 'rgba(0, 0, 0, 0.6)' }]}>
+        <TouchableOpacity style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }} activeOpacity={1} onPress={handleClose} />
+          <Animated.View entering={FadeInUp.duration(350)} style={styles.outerWrapper} pointerEvents="box-none">
         <View style={[styles.sheet, { overflow: 'visible' }]}>
           <ScrollView
-            contentContainerStyle={[styles.content, { paddingBottom: 60 }]}
+            contentContainerStyle={styles.content}
             nestedScrollEnabled
             keyboardShouldPersistTaps="handled"
             scrollEnabled={!catOpen}
           >
             <View style={styles.headerRow}>
-              <Text style={[styles.title, { color: colors.text }]}>
+              <Text style={styles.title}>
                 {isEditMode ? 'Edit List' : 'Create Routine List'}
               </Text>
               <View style={styles.headerButtons}>
-                <HomeButton color={colors.text} />
                 <TouchableOpacity onPress={handleClose} hitSlop={12}>
                   <Ionicons name="close" size={30} color={colors.text} />
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Category Section */}
-            <Text style={[styles.sectionLabel, { color: colors.icon }]}>Category</Text>
-            <View style={[styles.row, { zIndex: 9999, alignItems: 'center' }]}>
-              <View style={styles.flexOneMarRight}>
-                <DropDownPicker
-                  open={catOpen}
-                  value={category}
-                  items={categoryItems}
-                  setOpen={setCatOpen}
-                  setValue={(callback) => {
-                    setCategory((prev) => {
-                      const nextValue = typeof callback === 'function' ? callback(prev) : callback;
-                      setErrors((current) => ({ ...current, category: undefined }));
-                      return nextValue;
-                    });
-                  }}
-                  loading={loadingCategories}
-                  placeholder="Select Category"
-                  style={[
-                    dropDownStyle,
-                    errors.category ? { backgroundColor: colors.surface, borderColor: colors.error } : null,
-                  ]}
-                  textStyle={{ color: colors.text, fontSize: 16 }}
-                  placeholderStyle={{ color: colors.icon }}
-                  listMode="SCROLLVIEW"
-                  dropDownContainerStyle={{
-                    backgroundColor: colors.card,
-                    borderColor: colors.primary,
-                    borderRadius: 12,
-                    elevation: 5,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 5,
-                  }}
-                  modalContentContainerStyle={{
-                    backgroundColor: colors.background,
-                  }}
-                  searchPlaceholder="Search..."
-                  searchable={true}
-                  closeAfterSelecting={true}
-                  theme={isDark ? 'DARK' : 'LIGHT'}
-                  zIndex={5000}
-                  zIndexInverse={1000}
-                />
-                {errors.category && (
-                  <Text style={styles.errorText}>{errors.category}</Text>
-                )}
-              </View>
-
-              <View style={styles.categoryActionButtons}>
-                {category !== null && (
-                  <TouchableOpacity
-                    style={[
-                      styles.addIconBtn,
-                      {
-                        width: 44,
-                        height: 44,
-                        borderRadius: 22,
-                        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)',
-                        borderWidth: 1,
-                        borderColor: 'rgba(239, 68, 68, 0.2)',
-                      },
-                    ]}
-                    onPress={handleDeleteCategory}
-                    disabled={isDeleting}
-                    hitSlop={15}
-                  >
-                    {isDeleting ? (
-                      <ActivityIndicator size="small" color={colors.error} />
-                    ) : (
-                      <Ionicons name="trash-outline" size={24} color={colors.error} />
-                    )}
+            {/* Category Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, marginBottom: 12 }}>
+               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                 <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#8B5CF620', alignItems: 'center', justifyContent: 'center' }}>
+                   <Ionicons name="folder-open" size={16} color="#8B5CF6" />
+                 </View>
+                 <Text style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Category</Text>
+               </View>
+               <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {category !== null && (
+                    <TouchableOpacity onPress={handleDeleteCategory} disabled={isDeleting} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)' }}>
+                       {isDeleting ? <ActivityIndicator size="small" color={colors.error} /> : <Ionicons name="trash-outline" size={16} color={colors.error} />}
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity onPress={() => setShowNewCategoryInput(!showNewCategoryInput)} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 5, shadowOffset: { width:0, height:2 }, elevation: 3 }}>
+                     <Ionicons name="add" size={20} color="#fff" />
                   </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  style={[
-                    styles.addIconBtn,
-                    {
-                      width: 44,
-                      height: 44,
-                      borderRadius: 22,
-                      backgroundColor: isDark ? colors.secondary : colors.primary,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.2,
-                      shadowRadius: 8,
-                      elevation: 4,
-                    },
-                  ]}
-                  onPress={() => setShowNewCategoryInput((prev) => !prev)}
-                  hitSlop={10}
-                >
-                  <Ionicons name="add" size={24} color={colors.white} />
-                </TouchableOpacity>
-              </View>
+               </View>
             </View>
+
+            {/* Category Chips Horizontal */}
+            {loadingCategories ? (
+               <ActivityIndicator style={{ paddingVertical: 15 }} color={colors.primary} />
+            ) : (
+               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 5 }} style={{ marginBottom: 15, zIndex: 10 }}>
+                 {categoryItems.map(item => {
+                    const isSelected = category === item.value;
+                    return (
+                       <TouchableOpacity
+                          key={item.value}
+                          onPress={() => { setCategory(item.value); setErrors(prev => ({...prev, category: undefined})); }}
+                          style={[
+                            { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : colors.surface },
+                            isSelected && { backgroundColor: '#8B5CF6', borderColor: '#8B5CF6', shadowColor: '#8B5CF6', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 4 }
+                          ]}
+                       >
+                          <Text style={{ fontSize: 14, fontWeight: isSelected ? '700' : '500', color: isSelected ? '#fff' : colors.text }}>{item.label}</Text>
+                       </TouchableOpacity>
+                    );
+                 })}
+                 {categoryItems.length === 0 && (
+                   <Text style={{ color: colors.icon, fontStyle: 'italic', paddingVertical: 10 }}>No categories available.</Text>
+                 )}
+               </ScrollView>
+            )}
+            {errors.category && <Text style={styles.errorText}>{errors.category}</Text>}
 
             {/* New Category Input */}
             {showNewCategoryInput && (
@@ -417,7 +367,12 @@ export function CreateRoutineModal({
             )}
 
             {/* Routine List Title */}
-            <Text style={[styles.sectionLabel, { marginTop: 24, color: colors.icon }]}>List Title</Text>
+            <View style={styles.detailLabelRow}>
+              <View style={[styles.iconBox, { backgroundColor: '#8B5CF620' }]}>
+                <Ionicons name="text" size={16} color="#8B5CF6" />
+              </View>
+              <Text style={styles.sectionLabel}>List Title</Text>
+            </View>
             <View
               style={[
                 styles.inputContainer,
@@ -452,7 +407,6 @@ export function CreateRoutineModal({
               style={[
                 styles.createBtn,
                 {
-                  marginTop: 48,
                   backgroundColor: isDark ? colors.secondary : colors.primary,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 6 },
@@ -474,7 +428,8 @@ export function CreateRoutineModal({
             </TouchableOpacity>
           </ScrollView>
         </View>
-      </View>
-    </LinearGradient>
+      </Animated.View>
+    </Animated.View>
+    </Modal>
   );
 }

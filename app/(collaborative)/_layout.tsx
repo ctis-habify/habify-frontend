@@ -13,8 +13,9 @@ export default function AppLayout(): React.ReactElement {
       <Stack.Screen
         name="create-routine"
         options={{
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
+          presentation: 'transparentModal',
+          animation: 'fade',
+          contentStyle: { backgroundColor: 'transparent' },
         }}
       />
       <Stack.Screen
