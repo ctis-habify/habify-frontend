@@ -867,7 +867,7 @@ export default function CollaborativeChatScreen() {
 
         {predefinedMessages.length > 0 && (
           <TouchableOpacity
-            style={styles.openReplyBar, { backgroundColor: colors.card, borderTopColor: colors.border }}
+            style={[styles.openReplyBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}
             onPress={() => {
               setSelectedPredefinedMessage(null);
               setTaggedParticipant(null);
@@ -1067,7 +1067,7 @@ export default function CollaborativeChatScreen() {
                                       <ActivityIndicator size="small" color={accentColor} />
                                     ) : null}
                                     <Text
-                                      style={[styles.quickReplyText, { color: accentColor }]}
+                                      style={[styles.quickReplyBtnText, { color: accentColor }]}
                                       numberOfLines={2}
                                     >
                                       {message.text}

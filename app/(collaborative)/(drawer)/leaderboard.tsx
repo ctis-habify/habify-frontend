@@ -164,7 +164,6 @@ export default function LeaderboardScreen(): React.ReactElement {
         </View>
         <HomeButton color={colors.text} />
       </Animated.View>
-      </Animated.View>
 
       {/* Subtitle pill */}
       <Animated.View style={styles.subtitleWrap} entering={FadeIn.delay(80).duration(320)}>

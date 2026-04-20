@@ -94,7 +94,6 @@ export default function AddFriendScreen(): React.ReactElement {
         </View>
         <HomeButton color={colors.text} />
       </View>
-      </View>
 
       <View style={styles.searchRow}>
         <View style={[styles.inputWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>

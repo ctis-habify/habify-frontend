@@ -176,6 +176,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                     )}
                 </View>
                 {!isMember && (
+                    <TouchableOpacity
                         style={[
                             styles.inviteBtn,
                             isInvited 

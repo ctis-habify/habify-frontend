@@ -253,7 +253,6 @@ export default function FriendsScreen(): React.ReactElement {
         </View>
         <HomeButton color={colors.text} />
       </Animated.View>
-      </Animated.View>
 
       <Animated.View
         style={styles.segmentBarWrapper}
@@ -493,7 +492,8 @@ export default function FriendsScreen(): React.ReactElement {
                 </Animated.View>
               )}
             />
-          )}
+          )
+        }
         </>
         </Animated.View>
       )}
@@ -564,7 +564,8 @@ export default function FriendsScreen(): React.ReactElement {
               )}
             />
             </>
-          )}
+          )
+        }
         </>
         </Animated.View>
       )}

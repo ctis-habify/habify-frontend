@@ -320,7 +320,8 @@ export function PokeAnimation({
                     textStyle,
                     { 
                         backgroundColor: `${colors.collaborativePrimary}26`, // 15% opacity
-                        borderColor: colors.collaborativePrimary
+                        borderColor: colors.collaborativePrimary,
+                        shadowColor: colors.collaborativePrimary
                     }
                 ]}>
                     <Text style={[styles.pokeText, { color: colors.white }]}>
@@ -362,15 +363,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 26,
         paddingVertical: 12,
         borderRadius: 24,
-        backgroundColor: `${colors.collaborativePrimary}47`, // ~28% opacity
         borderWidth: 1.5,
-        borderColor: `${colors.collaborativePrimary}80`, // ~50% opacity
-        shadowColor: colors.collaborativePrimary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 6,
-
     },
     pokeText: {
         fontSize: 18,

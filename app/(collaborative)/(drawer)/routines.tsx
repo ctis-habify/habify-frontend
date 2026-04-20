@@ -374,7 +374,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                   <Text style={styles.discoverySubtitle}>Discover public groups & join new habits</Text>
                 </View>
                 <View style={styles.discoveryIconBox}>
-                  <Ionicons name="search" size={20} color={COLLABORATIVE_PRIMARY} />
+                  <Ionicons name="search" size={20} color={collaborativePrimary} />
                 </View>
               </View>
             </LinearGradient>
@@ -391,7 +391,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
                 theme={isDark ? "DARK" : "LIGHT"}
                 style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: colors.shadow }]}
+                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)' }]}
                 placeholder={loadingCategories ? "Loading..." : "Category"}
                 placeholderStyle={{ color: colors.icon, fontSize: 12, opacity: 0.6 }}
                 textStyle={{ color: colors.text, fontSize: 12 }}
@@ -415,7 +415,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string | null>>}
                 theme={isDark ? "DARK" : "LIGHT"}
                 style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: colors.shadow }]}
+                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)' }]}
                 placeholder="Frequency"
                 placeholderStyle={{ color: colors.icon, fontSize: 12, opacity: 0.6 }}
                 textStyle={{ color: colors.text, fontSize: 12 }}
