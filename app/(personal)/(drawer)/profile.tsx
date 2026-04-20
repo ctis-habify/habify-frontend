@@ -1,3 +1,4 @@
+import { AVATARS, getAvatarUri } from '@/constants/avatars';
 import { HomeButton } from '@/components/navigation/home-button';
 import { CupIndicator } from '@/components/cup-indicator';
 import { FriendList } from '@/components/profile/FriendList';
@@ -77,25 +78,7 @@ export default function ProfileScreen() {
     [router],
   );
 
-  // Helper for Avatar URL
-  const getAvatarUrl = (id?: string) => {
-    switch (id) {
-      case 'avatar1':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix';
-      case 'avatar2':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka';
-      case 'avatar3':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob';
-      case 'avatar4':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack';
-      case 'avatar5':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly';
-      default:
-        return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(displayName)}`;
-    }
-  };
-
-  const avatarUrl = getAvatarUrl(user?.avatar);
+  const avatarUrl = getAvatarUri(user?.avatar, displayName);
 
   return (
     <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>

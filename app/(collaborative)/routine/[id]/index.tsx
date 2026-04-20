@@ -544,11 +544,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                 </View>
                 <View style={[styles.metaPill, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
                   <ThrobbingHeart lives={displayLives} size={13} />
-<<<<<<< Updated upstream:app/(collaborative)/routine/[id]/index.tsx
-                  <Text style={[styles.metaPillText, { color: colors.text }]}>Lives {displayLives}</Text>
-=======
-                  <Text style={styles.metaPillText}>Lives {displayLives}/{displayMaxLives}</Text>
->>>>>>> Stashed changes:app/(collaborative)/routine/[id].tsx
+                  <Text style={[styles.metaPillText, { color: colors.text }]}>Lives {displayLives}/{displayMaxLives}</Text>
                 </View>
                 <View style={[styles.metaPill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                   <AnimatedFlame streak={displayStreak} size={13} />

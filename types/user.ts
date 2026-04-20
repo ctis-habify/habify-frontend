@@ -8,6 +8,7 @@ export interface User {
   totalXp: number;
   currentStreak: number;
   birthDate?: string;
+  avatar?: string;
   fcmToken?: string;
   createdAt: string;
   updatedAt: string;
@@ -18,6 +19,7 @@ export interface UserUpdateDto {
   name?: string;
   gender?: UserGender;
   birthDate?: string;
+  avatar?: string;
   fcmToken?: string;
 }
 

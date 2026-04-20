@@ -173,15 +173,10 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                 <View style={[styles.statsBar, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.03)' }]}>
                     <View style={styles.statItem}>
                         <ThrobbingHeart lives={lives} size={16} />
-<<<<<<< Updated upstream
                         <Text style={[styles.statLabel, { color: colors.icon }]}>Lives: </Text>
-                        <Text style={[styles.statValue, { color: colors.text }]}>{lives}</Text>
-=======
-                        <Text style={styles.statLabel}>Lives: </Text>
-                        <Text style={styles.statValue}>
+                        <Text style={[styles.statValue, { color: colors.text }]}>
                             {lives}{safeRoutine.maxLives ? `/${safeRoutine.maxLives}` : ''}
                         </Text>
->>>>>>> Stashed changes
                     </View>
                     <View style={[styles.divider, { height: '60%', backgroundColor: colors.border }]} />
                     <View style={styles.statItem}>

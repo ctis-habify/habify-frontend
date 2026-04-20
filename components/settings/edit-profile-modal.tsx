@@ -1,3 +1,4 @@
+import { AVATARS } from '@/constants/avatars';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { User, UserUpdateDto } from '@/types/user';
@@ -6,8 +7,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,7 +23,7 @@ export interface EditProfileModalProps {
     visible: boolean;
     onClose: () => void;
     user: User;
-    field: 'name' | 'birthDate';
+    field: 'name' | 'birthDate' | 'avatar';
     onSave: (data: UserUpdateDto) => Promise<void>;
 }
 
@@ -35,20 +38,27 @@ export function EditProfileModal({
     const [birthDate, setBirthDate] = useState<Date>(
       user.birthDate ? new Date(user.birthDate) : new Date(2000, 0, 1),
     );
+    const [selectedAvatar, setSelectedAvatar] = useState(user.avatar || 'avatar1');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const theme = useColorScheme() ?? 'light';
     const isDark = theme === 'dark';
     const isEditingName = field === 'name';
-    const modalTitle = isEditingName ? 'Edit Profile' : 'Edit Birth Date';
+    const isEditingAvatar = field === 'avatar';
+    
+    let modalTitle = 'Edit Profile';
+    if (field === 'birthDate') modalTitle = 'Edit Birth Date';
+    if (field === 'avatar') modalTitle = 'Change Avatar';
+
     const dateText = useMemo(() => birthDate.toLocaleDateString(), [birthDate]);
 
     useEffect(() => {
       if (!visible) return;
       setName(user.name ?? '');
       setBirthDate(user.birthDate ? new Date(user.birthDate) : new Date(2000, 0, 1));
-      setShowDatePicker(!isEditingName && Platform.OS === 'ios');
-    }, [visible, user.name, user.birthDate, isEditingName]);
+      setSelectedAvatar(user.avatar || 'avatar1');
+      setShowDatePicker(field === 'birthDate' && Platform.OS === 'ios');
+    }, [visible, user.name, user.birthDate, user.avatar, field]);
 
     const handleSave = async () => {
         if (isEditingName && !name.trim()) return;
@@ -57,13 +67,14 @@ export function EditProfileModal({
         try {
             if (isEditingName) {
               await onSave({ name: name.trim() });
+            } else if (isEditingAvatar) {
+              await onSave({ avatar: selectedAvatar });
             } else {
               await onSave({ birthDate: birthDate.toISOString().split('T')[0] });
             }
             onClose();
         } catch (error) {
             console.error('Failed to update profile', error);
-            // TODO: Show error toast
         } finally {
             setLoading(false);
         }
@@ -113,7 +124,7 @@ export function EditProfileModal({
                     </View>
 
                     <View style={styles.form}>
-                        {isEditingName ? (
+                        {isEditingName && (
                           <>
                             <Text style={[styles.label, { color: Colors[theme].textSecondary }]}>Full Name</Text>
                             <TextInput
@@ -131,7 +142,9 @@ export function EditProfileModal({
                                 placeholderTextColor={Colors[theme].textTertiary}
                             />
                           </>
-                        ) : (
+                        )}
+                        
+                        {field === 'birthDate' && (
                           <>
                             <Text style={[styles.label, { color: Colors[theme].textSecondary }]}>Birth Date</Text>
                             <TouchableOpacity
@@ -164,6 +177,40 @@ export function EditProfileModal({
                               />
                             )}
                           </>
+                        )}
+
+                        {isEditingAvatar && (
+                          <View style={styles.avatarSection}>
+                            <Text style={[styles.label, { color: Colors[theme].textSecondary, marginBottom: 16 }]}>Choose your look</Text>
+                            <ScrollView 
+                              horizontal 
+                              showsHorizontalScrollIndicator={false}
+                              contentContainerStyle={styles.avatarGrid}
+                            >
+                              {AVATARS.map((avatar) => (
+                                <TouchableOpacity
+                                  key={avatar.id}
+                                  onPress={() => setSelectedAvatar(avatar.id)}
+                                  activeOpacity={0.8}
+                                  style={[
+                                    styles.avatarOption,
+                                    { borderColor: Colors[theme].border },
+                                    selectedAvatar === avatar.id && { 
+                                      borderColor: Colors[theme].primary,
+                                      backgroundColor: `${Colors[theme].primary}15`
+                                    }
+                                  ]}
+                                >
+                                  <Image source={{ uri: avatar.uri }} style={styles.avatarImage} />
+                                  {selectedAvatar === avatar.id && (
+                                    <View style={[styles.checkBadge, { backgroundColor: Colors[theme].primary }]}>
+                                      <Ionicons name="checkmark" size={12} color="white" />
+                                    </View>
+                                  )}
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
+                          </View>
                         )}
 
                         <TouchableOpacity
@@ -252,6 +299,41 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: '600',
     },
+    avatarSection: {
+      marginVertical: 4,
+    },
+    avatarGrid: {
+      gap: 12,
+      paddingHorizontal: 4,
+      paddingVertical: 8,
+    },
+    avatarOption: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      borderWidth: 3,
+      padding: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+    },
+    avatarImage: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 30,
+    },
+    checkBadge: {
+      position: 'absolute',
+      bottom: -2,
+      right: -2,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: 'white',
+    },
     saveButton: {
         borderRadius: 18,
         padding: 18,
@@ -271,3 +353,4 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
 });
+

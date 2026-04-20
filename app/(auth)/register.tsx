@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { authService } from '../../services/auth.service';
+import { AVATARS } from '@/constants/avatars';
 
 type RegisterErrors = {
   name?: string;
@@ -48,13 +49,6 @@ export default function SignupScreen(): React.ReactElement {
   const [selectedAvatar, setSelectedAvatar] = useState('avatar1');
   const [isLoading, setIsLoading] = useState(false);
 
-  const AVATARS = [
-    { id: 'avatar1', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix' },
-    { id: 'avatar2', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka' },
-    { id: 'avatar3', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob' },
-    { id: 'avatar4', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack' },
-    { id: 'avatar5', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly' },
-  ];
 
   const validateForm = () => {
     const nextErrors: RegisterErrors = {};

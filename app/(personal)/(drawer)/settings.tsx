@@ -28,7 +28,7 @@ export default function SettingsScreen(): React.ReactElement {
   const colors = Colors[colorScheme];
   const { theme, toggleTheme } = useThemeControl();
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingField, setEditingField] = useState<'name' | 'birthDate'>('name');
+  const [editingField, setEditingField] = useState<'name' | 'birthDate' | 'avatar'>('name');
   const [notifications, setNotifications] = useState(true);
 
   // Quiet Mode Helpers
@@ -161,6 +161,10 @@ export default function SettingsScreen(): React.ReactElement {
     setEditingField('birthDate');
     setModalVisible(true);
   }, []);
+  const handleOpenAvatarModal = useCallback(() => {
+    setEditingField('avatar');
+    setModalVisible(true);
+  }, []);
   const handleCloseModal = useCallback(() => setModalVisible(false), []);
 
   return (
@@ -187,6 +191,12 @@ export default function SettingsScreen(): React.ReactElement {
             label="Name"
             value={user?.name || 'User'}
             onPress={handleOpenNameModal}
+          />
+          <SettingsItem
+            icon="happy-outline"
+            label="Avatar"
+            value="Change"
+            onPress={handleOpenAvatarModal}
           />
           <SettingsItem
             icon="mail-outline"
