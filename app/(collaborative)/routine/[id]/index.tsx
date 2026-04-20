@@ -279,6 +279,10 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     livesFromParams ??
     detailNumber(routineDetail, ['lives']) ??
     0;
+  const displayMaxLives =
+    detailNumber(routineDetail, ['maxLives']) ??
+    detailNumber(routineDetail, ['rules.lives']) ??
+    displayLives;
   const displayStreak =
     streakFromParams ??
     detailNumber(routineDetail, ['streak']) ??
@@ -363,7 +367,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     rows.push(
       { label: 'Frequency', value: displayFrequency },
       { label: 'Visibility', value: displayVisibility },
-      { label: 'Lives', value: String(displayLives) },
+      { label: 'Lives', value: `${displayLives}/${displayMaxLives}` },
       { label: 'Streak', value: String(displayStreak) },
     );
 
@@ -540,7 +544,11 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                 </View>
                 <View style={[styles.metaPill, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
                   <ThrobbingHeart lives={displayLives} size={13} />
+<<<<<<< Updated upstream:app/(collaborative)/routine/[id]/index.tsx
                   <Text style={[styles.metaPillText, { color: colors.text }]}>Lives {displayLives}</Text>
+=======
+                  <Text style={styles.metaPillText}>Lives {displayLives}/{displayMaxLives}</Text>
+>>>>>>> Stashed changes:app/(collaborative)/routine/[id].tsx
                 </View>
                 <View style={[styles.metaPill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                   <AnimatedFlame streak={displayStreak} size={13} />
