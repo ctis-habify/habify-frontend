@@ -1,4 +1,3 @@
-import { HomeButton } from '@/components/navigation/home-button';
 import { useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -7,9 +6,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter, Platform, StatusBar, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
-  FadeInDown,
-  FadeOutUp,
-  LinearTransition,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -197,7 +193,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
     });
     
     return () => sub.remove();
-  }, [load]);
+  }, [load, isFocused]);
 
   // Handled by useEffect above
 
@@ -212,9 +208,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         />
 
       <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <View style={styles.header}>
-          <HomeButton color="#fff" style={styles.menuButton} />
-        </View>
         <View style={styles.content}>
           <TodayRoutinesList
             items={items}

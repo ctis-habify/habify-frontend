@@ -126,6 +126,7 @@ export default function CameraModal(): React.ReactElement {
       if (result.status === 'succeeded' || result.verified) {
         setIsUploading(false);
         DeviceEventEmitter.emit('refreshPersonalRoutines');
+        DeviceEventEmitter.emit('PERSONAL_ROUTINE_COMPLETED');
         Alert.alert('Success', 'AI verified your routine! Great job!', [
           { text: 'Awesome', onPress: () => router.back() },
         ]);
@@ -157,6 +158,7 @@ export default function CameraModal(): React.ReactElement {
       if (result.status === 'succeeded' || result.verified) {
         setIsUploading(false);
         DeviceEventEmitter.emit('refreshPersonalRoutines');
+        DeviceEventEmitter.emit('PERSONAL_ROUTINE_COMPLETED');
         Alert.alert('Success', 'AI verified your routine! Great job!', [
           { text: 'Awesome', onPress: () => router.back() },
         ]);
