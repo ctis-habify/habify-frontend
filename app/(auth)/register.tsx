@@ -10,7 +10,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
-import { Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { authService } from '../../services/auth.service';
 
@@ -44,17 +44,24 @@ export default function SignupScreen(): React.ReactElement {
   const [gender, setGender] = useState('');
   const [genderOpen, setGenderOpen] = useState(false);
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<RegisterErrors>({});
-  const [selectedAvatar, setSelectedAvatar] = useState('avatar1');
-  const [isLoading, setIsLoading] = useState(false);
-
   const AVATARS = [
     { id: 'avatar1', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix' },
     { id: 'avatar2', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka' },
     { id: 'avatar3', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob' },
     { id: 'avatar4', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack' },
     { id: 'avatar5', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly' },
+    { id: 'avatar6', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Sophia' },
+    { id: 'avatar7', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=George' },
+    { id: 'avatar8', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Elena' },
+    { id: 'avatar9', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Klaus' },
+    { id: 'avatar10', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Zoe' },
+    { id: 'avatar11', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Oliver' },
+    { id: 'avatar12', uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Sarah' },
   ];
+
+  const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0].uri);
+  const [errors, setErrors] = useState<RegisterErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
     const nextErrors: RegisterErrors = {};
@@ -202,12 +209,18 @@ export default function SignupScreen(): React.ReactElement {
                            mode="date"
                            display="spinner"
                            maximumDate={new Date()}
+                           textColor={colors.text}
+                           themeVariant={theme === 'dark' ? 'dark' : 'light'}
                            onChange={(e, d) => {
-                              if (d) {
-                                setDateObject(d);
-                                setBirthDate(d.toISOString().split('T')[0]);
-                                setErrors((prev) => ({ ...prev, birthDate: undefined }));
-                              }
+                             if (d) {
+                               setDateObject(d);
+                               // Format locally to avoid timezone shifts
+                               const year = d.getFullYear();
+                               const month = String(d.getMonth() + 1).padStart(2, '0');
+                               const day = String(d.getDate()).padStart(2, '0');
+                               setBirthDate(`${year}-${month}-${day}`);
+                               setErrors((prev) => ({ ...prev, birthDate: undefined }));
+                             }
                            }}
                          />
                       </View>
@@ -220,10 +233,16 @@ export default function SignupScreen(): React.ReactElement {
                   display="default"
                   maximumDate={new Date()}
                   onChange={(e, d) => {
-                     setShowDatePicker(false);
+                     if (Platform.OS === 'android') {
+                       setShowDatePicker(false);
+                     }
                      if (d) {
                        setDateObject(d);
-                       setBirthDate(d.toISOString().split('T')[0]);
+                       // Format locally to avoid timezone shifts
+                       const year = d.getFullYear();
+                       const month = String(d.getMonth() + 1).padStart(2, '0');
+                       const day = String(d.getDate()).padStart(2, '0');
+                       setBirthDate(`${year}-${month}-${day}`);
                        setErrors((prev) => ({ ...prev, birthDate: undefined }));
                      }
                   }}
@@ -286,34 +305,38 @@ export default function SignupScreen(): React.ReactElement {
         />
 
         {/* Avatar Selection */}
-        <View style={{ marginBottom: 12 }}>
+        <View style={{ marginBottom: 20 }}>
           <ThemedText type="label" style={{ marginBottom: 12, marginLeft: 4, color: colors.icon }}>
             Select Avatar
           </ThemedText>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12, paddingRight: 20 }}
+          >
             {AVATARS.map((av) => (
               <TouchableOpacity
                 key={av.id}
-                onPress={() => setSelectedAvatar(av.id)}
+                onPress={() => setSelectedAvatar(av.uri)}
                 style={{
                   borderWidth: 3,
-                  borderColor: selectedAvatar === av.id ? colors.primary : 'transparent',
-                  borderRadius: 30, // fully rounded padding
+                  borderColor: selectedAvatar === av.uri ? colors.primary : 'transparent',
+                  borderRadius: 35,
                   padding: 2,
                 }}
               >
                <Image 
                  source={{ uri: av.uri }} 
                  style={{
-                   width: 45,
-                   height: 45,
-                   borderRadius: 22.5,
+                   width: 54,
+                   height: 54,
+                   borderRadius: 27,
                    backgroundColor: colors.surface,
                  }} 
                />
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         </View>
 
         <Button 

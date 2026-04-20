@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -39,6 +39,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   const [loading, setLoading] = React.useState<'approve' | 'reject' | null>(null);
   const badgeScale = React.useRef(new Animated.Value(1)).current;
   const sparkleOpacity = React.useRef(new Animated.Value(0.7)).current;
+  const glowAnim = React.useRef(new Animated.Value(0)).current;
   
   const hasApproved = log.status === 'approved';
   const hasRejected = log.status === 'rejected';
@@ -85,20 +86,28 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
     .filter(Boolean)
     .slice(0, 3);
 
+  // Mini konfeti tanecikleri için rastgele pozisyonlar
+  const miniSparkles = useMemo(() => [
+    { top: -2, left: 10, scale: 0.8, delay: 0 },
+    { top: 10, right: -4, scale: 1.1, delay: 200 },
+    { bottom: 5, left: -6, scale: 0.9, delay: 400 },
+    { bottom: -3, right: 15, scale: 0.7, delay: 600 },
+  ], []);
+
   React.useEffect(() => {
     if (log.status !== 'approved') return;
 
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(badgeScale, {
-          toValue: 1.08,
-          duration: 450,
+          toValue: 1.15,
+          duration: 500,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
         Animated.timing(badgeScale, {
           toValue: 1,
-          duration: 450,
+          duration: 500,
           easing: Easing.inOut(Easing.quad),
           useNativeDriver: true,
         }),
@@ -109,12 +118,29 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
       Animated.sequence([
         Animated.timing(sparkleOpacity, {
           toValue: 1,
-          duration: 420,
+          duration: 600,
           useNativeDriver: true,
         }),
         Animated.timing(sparkleOpacity, {
-          toValue: 0.55,
-          duration: 420,
+          toValue: 0.4,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    const glow = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 1500,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ]),
@@ -122,17 +148,23 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
 
     pulse.start();
     sparkle.start();
+    glow.start();
 
     return () => {
       pulse.stop();
       sparkle.stop();
+      glow.stop();
     };
-  }, [badgeScale, log.status, sparkleOpacity]);
+  }, [badgeScale, log.status, sparkleOpacity, glowAnim]);
 
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={[styles.imageWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]} 
+        style={[
+          styles.imageWrapper, 
+          { backgroundColor: colors.surface, borderColor: colors.border },
+          hasApproved && { borderColor: '#fbbf24', borderWidth: 2 }
+        ]} 
         activeOpacity={0.9} 
         onPress={() => onPressImage && onPressImage(imageUrl)}
       >
@@ -140,6 +172,41 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
           source={{ uri: imageUrl }} 
           style={styles.image} 
         />
+        
+        {hasApproved && (
+           <Animated.View 
+             style={[
+               styles.verifiedGlow, 
+               { 
+                 borderColor: '#fbbf24', 
+                 opacity: glowAnim.interpolate({
+                   inputRange: [0, 1],
+                   outputRange: [0.3, 0.8]
+                 })
+               }
+             ]} 
+           />
+        )}
+
+        {hasApproved && miniSparkles.map((s, i) => (
+          <Animated.View 
+            key={i} 
+            style={[
+              styles.miniSparkle, 
+              s, 
+              { 
+                opacity: sparkleOpacity,
+                transform: [{ scale: badgeScale.interpolate({
+                  inputRange: [1, 1.15],
+                  outputRange: [s.scale, s.scale * 1.3]
+                }) }]
+              }
+            ]}
+          >
+            <Ionicons name="sparkles" size={14} color="#facc15" />
+          </Animated.View>
+        ))}
+
         {log.status === 'approved' && (
           <Animated.View style={[styles.statusBadgeSuccess, { backgroundColor: colors.success, transform: [{ scale: badgeScale }] }]}>
             <Animated.View style={[styles.sparkleWrap, { opacity: sparkleOpacity }]}>
@@ -284,13 +351,13 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginTop: 8,
-    width: 240,
+    width: 220,
   },
   imageWrapper: {
     width: '100%',
     height: 180,
     borderRadius: 14,
-    overflow: 'hidden',
+    overflow: 'visible', // Allow sparkles to overflow slightly
     marginBottom: 8,
     position: 'relative',
     borderWidth: 1.5,
@@ -299,6 +366,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+    borderRadius: 12,
+  },
+  verifiedGlow: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
+    borderWidth: 3,
+    zIndex: 1,
+  },
+  miniSparkle: {
+    position: 'absolute',
+    zIndex: 5,
   },
   statusBadgeSuccess: {
     position: 'absolute',
@@ -310,6 +388,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 10,
     gap: 4,
+    zIndex: 10,
   },
   sparkleWrap: {
     marginRight: 1,

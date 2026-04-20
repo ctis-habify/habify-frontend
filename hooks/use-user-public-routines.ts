@@ -23,7 +23,16 @@ export function useUserPublicRoutines(userId: string): UseUserPublicRoutinesResu
     try {
       setLoading(true);
       setError(null);
-      const data = await routineService.browsePublicRoutines(undefined, undefined, undefined, undefined, userId);
+      const data = await routineService.browsePublicRoutines(
+        undefined, 
+        undefined, 
+        undefined, 
+        undefined, 
+        undefined, 
+        undefined, 
+        undefined, 
+        userId
+      );
       const list: PublicRoutine[] = Array.isArray(data) ? data : [];
 
       // Re-apply joined cache so navigating away and back preserves Joined state

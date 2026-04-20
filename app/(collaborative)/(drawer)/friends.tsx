@@ -1,43 +1,43 @@
 import { HomeButton } from '@/components/navigation/home-button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Colors } from '@/constants/theme';
-import {
-    FriendRequestSentItem,
-    friendService,
-    UserSearchResult,
-} from '@/services/friend.service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
+import {
+  FriendRequestSentItem,
+  friendService,
+  UserSearchResult,
+} from '@/services/friend.service';
 import { Ionicons } from '@expo/vector-icons';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Animated, {
-    FadeIn,
-    FadeInDown,
-    interpolate,
-    useAnimatedStyle,
-    useSharedValue,
-    withDelay,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withTiming,
-    ZoomIn,
+  FadeIn,
+  FadeInDown,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+  ZoomIn,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -45,44 +45,106 @@ const SEARCH_DEBOUNCE_MS = 400;
 
 type SegmentTab = 'add' | 'sent' | 'list';
 
-/** Sent boş ekranı: uçak sağa dönük, belirgin; sayfadan uçar */
+/** Sent boş ekranı: Kağıt uçak ekranı kavisli bir şekilde geçer ve süzülür */
 function FlyingPlaneIllustration({ color }: { color: string }): React.ReactElement {
-  const fly = useSharedValue(0);
-  useEffect(() => {
-    fly.value = withRepeat(
+  const progress = useSharedValue(0);
+  const hover = useSharedValue(0);
+
+  const startAnimation = useCallback(() => {
+    progress.value = 0;
+    progress.value = withRepeat(
       withSequence(
-        withTiming(1, { duration: 2600 }),
-        withDelay(400, withTiming(0, { duration: 0 }))
+        withTiming(1, { duration: 3500 }),
+        withDelay(600, withTiming(0, { duration: 0 }))
       ),
       -1,
       false
     );
-  }, [fly]);
-  const planeStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: interpolate(fly.value, [0, 1], [-100, 420]) },
-      { rotate: '8deg' },
-    ],
+
+    hover.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1200 }),
+        withTiming(0, { duration: 1200 })
+      ),
+      -1,
+      true
+    );
+  }, [progress, hover]);
+
+  useEffect(() => {
+    startAnimation();
+  }, [startAnimation]);
+
+  const planeStyle = useAnimatedStyle(() => {
+    const translateX = interpolate(progress.value, [0, 1], [-100, 450]);
+    const sinValue = Math.sin(progress.value * Math.PI);
+    const translateY = (sinValue * -45) + interpolate(hover.value, [0, 1], [0, 15]);
+
+    const rotationNum = interpolate(
+      progress.value,
+      [0, 0.2, 0.8, 1],
+      [-15, 5, 12, 20]
+    );
+
+    return {
+      transform: [
+        { translateX },
+        { translateY },
+        { rotate: `${rotationNum}deg` },
+      ],
+    };
+  });
+
+  const line1Style = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.1, 0.9, 1], [0, 0.6, 0.6, 0]),
+    transform: [{ scaleX: interpolate(hover.value, [0, 1], [0.8, 1.2]) }]
   }));
+
+  const line2Style = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.2, 0.85, 1], [0, 0.4, 0.4, 0]),
+    transform: [{ scaleX: interpolate(hover.value, [0, 1], [1.1, 0.9]) }]
+  }));
+
+  const line3Style = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.15, 0.95, 1], [0, 0.3, 0.3, 0]),
+    transform: [{ scaleX: interpolate(hover.value, [0, 1], [0.9, 1.1]) }]
+  }));
+
   return (
     <View style={styles.emptyIllustration} pointerEvents="none">
-      <Animated.View style={[styles.flyingPlaneWrap, planeStyle]}>
-        <Svg width={72} height={56} viewBox="0 0 72 56" fill="none">
-          {/* Uçak animasyonu */}
+      <Animated.View style={[styles.flyingPlaneWrap, planeStyle, { position: 'absolute' }]}>
+        <View style={{ position: 'absolute', left: -45, top: 25 }}>
+          <Animated.View style={[{ height: 2, width: 30, backgroundColor: color, borderRadius: 1, marginBottom: 10 }, line1Style]} />
+          <Animated.View style={[{ height: 2, width: 18, backgroundColor: color, borderRadius: 1, marginLeft: 15, marginBottom: 10 }, line2Style]} />
+          <Animated.View style={[{ height: 2, width: 22, backgroundColor: color, borderRadius: 1, marginLeft: -5 }, line3Style]} />
+        </View>
+
+        <Svg width={90} height={70} viewBox="0 0 90 70" fill="none">
           <Path
-            d="M64 28 L24 20 L16 28 L24 36 Z"
+            d="M80 35 L20 15 L30 35 L20 55 L80 35Z"
             fill={color}
-            stroke={color}
-            strokeWidth={1.5}
-            strokeOpacity={0.5}
-            strokeLinejoin="round"
+            opacity={0.85}
+          />
+          <Path
+            d="M80 35 L30 35 L20 55 Z"
+            fill="black"
+            opacity={0.2}
+          />
+          <Path
+            d="M80 35 L30 35 L20 15 Z"
+            fill="white"
+            opacity={0.15}
+          />
+          <Path
+            d="M30 35 L50 40 L50 30 L30 35Z"
+            fill="black"
+            opacity={0.3}
           />
         </Svg>
       </Animated.View>
     </View>
   );
 }
-
 
 function EmptyStateIllustration({ type, color }: { type: 'friends' | 'sent' | 'search', color: string }): React.ReactElement {
   const pulse = useSharedValue(1);
@@ -288,7 +350,7 @@ export default function FriendsScreen(): React.ReactElement {
         >
           <Animated.View style={[styles.segmentTabInner, animatedTabSent]}>
             <Ionicons
-              name="paper-plane-outline"
+              name="send"
               size={18}
               color={segment === 'sent' ? colors.white : colors.icon}
             />
@@ -392,13 +454,11 @@ export default function FriendsScreen(): React.ReactElement {
                     style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
                   >
                     <View style={styles.avatarWrap}>
-                      {user.avatarUrl ? (
-                        <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-                      ) : (
-                        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
-                          <Text style={[styles.avatarLetter, { color: colors.text }]}>{user.name.charAt(0).toUpperCase()}</Text>
-                        </View>
-                      )}
+                      <UserAvatar 
+                        url={user.avatarUrl} 
+                        name={user.name} 
+                        size={48} 
+                      />
                     </View>
                     <View style={styles.info}>
                       <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
@@ -466,15 +526,11 @@ export default function FriendsScreen(): React.ReactElement {
                   style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
                   <View style={styles.avatarWrap}>
-                    {item.toUser.avatarUrl ? (
-                      <Image source={{ uri: item.toUser.avatarUrl }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.avatarLetter, { color: colors.text }]}>
-                          {item.toUser.name.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
+                    <UserAvatar 
+                      url={item.toUser.avatarUrl} 
+                      name={item.toUser.name} 
+                      size={48} 
+                    />
                   </View>
                   <View style={styles.info}>
                     <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
@@ -485,7 +541,8 @@ export default function FriendsScreen(): React.ReactElement {
                         @{item.toUser.username}
                       </Text>
                     )}
-                    <View style={[styles.pendingBadge, { backgroundColor: colors.surface }]}>
+                    <View style={[styles.pendingBadge, { backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                      <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
                       <Text style={[styles.pendingBadgeText, { color: colors.textTertiary }]}>Pending</Text>
                     </View>
                   </View>
@@ -539,15 +596,11 @@ export default function FriendsScreen(): React.ReactElement {
                   style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
                   <View style={styles.avatarWrap}>
-                    {item.avatarUrl ? (
-                      <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.avatarLetter, { color: colors.text }]}>
-                          {item.name.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                    )}
+                    <UserAvatar 
+                      url={item.avatarUrl} 
+                      name={item.name} 
+                      size={48} 
+                    />
                   </View>
                   <View style={styles.info}>
                     <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
@@ -558,7 +611,6 @@ export default function FriendsScreen(): React.ReactElement {
                         @{item.username}
                       </Text>
                     )}
-                    <Text style={[styles.xpText, { color: collaborativePrimary }]}>{item.totalXp} XP</Text>
                   </View>
                 </Animated.View>
               )}
@@ -632,7 +684,10 @@ const styles = StyleSheet.create({
     maxWidth: 72,
   },
   emptyIllustration: {
+    height: 120,
     marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
     overflow: 'visible',
   },
   emptyIllustrationSearch: {
@@ -641,8 +696,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   flyingPlaneWrap: {
-    width: 72,
-    height: 56,
+    width: 100,
+    height: 80,
     alignSelf: 'center',
     overflow: 'visible',
   },

@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Ionicons } from '@expo/vector-icons';
 import {
   DrawerContentComponentProps,
@@ -42,25 +43,6 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
   const displayEmail = user?.email || 'user@example.com';
   const initial = displayName.charAt(0).toUpperCase();
 
-  // Map IDs to URLs (Ensure consistency with Register screen)
-  const getAvatarUrl = (id?: string) => {
-    switch (id) {
-      case 'avatar1':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix';
-      case 'avatar2':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka';
-      case 'avatar3':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob';
-      case 'avatar4':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack';
-      case 'avatar5':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly';
-      default:
-        return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(displayName)}`;
-    }
-  };
-
-  const avatarUrl = getAvatarUrl(user?.avatar);
 
   const handleLogout = async () => {
     try {
@@ -90,19 +72,13 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           ]}
         >
           <View style={styles.headerTopRow}>
-            <View
-              style={[
-                styles.avatarPlaceholder,
-                { backgroundColor: colors.primary, borderColor: colors.border },
-                avatarUrl ? { backgroundColor: 'transparent' } : {},
-              ]}
-            >
-              {avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-              ) : (
-                <Text style={[styles.avatarText, { color: colors.white }]}>{initial}</Text>
-              )}
-            </View>
+            <UserAvatar 
+              url={user?.avatar} 
+              name={displayName} 
+              size={64} 
+              borderWidth={2}
+              borderColor={colors.border}
+            />
 
             <TouchableOpacity
               style={styles.menuBtn}

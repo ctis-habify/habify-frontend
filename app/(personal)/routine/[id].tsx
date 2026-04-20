@@ -1,4 +1,3 @@
-import { HomeButton } from '@/components/navigation/home-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
@@ -204,7 +203,6 @@ export default function EditRoutineScreen(): React.ReactElement {
         <TouchableOpacity onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: Colors[theme].surface }]}>
           <Ionicons name="close" size={24} color={Colors[theme].text} />
         </TouchableOpacity>
-        <HomeButton color={Colors.light.icon} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -245,7 +243,7 @@ export default function EditRoutineScreen(): React.ReactElement {
         </ThemedView>
 
         {/* Routine History Grid */}
-        <RoutineHistory routineId={id as string} themeColor={colors.primary} createdAt={originalData?.startDate} />
+        <RoutineHistory routineId={id as string} themeColor={colors.primary} createdAt={originalData?.startDate} endTime={originalData?.endTime} />
 
         {/* 3. Fancy Routine Details Card */}
         <Animated.View 

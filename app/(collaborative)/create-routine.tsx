@@ -1,4 +1,3 @@
-import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -47,13 +46,11 @@ export default function CreateCollaborativeRoutineScreen() {
         <View style={styles.header}>
             <TouchableOpacity 
                 onPress={() => router.back()} 
-                style={[styles.backBtn, { backgroundColor: Colors[theme].surface }]}
+                style={[styles.backBtn, { backgroundColor: Colors[theme].surface, position: 'absolute', left: 20, top: 30, zIndex: 10 }]}
             >
                 <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: Colors[theme].text }]}>Create Collaborative Routine</Text>
-            <HomeButton color={Colors[theme].text} style={[styles.backBtn, { backgroundColor: Colors[theme].surface }]} />
-
         </View>
     );
 
@@ -125,7 +122,7 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
     },
     backBtn: {
         width: 40, height: 40,
@@ -133,7 +130,10 @@ const styles = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
     },
     headerTitle: {
-        fontSize: 18, fontWeight: '700',
+        fontSize: 18, 
+        fontWeight: '700',
+        textAlign: 'center',
+        top: -20,
     },
     scrollContent: {
         paddingHorizontal: 24,

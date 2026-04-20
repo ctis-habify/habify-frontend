@@ -1,4 +1,5 @@
 import { HomeButton } from '@/components/navigation/home-button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { SwipeableNotificationRow } from '@/components/ui/swipeable-notification-row';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -277,13 +278,11 @@ export default function NotificationsScreen(): React.ReactElement {
                     {pendingRequests.map((item) => (
                       <View key={`fr-${item.id}`} style={[styles.actionRow, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
                         <View style={styles.actionAvatarWrap}>
-                          {item.fromUser.avatarUrl ? (
-                            <Image source={{ uri: item.fromUser.avatarUrl }} style={styles.actionAvatar} />
-                          ) : (
-                            <View style={[styles.actionAvatarPlaceholder, { backgroundColor: colors.primary }]}>
-                              <Text style={[styles.actionAvatarLetter, { color: colors.white }]}>{item.fromUser.name.charAt(0).toUpperCase()}</Text>
-                            </View>
-                          )}
+                          <UserAvatar 
+                            url={item.fromUser.avatarUrl} 
+                            name={item.fromUser.name} 
+                            size={36} 
+                          />
                         </View>
                         <View style={styles.actionInfo}>
                           <Text style={[styles.actionName, { color: colors.text }]} numberOfLines={1}>{item.fromUser.name}</Text>
@@ -312,13 +311,11 @@ export default function NotificationsScreen(): React.ReactElement {
                     {routineInvitations.map((item) => (
                       <View key={`ri-${item.id}`} style={[styles.actionRow, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
                         <View style={styles.actionAvatarWrap}>
-                          {item.fromUserAvatarUrl ? (
-                            <Image source={{ uri: item.fromUserAvatarUrl }} style={styles.actionAvatar} />
-                          ) : (
-                            <View style={[styles.actionAvatarPlaceholder, { backgroundColor: colors.collaborativePrimary }]}>
-                              <Text style={[styles.actionAvatarLetter, { color: colors.white }]}>{item.fromUserName ? item.fromUserName.charAt(0).toUpperCase() : '?'}</Text>
-                            </View>
-                          )}
+                          <UserAvatar 
+                            url={item.fromUserAvatarUrl} 
+                            name={item.fromUserName || 'User'} 
+                            size={36} 
+                          />
                         </View>
                         <View style={styles.actionInfo}>
                           <Text style={[styles.actionName, { color: colors.text }]} numberOfLines={1}>

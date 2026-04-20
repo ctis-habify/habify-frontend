@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { friendService, UserSearchResult } from '@/services/friend.service';
 import { routineService } from '@/services/routine.service';
@@ -155,15 +156,11 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
         return (
             <View key={`${isMember ? 'member' : 'friend'}-${key}-${index}`} style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.avatarWrap}>
-                    {resolvedAvatarUrl ? (
-                        <Image source={{ uri: resolvedAvatarUrl }} style={styles.avatar} />
-                    ) : (
-                        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
-                            <Text style={[styles.avatarLetter, { color: colors.white }]}>
-                                {displayName.charAt(0).toUpperCase()}
-                            </Text>
-                        </View>
-                    )}
+                    <UserAvatar 
+                        url={resolvedAvatarUrl} 
+                        name={displayName} 
+                        size={52} 
+                    />
                 </View>
                 <View style={styles.info}>
                     <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
@@ -196,7 +193,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                             </>
                         ) : (
                             <>
-                                <Ionicons name="paper-plane" size={16} color={colors.white} />
+                                <Ionicons name="send" size={14} color={colors.white} />
                                 <Text style={[styles.inviteBtnText, { color: colors.white }]}>Invite</Text>
                             </>
                         )}

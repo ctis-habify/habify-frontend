@@ -1,4 +1,5 @@
 import { HomeButton } from '@/components/navigation/home-button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { CupIndicator } from '@/components/cup-indicator';
 import { FriendList } from '@/components/profile/FriendList';
 import { getBackgroundGradient, Colors } from '@/constants/theme';
@@ -77,25 +78,6 @@ export default function ProfileScreen() {
     [router],
   );
 
-  // Helper for Avatar URL
-  const getAvatarUrl = (id?: string) => {
-    switch (id) {
-      case 'avatar1':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Felix';
-      case 'avatar2':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Aneka';
-      case 'avatar3':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Bob';
-      case 'avatar4':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Jack';
-      case 'avatar5':
-        return 'https://api.dicebear.com/7.x/avataaars/png?seed=Molly';
-      default:
-        return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(displayName)}`;
-    }
-  };
-
-  const avatarUrl = getAvatarUrl(user?.avatar);
 
   return (
     <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
@@ -117,15 +99,12 @@ export default function ProfileScreen() {
           entering={FadeInDown.delay(100).duration(600).springify()}
           style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
-          <View
-            style={[styles.avatarContainer, { backgroundColor: colors.surface }, avatarUrl ? { backgroundColor: 'transparent' } : {}]}
-          >
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-            ) : (
-              <Text style={[styles.avatarText, { color: colors.text }]}>{initial}</Text>
-            )}
-          </View>
+          <UserAvatar 
+            url={user?.avatar} 
+            name={displayName} 
+            size={100} 
+            style={styles.avatarContainer}
+          />
 
           <Text style={[styles.nameText, { color: colors.text }]}>{displayName}</Text>
           <Text style={[styles.emailText, { color: colors.textSecondary }]}>{displayEmail}</Text>

@@ -1,4 +1,5 @@
 import { HomeButton } from '@/components/navigation/home-button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { CupIndicator } from '@/components/cup-indicator';
 import { Colors } from '@/constants/theme';
 import { collaborativeScoreService } from '@/services/collaborative-score.service';
@@ -89,13 +90,11 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
 
       {/* Avatar */}
       <View style={styles.avatarWrap}>
-        {item.avatarUrl ? (
-          <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatarPlaceholder, { backgroundColor: rankInfo.color }]}>
-            <Text style={styles.avatarLetter}>{item.name.charAt(0).toUpperCase()}</Text>
-          </View>
-        )}
+        <UserAvatar 
+          url={item.avatarUrl} 
+          name={item.name} 
+          size={44} 
+        />
       </View>
 
       {/* Info */}

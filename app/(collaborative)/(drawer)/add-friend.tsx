@@ -1,4 +1,5 @@
 import { HomeButton } from '@/components/navigation/home-button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Colors } from '@/constants/theme';
 import { friendService, UserSearchResult } from '@/services/friend.service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -144,13 +145,11 @@ export default function AddFriendScreen(): React.ReactElement {
         {results.map((user) => (
           <View key={user.id} style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.avatarWrap}>
-              {user.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatarPlaceholder, { backgroundColor: collaborativePrimary }]}>
-                  <Text style={[styles.avatarLetter, { color: colors.white }]}>{user.name.charAt(0).toUpperCase()}</Text>
-                </View>
-              )}
+              <UserAvatar 
+                url={user.avatarUrl} 
+                name={user.name} 
+                size={48} 
+              />
             </View>
             <View style={styles.info}>
               <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
