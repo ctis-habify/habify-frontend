@@ -101,12 +101,14 @@ export default function ForgotPasswordScreen(): React.ReactElement {
           }}
           placeholder="***********"
           secureTextEntry
+          autoComplete="new-password"
+          textContentType="newPassword"
           icon="lock-closed-outline"
           error={errors.password}
         />
 
         <TextInput 
-          label="Confirm New Password"
+          label="Re-enter New Password"
           value={confirmPassword}
           onChangeText={(value) => {
             setConfirmPassword(value);
@@ -114,6 +116,8 @@ export default function ForgotPasswordScreen(): React.ReactElement {
           }}
           placeholder="***********"
           secureTextEntry
+          autoComplete="new-password"
+          textContentType="newPassword"
           icon="lock-closed-outline"
           error={errors.confirmPassword}
         />
