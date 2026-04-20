@@ -92,20 +92,8 @@ export default function CameraModal(): React.ReactElement {
       // 2. Prepare file blob
 
       let blob;
-      if (photoUri === 'mock-photo') {
-        const asset = require('../../img/true.jpg');
-        const assetSource = Image.resolveAssetSource(asset);
-        const assetResponse = await fetch(assetSource.uri);
-        blob = await assetResponse.blob();
-      } else if (photoUri === 'mock-photo-fail') {
-        const asset = require('../../img/false.png');
-        const assetSource = Image.resolveAssetSource(asset);
-        const assetResponse = await fetch(assetSource.uri);
-        blob = await assetResponse.blob();
-      } else {
-        const photoResponse = await fetch(photoUri);
-        blob = await photoResponse.blob();
-      }
+      const photoResponse = await fetch(photoUri);
+      blob = await photoResponse.blob();
 
 
 
@@ -188,13 +176,7 @@ export default function CameraModal(): React.ReactElement {
   if (photoUri) {
     return (
       <View style={styles.container}>
-        {photoUri === 'mock-photo' ? (
-          <Image source={require('../../img/true.jpg')} style={styles.previewImage} />
-        ) : photoUri === 'mock-photo-fail' ? (
-          <Image source={require('../../img/false.png')} style={styles.previewImage} />
-        ) : (
-          <Image source={{ uri: photoUri }} style={styles.previewImage} />
-        )}
+        <Image source={{ uri: photoUri }} style={styles.previewImage} />
 
         
         {isUploading && (
