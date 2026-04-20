@@ -9,19 +9,19 @@ export const setAuthToken = (token: string | null): void => {
   authToken = token;
 };
 
-// const resolveBaseUrl = (): string => {
-//   const envUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-//   if (envUrl) return envUrl;
+const resolveBaseUrl = (): string => {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+  if (envUrl) return envUrl;
 
-//   // In local development, prefer local backend so newest changes
-//   // (e.g. categorized predefined messages) are available immediately.
-//   if (__DEV__) return 'http://localhost:3000';
+  // In local development, prefer local backend so newest changes
+  // (e.g. categorized predefined messages) are available immediately.
+  if (__DEV__) return 'http://localhost:3000';
 
-//   return 'https://habify-backend.onrender.com';
-// };
+  return 'https://habify-backend.onrender.com';
+};
 
-// const BASE_URL = resolveBaseUrl();
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = resolveBaseUrl();
+
 
 export const api = axios.create({
   baseURL: BASE_URL,
