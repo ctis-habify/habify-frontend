@@ -24,6 +24,8 @@ export default function SettingsScreen(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const { user, logout, updateUser } = useAuth();
   const colorScheme = useColorScheme() ?? 'light';
+  const isDark = colorScheme === 'dark';
+  const colors = Colors[colorScheme];
   const { theme, toggleTheme } = useThemeControl();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingField, setEditingField] = useState<'name' | 'birthDate'>('name');
@@ -224,18 +226,22 @@ export default function SettingsScreen(): React.ReactElement {
             onToggle={handleToggleQuietMode}
           />
           {(user?.quietModeEnabled) && (
-            <View style={styles.quietModeCard}>
+            <View style={[styles.quietModeCard, { 
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'
+            }]}>
               <View style={styles.cardHeader}>
-                <View style={styles.statusBadge}>
+                <View style={[styles.statusBadge, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)' }]}>
                   <View style={[
                     styles.statusDot, 
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.2)' },
                     isCurrentlyQuiet(user.quietModeStart || '22:00', user.quietModeEnd || '08:00') && styles.statusDotActive
                   ]} />
-                  <Text style={styles.statusText}>
+                  <Text style={[styles.statusText, { color: isDark ? 'rgba(255,255,255,0.7)' : colors.textSecondary }]}>
                     {isCurrentlyQuiet(user.quietModeStart || '22:00', user.quietModeEnd || '08:00') ? 'Active' : 'Scheduled'}
                   </Text>
                 </View>
-                <Text style={styles.cardDuration}>
+                <Text style={[styles.cardDuration, { color: isDark ? 'rgba(255,255,255,0.4)' : colors.textTertiary }]}>
                   {calculateQuietDuration(user.quietModeStart || '22:00', user.quietModeEnd || '08:00')}
                 </Text>
               </View>
@@ -245,29 +251,29 @@ export default function SettingsScreen(): React.ReactElement {
                   style={styles.timePickerBtn} 
                   onPress={() => setShowStartTimePicker(true)}
                 >
-                  <View style={styles.timeIconBox}>
+                  <View style={[styles.timeIconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
                     <Ionicons name="moon" size={16} color="#A78BFA" />
                   </View>
                   <View>
-                    <Text style={styles.timeLabel}>Starts At</Text>
-                    <Text style={styles.timeValue}>{user.quietModeStart || '22:00'}</Text>
+                    <Text style={[styles.timeLabel, { color: isDark ? 'rgba(255,255,255,0.5)' : colors.textSecondary }]}>Starts At</Text>
+                    <Text style={[styles.timeValue, { color: isDark ? '#fff' : colors.text }]}>{user.quietModeStart || '22:00'}</Text>
                   </View>
                 </TouchableOpacity>
 
                 <View style={styles.timeSeparator}>
-                  <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.2)" />
+                  <Ionicons name="arrow-forward" size={16} color={isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)"} />
                 </View>
 
                 <TouchableOpacity 
                   style={styles.timePickerBtn} 
                   onPress={() => setShowEndTimePicker(true)}
                 >
-                  <View style={styles.timeIconBox}>
+                  <View style={[styles.timeIconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
                     <Ionicons name="sunny" size={16} color="#FBBF24" />
                   </View>
                   <View>
-                    <Text style={styles.timeLabel}>Ends At</Text>
-                    <Text style={styles.timeValue}>{user.quietModeEnd || '08:00'}</Text>
+                    <Text style={[styles.timeLabel, { color: isDark ? 'rgba(255,255,255,0.5)' : colors.textSecondary }]}>Ends At</Text>
+                    <Text style={[styles.timeValue, { color: isDark ? '#fff' : colors.text }]}>{user.quietModeEnd || '08:00'}</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -451,14 +457,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   quietModeCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,
     padding: 16,
     marginHorizontal: 10,
     marginBottom: 10,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -470,7 +474,6 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -480,7 +483,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   statusDotActive: {
     backgroundColor: '#34D399',
@@ -492,13 +494,11 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   cardDuration: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
     fontWeight: '500',
   },
   timerRow: {
@@ -517,19 +517,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   timeLabel: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
     marginBottom: 2,
   },
   timeValue: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#fff',
     letterSpacing: 0.5,
   },
   timeSeparator: {
