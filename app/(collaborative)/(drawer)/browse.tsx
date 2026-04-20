@@ -1,6 +1,4 @@
-import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import * as React from 'react';
@@ -29,8 +27,8 @@ import DropDownPicker from 'react-native-dropdown-picker';
 
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { Toast } from '@/components/ui/toast';
-import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { getCategoryAccentColor } from '@/constants/category-colors';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
 import { routineService } from '@/services/routine.service';
@@ -243,20 +241,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
             <LinearGradient colors={screenGradient} style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity
-                        style={[styles.menuBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}
-                        onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-                    >
-                        <Ionicons name="menu" size={24} color={colors.text} />
-                    </TouchableOpacity>
-
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.headerTitle, { color: colors.text }]}>Browse Routines</Text>
-                        <Text style={[styles.headerSubtitle, { color: colors.text }]}>Discover & join public groups</Text>
-                    </View>
-
                     <View style={{ flexDirection: 'row', gap: 8 }}>
-                        <HomeButton color={colors.text} style={[styles.menuBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]} />
                         <TouchableOpacity
                             style={[styles.menuBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}
                             onPress={goBack}
@@ -264,6 +249,10 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                         >
                             <Ionicons name="arrow-back" size={24} color={colors.text} />
                         </TouchableOpacity>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={[styles.headerTitle, { color: colors.text }]}>Browse Routines</Text>
+                        <Text style={[styles.headerSubtitle, { color: colors.text }]}>Discover & join public groups</Text>
                     </View>
                 </View>
 
@@ -431,8 +420,8 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingTop: 60,
-        paddingBottom: 8,
+        paddingTop: 70,
+        paddingBottom: 20,
         paddingHorizontal: 20,
         gap: 14,
     },

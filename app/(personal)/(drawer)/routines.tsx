@@ -370,20 +370,16 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
         />
 
         {editListParams && (
-          <Modal visible={true} transparent animationType="slide" onRequestClose={() => setEditListParams(null)}>
-            <View style={styles.modalOverlay}>
-              <CreateRoutineModal
-                initialRoutineListId={editListParams.listId}
-                initialTitle={editListParams.title}
-                initialCategoryId={editListParams.categoryId}
-                onClose={() => setEditListParams(null)}
-                onCreated={() => {
-                  setEditListParams(null);
-                  loadLists();
-                }}
-              />
-            </View>
-          </Modal>
+          <CreateRoutineModal
+            initialRoutineListId={editListParams.listId}
+            initialTitle={editListParams.title}
+            initialCategoryId={editListParams.categoryId}
+            onClose={() => setEditListParams(null)}
+            onCreated={() => {
+              setEditListParams(null);
+              loadLists();
+            }}
+          />
         )}
 
         <CelebrationAnimation 

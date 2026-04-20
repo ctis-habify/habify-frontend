@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   DeviceEventEmitter,
   Platform,
@@ -156,14 +158,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
   useFocusEffect(
     useCallback(() => {
-      opacity.value = 0;
-      translateX.value = 40;
-      scale.value = 0.97;
-
-      opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
-      translateX.value = withSpring(0, ENTER_SPRING);
-      scale.value = withSpring(1, ENTER_SPRING);
-
+      // Only trigger entrance animation if we're not already visible to avoid 'double flash'
+      if (opacity.value === 0) {
+        translateX.value = 40;
+        scale.value = 0.97;
+        opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+        translateX.value = withSpring(0, ENTER_SPRING);
+        scale.value = withSpring(1, ENTER_SPRING);
+      }
       loadLists();
     }, [loadLists]),
   );
@@ -201,6 +203,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     if (tab !== 'Personal' || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     requestAnimationFrame(() => {
       setTimeout(() => {
         router.replace('/(personal)/(drawer)/routines');
@@ -383,7 +386,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           {/* Discovery Entry Point */}
           <TouchableOpacity 
             style={styles.discoveryCard}
-            onPress={() => router.push('/(collaborative)/(drawer)/browse')}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/(collaborative)/(drawer)/browse');
+            }}
             activeOpacity={0.8}
           >
             <LinearGradient
@@ -471,6 +477,14 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               </TouchableOpacity>
             )}
           </View>
+ 
+          {/* Loading State Overlay to prevent 'Double Pass' feeling */}
+          {loading && (
+             <View style={{ paddingVertical: 100, alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator size="large" color={collaborativePrimary} />
+                <Text style={{ marginTop: 15, color: colors.text, opacity: 0.5, fontWeight: '500' }}>Loading routines...</Text>
+             </View>
+          )}
 
 
 
@@ -562,7 +576,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           )}
 
           {!loading && routines.length === 0 && (
-            <View style={styles.emptyContainer}>
+            <Animated.View entering={FadeInDown.duration(600).springify().damping(20)} style={styles.emptyContainer}>
               <View
                 style={{
                   backgroundColor: `${collaborativePrimary}22`,
@@ -578,14 +592,25 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 Create a new collaborative list or join your friends&apos; routines to see them
                 here!
               </Text>
-            </View>
+            </Animated.View>
           )}
 
           <TouchableOpacity
-            style={[styles.createBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => router.push('/(collaborative)/create-routine')}
+            style={[
+              styles.createBtn, 
+              { 
+                backgroundColor: collaborativePrimary,
+                shadowColor: collaborativePrimary 
+              }
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              router.push('/(collaborative)/create-routine');
+            }}
+            activeOpacity={0.8}
           >
-            <Text style={[styles.createBtnText, { color: colors.text }]}>Create Collaborative List</Text>
+             <Ionicons name="add-circle" size={22} color={colors.white} style={{ marginRight: 8 }} />
+            <Text style={[styles.createBtnText, { color: colors.white }]}>Create Collaborative List</Text>
           </TouchableOpacity>
         </Animated.ScrollView>
 
@@ -641,16 +666,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   createBtn: {
+    flexDirection: 'row',
     borderRadius: 18,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 10,
-    borderWidth: 1,
-    borderStyle: 'dashed',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
   },
   createBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   emptyContainer: {
     paddingVertical: 40,
