@@ -5,6 +5,8 @@ import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown, FadeInLeft } from "react-native-reanimated";
 
+import { AnimatedFlame } from '../animations/animated-flame';
+
    
 type Props = {
   points: number;
@@ -69,7 +71,8 @@ export function TodayHeader({points, streak, loading}: Props): React.ReactElemen
               },
             ]}
           >
-            <Ionicons name="flame" size={20} color="#f97316" style={{ marginRight: 6 }} />
+            <AnimatedFlame streak={streak} size={20} />
+            <View style={{ width: 4 }} />
             <Text style={[styles.streakText, { color: '#f97316' }]}>
               {streak}
             </Text>

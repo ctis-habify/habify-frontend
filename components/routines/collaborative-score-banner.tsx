@@ -144,7 +144,7 @@ export function CollaborativeScoreBanner({
         {/* Streak Column */}
         <View style={styles.statColumn}>
           <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
-            <Ionicons name="flame" size={20} color="#F97316" />
+            <AnimatedFlame streak={streak} size={22} />
           </View>
           <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
           <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Streak</Text>

@@ -903,22 +903,26 @@ export default function CollaborativeChatScreen() {
                 setTaggedParticipant(null);
               }}
             />
-            <View style={styles.quickReplyBottomSheet}>
-              <View style={styles.bottomSheetHandle} />
+            <View style={[styles.quickReplyBottomSheet, { borderTopColor: colors.border, borderTopWidth: 1, overflow: 'hidden' }]}>
+              <LinearGradient
+                colors={isDark ? ['#1E1B4B', '#0F172A'] : ['#F5F3FF', '#EDE9FE']}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={[styles.bottomSheetHandle, { backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.1)' }]} />
               <TouchableOpacity
                 onPress={() => {
                   setIsQuickReplyOpen(false);
                   setSelectedPredefinedMessage(null);
                   setTaggedParticipant(null);
                 }}
-                style={[styles.floatingCloseBtn, { backgroundColor: colors.surface }]}
+                style={[styles.floatingCloseBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
               >
                 <Ionicons name="close" size={20} color={isDark ? '#e7d0ff' : colors.primary} />
               </TouchableOpacity>
               <View style={styles.bottomSheetHeader}>
                 <View style={styles.bottomSheetTitleWrap}>
-                  <Text style={styles.quickReplyTitle}>Quick replies</Text>
-                  <Text style={styles.quickReplySubtitle}>
+                  <Text style={[styles.quickReplyTitle, { color: colors.text }]}>Quick replies</Text>
+                  <Text style={[styles.quickReplySubtitle, { color: colors.textSecondary }]}>
                     Pick a message, then send it to the group or mention one teammate.
                   </Text>
                 </View>
@@ -940,12 +944,12 @@ export default function CollaborativeChatScreen() {
                     <Animated.View
                       entering={FadeInUp.duration(600).springify().damping(28).stiffness(100)}
                       exiting={FadeOutDown.duration(240)}
-                      style={styles.selectedMessageCard}
+                      style={[styles.selectedMessageCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                     >
-                      <Text style={styles.selectedMessageLabel}>Selected message</Text>
-                      <View style={styles.selectedMessagePreview}>
+                      <Text style={[styles.selectedMessageLabel, { color: colors.primary }]}>Selected message</Text>
+                      <View style={[styles.selectedMessagePreview, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', padding: 12, borderRadius: 12 }]}>
                         <Ionicons name="sparkles-outline" size={16} color={isDark ? "#c4b5fd" : colors.primary} />
-                        <Text style={styles.selectedMessageText}>{selectedPredefinedMessage}</Text>
+                        <Text style={[styles.selectedMessageText, { color: colors.text }]}>{selectedPredefinedMessage}</Text>
                       </View>
 
                       <TouchableOpacity
@@ -961,12 +965,12 @@ export default function CollaborativeChatScreen() {
                         {sendingMessage === selectedPredefinedMessage && !taggedParticipant ? (
                           <ActivityIndicator size="small" color="#ffffff" />
                         ) : null}
-                        <Text style={styles.sendToGroupText}>Send to group</Text>
+                        <Text style={[styles.sendToGroupText, { color: colors.white }]}>Send to group</Text>
                       </TouchableOpacity>
 
                       {participants.length > 0 ? (
                         <View style={styles.tagSection}>
-                          <Text style={styles.tagSectionLabel}>Mention a teammate</Text>
+                          <Text style={[styles.tagSectionLabel, { color: colors.textTertiary }]}>Mention a teammate</Text>
                           <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -977,13 +981,18 @@ export default function CollaborativeChatScreen() {
                               return (
                                 <TouchableOpacity
                                   key={participant.id}
-                                  style={[styles.tagChip, isSelected && styles.tagChipSelected]}
+                                  style={[
+                                    styles.tagChip, 
+                                    { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', borderColor: colors.border },
+                                    isSelected && { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.3)' : colors.primary, borderColor: colors.primary }
+                                  ]}
                                   onPress={() => setTaggedParticipant(participant)}
                                   activeOpacity={0.85}
                                 >
                                   <Text
                                     style={[
                                       styles.tagChipText,
+                                      { color: isSelected ? colors.white : colors.textSecondary },
                                       isSelected && styles.tagChipTextSelected,
                                     ]}
                                   >
@@ -1034,7 +1043,7 @@ export default function CollaborativeChatScreen() {
                         activeOpacity={0.85}
                         disabled={sendingMessage !== null}
                       >
-                        <Text style={styles.changeMessageText}>Choose a different message</Text>
+                        <Text style={[styles.changeMessageText, { color: isDark ? '#c4b5fd' : colors.primary }]}>Choose a different message</Text>
                       </TouchableOpacity>
                     </Animated.View>
                   ) : (
@@ -1051,7 +1060,7 @@ export default function CollaborativeChatScreen() {
 
                         return (
                           <View key={categoryKey} style={styles.quickReplyCategorySection}>
-                            <Text style={styles.quickReplyCategoryTitle}>
+                            <Text style={[styles.quickReplyCategoryTitle, { color: isDark ? '#e7d0ff' : colors.primary }]}>
                               {getCategoryLabel(categoryKey)}
                             </Text>
                             <View style={styles.quickReplyGrid}>
@@ -1492,10 +1501,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     right: 20,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 10,
     borderWidth: 1,
   },
