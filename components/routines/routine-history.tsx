@@ -11,9 +11,10 @@ interface RoutineHistoryProps {
   routineId: string;
   themeColor: string;
   createdAt?: string;
+  endTime?: string;
 }
 
-export function RoutineHistory({ routineId, themeColor, createdAt }: RoutineHistoryProps) {
+export function RoutineHistory({ routineId, themeColor, createdAt, endTime }: RoutineHistoryProps) {
   const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
@@ -103,8 +104,20 @@ export function RoutineHistory({ routineId, themeColor, createdAt }: RoutineHist
               backgroundColor = themeColor;
               borderColor = themeColor;
             } else if (dateStr === todayStr) {
-              backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
-              borderColor = themeColor + '60'; // Semi-transparent theme color
+              // Check if time window has passed today
+              const now = new Date();
+              const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+              const isTimePassed = endTime ? currentTimeStr > endTime : false;
+
+              if (isTimePassed) {
+                // Today is missed because time is passed
+                backgroundColor = isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)';
+                borderColor = isDark ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.2)';
+              } else {
+                // Still have time to finish today
+                backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                borderColor = themeColor + '60'; // Semi-transparent theme color
+              }
             } else if (!isBeforeCreation) {
               backgroundColor = isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)';
               borderColor = isDark ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.2)';

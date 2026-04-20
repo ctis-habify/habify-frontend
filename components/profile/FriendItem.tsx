@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -28,15 +29,11 @@ export function FriendItem({ friend, onPress }: FriendItemProps): React.ReactEle
             activeOpacity={0.7}
         >
             <View style={styles.avatarContainer}>
-                {friend.avatar ? (
-                    <Image source={{ uri: friend.avatar }} style={styles.avatar} />
-                ) : (
-                    <View style={[styles.placeholderAvatar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                        <Text style={[styles.initials, { color: colors.text }]}>
-                            {friend.name.charAt(0).toUpperCase()}
-                        </Text>
-                    </View>
-                )}
+                <UserAvatar 
+                  url={friend.avatar} 
+                  name={friend.name} 
+                  size={48} 
+                />
             </View>
             <View style={styles.info}>
                 <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{friend.name}</Text>

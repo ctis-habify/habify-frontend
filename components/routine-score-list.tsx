@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, Platform } from 'react-native';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import Animated, {
     FadeInDown,
     useAnimatedStyle,
@@ -89,15 +90,14 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
                   )}
                 </View>
 
-                {entry.avatarUrl ? (
-                  <Image source={{ uri: entry.avatarUrl }} style={[styles.avatar, { borderColor: colors.border }]} />
-                ) : (
-                  <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
-                    <Text style={[styles.avatarPlaceholderText, { color: colors.text }]}>
-                      {displayName.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                )}
+                <UserAvatar 
+                  url={entry.avatarUrl} 
+                  name={displayName} 
+                  size={40} 
+                  style={{ marginRight: 12 }}
+                  borderColor={colors.border}
+                  borderWidth={1.5}
+                />
 
                 <View style={styles.nameContainer}>
                   <View style={styles.nameRow}>

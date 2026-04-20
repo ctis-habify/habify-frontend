@@ -11,9 +11,11 @@ import Animated, {
   Easing,
   FadeInDown,
   FadeOutUp,
+  interpolate,
   LinearTransition,
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -59,6 +61,21 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     opacity: opacity.value,
     transform: [
       { translateX: translateX.value },
+    ],
+  }));
+  
+  const trophyY = useSharedValue(0);
+  useEffect(() => {
+    trophyY.value = withRepeat(
+      withTiming(1, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+  }, []);
+
+  const trophyStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(trophyY.value, [0, 1], [0, -12]) },
       { scale: scale.value },
     ],
   }));
@@ -299,11 +316,8 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           {hasNoData && (
             <View style={styles.emptyOuter}>
               <Animated.View style={trophyStyle}>
-                <View style={[styles.trophyWrapper, { borderColor: colors.primary + '30' }]}>
-                    <Image 
-                        source={require('@/assets/images/sweet-png-trophy.png')} 
-                        style={styles.trophyImage}
-                    />
+                <View style={[styles.trophyWrapper, { borderColor: colors.primary + '30', backgroundColor: colors.surface }]}>
+                    <Ionicons name="trophy" size={80} color={colors.primary} />
                 </View>
               </Animated.View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>You haven&apos;t created a routine yet.</Text>

@@ -74,6 +74,7 @@ export interface RoutineLog {
   approvals?: (string | RoutineLogUser)[];
   rejections?: (string | RoutineLogUser)[];
   userName?: string;
+  userAvatar?: string;
   requiredApprovals?: number;
   approvalCount?: number;
   isCompletedByGroup?: boolean;

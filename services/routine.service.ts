@@ -306,7 +306,8 @@ const normalizeRoutineLog = (item: unknown): RoutineLog => {
     status: (toStringOrUndefined(source.status || source.STATUS) || 'pending').toLowerCase() as any,
     approvals: Array.isArray(source.approvals) ? source.approvals.map(a => typeof a === 'object' ? a : String(a)) : [],
     rejections: Array.isArray(source.rejections) ? source.rejections.map(r => typeof r === 'object' ? r : String(r)) : [],
-    userName: toStringOrUndefined(source.userName || source.user_name || source.username || (source.user as any)?.name),
+    userName: toStringOrUndefined(source.userName || source.user_name || source.username || (source.user as any)?.name || (source.user as any)?.username),
+    userAvatar: toStringOrUndefined(source.userAvatar || source.user_avatar || (source.user as any)?.avatar || (source.user as any)?.avatarUrl || (source.user as any)?.profileImage || (source.user as any)?.user_avatar || (source.user as any)?.avatar_url),
     requiredApprovals: toNumberOrDefault(source.requiredApprovals || source.required_approvals, 0),
     approvalCount: toNumberOrDefault(source.approvalCount || source.approval_count, 0),
     isCompletedByGroup:

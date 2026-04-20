@@ -47,7 +47,7 @@ import { collaborativeScoreService } from '@/services/collaborative-score.servic
 import { notificationService } from '@/services/notification.service';
 import { routineService } from '@/services/routine.service';
 import { createLeaderboardCupAward, LeaderboardEntry, UserCupAward } from '@/types/collaborative-score';
-import { Routine } from '@/types/routine';
+import { Routine, RoutineLog } from '@/types/routine';
 
 type GroupParticipant = {
   id?: string;
@@ -178,6 +178,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const collaborativePrimary = colors.collaborativePrimary;
 
   const [routineDetail, setRoutineDetail] = useState<CollaborativeRoutineDetail | null>(null);
+  const [logs, setLogs] = useState<RoutineLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLeavingRoutine, setIsLeavingRoutine] = useState(false);
@@ -208,14 +209,16 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     setLoadingLeaderboard(true);
     setError(null);
     try {
-      const [detail, leaderboardData, globalLeaderboardData] = await Promise.all([
+      const [detail, leaderboardData, globalLeaderboardData, routineLogs] = await Promise.all([
         routineService.getGroupDetail(routineId),
         routineService.getCollaborativeRoutineLeaderboard(routineId).catch(() => []),
         collaborativeScoreService.getLeaderboard(200).catch(() => []),
+        routineService.getRoutineLogs(routineId).catch(() => []),
       ]);
       setRoutineDetail(detail);
       setLeaderboard(leaderboardData);
       setGlobalLeaderboard(globalLeaderboardData);
+      setLogs(routineLogs);
     } catch (fetchError) {
       setError(getErrorMessage(fetchError));
     } finally {
@@ -557,45 +560,80 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               </View>
             </Animated.View>
 
-            {/* 2. Consistency Map Card (Previously nested) */}
-            <RoutineHistory routineId={routineId as string} themeColor={collaborativePrimary} createdAt={routineDetail?.startDate} />
+            <RoutineHistory 
+              routineId={routineId as string} 
+              themeColor={collaborativePrimary} 
+              createdAt={routineDetail?.startDate} 
+              endTime={routineDetail?.endTime}
+            />
 
             {/* 3. Enrolled Users Card (Previously nested) */}
             <Animated.View entering={FadeInDown.delay(150).duration(420)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Enrolled Users</Text>
-              <Text style={[styles.pokeHint, { color: colors.text, opacity: 0.6 }]}>Tap a member to poke them 👈</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.sectionTitle, { color: collaborativePrimary, marginBottom: 0 }]}>Members & Habit Pokes</Text>
+                <Ionicons name="flash" size={16} color="#fbbf24" />
+              </View>
+              <Text style={[styles.pokeHint, { color: colors.text, opacity: 0.6 }]}>
+                Friend falling behind? Tap to <Text style={{ fontWeight: 'bold', color: collaborativePrimary }}>POKE</Text> them and send a reminder! 🔔🚀
+              </Text>
               {participantNames.length === 0 ? (
                 <Text style={[styles.secondaryValue, { color: colors.text }]}>No users enrolled yet.</Text>
               ) : (
                 <View style={styles.participantsContainer}>
-                  {uniqueParticipants.map((participant, index) => {
-                    const u = participant.user;
-                    const name = u?.name || participant.name || u?.username || participant.username || 'Unnamed User';
-                    const participantUserId = participant.userId || u?.id || participant.id;
-                    const participantCup =
-                      participant.cup ||
-                      u?.cup ||
-                      globalCupByUserId.get(String(participantUserId || '').trim()) ||
-                      null;
-                    const isSelf = !!currentUserId && currentUserId === String(participantUserId || '').trim();
+                  {(() => {
+                    // Get today's completion status for each participant
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const statusMap = new Map<string, 'completed' | 'pending' | 'missed' | 'none'>();
+                    
+                    const now = new Date();
+                    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    const isTimePassed = routineDetail?.endTime ? currentTimeStr > routineDetail.endTime : false;
 
-                    return (
-                      <Animated.View
-                        key={`${name}-${participantUserId}-${index}`}
-                        entering={FadeInDown.delay(index * 60).duration(280)}
-                      >
-                        <ParticipantChip
-                          participant={participant}
-                          isSelf={isSelf}
-                          isPoking={false}
-                          onPoke={handlePoke}
-                          disabled={false}
-                          name={name}
-                          participantCup={participantCup}
-                        />
-                      </Animated.View>
-                    );
-                  })}
+                    logs.filter(l => l.logDate === todayStr).forEach(log => {
+                      const uid = String(log.userId);
+                      if (log.status === 'approved') {
+                        statusMap.set(uid, 'completed');
+                      } else if (log.status === 'pending' && !statusMap.has(uid)) {
+                        statusMap.set(uid, 'pending');
+                      }
+                    });
+
+                    return uniqueParticipants.map((participant, index) => {
+                      const u = participant.user;
+                      const name = u?.name || participant.name || u?.username || participant.username || 'Unnamed User';
+                      const participantUserId = participant.userId || u?.id || participant.id;
+                      const uidStr = String(participantUserId || '').trim();
+                      const participantCup =
+                        participant.cup ||
+                        u?.cup ||
+                        globalCupByUserId.get(uidStr) ||
+                        null;
+                      const isSelf = !!currentUserId && currentUserId === uidStr;
+                      
+                      let status: 'completed' | 'pending' | 'missed' | 'none' = statusMap.get(uidStr) || 'none';
+                      if (status === 'none' && isTimePassed) {
+                        status = 'missed';
+                      }
+
+                      return (
+                        <Animated.View
+                          key={`${name}-${uidStr}-${index}`}
+                          entering={FadeInDown.delay(index * 60).duration(280)}
+                        >
+                          <ParticipantChip
+                            participant={participant}
+                            isSelf={isSelf}
+                            isPoking={false}
+                            onPoke={handlePoke}
+                            disabled={false}
+                            name={name}
+                            participantCup={participantCup}
+                            completionStatus={status}
+                          />
+                        </Animated.View>
+                      );
+                    });
+                  })()}
                 </View>
               )}
             </Animated.View>
@@ -691,7 +729,8 @@ function ParticipantChip({
   onPoke,
   disabled,
   name,
-  participantCup
+  participantCup,
+  completionStatus
 }: {
   participant: GroupParticipant;
   isSelf: boolean;
@@ -700,6 +739,7 @@ function ParticipantChip({
   disabled: boolean;
   name: string;
   participantCup: UserCupAward | null;
+  completionStatus?: 'completed' | 'pending' | 'missed' | 'none';
 }) {
   const rippleScale = useSharedValue(0);
   const rippleOpacity = useSharedValue(0);
@@ -771,6 +811,15 @@ function ParticipantChip({
                 {name}
                 {isSelf ? ' (You)' : ''}
               </Text>
+              {completionStatus === 'completed' && (
+                <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+              )}
+              {completionStatus === 'pending' && (
+                <Ionicons name="time" size={16} color="#fbbf24" />
+              )}
+              {completionStatus === 'missed' && (
+                <Ionicons name="close-circle" size={16} color={colors.error} />
+              )}
               <CupIndicator cup={participantCup} compact transparent />
             </View>
         </>

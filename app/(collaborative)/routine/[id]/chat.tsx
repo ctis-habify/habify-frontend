@@ -1,4 +1,5 @@
 import { HomeButton } from '@/components/navigation/home-button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -36,6 +37,7 @@ type ChatMessage = {
   text: string;
   sender: 'me' | 'system' | 'other';
   senderName: string;
+  senderAvatar?: string;
   createdAt?: string;
   isSystemEvent?: boolean;
 };
@@ -50,6 +52,11 @@ type RawChatMessage = {
     name?: string;
     username?: string;
     email?: string;
+    avatar?: string;
+    avatarUrl?: string;
+    avatar_url?: string;
+    profileImage?: string;
+    user_avatar?: string;
   };
 };
 
@@ -156,6 +163,16 @@ const normalizeChatMessages = (
         (senderId ? `User ${String(senderId).slice(0, 6)}` : 'Unknown User');
       const isSystemMessage = /^\[SYSTEM\]\s*/i.test(text);
 
+      const senderAvatar = 
+        msg.user?.avatar || 
+        msg.user?.avatarUrl || 
+        msg.user?.avatar_url ||
+        msg.user?.profileImage ||
+        msg.user?.user_avatar ||
+        msg.userAvatar ||
+        msg.profileImage ||
+        msg.user_avatar;
+
       return {
         id: String(msg.id ?? `${senderId || 'msg'}-${index}-${text.slice(0, 8)}`),
         text: text.replace(/^\[SYSTEM\]\s*/i, ''),
@@ -165,6 +182,7 @@ const normalizeChatMessages = (
             ? 'me'
             : 'other',
         senderName: isSystemMessage ? 'System' : senderName,
+        senderAvatar: senderAvatar ? String(senderAvatar) : undefined,
         createdAt: msg.sentAt,
         isSystemEvent: isSystemMessage,
       } as ChatMessage;
@@ -302,6 +320,7 @@ export default function CollaborativeChatScreen() {
           text: imageUrl, 
           sender: log.userId === user?.id ? 'me' : 'system',
           senderName: log.userName || 'Member',
+          senderAvatar: log.userAvatar,
           createdAt: log.createdAt || log.logDate,
         } as ChatMessage;
       })
@@ -311,7 +330,7 @@ export default function CollaborativeChatScreen() {
     const filteredChatMessages = chatMessages.filter((m) => {
       const text = m.text.toLowerCase();
       const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
-      const isPhoto = text.startsWith('[photo]:') || text.includes('storage.googleapis.com') || imageRegex.test(text);
+      const isPhoto = /^\[photo\]:/i.test(text) || text.includes('storage.googleapis.com') || imageRegex.test(text);
       
       if (!isPhoto) return true;
 
@@ -776,28 +795,44 @@ export default function CollaborativeChatScreen() {
                         : styles.chatRowOther
                   }
                 >
-                  <View
-                    style={[
-                      styles.chatBubble,
-                      item.isSystemEvent
-                        ? [styles.chatBubbleEvent, { backgroundColor: colors.surface, borderColor: colors.border }]
-                        : item.sender === 'me'
-                          ? [styles.chatBubbleMine, { backgroundColor: collaborativePrimary }]
-                          : [styles.chatBubbleOther, { backgroundColor: colors.card }],
-                    ]}
-                  >
-                    {!item.isSystemEvent ? (
-                      <Text style={[styles.chatSender, { color: item.sender === 'me' ? colors.white : colors.text, opacity: 0.8 }]}>
-                        {item.sender === 'me' ? 'You' : item.senderName}
-                      </Text>
-                    ) : (
-                      <Text style={[styles.chatSystemLabel, { color: colors.icon }]}>System</Text>
+                  <View style={[
+                    styles.chatRowWrapper, 
+                    item.sender === 'me' ? { justifyContent: 'flex-end' } : { justifyContent: 'flex-start' }
+                  ]}>
+                    {item.sender === 'other' && !item.isSystemEvent && (
+                      <View style={styles.chatAvatarWrapper}>
+                        <UserAvatar 
+                          url={item.senderAvatar} 
+                          name={item.senderName} 
+                          size={32} 
+                          borderColor="rgba(255,255,255,0.1)"
+                          borderWidth={1}
+                        />
+                      </View>
                     )}
+
+                    <View
+                      style={[
+                        styles.chatBubble,
+                        item.isSystemEvent
+                          ? [styles.chatBubbleEvent, { backgroundColor: colors.surface, borderColor: colors.border }]
+                          : item.sender === 'me'
+                            ? [styles.chatBubbleMine, { backgroundColor: collaborativePrimary }]
+                            : [styles.chatBubbleOther, { backgroundColor: colors.card }],
+                      ]}
+                    >
+                      {!item.isSystemEvent ? (
+                        <Text style={[styles.chatSender, { color: item.sender === 'me' ? colors.white : colors.text, opacity: 0.8 }]}>
+                          {item.sender === 'me' ? 'You' : item.senderName}
+                        </Text>
+                      ) : (
+                        <Text style={[styles.chatSystemLabel, { color: colors.icon }]}>System</Text>
+                      )}
                     
                     {(() => {
                       const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
                       const isPhotoMessage =
-                        item.text.startsWith('[PHOTO]:') ||
+                        /^\[photo\]:/i.test(item.text) ||
                         item.text.includes('storage.googleapis.com') ||
                         imageRegex.test(item.text);
     
@@ -805,8 +840,8 @@ export default function CollaborativeChatScreen() {
                         return renderChatMessageText(item.text, item.sender === 'me' ? colors.white : colors.text);
                       }
     
-                      const isPrefixed = item.text.startsWith('[PHOTO]:');
-                      let imageUrl = (isPrefixed ? item.text.replace('[PHOTO]:', '') : item.text).trim();
+                      const isPrefixed = /^\[photo\]:/i.test(item.text);
+                      let imageUrl = (isPrefixed ? item.text.replace(/^\[photo\]:/i, '') : item.text).trim();
     
                       if (!imageUrl.startsWith('http')) {
                         imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
@@ -865,7 +900,8 @@ export default function CollaborativeChatScreen() {
                       <Text style={[styles.chatTime, { color: item.sender === 'me' ? colors.white : colors.textSecondary, opacity: 0.7 }]}>{formatMessageTime(item.createdAt)}</Text>
                     )}
                   </View>
-                </Animated.View>
+                </View>
+              </Animated.View>
               )}
             />
     
@@ -1152,30 +1188,11 @@ export default function CollaborativeChatScreen() {
                               gap: 10,
                             }}
                           >
-                            {avatarUrl ? (
-                              <Image
-                                source={{ uri: avatarUrl }}
-                                style={{
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: 14,
-                                  backgroundColor: 'rgba(255,255,255,0.1)',
-                                }}
-                              />
-                            ) : (
-                              <View
-                                style={{
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: 14,
-                                  backgroundColor: 'rgba(255,255,255,0.1)',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                <Ionicons name="person" size={14} color="#e7d0ff" />
-                              </View>
-                            )}
+                            <UserAvatar 
+                              url={(voter as any).avatar || (voter as any).avatarUrl || (voter as any).profileImage} 
+                              name={name} 
+                              size={28} 
+                            />
                             <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
                               {name}
                             </Text>
@@ -1216,30 +1233,11 @@ export default function CollaborativeChatScreen() {
                               gap: 10,
                             }}
                           >
-                            {avatarUrl ? (
-                              <Image
-                                source={{ uri: avatarUrl }}
-                                style={{
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: 14,
-                                  backgroundColor: 'rgba(255,255,255,0.1)',
-                                }}
-                              />
-                            ) : (
-                              <View
-                                style={{
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: 14,
-                                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                <Ionicons name="person" size={14} color={isDark ? "#e7d0ff" : colors.primary} />
-                              </View>
-                            )}
+                            <UserAvatar 
+                              url={(voter as any).avatar || (voter as any).avatarUrl || (voter as any).profileImage} 
+                              name={name} 
+                              size={28} 
+                            />
                             <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
                               {name}
                             </Text>
@@ -1264,9 +1262,12 @@ export default function CollaborativeChatScreen() {
                   (votersModalLog?.approvals || []).length > 0 ? (
                     (votersModalLog?.approvals || []).map((voter: any, idx: number) => (
                       <View key={idx} style={[styles.voterRow, { borderBottomColor: colors.border }]}>
-                        <View style={[styles.voterAvatar, { backgroundColor: collaborativePrimary }]}>
-                           <Text style={styles.voterLetter}>{(voter.name || voter.username || '?').charAt(0).toUpperCase()}</Text>
-                        </View>
+                        <UserAvatar 
+                           url={voter.avatar || voter.avatarUrl || voter.profileImage} 
+                           name={voter.name || voter.username} 
+                           size={32} 
+                           style={styles.voterAvatar}
+                         />
                         <Text style={[styles.voterName, { color: colors.text }]}>{voter.name || voter.username || 'Member'}</Text>
                         <Ionicons name="checkmark-circle" size={18} color={getCategoryAccentColor('motivation')} />
                       </View>
@@ -1278,9 +1279,12 @@ export default function CollaborativeChatScreen() {
                   (votersModalLog?.rejections || []).length > 0 ? (
                     (votersModalLog?.rejections || []).map((voter: any, idx: number) => (
                       <View key={idx} style={[styles.voterRow, { borderBottomColor: colors.border }]}>
-                         <View style={[styles.voterAvatar, { backgroundColor: getCategoryAccentColor('spicy') }]}>
-                           <Text style={styles.voterLetter}>{(voter.name || voter.username || '?').charAt(0).toUpperCase()}</Text>
-                        </View>
+                        <UserAvatar 
+                           url={voter.avatar || voter.avatarUrl || voter.profileImage} 
+                           name={voter.name || voter.username} 
+                           size={32} 
+                           style={styles.voterAvatar}
+                         />
                         <Text style={[styles.voterName, { color: colors.text }]}>{voter.name || voter.username || 'Member'}</Text>
                         <Ionicons name="close-circle" size={18} color={getCategoryAccentColor('spicy')} />
                       </View>
@@ -1777,5 +1781,18 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  chatRowWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    width: '100%',
+  },
+  chatAvatarWrapper: {
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  chatAvatar: {
+    width: 32,
+    height: 32,
   },
 });
