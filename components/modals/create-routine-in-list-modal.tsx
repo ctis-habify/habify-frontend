@@ -85,7 +85,7 @@ export function CreateRoutineInListModal({
   const dropDownStyle = useMemo(
     () => ({
       backgroundColor: colors.card,
-      borderColor: freqOpen ? colors.primary : 'transparent',
+      borderColor: freqOpen ? colors.primary : colors.border,
       borderRadius: 12,
       minHeight: 50,
     }),
@@ -181,7 +181,7 @@ export function CreateRoutineInListModal({
                       ? colors.error
                       : routineNameFocused
                         ? colors.primary
-                        : 'transparent',
+                        : colors.border,
                   },
                 ]}
               >

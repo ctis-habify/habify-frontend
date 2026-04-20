@@ -276,7 +276,7 @@ export function CreateRoutineModal({
 
   const dropDownStyle = {
     backgroundColor: colors.card,
-    borderColor: catOpen ? colors.primary : 'transparent',
+    borderColor: catOpen ? colors.primary : colors.border,
     borderRadius: 12,
     minHeight: 50,
   };
@@ -435,7 +435,7 @@ export function CreateRoutineModal({
             <View
               style={[
                 styles.inputContainer,
-                { borderColor: errors.routineListTitle ? colors.error : titleFocused ? colors.primary : 'transparent' },
+                { borderColor: errors.routineListTitle ? colors.error : titleFocused ? colors.primary : colors.border },
               ]}
             >
               <TextInput
