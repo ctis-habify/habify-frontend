@@ -328,15 +328,15 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 16,
-        borderWidth: 1.5,
+        borderRadius: 26,
+        padding: 22,
+        marginBottom: 20,
+        borderWidth: 1,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 5,
+        shadowOffset: { width: 0, height: 14 },
+        shadowOpacity: 0.08,
+        shadowRadius: 28,
+        elevation: 8,
     },
     header: {
         flexDirection: 'row',
