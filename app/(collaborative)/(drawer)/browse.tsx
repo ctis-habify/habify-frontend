@@ -200,6 +200,24 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
         [showToast],
     );
 
+    const handlePressRoutine = useCallback(
+        (routine: PublicRoutine) => {
+            if (!routine?.id) return;
+            router.push({
+                pathname: '/(collaborative)/routine/[id]/chat',
+                params: {
+                    id: routine.id,
+                    routineName: routine.routineName || '',
+                    description: routine.description || '',
+                    categoryName: routine.category || '',
+                    frequencyType: routine.frequencyType || '',
+                    isPublic: '1',
+                },
+            });
+        },
+        [router],
+    );
+
     const renderEmpty = () => {
         if (loading) return null;
         return (
@@ -394,12 +412,13 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                                 index={index}
                                 accentColor={getCategoryAccentColor(item.category, item.categoryId ?? null)}
                                 onJoin={handleJoin}
+                                onPress={handlePressRoutine}
                             />
                         )}
                     />
                 )}
 
-                <Toast visible={toastVisible} message={toastMessage} onHide={() => setToastVisible(false)} />
+                <Toast visible={toastVisible} message={toastMessage} onClose={() => setToastVisible(false)} />
             </LinearGradient>
         </Animated.View>
     );

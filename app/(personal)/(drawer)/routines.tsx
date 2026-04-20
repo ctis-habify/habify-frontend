@@ -1,11 +1,12 @@
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
-import { DrawerActions } from '@react-navigation/native';
+import { DrawerActions, useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, DeviceEventEmitter, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
@@ -16,9 +17,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { ActivityIndicator, Alert, DeviceEventEmitter, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // UI
+import { CelebrationAnimation } from '@/components/animations/celebration-animation';
 import { CreateRoutineInListModal } from '@/components/modals/create-routine-in-list-modal';
 import { CreateRoutineModal } from '@/components/modals/create-routine-modal';
 import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
@@ -68,6 +69,10 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const [routineLists, setRoutineLists] = useState<RoutineList[]>([]);
   const [selectedListForNewRoutine, setSelectedListForNewRoutine] = useState<{ listId: number; categoryId?: number | null } | null>(null);
   const [editListParams, setEditListParams] = useState<{ listId: number; title: string; categoryId?: number } | null>(null);
+  const [celebrationVisible, setCelebrationVisible] = useState(false);
+  const [celebrationTrigger, setCelebrationTrigger] = useState(0);
+  const [hasPendingCelebration, setHasPendingCelebration] = useState(false);
+  const isFocused = useIsFocused();
 
   const loadLists = useCallback(async () => {
     try {
@@ -105,13 +110,30 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
   useEffect(() => {
     loadLists();
-    
-    // Refresh listener for when returning from edit/create screens
     const sub = DeviceEventEmitter.addListener('refreshPersonalRoutines', () => {
       loadLists();
     });
-    return () => sub.remove();
+
+    const celebrationSub = DeviceEventEmitter.addListener('PERSONAL_ROUTINE_COMPLETED', () => {
+      setHasPendingCelebration(true);
+    });
+
+    return () => {
+      sub.remove();
+      celebrationSub.remove();
+    };
   }, [loadLists]);
+
+  useEffect(() => {
+    if (isFocused && hasPendingCelebration) {
+      setHasPendingCelebration(false);
+      // Delay to ensure any entrance animation is mostly done
+      setTimeout(() => {
+        setCelebrationTrigger(prev => prev + 1);
+        setCelebrationVisible(true);
+      }, 500);
+    }
+  }, [isFocused, hasPendingCelebration]);
 
   // Focus re-trigger is handled by useFocusEffect above
 
@@ -276,9 +298,14 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
           {hasNoData && (
             <View style={styles.emptyOuter}>
-              <View style={[styles.emptyIconWrapper, { backgroundColor: colors.surface }]}>
-                <Ionicons name="calendar-outline" size={64} color={colors.primary} />
-              </View>
+              <Animated.View style={trophyStyle}>
+                <View style={[styles.trophyWrapper, { borderColor: colors.primary + '30' }]}>
+                    <Image 
+                        source={require('@/assets/images/sweet-png-trophy.png')} 
+                        style={styles.trophyImage}
+                    />
+                </View>
+              </Animated.View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>You haven&apos;t created a routine yet.</Text>
               <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                 You can create a new list by clicking the button below.
@@ -344,6 +371,12 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             </View>
           </Modal>
         )}
+
+        <CelebrationAnimation 
+          play={celebrationVisible} 
+          triggerKey={celebrationTrigger} 
+          onComplete={() => setCelebrationVisible(false)} 
+        />
       </LinearGradient>
     </Animated.View>
   );
@@ -401,6 +434,26 @@ const styles = StyleSheet.create({
     padding: 30,
     borderRadius: 100,
     marginBottom: 20,
+  },
+  trophyWrapper: {
+      width: 180,
+      height: 180,
+      borderRadius: 90,
+      backgroundColor: '#fff',
+      borderWidth: 4,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.2,
+      shadowRadius: 20,
+      elevation: 10,
+  },
+  trophyImage: {
+      width: 160,
+      height: 160,
+      resizeMode: 'contain',
   },
   emptyTitle: {
     fontSize: 18,

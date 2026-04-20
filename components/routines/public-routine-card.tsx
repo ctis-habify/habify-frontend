@@ -18,6 +18,7 @@ interface PublicRoutineCardProps {
     index: number;
     accentColor?: string;
     onJoin: (id: string) => Promise<void>;
+    onPress?: (routine: PublicRoutine) => void;
 }
 
 export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
@@ -25,6 +26,7 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
     index,
     accentColor,
     onJoin,
+    onPress,
 }) => {
     const theme = useColorScheme() ?? 'light';
     const isDark = theme === 'dark';
@@ -150,10 +152,15 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
                 {/* Action */}
                 <View style={styles.actionRow}>
                     {isAlreadyMember ? (
-                        <View style={[styles.joinedBadge, { backgroundColor: isDark ? 'rgba(74, 222, 128, 0.2)' : 'rgba(74, 222, 128, 0.06)', borderColor: 'rgba(74, 222, 128, 0.25)' }]}>
+                        <TouchableOpacity 
+                            onPress={() => onPress?.(routine)}
+                            activeOpacity={0.7}
+                            style={[styles.joinedBadge, { backgroundColor: isDark ? 'rgba(74, 222, 128, 0.2)' : 'rgba(74, 222, 128, 0.06)', borderColor: 'rgba(74, 222, 128, 0.25)' }]}
+                        >
                             <Ionicons name="checkmark-circle" size={16} color="#4ade80" />
                             <Text style={[styles.joinedText, { color: '#4ade80' }]}>Joined</Text>
-                        </View>
+                            <Ionicons name="chevron-forward" size={14} color="#4ade80" style={{ marginLeft: 4, opacity: 0.7 }} />
+                        </TouchableOpacity>
                     ) : (
                         <TouchableOpacity
                             style={[styles.joinBtn, { backgroundColor: isDark ? `${effectiveAccentColor}22` : `${effectiveAccentColor}0D`, borderColor: `${effectiveAccentColor}4D` }]}

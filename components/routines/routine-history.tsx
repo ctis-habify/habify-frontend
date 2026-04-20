@@ -21,6 +21,15 @@ export function RoutineHistory({ routineId, themeColor, createdAt }: RoutineHist
 
   const [isLoading, setIsLoading] = useState(true);
   const [logs, setLogs] = useState<{ date: string; isDone: boolean }[]>([]);
+  
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = useMemo(() => formatLocalDate(new Date()), []);
 
   const last30Days = useMemo(() => {
     const days = [];
@@ -30,7 +39,7 @@ export function RoutineHistory({ routineId, themeColor, createdAt }: RoutineHist
     for (let i = 29; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      days.push(d.toISOString().split('T')[0]);
+      days.push(formatLocalDate(d));
     }
     return days;
   }, []);
@@ -53,7 +62,7 @@ export function RoutineHistory({ routineId, themeColor, createdAt }: RoutineHist
     fetchHistory();
   }, [routineId, token, last30Days]);
 
-  const creationDate = createdAt ? new Date(createdAt).toISOString().split('T')[0] : null;
+  const creationDate = createdAt ? formatLocalDate(new Date(createdAt)) : null;
 
   return (
     <Animated.View 
@@ -93,6 +102,9 @@ export function RoutineHistory({ routineId, themeColor, createdAt }: RoutineHist
             if (isCompleted) {
               backgroundColor = themeColor;
               borderColor = themeColor;
+            } else if (dateStr === todayStr) {
+              backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+              borderColor = themeColor + '60'; // Semi-transparent theme color
             } else if (!isBeforeCreation) {
               backgroundColor = isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)';
               borderColor = isDark ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.2)';
@@ -110,6 +122,7 @@ export function RoutineHistory({ routineId, themeColor, createdAt }: RoutineHist
                   {
                     backgroundColor,
                     borderColor,
+                    borderStyle: dateStr === todayStr && !isCompleted ? 'dashed' : 'solid',
                     opacity: isBeforeCreation ? 0.3 : 1,
                   },
                 ]}
@@ -139,6 +152,10 @@ export function RoutineHistory({ routineId, themeColor, createdAt }: RoutineHist
         <View style={styles.legendItem}>
           <View style={[styles.legendBox, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)' }]} />
           <Text style={[styles.legendText, { color: colors.text }]}>Missed</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendBox, { backgroundColor: 'transparent', borderColor: themeColor + '80', borderWidth: 1, borderStyle: 'dashed' }]} />
+          <Text style={[styles.legendText, { color: colors.text }]}>Pending</Text>
         </View>
       </View>
     </Animated.View>
