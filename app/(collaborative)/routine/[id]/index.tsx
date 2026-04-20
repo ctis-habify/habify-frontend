@@ -1,5 +1,6 @@
 import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -9,46 +10,44 @@ import {
   DeviceEventEmitter,
   Pressable,
   ScrollView,
-  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  ViewStyle,
+  View
 } from 'react-native';
 import {
   Gesture,
   GestureDetector,
 } from 'react-native-gesture-handler';
 import Animated, {
-    FadeInDown,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withDelay,
-    withTiming,
-    ZoomIn,
-    Easing,
+  Easing,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+  ZoomIn,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 
+import { AnimatedFlame } from '@/components/animations/animated-flame';
+import { PokeAnimation } from '@/components/animations/poke-animation';
+import { ThrobbingHeart } from '@/components/animations/throbbing-heart';
+import { CupIndicator } from '@/components/cup-indicator';
 import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { LeaveRoutineModal } from '@/components/modals/leave-routine-modal';
-import { PokeAnimation } from '@/components/animations/poke-animation';
-import { CupIndicator } from '@/components/cup-indicator';
+import { RoutineLeaderboardEntry, RoutineScoreList } from '@/components/routine-score-list';
+import { RoutineHistory } from '@/components/routines/routine-history';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { collaborativeScoreService } from '@/services/collaborative-score.service';
-import { routineService } from '@/services/routine.service';
 import { notificationService } from '@/services/notification.service';
-import { LeaderboardEntry, UserCupAward, createLeaderboardCupAward } from '@/types/collaborative-score';
+import { routineService } from '@/services/routine.service';
+import { createLeaderboardCupAward, LeaderboardEntry, UserCupAward } from '@/types/collaborative-score';
 import { Routine } from '@/types/routine';
-import { RoutineScoreList, RoutineLeaderboardEntry } from '@/components/routine-score-list';
-import { ThrobbingHeart } from '@/components/animations/throbbing-heart';
-import { AnimatedFlame } from '@/components/animations/animated-flame';
 
 type GroupParticipant = {
   id?: string;
@@ -532,6 +531,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
 
         {canRenderContent ? (
           <>
+            {/* 1. Basic Info Card */}
             <Animated.View entering={FadeInDown.delay(120).duration(420)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Routine Name</Text>
               <Text style={[styles.primaryValue, { color: colors.text }]}>{displayRoutineName}</Text>
@@ -555,8 +555,14 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                   <Text style={[styles.metaPillText, { color: colors.text }]}>Streak {displayStreak}</Text>
                 </View>
               </View>
+            </Animated.View>
 
-              <Text style={[styles.sectionTitle, styles.spacingTop, { color: collaborativePrimary }]}>Enrolled Users</Text>
+            {/* 2. Consistency Map Card (Previously nested) */}
+            <RoutineHistory routineId={routineId as string} themeColor={collaborativePrimary} createdAt={routineDetail?.startDate} />
+
+            {/* 3. Enrolled Users Card (Previously nested) */}
+            <Animated.View entering={FadeInDown.delay(150).duration(420)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Enrolled Users</Text>
               <Text style={[styles.pokeHint, { color: colors.text, opacity: 0.6 }]}>Tap a member to poke them 👈</Text>
               {participantNames.length === 0 ? (
                 <Text style={[styles.secondaryValue, { color: colors.text }]}>No users enrolled yet.</Text>
@@ -572,17 +578,16 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                       globalCupByUserId.get(String(participantUserId || '').trim()) ||
                       null;
                     const isSelf = !!currentUserId && currentUserId === String(participantUserId || '').trim();
-                    const isPoking = pokingUserId === participantUserId;
 
                     return (
                       <Animated.View
                         key={`${name}-${participantUserId}-${index}`}
-                        entering={FadeInDown.delay(180 + index * 60).duration(280)}
+                        entering={FadeInDown.delay(index * 60).duration(280)}
                       >
                         <ParticipantChip
                           participant={participant}
                           isSelf={isSelf}
-                          isPoking={false} // No longer blocking
+                          isPoking={false}
                           onPoke={handlePoke}
                           disabled={false}
                           name={name}
@@ -596,7 +601,17 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(220).duration(420)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Routine Details</Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Routine Details</Text>
+                {isCreator && (
+                  <TouchableOpacity 
+                    onPress={() => router.push(`/(personal)/routine/${routineId}`)}
+                    style={[styles.editIconBtn, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}
+                  >
+                    <Ionicons name="pencil" size={16} color={collaborativePrimary} />
+                  </TouchableOpacity>
+                )}
+              </View>
               {detailRows.map((row, index) => (
                 <Animated.View
                   key={`${row.label}-${index}`}
@@ -737,7 +752,13 @@ function ParticipantChip({
         <ActivityIndicator size="small" color={isDark ? "#E879F9" : collaborativePrimary} />
       ) : (
         <>
-          {!isSelf && <Text style={styles.pokeIcon}>👈</Text>}
+          <View style={styles.pokeIconContainer}>
+            {!isSelf ? (
+              <Text style={styles.pokeIcon}>👈</Text>
+            ) : (
+              <Ionicons name="sparkles" size={12} color={collaborativePrimary} style={{ opacity: 0.8 }} />
+            )}
+          </View>
             <View style={styles.participantNameRow}>
               <Text
                 style={[
@@ -969,6 +990,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  editIconBtn: {
+    padding: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
   spacingTop: {
     marginTop: 14,
   },
@@ -1043,13 +1075,18 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     maxWidth: '100%',
   },
+  pokeIconContainer: {
+    width: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pokeIcon: {
     fontSize: 12,
   },
   pokeHint: {
     fontSize: 11,
-    marginTop: 4,
-    marginBottom: 2,
+    marginTop: 2, // Reduced from 4
+    marginBottom: 4, // Increased slightly
     fontStyle: 'italic',
   },
   infoRow: {

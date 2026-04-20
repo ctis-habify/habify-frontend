@@ -85,10 +85,21 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
     return null;
   }
 
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-  const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId: projectId ?? undefined,
-  });
+  const projectId =
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId;
+
+  let pushToken: string | null = null;
+  try {
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: projectId ?? undefined,
+    });
+    pushToken = tokenData.data;
+  } catch (err) {
+    // Expo Go without a projectId — push tokens unavailable, not a crash
+    console.warn('Could not get push token (expected in Expo Go):', err);
+    return null;
+  }
 
   if (Platform.OS === 'android') {
     Notifications.setNotificationChannelAsync('default', {
@@ -99,7 +110,7 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
     });
   }
 
-  return tokenData.data;
+  return pushToken;
 }
 
 export function useNotifications(isAuthenticated: boolean) {
