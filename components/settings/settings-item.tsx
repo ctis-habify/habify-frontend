@@ -1,4 +1,5 @@
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
@@ -27,6 +28,8 @@ export function SettingsItem({
     color,
     destructive = false,
 }: SettingsItemProps): React.ReactElement {
+    const theme = useColorScheme() ?? 'light';
+    const isDark = theme === 'dark';
     const scale = useSharedValue(1);
 
     const animatedStyle = useAnimatedStyle(() => {
@@ -43,8 +46,8 @@ export function SettingsItem({
         scale.value = withSpring(1);
     };
 
-    const textColor = destructive ? Colors.light.error : (color || '#fff');
-    const iconColor = destructive ? Colors.light.error : (color || '#fff');
+    const textColor = destructive ? Colors[theme].error : (color || Colors[theme].text);
+    const iconColor = destructive ? Colors[theme].error : (color || Colors[theme].primary);
 
     const renderRightContent = () => {
         switch (type) {
@@ -53,20 +56,27 @@ export function SettingsItem({
                     <Switch
                         value={value as boolean}
                         onValueChange={onToggle}
-                        trackColor={{ false: Colors.light.border, true: Colors.light.primary }}
-                        thumbColor={'#fff'}
+                        trackColor={{ false: Colors[theme].border, true: Colors[theme].primary }}
+                        thumbColor={Colors[theme].white}
+                        ios_backgroundColor={Colors[theme].border}
                     />
                 );
             case 'info':
                 return (
-                    <Text style={styles.valueText}>{value as string}</Text>
+                    <Text style={[styles.valueText, { color: Colors[theme].textSecondary }]}>
+                        {value as string}
+                    </Text>
                 );
             case 'link':
             default:
                 return (
                     <View style={styles.rightContainer}>
-                        {value ? <Text style={styles.valueText}>{value as string}</Text> : null}
-                        <Ionicons name="chevron-forward" size={20} color={Colors.light.icon} />
+                        {value ? (
+                            <Text style={[styles.valueText, { color: Colors[theme].textSecondary }]}>
+                                {value as string}
+                            </Text>
+                        ) : null}
+                        <Ionicons name="chevron-forward" size={18} color={Colors[theme].icon} />
                     </View>
                 );
         }
@@ -76,8 +86,11 @@ export function SettingsItem({
         <View style={styles.container}>
             <View style={styles.leftContainer}>
                 {icon && (
-                    <View style={[styles.iconContainer, { backgroundColor: destructive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(124, 58, 237, 0.1)' }]}>
-                        <Ionicons name={icon} size={20} color={iconColor} />
+                    <View style={[
+                        styles.iconContainer, 
+                        { backgroundColor: destructive ? 'rgba(239, 68, 68, 0.15)' : Colors[theme].surface }
+                    ]}>
+                        <Ionicons name={icon} size={18} color={iconColor} />
                     </View>
                 )}
                 <Text style={[styles.label, { color: textColor }]}>{label}</Text>
@@ -87,11 +100,11 @@ export function SettingsItem({
     );
 
     if (type === 'toggle' || type === 'info') {
-        return <View style={styles.wrapper}>{content}</View>;
+        return <View style={[styles.wrapper, { borderBottomColor: Colors[theme].border }]}>{content}</View>;
     }
 
     return (
-        <Animated.View style={[styles.wrapper, animatedStyle]}>
+        <Animated.View style={[styles.wrapper, animatedStyle, { borderBottomColor: Colors[theme].border }]}>
             <TouchableOpacity
                 onPress={onPress}
                 onPressIn={handlePressIn}
@@ -107,15 +120,13 @@ export function SettingsItem({
 const styles = StyleSheet.create({
     wrapper: {
         backgroundColor: 'transparent',
-        marginBottom: 0,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.1)',
     },
     container: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 16,
+        paddingVertical: 14,
         paddingHorizontal: 16,
     },
     leftContainer: {
@@ -126,7 +137,7 @@ const styles = StyleSheet.create({
     iconContainer: {
         width: 32,
         height: 32,
-        borderRadius: 8,
+        borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 12,
@@ -134,7 +145,6 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 16,
         fontWeight: '500',
-        color: '#fff',
     },
     rightContainer: {
         flexDirection: 'row',
@@ -142,7 +152,6 @@ const styles = StyleSheet.create({
     },
     valueText: {
         fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.6)',
         marginRight: 8,
     },
 });

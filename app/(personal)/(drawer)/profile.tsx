@@ -1,7 +1,7 @@
 import { HomeButton } from '@/components/navigation/home-button';
 import { CupIndicator } from '@/components/cup-indicator';
 import { FriendList } from '@/components/profile/FriendList';
-import { getBackgroundGradient } from '@/constants/theme';
+import { getBackgroundGradient, Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useCollaborativeScore } from '@/hooks/use-collaborative-score';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -30,6 +30,9 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+
   const { friends, loading: friendsLoading } = useFriends();
   const {
     cup,
@@ -100,58 +103,60 @@ export default function ProfileScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={styles.menuButton}
+          style={[styles.menuButton, { backgroundColor: Colors[theme].surface }]}
         >
-          <Ionicons name="menu" size={24} color="#fff" />
+          <Ionicons name="menu" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <HomeButton color="#fff" style={styles.menuButton} />
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
+        <HomeButton color={colors.text} style={[styles.menuButton, { backgroundColor: Colors[theme].surface }]} />
+
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View
           entering={FadeInDown.delay(100).duration(600).springify()}
-          style={styles.profileCard}
+          style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <View
-            style={[styles.avatarContainer, avatarUrl ? { backgroundColor: 'transparent' } : {}]}
+            style={[styles.avatarContainer, { backgroundColor: colors.surface }, avatarUrl ? { backgroundColor: 'transparent' } : {}]}
           >
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
             ) : (
-              <Text style={styles.avatarText}>{initial}</Text>
+              <Text style={[styles.avatarText, { color: colors.text }]}>{initial}</Text>
             )}
           </View>
 
-          <Text style={styles.nameText}>{displayName}</Text>
-          <Text style={styles.emailText}>{displayEmail}</Text>
+          <Text style={[styles.nameText, { color: colors.text }]}>{displayName}</Text>
+          <Text style={[styles.emailText, { color: colors.textSecondary }]}>{displayEmail}</Text>
 
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{age}</Text>
-              <Text style={styles.statLabel}>Age</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{age}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Age</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user?.totalXp || 0}</Text>
-              <Text style={styles.statLabel}>Total XP</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{user?.totalXp || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total XP</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: status.color }]}>{status.label}</Text>
-              <Text style={styles.statLabel}>Status</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Status</Text>
+
             </View>
           </View>
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(180).duration(600).springify()}
-          style={styles.achievementCard}
+          style={[styles.achievementCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <View style={styles.achievementHeader}>
-            <Text style={styles.achievementTitle}>Collaborative Cup</Text>
+            <Text style={[styles.achievementTitle, { color: colors.text }]}>Collaborative Cup</Text>
             {collaborativeScoreLoading ? (
-              <ActivityIndicator color="rgba(255,255,255,0.7)" size="large" />
+              <ActivityIndicator color={colors.textSecondary} size="large" />
             ) : (
               <Ionicons name="trophy" size={20} color={cupInfo?.color || '#FACC15'} />
             )}
@@ -162,18 +167,18 @@ export default function ProfileScreen() {
               {cup ? (
                 <CupIndicator cup={cup} transparent large />
               ) : (
-                <Text style={styles.emptyCupText}>No cup yet</Text>
+                <Text style={[styles.emptyCupText, { color: colors.text }]}>No cup yet</Text>
               )}
-              <Text style={styles.achievementSubtitle}>
+              <Text style={[styles.achievementSubtitle, { color: colors.textSecondary }]}>
                 {cupInfo
                   ? 'Awarded based on first-place leaderboard finishes'
                   : 'Reach 1st place on the leaderboard to start earning cups!'}
               </Text>
             </View>
 
-            <View style={styles.pointsBadge}>
-              <Text style={styles.pointsValue}>{collaborativePoints}</Text>
-              <Text style={styles.pointsLabel}>Collaborative Points</Text>
+            <View style={[styles.pointsBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.pointsValue, { color: colors.text }]}>{collaborativePoints}</Text>
+              <Text style={[styles.pointsLabel, { color: colors.textTertiary }]}>Points</Text>
               <Text style={styles.pointsHint}>
                 Next reward at {nextBonusStreak} days: +{nextBonusPoints}
               </Text>
@@ -183,13 +188,13 @@ export default function ProfileScreen() {
 
         <Animated.View entering={FadeInDown.delay(240).duration(600).springify()}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Friends</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See All</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Friends</Text>
+            <TouchableOpacity hitSlop={10}>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
             </TouchableOpacity>
           </View>
           {friendsLoading ? (
-            <ActivityIndicator color="rgba(255,255,255,0.7)" style={styles.loadingIndicator} />
+            <ActivityIndicator color={colors.textTertiary} style={styles.loadingIndicator} />
           ) : (
             <FriendList friends={friends} onPressFriend={handlePressFriend} />
           )}
@@ -202,7 +207,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent', // Gradient handles background
   },
   header: {
     flexDirection: 'row',
@@ -210,38 +214,34 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 15,
-    // Removed explicit background color/border to blend with gradient
   },
   menuButton: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '800',
+    letterSpacing: -0.4,
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   profileCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 24,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
     marginBottom: 20,
   },
   avatarContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -255,17 +255,14 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#fff',
   },
   nameText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
     marginBottom: 4,
   },
   emailText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
     marginBottom: 24,
   },
   statsContainer: {
@@ -281,43 +278,39 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
     marginTop: 4,
   },
   statDivider: {
     width: 1,
     height: 30,
-    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
     marginTop: 10,
+    paddingHorizontal: 4,
   },
   achievementCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    marginBottom: 18,
+    marginBottom: 20,
   },
   achievementHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   achievementTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
   },
   achievementContent: {
     flexDirection: 'row',
@@ -330,35 +323,31 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   achievementSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.72)',
-    lineHeight: 18,
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   emptyCupText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
   },
   pointsBadge: {
-    minWidth: 108,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    minWidth: 100,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
   },
   pointsValue: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: '900',
   },
   pointsLabel: {
-    marginTop: 4,
-    fontSize: 11,
-    textAlign: 'center',
-    color: 'rgba(255,255,255,0.72)',
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   pointsHint: {
     marginTop: 8,
@@ -371,12 +360,11 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 20,
+    fontWeight: '800',
   },
   seeAllText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '700',
   },
 });

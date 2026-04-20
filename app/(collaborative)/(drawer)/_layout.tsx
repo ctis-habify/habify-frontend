@@ -5,12 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
 import * as React from 'react';
 
-// Collaborative Theme Color (Fuchsia-400) - Compatible with Purple
-const COLLABORATIVE_PRIMARY = '#E879F9';
-
 export default function DrawerLayout(): React.ReactElement {
   const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
   const colors = Colors[theme];
+  const collaborativePrimary = colors.collaborativePrimary;
 
   return (
     <Drawer
@@ -23,11 +22,11 @@ export default function DrawerLayout(): React.ReactElement {
           backgroundColor: colors.background,
         },
         sceneStyle: {
-          backgroundColor: theme === 'dark' ? '#0F172A' : '#2e1065',
+          backgroundColor: colors.background,
         },
-        drawerActiveTintColor: theme === 'dark' ? colors.secondary : COLLABORATIVE_PRIMARY,
-        drawerInactiveTintColor: theme === 'dark' ? '#E5E7EB' : colors.text,
-        drawerActiveBackgroundColor: theme === 'dark' ? 'rgba(167, 139, 250, 0.2)' : 'rgba(232, 121, 249, 0.1)',
+        drawerActiveTintColor: collaborativePrimary,
+        drawerInactiveTintColor: colors.text,
+        drawerActiveBackgroundColor: isDark ? `${collaborativePrimary}33` : `${collaborativePrimary}11`,
         drawerLabelStyle: {
           marginLeft: 0,
           fontWeight: '600',

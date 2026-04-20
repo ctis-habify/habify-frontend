@@ -3,7 +3,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export function AuthLayout({ children }: AuthLayoutProps): React.ReactElement {
 
   return (
     <LinearGradient colors={getBackgroundGradient(theme)} style={styles.background}>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"} 
@@ -26,19 +26,20 @@ export function AuthLayout({ children }: AuthLayoutProps): React.ReactElement {
             contentContainerStyle={styles.scrollContainer} 
             showsVerticalScrollIndicator={false}
           >
-            <LinearGradient
-              colors={[colors.card, colors.card]}
+            <View
               style={[
                 styles.card,
                 {
-                  borderColor: isDark ? colors.border : 'transparent',
+                  backgroundColor: colors.card,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
                   borderWidth: isDark ? 1 : 0,
-                  shadowOpacity: isDark ? 0.25 : 0.5,
+                  shadowOpacity: isDark ? 0.25 : 0.15,
+                  shadowColor: isDark ? '#000' : colors.text,
                 },
               ]}
             >
               {children}
-            </LinearGradient>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

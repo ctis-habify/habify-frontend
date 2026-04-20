@@ -1,4 +1,6 @@
+import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { categoryService } from '@/services/category.service';
 import type { Category } from '@/types/category';
 import type { CreateRoutineFormState } from '@/types/create-routine';
@@ -6,9 +8,6 @@ import React, { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
-
-const ACCENT_COLOR = '#E879F9';
-const INPUT_BG = 'rgba(0,0,0,0.2)';
 
 interface Props {
   formState: CreateRoutineFormState;
@@ -20,6 +19,10 @@ interface Props {
 
 export function StepBasicInfo({ formState, updateForm, categories, loadCategories, loadingCategories }: Props) {
   const { token } = useAuth();
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
+  
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -52,21 +55,30 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
     ]);
   };
 
+  const inputStyle = [
+    styles.input, 
+    { 
+      backgroundColor: colors.surface, 
+      color: colors.text,
+      borderColor: colors.border
+    }
+  ];
+
   return (
     <Animated.View exiting={SlideOutLeft} entering={SlideInRight} style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Let's get started</Text>
-      <Text style={styles.stepSub}>Define the basics of your group routine.</Text>
+      <Text style={[styles.stepTitle, { color: colors.text }]}>Let's get started</Text>
+      <Text style={[styles.stepSub, { color: colors.text, opacity: 0.7 }]}>Define the basics of your group routine.</Text>
 
       {/* Category Selection */}
       <View style={[styles.fieldContainer, { zIndex: 2000 }]}>
         <View style={styles.rowBetween}>
-          <Text style={[styles.label, { marginBottom: 0 }]}>Category</Text>
+          <Text style={[styles.label, { marginBottom: 0, color: colors.text }]}>Category</Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity onPress={handleDeleteCategory} disabled={!formState.categoryId}>
-                <Text style={{ color: formState.categoryId ? '#ef4444' : 'rgba(255,255,255,0.3)', fontSize: 13, fontWeight: '600' }}>Delete</Text>
+                <Text style={{ color: formState.categoryId ? colors.error : colors.icon, fontSize: 13, fontWeight: '600', opacity: formState.categoryId ? 1 : 0.5 }}>Delete</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowNewCategory(!showNewCategory)}>
-                <Text style={{ color: ACCENT_COLOR, fontSize: 13, fontWeight: '600' }}>+ New Category</Text>
+                <Text style={{ color: colors.collaborativePrimary, fontSize: 13, fontWeight: '600' }}>+ New Category</Text>
               </TouchableOpacity>
           </View>
         </View>
@@ -75,18 +87,18 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
         {showNewCategory && (
           <View style={{ marginBottom: 15, flexDirection: 'row', gap: 10 }}>
             <TextInput 
-              style={[styles.input, { flex: 1, padding: 12 }]}
+              style={[...inputStyle, { flex: 1, padding: 12 }]}
               placeholder="New Category Name"
-              placeholderTextColor="rgba(255,255,255,0.4)"
+              placeholderTextColor={colors.icon}
               value={newCategoryName}
               onChangeText={setNewCategoryName}
               autoFocus
             />
               <TouchableOpacity 
               onPress={handleCreateCategory}
-              style={{ backgroundColor: ACCENT_COLOR, borderRadius: 12, justifyContent: 'center', paddingHorizontal: 20 }}
+              style={{ backgroundColor: colors.collaborativePrimary, borderRadius: 12, justifyContent: 'center', paddingHorizontal: 20 }}
               >
-                <Text style={{ color: '#000', fontWeight: 'bold' }}>Save</Text>
+                <Text style={{ color: colors.white, fontWeight: 'bold' }}>Save</Text>
               </TouchableOpacity>
           </View>
         )}
@@ -107,36 +119,38 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
           onChangeValue={(value) => {
             updateForm({ categoryId: value });
           }}
-          theme="DARK"
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownContainer}
+          theme={isDark ? "DARK" : "LIGHT"}
+          style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          listItemLabelStyle={{ color: colors.text }}
+          selectedItemLabelStyle={{ color: colors.collaborativePrimary, fontWeight: 'bold' }}
           placeholder={loadingCategories ? "Loading categories..." : "Select a category"}
-          placeholderStyle={{ color: 'rgba(255,255,255,0.5)' }}
-          textStyle={{ color: '#fff', fontSize: 15 }}
+          placeholderStyle={{ color: colors.icon, opacity: 0.6 }}
+          textStyle={{ color: colors.text, fontSize: 15 }}
           labelStyle={{ fontWeight: '600' }}
-          arrowIconStyle={{ width: 20, height: 20 }}
-          tickIconStyle={{ width: 20, height: 20 }}
+          arrowIconStyle={{ width: 20, height: 20, tintColor: colors.icon }}
+          tickIconStyle={{ width: 20, height: 20, tintColor: colors.collaborativePrimary }}
           listMode="SCROLLVIEW"
           zIndex={3000}
           zIndexInverse={1000}
           searchable={true}
           searchPlaceholder="Search category..."
-          searchContainerStyle={{ borderBottomColor: 'rgba(255,255,255,0.1)', paddingVertical: 10 }}
+          searchContainerStyle={{ borderBottomColor: colors.border, paddingVertical: 10 }}
           searchTextInputStyle={{ 
-            color: '#fff', 
-            borderColor: 'rgba(255,255,255,0.1)',
-            backgroundColor: 'rgba(255,255,255,0.05)'
+            color: colors.text, 
+            borderColor: colors.border,
+            backgroundColor: colors.background
           }}
         />
       </View>
 
       {/* Name */}
       <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Routine Name</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Routine Name</Text>
         <TextInput 
-          style={styles.input}
+          style={inputStyle}
           placeholder="e.g. Morning Yoga"
-          placeholderTextColor="rgba(255,255,255,0.4)"
+          placeholderTextColor={colors.icon}
           value={formState.routineName}
           onChangeText={(text) => updateForm({ routineName: text })}
         />
@@ -144,11 +158,11 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
 
       {/* Description */}
       <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Description & Rules</Text>
+        <Text style={[styles.label, { color: colors.text }]}>Description & Rules</Text>
         <TextInput 
-          style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+          style={[...inputStyle, { height: 80, textAlignVertical: 'top' }]}
           placeholder="Tell participants what they need to do..."
-          placeholderTextColor="rgba(255,255,255,0.4)"
+          placeholderTextColor={colors.icon}
           value={formState.description}
           onChangeText={(text) => updateForm({ description: text })}
           multiline
@@ -158,14 +172,14 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
       {/* Privacy */}
       <View style={styles.rowBetween}>
         <View>
-          <Text style={styles.label}>Public Routine</Text>
-          <Text style={styles.subLabel}>{formState.isPublic ? 'Anyone can find and join' : 'Invite only'}</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Public Routine</Text>
+          <Text style={[styles.subLabel, { color: colors.text, opacity: 0.5 }]}>{formState.isPublic ? 'Anyone can find and join' : 'Invite only'}</Text>
         </View>
         <Switch 
           value={formState.isPublic}
           onValueChange={(val) => updateForm({ isPublic: val })}
-          trackColor={{ false: '#555', true: ACCENT_COLOR }}
-          thumbColor="#fff"
+          trackColor={{ false: colors.border, true: colors.collaborativePrimary }}
+          thumbColor={colors.white}
         />
       </View>
     </Animated.View>
@@ -174,31 +188,24 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
 
 const styles = StyleSheet.create({
   stepContainer: { width: '100%' },
-  stepTitle: { color: '#fff', fontSize: 24, fontWeight: '800', marginBottom: 8 },
-  stepSub: { color: 'rgba(255,255,255,0.7)', fontSize: 16, marginBottom: 30 },
+  stepTitle: { fontSize: 24, fontWeight: '800', marginBottom: 8 },
+  stepSub: { fontSize: 16, marginBottom: 30 },
   fieldContainer: { marginBottom: 24 },
-  label: { color: '#fff', marginBottom: 8, fontWeight: '600' },
-  subLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 4 },
+  label: { marginBottom: 8, fontWeight: '600' },
+  subLabel: { fontSize: 12, marginTop: 4 },
   dropdown: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.1)',
     borderRadius: 16,
     paddingHorizontal: 16,
   },
   dropdownContainer: {
-    backgroundColor: '#1e1b4b',
-    borderColor: 'rgba(255,255,255,0.1)',
     borderRadius: 16,
     marginTop: 8,
   },
   input: {
-    backgroundColor: INPUT_BG,
     borderRadius: 12,
     padding: 16,
-    color: '#fff',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   rowBetween: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24,

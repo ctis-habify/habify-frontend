@@ -14,12 +14,17 @@ import {
 } from 'react-native';
 import { verificationService } from '../../services/verification.service';
 import { routineService } from '../../services/routine.service';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 export default function CollaborativeCameraModal(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams(); 
   const routineIdRaw = params.routineId;
   const routineId = Array.isArray(routineIdRaw) ? routineIdRaw[0] : routineIdRaw;
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
 
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -31,15 +36,15 @@ export default function CollaborativeCameraModal(): React.ReactElement {
 
   // 1. Check Permissions
   if (!permission) {
-    return <View style={styles.container} />; // Loading state
+    return <View style={[styles.container, { backgroundColor: colors.background }]} />; // Loading state
   }
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginBottom: 20, color: 'white' }}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={{ textAlign: 'center', marginBottom: 20, color: colors.text, fontSize: 16, fontWeight: '600' }}>
           We need your permission to show the camera
         </Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.permissionBtn}>
+        <TouchableOpacity onPress={requestPermission} style={[styles.permissionBtn, { backgroundColor: colors.collaborativePrimary }]}>
           <Text style={styles.btnText}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
@@ -123,32 +128,32 @@ export default function CollaborativeCameraModal(): React.ReactElement {
   // --- RENDER: PREVIEW MODE (Photo Taken) ---
   if (photoUri) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: '#000' }]}>
         <Image source={{ uri: photoUri }} style={styles.previewImage} />
         
         {isUploading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#ffffff" />
-            <Text style={styles.loadingText}>{loadingText}</Text>
+          <View style={[styles.loadingOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.7)' }]}>
+            <ActivityIndicator size="large" color={colors.collaborativePrimary} />
+            <Text style={[styles.loadingText, { color: colors.white }]}>{loadingText}</Text>
           </View>
         )}
 
         <View style={styles.bottomControls}>
           <TouchableOpacity
-            style={[styles.btn, styles.cancelBtn]}
+            style={[styles.btn, styles.cancelBtn, { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderColor: 'rgba(255, 255, 255, 0.2)', borderWidth: 1 }]}
             onPress={() => setPhotoUri(null)}
             disabled={isUploading}
           >
-            <Text style={styles.cancelText}>Retake</Text>
+            <Text style={[styles.cancelText, { color: colors.white }]}>Retake</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btn, styles.uploadBtn]}
+            style={[styles.btn, styles.uploadBtn, { backgroundColor: colors.collaborativePrimary }]}
             onPress={handleUpload}
             disabled={isUploading}
           >
-            <Ionicons name="send" size={20} color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.btnText}>Post to Chat</Text>
+            <Ionicons name="send" size={20} color={colors.white} style={{ marginRight: 8 }} />
+            <Text style={[styles.btnText, { color: colors.white }]}>Post to Chat</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -165,17 +170,17 @@ export default function CollaborativeCameraModal(): React.ReactElement {
         {/* Top Bar: Close & Flip */}
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-            <Ionicons name="close" size={28} color="white" />
+            <Ionicons name="close" size={28} color={colors.white} />
           </TouchableOpacity>
           <TouchableOpacity onPress={toggleCameraFacing} style={styles.iconBtn}>
-            <Ionicons name="camera-reverse" size={28} color="white" />
+            <Ionicons name="camera-reverse" size={28} color={colors.white} />
           </TouchableOpacity>
         </View>
 
         {/* Bottom Bar: Shutter */}
         <View style={styles.bottomBar}>
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
-            <View style={styles.shutterInner} />
+            <View style={[styles.shutterInner, { backgroundColor: colors.white }]} />
           </TouchableOpacity>
         </View>
       </View>
@@ -192,7 +197,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   permissionBtn: {
-    backgroundColor: '#2563eb',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -201,11 +205,11 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40, 
+    paddingTop: 44,
   },
   iconBtn: {
     padding: 10,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     borderRadius: 30,
   },
   bottomBar: {
@@ -213,19 +217,18 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   shutterBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 5,
-    borderColor: 'white',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 6,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   shutterInner: {
-    width: 65,
-    height: 65,
-    borderRadius: 35,
-    backgroundColor: 'white',
+    width: 66,
+    height: 66,
+    borderRadius: 33,
   },
   previewImage: { flex: 1, resizeMode: 'contain' },
   bottomControls: {
@@ -245,20 +248,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
   },
-  cancelBtn: { backgroundColor: '#374151' },
-  cancelText: { color: '#fff', fontWeight: '600' },
-  uploadBtn: { backgroundColor: '#E879F9' },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  cancelBtn: {},
+  cancelText: { fontWeight: '700' },
+  uploadBtn: {},
+  btnText: { fontWeight: '800', fontSize: 16 },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    color: 'white',
-    marginTop: 10,
+    color: '#FFFFFF',
+    marginTop: 12,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

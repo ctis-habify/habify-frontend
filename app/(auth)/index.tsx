@@ -145,14 +145,13 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     borderRadius: 4,
-    borderColor: Colors.light.border,
   },
   rememberText: {
     fontSize: 14,
   },
   forgotText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   bottomRow: {
     flexDirection: 'row',

@@ -1,3 +1,5 @@
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -15,6 +17,10 @@ export function RoutineCompletedAnimation({
   rewardText,
   onComplete,
 }: Props): React.ReactElement | null {
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
+
   const scale = useRef(new Animated.Value(0.7)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const sparkle = useRef(new Animated.Value(0)).current;
@@ -63,20 +69,28 @@ export function RoutineCompletedAnimation({
 
   return (
     <Modal transparent animationType="fade" visible={visible}>
-      <View style={styles.overlay}>
-        <Animated.View style={[styles.card, { opacity, transform: [{ scale }] }]}>
+      <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)' }]}>
+        <Animated.View style={[
+          styles.card, 
+          { 
+            opacity, 
+            transform: [{ scale }],
+            backgroundColor: isDark ? colors.surface : colors.card,
+            borderColor: colors.border
+          }
+        ]}>
           <TouchableOpacity
             onPress={onComplete}
-            style={styles.closeButton}
+            style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
             hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           >
-            <Ionicons name="close" size={18} color="rgba(255,255,255,0.9)" />
+            <Ionicons name="close" size={18} color={colors.text} />
           </TouchableOpacity>
-          <View style={styles.iconCircle}>
-            <Ionicons name="checkmark-done-circle" size={56} color="#4ade80" />
+          <View style={[styles.iconCircle, { backgroundColor: `${colors.success}22` }]}>
+            <Ionicons name="checkmark-done-circle" size={56} color={colors.success} />
           </View>
-          <Text style={styles.title}>Goal Completed!</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Goal Completed!</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Group approved your photo
             {routineName ? ` for "${routineName}"` : ''}.
           </Text>
@@ -112,7 +126,6 @@ export function RoutineCompletedAnimation({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(12, 3, 25, 0.52)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 22,
@@ -121,13 +134,16 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 360,
     borderRadius: 24,
-    backgroundColor: 'rgba(44, 17, 82, 0.86)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 1.5,
     paddingVertical: 28,
     paddingHorizontal: 20,
     alignItems: 'center',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
   },
   closeButton: {
     position: 'absolute',
@@ -138,35 +154,32 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
     zIndex: 2,
   },
   iconCircle: {
     width: 86,
     height: 86,
     borderRadius: 43,
-    backgroundColor: 'rgba(74, 222, 128, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   title: {
-    color: '#ffffff',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 24,
+    textAlign: 'center',
   },
   subtitle: {
     marginTop: 8,
-    color: 'rgba(255,255,255,0.88)',
     textAlign: 'center',
     fontSize: 15,
     lineHeight: 21,
+    fontWeight: '500',
   },
   rewardText: {
     marginTop: 8,
-    color: '#86efac',
+    color: '#34d399',
     textAlign: 'center',
     fontSize: 14,
     fontWeight: '700',

@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
 interface PublicRoutineCardProps {
     routine: PublicRoutine;
     index: number;
@@ -20,9 +23,12 @@ interface PublicRoutineCardProps {
 export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
     routine,
     index,
-    accentColor = '#E879F9',
+    accentColor,
     onJoin,
 }) => {
+    const theme = useColorScheme() ?? 'light';
+    const isDark = theme === 'dark';
+    const effectiveAccentColor = accentColor || Colors[theme].primary;
     const [joining, setJoining] = React.useState(false);
 
     const {
@@ -69,26 +75,26 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
 
     return (
         <Animated.View entering={FadeInDown.delay(200 + index * 100).springify()}>
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border }]}>
                 {/* Header Row */}
                 <View style={styles.header}>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.title} numberOfLines={1}>
+                        <Text style={[styles.title, { color: Colors[theme].text }]} numberOfLines={1}>
                             {routineName}
                         </Text>
                     </View>
 
                     {/* Category pill */}
                     {!!category && (
-                        <View style={[styles.pill, { borderColor: `${accentColor}40` }]}>
-                            <Text style={[styles.pillText, { color: accentColor }]}>{category.toUpperCase()}</Text>
+                        <View style={[styles.pill, { borderColor: `${effectiveAccentColor}40` }]}>
+                            <Text style={[styles.pillText, { color: effectiveAccentColor }]}>{category.toUpperCase()}</Text>
                         </View>
                     )}
                 </View>
 
                 {/* Description */}
                 {!!description && (
-                    <Text style={styles.description} numberOfLines={2}>
+                    <Text style={[styles.description, { color: Colors[theme].icon }]} numberOfLines={2}>
                         {description}
                     </Text>
                 )}
@@ -96,18 +102,18 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
                 {/* Meta Row */}
                 <View style={styles.metaRow}>
                     <View style={styles.metaItem}>
-                        <Ionicons name="repeat" size={14} color="rgba(255,255,255,0.5)" />
-                        <Text style={styles.metaText}>{frequencyType}</Text>
+                        <Ionicons name="repeat" size={14} color={Colors[theme].icon} />
+                        <Text style={[styles.metaText, { color: Colors[theme].icon }]}>{frequencyType}</Text>
                     </View>
-                    <View style={styles.metaDot} />
+                    <View style={[styles.metaDot, { backgroundColor: Colors[theme].border }]} />
                     <View style={styles.metaItem}>
-                        <Ionicons name="calendar-outline" size={14} color="rgba(255,255,255,0.5)" />
-                        <Text style={styles.metaText}>{formattedDate}</Text>
+                        <Ionicons name="calendar-outline" size={14} color={Colors[theme].icon} />
+                        <Text style={[styles.metaText, { color: Colors[theme].icon }]}>{formattedDate}</Text>
                     </View>
-                    <View style={styles.metaDot} />
+                    <View style={[styles.metaDot, { backgroundColor: Colors[theme].border }]} />
                     <View style={styles.metaItem}>
-                        <Ionicons name="people-outline" size={14} color="rgba(255,255,255,0.5)" />
-                        <Text style={styles.metaText}>{memberCount} members</Text>
+                        <Ionicons name="people-outline" size={14} color={Colors[theme].icon} />
+                        <Text style={[styles.metaText, { color: Colors[theme].icon }]}>{memberCount} members</Text>
                     </View>
                 </View>
 
@@ -144,23 +150,23 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
                 {/* Action */}
                 <View style={styles.actionRow}>
                     {isAlreadyMember ? (
-                        <View style={styles.joinedBadge}>
+                        <View style={[styles.joinedBadge, { backgroundColor: isDark ? 'rgba(74, 222, 128, 0.2)' : 'rgba(74, 222, 128, 0.06)', borderColor: 'rgba(74, 222, 128, 0.25)' }]}>
                             <Ionicons name="checkmark-circle" size={16} color="#4ade80" />
-                            <Text style={styles.joinedText}>Joined</Text>
+                            <Text style={[styles.joinedText, { color: '#4ade80' }]}>Joined</Text>
                         </View>
                     ) : (
                         <TouchableOpacity
-                            style={[styles.joinBtn, { backgroundColor: `${accentColor}22`, borderColor: `${accentColor}60` }]}
+                            style={[styles.joinBtn, { backgroundColor: isDark ? `${effectiveAccentColor}22` : `${effectiveAccentColor}0D`, borderColor: `${effectiveAccentColor}4D` }]}
                             onPress={handleJoin}
                             activeOpacity={0.75}
                             disabled={joining}
                         >
                             {joining ? (
-                                <ActivityIndicator size="small" color={accentColor} />
+                                <ActivityIndicator size="small" color={effectiveAccentColor} />
                             ) : (
                                 <>
-                                    <Ionicons name="enter-outline" size={16} color={accentColor} />
-                                    <Text style={[styles.joinBtnText, { color: accentColor }]}>Join</Text>
+                                    <Ionicons name="enter-outline" size={16} color={effectiveAccentColor} />
+                                    <Text style={[styles.joinBtnText, { color: effectiveAccentColor }]}>Join</Text>
                                 </>
                             )}
                         </TouchableOpacity>
@@ -173,12 +179,10 @@ export const PublicRoutineCard: React.FC<PublicRoutineCardProps> = ({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: 'rgba(255,255,255,0.07)',
         borderRadius: 22,
         padding: 18,
         marginBottom: 14,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.10)',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.12,
@@ -194,7 +198,6 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#fff',
         letterSpacing: -0.4,
     },
     pill: {
@@ -209,7 +212,6 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     description: {
-        color: 'rgba(255,255,255,0.55)',
         fontSize: 13,
         lineHeight: 19,
         marginBottom: 14,
@@ -227,7 +229,6 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     metaText: {
-        color: 'rgba(255,255,255,0.5)',
         fontSize: 12,
         fontWeight: '500',
     },
@@ -235,7 +236,6 @@ const styles = StyleSheet.create({
         width: 3,
         height: 3,
         borderRadius: 1.5,
-        backgroundColor: 'rgba(255,255,255,0.25)',
     },
     actionRow: {
         flexDirection: 'row',
@@ -263,12 +263,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 14,
-        backgroundColor: 'rgba(74, 222, 128, 0.12)',
         borderWidth: 1,
-        borderColor: 'rgba(74, 222, 128, 0.3)',
     },
     joinedText: {
-        color: '#4ade80',
         fontSize: 14,
         fontWeight: '700',
     },

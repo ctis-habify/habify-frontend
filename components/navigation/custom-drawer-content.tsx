@@ -28,13 +28,14 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
   const insets = useSafeAreaInsets();
   const { user, token, logout } = useAuth();
   const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
   const { count: unreadCount } = useUnreadCount(!!token);
   const colors = Colors[theme];
   const isCollaborativeDrawer = !props.state.routeNames.includes('profile');
-  const activeTint = theme === 'dark' ? colors.secondary : colors.primary;
-  const inactiveTint = theme === 'dark' ? '#E5E7EB' : colors.text;
-  const activeBackgroundColor =
-    theme === 'dark' ? 'rgba(167, 139, 250, 0.2)' : 'rgba(124, 58, 237, 0.1)';
+  const activeTint = isDark ? colors.secondary : colors.primary;
+  const inactiveTint = isDark ? colors.textSecondary : colors.text;
+  const activeBackgroundColor = isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(124, 58, 237, 0.08)';
+
   const handleComingSoon = (title: string) => Alert.alert(title, 'Coming soon');
 
   const displayName = user?.name || 'User';
@@ -92,30 +93,26 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
             <View
               style={[
                 styles.avatarPlaceholder,
+                { backgroundColor: colors.primary, borderColor: colors.border },
                 avatarUrl ? { backgroundColor: 'transparent' } : {},
               ]}
             >
               {avatarUrl ? (
                 <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
               ) : (
-                <Text style={styles.avatarText}>{initial}</Text>
+                <Text style={[styles.avatarText, { color: colors.white }]}>{initial}</Text>
               )}
             </View>
 
             <TouchableOpacity
-              style={[
-                styles.menuBtn,
-                // {
-                //   backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : '',
-                // },
-              ]}
+              style={styles.menuBtn}
               onPress={() => props.navigation.closeDrawer()}
             >
-              <Ionicons name="close" size={30} color={theme === 'dark' ? '#FFFFFF' : '#111111'} />
+              <Ionicons name="close" size={30} color={colors.icon} />
             </TouchableOpacity>
           </View>
           <Text style={[styles.username, { color: colors.text }]}>{displayName}</Text>
-          <Text style={[styles.email, { color: colors.icon }]}>{displayEmail}</Text>
+          <Text style={[styles.email, { color: isDark ? colors.icon : colors.text, opacity: 0.7 }]}>{displayEmail}</Text>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -129,7 +126,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}
-          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ marginLeft: 0, fontWeight: '700' }}
         />
         <DrawerItem
           label="My Routines"
@@ -147,7 +144,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}
-          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ marginLeft: 0, fontWeight: '700' }}
         />
         <DrawerItem
           label="Leaderboard"
@@ -157,7 +154,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}
-          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ marginLeft: 0, fontWeight: '700' }}
         />
         <DrawerItem
           label="Friends"
@@ -167,7 +164,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}
-          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ marginLeft: 0, fontWeight: '700' }}
         />
         <DrawerItem
           label="Notifications"
@@ -179,7 +176,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}
-          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ marginLeft: 0, fontWeight: '700' }}
         />
         <DrawerItem
           label="Analytics (Soon)"
@@ -188,7 +185,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}
-          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ marginLeft: 0, fontWeight: '700' }}
         />
         <DrawerItem
           label="Settings"
@@ -198,7 +195,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           activeTintColor={activeTint}
           inactiveTintColor={inactiveTint}
           activeBackgroundColor={activeBackgroundColor}
-          labelStyle={{ marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ marginLeft: 0, fontWeight: '700' }}
         />
       </DrawerContentScrollView>
 
@@ -214,7 +211,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
           label="Logout"
           icon={({ size }) => <Ionicons name="log-out-outline" size={size} color={colors.error} />}
           onPress={handleLogout}
-          labelStyle={{ color: colors.error, marginLeft: 0, fontWeight: '600' }}
+          labelStyle={{ color: colors.error, marginLeft: 0, fontWeight: '700' }}
         />
       </View>
     </View>
@@ -283,7 +280,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    padding: 20,
+    padding: 24,
     alignItems: 'stretch',
     justifyContent: 'center',
     marginBottom: 10,
@@ -292,49 +289,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   avatarPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#7C3AED',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 0,
-    overflow: 'hidden', // Ensure image stays round
+    overflow: 'hidden',
+    borderWidth: 2,
   },
   menuBtn: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    // backgroundColor: 'rgba(120, 64, 217, 0.16)',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -4,
   },
   avatarImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30, // Match placeholder radius
+    width: 64,
+    height: 64,
+    borderRadius: 32,
   },
   avatarText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
   },
   username: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 19,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   email: {
     fontSize: 14,
-    marginTop: 2,
+    marginTop: 4,
+    fontWeight: '500',
   },
   divider: {
     height: 1,
-    marginVertical: 10,
-    marginHorizontal: 20,
+    marginVertical: 12,
+    marginHorizontal: 24,
   },
   footer: {
     marginTop: 'auto',
@@ -342,18 +339,20 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
     top: -4,
-    right: -8,
-    backgroundColor: '#EF4444',
+    right: -10,
+    backgroundColor: '#ef4444',
     borderRadius: 10,
-    minWidth: 18,
-    height: 18,
+    minWidth: 20,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   badgeText: {
-    color: '#fff',
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#fff',
   },
 });

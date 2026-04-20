@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Routine } from '@/types/routine';
 import { DeleteRoutineModal } from '../modals/delete-routine-modal';
 import { ManageRoutineUsersModal } from '../modals/manage-routine-users-modal';
@@ -34,8 +36,12 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     onDelete,
     isLeaving = false,
     isDeleting = false,
-    accentColor = '#E879F9'
+    accentColor
 }) => {
+    const theme = useColorScheme() ?? 'light';
+    const isDark = theme === 'dark';
+    const colors = Colors[theme];
+    const effectiveAccentColor = accentColor || colors.primary;
     const safeRoutine = routine ?? ({} as Routine);
     const {
         id,
@@ -132,7 +138,7 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     return (
         <Animated.View style={animatedCardStyle}>
             <Pressable
-                style={styles.card}
+                style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={onPress ? () => onPress(routine) : undefined}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
@@ -141,18 +147,18 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
                 {/* Header: Title & Category */}
                 <View style={styles.header}>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.title} numberOfLines={1}>{routineName || 'Unnamed Space'}</Text>
+                        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>{routineName || 'Unnamed Space'}</Text>
                     </View>
                     {hasCategory && (
-                        <View style={[styles.categoryBadge, { backgroundColor: `${accentColor}22` }]}>
-                            <Text style={[styles.categoryText, { color: accentColor }]}>
+                        <View style={[styles.categoryBadge, { backgroundColor: `${effectiveAccentColor}22` }]}>
+                            <Text style={[styles.categoryText, { color: effectiveAccentColor }]}>
                                 {categoryText}
                             </Text>
                         </View>
                     )}
-                    <View style={styles.keyPill}>
-                        <Ionicons name={isPublic ? "lock-open" : "lock-closed"} size={12} color="#fff" style={{ marginRight: 4 }} />
-                        <Text style={[styles.categoryText, { color: '#ffffff' }]}>
+                    <View style={[styles.keyPill, { backgroundColor: colors.surface }]}>
+                        <Ionicons name={isPublic ? "lock-open" : "lock-closed"} size={12} color={colors.text} style={{ marginRight: 4 }} />
+                        <Text style={[styles.categoryText, { color: colors.text }]}>
                             {isPublic ? 'PUBLIC' : 'PRIVATE'}
                         </Text>
                     </View>
@@ -160,26 +166,26 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
 
                 {/* Description */}
                 {!!description && (
-                    <Text style={styles.description} numberOfLines={2}>{description}</Text>
+                    <Text style={[styles.description, { color: colors.icon }]} numberOfLines={2}>{description}</Text>
                 )}
 
                 {/* Stats Bar */}
-                <View style={styles.statsBar}>
+                <View style={[styles.statsBar, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.03)' }]}>
                     <View style={styles.statItem}>
                         <ThrobbingHeart lives={lives} size={16} />
-                        <Text style={styles.statLabel}>Lives: </Text>
-                        <Text style={styles.statValue}>{lives}</Text>
+                        <Text style={[styles.statLabel, { color: colors.icon }]}>Lives: </Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>{lives}</Text>
                     </View>
-                    <View style={[styles.divider, { height: '60%' }]} />
+                    <View style={[styles.divider, { height: '60%', backgroundColor: colors.border }]} />
                     <View style={styles.statItem}>
                         <AnimatedFlame streak={streak} size={16} />
-                        <Text style={styles.statLabel}>Streak: </Text>
-                        <Text style={styles.statValue}>{streak}</Text>
+                        <Text style={[styles.statLabel, { color: colors.icon }]}>Streak: </Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>{streak}</Text>
                     </View>
-                    <View style={[styles.divider, { height: '60%' }]} />
+                    <View style={[styles.divider, { height: '60%', backgroundColor: colors.border }]} />
                     <View style={styles.statItem}>
-                        <Ionicons name="time" size={16} color={accentColor} />
-                        <Text style={styles.statValue}>
+                        <Ionicons name="time" size={16} color={effectiveAccentColor} />
+                        <Text style={[styles.statValue, { color: colors.text }]}>
                             {(safeRoutine.frequencyType?.toUpperCase() === 'WEEKLY' || 
                               String(safeRoutine.frequency || '').toUpperCase() === 'WEEKLY' ||
                               String(safeRoutine.repetition || '').toUpperCase() === 'WEEKLY' ||
@@ -193,61 +199,80 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
 
                 {/* Requirements Section */}
                 {!!(rewardCondition || ageRequirement || (genderRequirement && genderRequirement !== 'na') || xpRequirement) && (
-                    <View style={styles.footer}>
+                    <View style={[styles.footer, { borderTopColor: colors.border }]}>
                         {!!rewardCondition && (
-                            <View style={styles.conditionItem}>
-                                <Ionicons name="ribbon" size={16} color="#fbbf24" />
-                                <Text style={styles.footerText} numberOfLines={1}>{rewardCondition}</Text>
+                            <View style={[styles.conditionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                                <Ionicons name="ribbon" size={16} color={colors.gold} />
+                                <Text style={[styles.footerText, { color: colors.text }]} numberOfLines={1}>{rewardCondition}</Text>
                             </View>
                         )}
                         {!!ageRequirement && (
-                            <View style={styles.conditionItem}>
-                                <Ionicons name="calendar" size={16} color="#38bdf8" />
-                                <Text style={styles.footerText} numberOfLines={1}>{ageRequirement}+ Age</Text>
+                            <View style={[styles.conditionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                                <Ionicons name="calendar" size={16} color={colors.primary} />
+                                <Text style={[styles.footerText, { color: colors.text }]} numberOfLines={1}>{ageRequirement}+ Age</Text>
                             </View>
                         )}
                         {!!(genderRequirement && genderRequirement !== 'na') && (
-                            <View style={styles.conditionItem}>
-                                <Ionicons name="person" size={16} color="#f472b6" />
-                                <Text style={styles.footerText} numberOfLines={1}>
+                            <View style={[styles.conditionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                                <Ionicons name="person" size={16} color={isDark ? "#f472b6" : "#db2777"} />
+                                <Text style={[styles.footerText, { color: colors.text }]} numberOfLines={1}>
                                     {genderRequirement.toUpperCase()}
                                 </Text>
                             </View>
                         )}
                         {!!xpRequirement && (
-                            <View style={styles.conditionItem}>
+                            <View style={[styles.conditionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                                 <Ionicons name="star" size={16} color="#fbbf24" />
-                                <Text style={styles.footerText} numberOfLines={1}>{xpRequirement} XP</Text>
+                                <Text style={[styles.footerText, { color: colors.text }]} numberOfLines={1}>{xpRequirement} XP</Text>
                             </View>
                         )}
                     </View>
                 )}
 
-                {/* Actions */}
+                {/* Action Buttons */}
                 <View style={styles.actionRow}>
                     <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: 'rgba(232, 121, 249, 0.15)' }]}
+                        style={[
+                            styles.actionBtn, 
+                            { 
+                                backgroundColor: isDark ? 'rgba(168, 85, 247, 0.2)' : 'rgba(124, 58, 237, 0.06)',
+                                borderColor: isDark ? 'rgba(168, 85, 247, 0.3)' : 'rgba(124, 58, 237, 0.15)'
+                            }
+                        ]}
                         onPress={handleInvite}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="share-social" size={18} color="#E879F9" />
-                        <Text style={[styles.actionBtnText, { color: '#E879F9' }]}>Invite</Text>
+                        <Ionicons name="share-social" size={18} color={isDark ? '#c084fc' : '#7c3aed'} />
+                        <Text style={[styles.actionBtnText, { color: isDark ? '#c084fc' : '#7c3aed' }]}>Invite</Text>
                     </TouchableOpacity>
 
                     {isCreator && (
                         <TouchableOpacity
-                            style={[styles.actionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}
+                            style={[
+                                styles.actionBtn, 
+                                { 
+                                    backgroundColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, 0.06)',
+                                    borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(56, 189, 248, 0.15)'
+                                }
+                            ]}
                             onPress={handleManageUsers}
                             activeOpacity={0.7}
                         >
-                            <Ionicons name="people" size={18} color="#38bdf8" />
-                            <Text style={[styles.actionBtnText, { color: '#38bdf8' }]}>Manage</Text>
+                            <Ionicons name="people" size={18} color={isDark ? "#38bdf8" : "#0284c7"} />
+                            <Text style={[styles.actionBtnText, { color: isDark ? "#38bdf8" : "#0284c7" }]}>Manage</Text>
                         </TouchableOpacity>
                     )}
 
                     {!!onLeave && !isCreator && (
                         <TouchableOpacity
-                            style={[styles.actionBtn, styles.leaveBtn]}
+                            style={[
+                                styles.actionBtn, 
+                                styles.leaveBtn, 
+                                { 
+                                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.06)',
+                                    borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.15)'
+                                }
+                            ]}
                             onPress={() => routine && onLeave(routine)}
                             activeOpacity={0.7}
                             disabled={isLeaving}
@@ -259,7 +284,14 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
 
                     {!!onDelete && isCreator && (
                         <TouchableOpacity
-                            style={[styles.actionBtn, styles.deleteActionBtn]}
+                            style={[
+                                styles.actionBtn, 
+                                styles.deleteActionBtn, 
+                                { 
+                                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.06)',
+                                    borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.15)'
+                                }
+                            ]}
                             onPress={handleDelete}
                             activeOpacity={0.7}
                             disabled={isDeleting}
@@ -290,12 +322,10 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
         borderRadius: 24,
         padding: 20,
         marginBottom: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1.5,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.1,
@@ -309,24 +339,22 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 20,
-        fontWeight: '700',
-        color: '#fff',
+        fontWeight: '800',
         letterSpacing: -0.5,
     },
     categoryText: {
-        fontSize: 11,
-        fontWeight: '700',
+        fontSize: 10,
+        fontWeight: '800',
         textTransform: 'uppercase',
-        letterSpacing: 0.4,
+        letterSpacing: 0.6,
     },
     categoryBadge: {
-        paddingHorizontal: 10,
+        paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
         marginRight: 8,
     },
     keyPill: {
-        backgroundColor: 'rgba(255,255,255,0.15)',
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 10,
@@ -335,15 +363,14 @@ const styles = StyleSheet.create({
         marginLeft: 12,
     },
     description: {
-        color: 'rgba(255,255,255,0.6)',
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 16,
+        fontWeight: '500',
     },
     statsBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.2)',
         borderRadius: 16,
         padding: 12,
         marginBottom: 12,
@@ -355,19 +382,17 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     statLabel: {
-        color: 'rgba(255,255,255,0.5)',
         fontSize: 12,
         marginLeft: 4,
+        fontWeight: '500',
     },
     statValue: {
-        color: '#fff',
         fontSize: 12,
-        fontWeight: '600',
+        fontWeight: '700',
         marginLeft: 4,
     },
     divider: {
         width: 1,
-        backgroundColor: 'rgba(255,255,255,0.1)',
         marginHorizontal: 8,
     },
     footer: {
@@ -376,7 +401,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 10,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.08)',
         paddingTop: 16,
         marginTop: 4,
     },
@@ -384,17 +408,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        backgroundColor: 'rgba(255,255,255,0.08)',
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 14,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1.5,
     },
     footerText: {
-        color: '#fff',
         fontSize: 13,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     actionRow: {
         flexDirection: 'row',
@@ -408,30 +429,23 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderRadius: 16,
         paddingVertical: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1.5,
         gap: 8,
     },
     actionBtnText: {
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '800',
     },
-    leaveBtn: {
-        backgroundColor: 'rgba(239, 68, 68, 0.15)',
-        borderColor: 'rgba(248, 113, 113, 0.3)',
-    },
+    leaveBtn: {},
     leaveBtnText: {
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '800',
         color: '#f87171',
     },
-    deleteActionBtn: {
-        backgroundColor: 'rgba(239, 68, 68, 0.15)',
-        borderColor: 'rgba(248, 113, 113, 0.3)',
-    },
+    deleteActionBtn: {},
     deleteActionBtnText: {
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '800',
         color: '#f87171',
     },
 });

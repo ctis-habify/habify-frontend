@@ -1,3 +1,5 @@
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import React, { useEffect, useMemo } from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -164,6 +166,10 @@ export function PokeAnimation({
     targetName,
     onComplete,
 }: PokeAnimationProps): React.ReactElement | null {
+    const theme = useColorScheme() ?? 'light';
+    const isDark = theme === 'dark';
+    const colors = Colors[theme];
+
     const emojiScale = useSharedValue(0);
     const emojiRotation = useSharedValue(0);
     const overlayOpacity = useSharedValue(0);
@@ -294,7 +300,7 @@ export function PokeAnimation({
             <Animated.View style={[styles.overlay, overlayStyle]} />
 
             {/* Screen flash */}
-            <Animated.View style={[styles.flash, flashStyle]} />
+            <Animated.View style={[styles.flash, flashStyle, { backgroundColor: colors.collaborativePrimary }]} />
 
             {/* Center content */}
             <View style={styles.centerContent}>
@@ -309,8 +315,16 @@ export function PokeAnimation({
                 </Animated.View>
 
                 {/* Text */}
-                <Animated.View style={[styles.textContainer, textStyle]}>
-                    <Text style={styles.pokeText}>
+                <Animated.View style={[
+                    styles.textContainer, 
+                    textStyle,
+                    { 
+                        backgroundColor: `${colors.collaborativePrimary}26`, // 15% opacity
+                        borderColor: colors.collaborativePrimary,
+                        shadowColor: colors.collaborativePrimary
+                    }
+                ]}>
+                    <Text style={[styles.pokeText, { color: colors.white }]}>
                         Poked {targetName || 'them'}!
                     </Text>
                 </Animated.View>
@@ -328,11 +342,10 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.55)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
     },
     flash: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: '#E879F9',
     },
     centerContent: {
         alignItems: 'center',
@@ -350,21 +363,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: 26,
         paddingVertical: 12,
         borderRadius: 24,
-        backgroundColor: 'rgba(232, 121, 249, 0.28)',
         borderWidth: 1.5,
-        borderColor: 'rgba(232, 121, 249, 0.5)',
-        shadowColor: '#E879F9',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 6,
     },
     pokeText: {
-        color: '#ffffff',
         fontSize: 18,
-        fontWeight: '800',
+        fontWeight: '900',
         textAlign: 'center',
         letterSpacing: 0.4,
+
     },
 });
 

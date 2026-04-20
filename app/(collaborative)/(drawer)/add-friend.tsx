@@ -1,6 +1,7 @@
 import { HomeButton } from '@/components/navigation/home-button';
 import { Colors } from '@/constants/theme';
 import { friendService, UserSearchResult } from '@/services/friend.service';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
@@ -18,11 +19,15 @@ import {
     View,
 } from 'react-native';
 
-const COLLABORATIVE_PRIMARY = '#E879F9';
 const SEARCH_DEBOUNCE_MS = 400;
 
 export default function AddFriendScreen(): React.ReactElement {
   const router = useRouter();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const collaborativePrimary = colors.collaborativePrimary;
+  const isDark = theme === 'dark';
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -77,26 +82,26 @@ export default function AddFriendScreen(): React.ReactElement {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={12}>
-            <Ionicons name="arrow-back" size={24} color={Colors.light.text} />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Add Friend</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Add Friend</Text>
         </View>
-        <HomeButton color={Colors.light.text} />
+        <HomeButton color={colors.text} />
       </View>
 
       <View style={styles.searchRow}>
-        <View style={styles.inputWrap}>
-          <Ionicons name="search" size={20} color={Colors.light.icon} style={styles.searchIcon} />
+        <View style={[styles.inputWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Ionicons name="search" size={20} color={colors.icon} style={styles.searchIcon} />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: colors.text }]}
             placeholder="Search by ID, username or name..."
-            placeholderTextColor={Colors.light.icon}
+            placeholderTextColor={colors.icon}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={search}
@@ -112,63 +117,63 @@ export default function AddFriendScreen(): React.ReactElement {
               }}
               style={styles.clearBtn}
             >
-              <Ionicons name="close-circle" size={20} color={Colors.light.icon} />
+              <Ionicons name="close-circle" size={20} color={colors.icon} />
             </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity
-          style={[styles.searchBtn, (!query.trim() || loading) && styles.searchBtnDisabled]}
+          style={[styles.searchBtn, { backgroundColor: collaborativePrimary }, (!query.trim() || loading) && styles.searchBtnDisabled]}
           onPress={search}
           disabled={!query.trim() || loading}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
-            <Text style={styles.searchBtnText}>Search</Text>
+            <Text style={[styles.searchBtnText, { color: colors.white }]}>Search</Text>
           )}
         </TouchableOpacity>
       </View>
 
       <View style={styles.results}>
         {results.length === 0 && !loading && query.trim() && (
-          <Text style={styles.emptyText}>No users found. Try ID, username or name.</Text>
+          <Text style={[styles.emptyText, { color: colors.icon }]}>No users found. Try ID, username or name.</Text>
         )}
         {results.length === 0 && !loading && !query.trim() && (
-          <Text style={styles.hintText}>Enter a user ID, username or name to search.</Text>
+          <Text style={[styles.hintText, { color: colors.icon }]}>Enter a user ID, username or name to search.</Text>
         )}
         {results.map((user) => (
-          <View key={user.id} style={styles.row}>
+          <View key={user.id} style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.avatarWrap}>
               {user.avatarUrl ? (
                 <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
               ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarLetter}>{user.name.charAt(0).toUpperCase()}</Text>
+                <View style={[styles.avatarPlaceholder, { backgroundColor: collaborativePrimary }]}>
+                  <Text style={[styles.avatarLetter, { color: colors.white }]}>{user.name.charAt(0).toUpperCase()}</Text>
                 </View>
               )}
             </View>
             <View style={styles.info}>
-              <Text style={styles.name} numberOfLines={1}>
+              <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
                 {user.name}
               </Text>
               {(user.username || user.id) && (
-                <Text style={styles.meta} numberOfLines={1}>
+                <Text style={[styles.meta, { color: colors.icon }]} numberOfLines={1}>
                   @{user.username || user.id.slice(0, 8)}
                 </Text>
               )}
-              <Text style={styles.xp}>{user.totalXp} XP</Text>
+              <Text style={[styles.xp, { color: colors.icon }]}>{user.totalXp} XP</Text>
             </View>
             <TouchableOpacity
-              style={[styles.sendBtn, sendingId === user.id && styles.sendBtnDisabled]}
+              style={[styles.sendBtn, { backgroundColor: collaborativePrimary }, sendingId === user.id && styles.sendBtnDisabled]}
               onPress={() => sendRequest(user)}
               disabled={sendingId !== null}
             >
               {sendingId === user.id ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={colors.white} />
               ) : (
                 <>
-                  <Ionicons name="person-add" size={18} color="#fff" />
-                  <Text style={styles.sendBtnText}>Add</Text>
+                  <Ionicons name="person-add" size={18} color={colors.white} />
+                  <Text style={[styles.sendBtnText, { color: colors.white }]}>Add</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -182,7 +187,6 @@ export default function AddFriendScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -191,9 +195,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     paddingTop: 56,
-    backgroundColor: Colors.light.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -205,7 +207,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   searchRow: {
     flexDirection: 'row',
@@ -217,10 +218,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   searchIcon: {
     marginLeft: 12,
@@ -230,14 +229,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     fontSize: 16,
-    color: Colors.light.text,
   },
   clearBtn: {
     padding: 8,
     marginRight: 4,
   },
   searchBtn: {
-    backgroundColor: COLLABORATIVE_PRIMARY,
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 12,
@@ -249,7 +246,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   searchBtnText: {
-    color: '#fff',
     fontWeight: '600',
     fontSize: 15,
   },
@@ -260,24 +256,20 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 24,
     textAlign: 'center',
-    color: Colors.light.icon,
     fontSize: 15,
   },
   hintText: {
     marginTop: 24,
     textAlign: 'center',
-    color: Colors.light.icon,
     fontSize: 15,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   avatarWrap: {
     marginRight: 12,
@@ -291,12 +283,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLLABORATIVE_PRIMARY,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarLetter: {
-    color: '#fff',
     fontSize: 20,
     fontWeight: '700',
   },
@@ -306,23 +296,19 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   meta: {
     fontSize: 13,
-    color: Colors.light.icon,
     marginTop: 2,
   },
   xp: {
     fontSize: 12,
-    color: Colors.light.icon,
     marginTop: 2,
   },
   sendBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COLLABORATIVE_PRIMARY,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 10,
@@ -331,7 +317,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   sendBtnText: {
-    color: '#fff',
     fontWeight: '600',
     fontSize: 14,
   },

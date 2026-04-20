@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export interface Friend {
     id: string;
@@ -15,23 +17,31 @@ interface FriendItemProps {
 }
 
 export function FriendItem({ friend, onPress }: FriendItemProps): React.ReactElement {
+    const theme = useColorScheme() ?? 'light';
+    const colors = Colors[theme];
+    const isDark = theme === 'dark';
+
     return (
-        <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+        <TouchableOpacity 
+            style={[styles.container, { borderBottomColor: colors.border }]} 
+            onPress={onPress} 
+            activeOpacity={0.7}
+        >
             <View style={styles.avatarContainer}>
                 {friend.avatar ? (
                     <Image source={{ uri: friend.avatar }} style={styles.avatar} />
                 ) : (
-                    <View style={styles.placeholderAvatar}>
-                        <Text style={styles.initials}>
+                    <View style={[styles.placeholderAvatar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <Text style={[styles.initials, { color: colors.text }]}>
                             {friend.name.charAt(0).toUpperCase()}
                         </Text>
                     </View>
                 )}
             </View>
             <View style={styles.info}>
-                <Text style={styles.name} numberOfLines={1}>{friend.name}</Text>
+                <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{friend.name}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
+            <Ionicons name="chevron-forward" size={18} color={isDark ? colors.icon : '#CBD5E1'} />
         </TouchableOpacity>
     );
 }
@@ -42,7 +52,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 12,
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: 'rgba(255,255,255,0.1)',
     },
     avatarContainer: {
         marginRight: 12,
@@ -56,16 +65,13 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: 'rgba(255,255,255,0.1)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     initials: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#fff',
     },
     info: {
         flex: 1,
@@ -73,6 +79,5 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 16,
         fontWeight: '500',
-        color: '#fff',
     },
 });

@@ -4,6 +4,11 @@ import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { CircularCheckbox } from '@/components/ui/circular-checkbox';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
+import { AnimatedFlame } from '../animations/animated-flame';
+import { ThrobbingHeart } from '../animations/throbbing-heart';
 
 export type RoutineRowProps = {
   id: string;
@@ -23,6 +28,7 @@ export type RoutineRowProps = {
   collaborativeKey?: string;
   creatorId?: string;
   isDark?: boolean;
+  lives?: number;
 };
 
 // Helpers moved outside
@@ -53,14 +59,14 @@ const getHoursFromLabel = (label?: string) => {
   return 0;
 };
 
-const getBadgeColor = (label?: string, hours?: number) => {
-  if (!label || hours === undefined) return '#94a3b8';
-  if (label.startsWith('Starts')) return '#3b82f6';
-  if (hours <= 1) return '#ef4444';
-  if (hours <= 7) return '#ff5656';
-  if (hours <= 14) return '#f97316';
-  if (hours <= 20) return '#16a34a';
-  return '#ff93ff';
+const getBadgeColor = (label: string | undefined, hours: number | undefined, colors: any) => {
+  if (!label || hours === undefined) return colors.textTertiary;
+  if (label.startsWith('Starts')) return colors.primary;
+  if (hours <= 1) return colors.error;
+  if (hours <= 7) return '#ff5656'; // Semi-critical, keep distinct
+  if (hours <= 14) return colors.warning;
+  if (hours <= 20) return colors.success;
+  return colors.tint;
 };
 
 export const RoutineRow = React.memo(({
@@ -77,10 +83,12 @@ export const RoutineRow = React.memo(({
   startTime,
   endTime,
   collaborativeKey,
-  isDark = false,
+  lives = 0,
 }: RoutineRowProps): React.ReactElement => {
    
-  // 1. Hooks & State
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
   const router = useRouter();
   const [isChecked, setIsChecked] = useState(completed);
   const [displayLabel, setDisplayLabel] = useState(initialLabel);
@@ -171,7 +179,7 @@ export const RoutineRow = React.memo(({
 
   // 5. Derived Computations
   const hours = getHoursFromLabel(displayLabel);
-  const badgeColor = getBadgeColor(displayLabel, hours);
+  const badgeColor = getBadgeColor(displayLabel, hours, colors);
 
   // 6. Render
   return (
@@ -181,50 +189,87 @@ export const RoutineRow = React.memo(({
       activeOpacity={0.7}
     >
       <TouchableOpacity onPress={handleCameraPress}>
-        <CircularCheckbox value={isChecked} color={isDark ? '#E879F9' : undefined} />
+        <CircularCheckbox value={isChecked} color={isDark ? colors.tint : undefined} />
       </TouchableOpacity>
       
       <Text style={[
           styles.name, 
-          isDark && { color: '#fff' },
-          isChecked && styles.completedText
+          { color: colors.text },
+          isChecked && [styles.completedText, { color: colors.textSecondary }]
       ]} numberOfLines={1}>
         {name}
       </Text>
 
+      {/* LIVES BADGE */}
+      {lives > 0 && (
+        <View style={[
+          styles.badge, 
+          { 
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(220, 38, 38, 0.06)',
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            gap: 4 
+          }
+        ]}>
+          <ThrobbingHeart lives={lives} size={12} />
+          <Text style={[styles.badgeText, { color: isDark ? '#f87171' : '#dc2626' }]}>{lives}</Text>
+        </View>
+      )}
+
       {/* COLLABORATIVE BADGE */}
       {!!collaborativeKey && (
-         <View style={[styles.badge, { backgroundColor: isDark ? 'rgba(232, 121, 249, 0.15)' : '#e0f2fe', flexDirection: 'row', alignItems: 'center', gap: 2 }]}>
-          <Ionicons name="people" size={12} color={isDark ? '#E879F9' : '#0284c7'} />
-          <Text style={[styles.badgeText, { color: isDark ? '#E879F9' : '#0284c7' }]}>Group</Text>
+         <View style={[
+           styles.badge, 
+           { 
+             backgroundColor: isDark ? 'rgba(168, 85, 247, 0.2)' : 'rgba(124, 58, 237, 0.06)',
+             flexDirection: 'row', 
+             alignItems: 'center', 
+             gap: 4 
+           }
+         ]}>
+          <Ionicons name="people" size={12} color={isDark ? '#c084fc' : '#7c3aed'} />
+          <Text style={[styles.badgeText, { color: isDark ? '#c084fc' : '#7c3aed' }]}>Group</Text>
         </View>
       )}
 
       {/* STREAK BADGE */}
       {streak > 0 && (
-         <View style={[styles.badge, { backgroundColor: '#fef3c7', flexDirection: 'row', alignItems: 'center', gap: 2 }]}>
-          <Ionicons name="flame" size={12} color="#d97706" />
-          <Text style={[styles.badgeText, { color: '#d97706' }]}>{streak}</Text>
+         <View style={[
+           styles.badge, 
+           { 
+             backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : 'rgba(217, 119, 6, 0.06)',
+             flexDirection: 'row', 
+             alignItems: 'center', 
+             gap: 4 
+           }
+         ]}>
+          <AnimatedFlame streak={streak} size={12} />
+          <Text style={[styles.badgeText, { color: isDark ? '#fbbf24' : '#d97706' }]}>{streak}</Text>
         </View>
       )}
 
       {/* MISSED BADGE */}
       {missedCount > 0 && (
-        <View style={[styles.badge, { backgroundColor: '#fee2e2' }]}>
-          <Text style={[styles.badgeText, { color: '#ef4444' }]}>Missed: {missedCount}</Text>
+        <View style={[
+          styles.badge, 
+          { 
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(220, 38, 38, 0.06)' 
+          }
+        ]}>
+          <Text style={[styles.badgeText, { color: isDark ? '#f87171' : '#dc2626' }]}>Missed: {missedCount}</Text>
         </View>
       )}
 
       {/* DURATION BADGE */}
       {!isChecked && !effectiveFailed && displayLabel !== 'Pending' && (
         <View style={[styles.badge, { backgroundColor: badgeColor }]}>
-          <Text style={styles.badgeText}>{hours > 24 ? frequencyType : displayLabel }</Text>
+          <Text style={[styles.badgeText, { color: colors.white }]}>{hours > 24 ? frequencyType : displayLabel }</Text>
         </View>
       )}
 
       { effectiveFailed && (
-        <View style={[styles.badge, { backgroundColor: badgeColor }]}>
-          <Text style={styles.badgeText}>Failed</Text>
+        <View style={[styles.badge, { backgroundColor: colors.error }]}>
+          <Text style={[styles.badgeText, { color: colors.white }]}>Failed</Text>
         </View>
       )}
 
@@ -232,12 +277,11 @@ export const RoutineRow = React.memo(({
       {!isChecked && showCamera && !effectiveFailed && !displayLabel.startsWith('Starts') && (
         <TouchableOpacity 
             onPress={handleCameraPress} 
-            style={[styles.cameraBtn, isDark && { backgroundColor: 'rgba(232, 121, 249, 0.1)' }]}
+            style={[styles.cameraBtn, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}
         >
-          <Ionicons name="camera" size={18} color={isDark ? '#E879F9' : "#3b82f6"} />
+          <Ionicons name="camera" size={18} color={isDark ? colors.white : colors.primary} />
         </TouchableOpacity>
       )}
-   
     </TouchableOpacity>
   );
 });
@@ -253,32 +297,28 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937', // Gray-800
+    fontWeight: '600',
     marginLeft: 14,
   },
   completedText: {
-    color: '#9ca3af', // Gray-400
     textDecorationLine: 'line-through',
+    opacity: 0.6,
   },
   cameraBtn: {
     padding: 8,
-    marginLeft: 8, // Changed from marginRight to marginLeft
-    backgroundColor: '#eff6ff', 
+    marginLeft: 8, 
     borderRadius: 8,
   },
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 999, 
-    marginLeft: 4, // Reduced margin since it's now internal
-    opacity: 0.9,
+    marginLeft: 4, 
   },
   badgeText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
 });

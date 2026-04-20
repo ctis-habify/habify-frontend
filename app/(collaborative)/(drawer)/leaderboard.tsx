@@ -3,6 +3,7 @@ import { CupIndicator } from '@/components/cup-indicator';
 import { Colors } from '@/constants/theme';
 import { collaborativeScoreService } from '@/services/collaborative-score.service';
 import { LeaderboardEntry, createLeaderboardCupAward, resolveCollaborativeRank } from '@/types/collaborative-score';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,12 +25,11 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 
-const COLLABORATIVE_PRIMARY = '#E879F9';
-
-const MEDAL_COLORS: Record<number, { bg: string; border: string; text: string }> = {
-  1: { bg: '#FEF3C7', border: '#F59E0B', text: '#92400E' },  // Gold
-  2: { bg: '#F1F5F9', border: '#94A3B8', text: '#475569' },  // Silver
-  3: { bg: '#FFF7ED', border: '#EA580C', text: '#9A3412' },  // Bronze
+const getMedalColors = (rank: number, isDark: boolean, colors: any) => {
+  if (rank === 1) return { bg: isDark ? 'rgba(251, 191, 36, 0.2)' : '#FEF3C7', border: '#F59E0B', text: isDark ? '#FCD34D' : '#92400E' };
+  if (rank === 2) return { bg: isDark ? 'rgba(148, 163, 184, 0.2)' : '#F1F5F9', border: '#94A3B8', text: isDark ? '#CBD5E1' : '#475569' };
+  if (rank === 3) return { bg: isDark ? 'rgba(234, 88, 12, 0.2)' : '#FFF7ED', border: '#EA580C', text: isDark ? '#FB923C' : '#9A3412' };
+  return null;
 };
 
 const MEDAL_ICONS: Record<number, string> = {
@@ -38,12 +38,12 @@ const MEDAL_ICONS: Record<number, string> = {
   3: '🥉',
 };
 
-function EmptyLeaderboard(): React.ReactElement {
+function EmptyLeaderboard({ color, textColor }: { color: string; textColor: string }): React.ReactElement {
   return (
     <View style={styles.centered}>
-      <Ionicons name="trophy-outline" size={64} color={COLLABORATIVE_PRIMARY} style={{ opacity: 0.5 }} />
-      <Text style={styles.emptyTitle}>No scores yet</Text>
-      <Text style={styles.emptySubtitle}>
+      <Ionicons name="trophy-outline" size={64} color={color} style={{ opacity: 0.5 }} />
+      <Text style={[styles.emptyTitle, { color: textColor }]}>No scores yet</Text>
+      <Text style={[styles.emptySubtitle, { color: textColor, opacity: 0.6 }]}>
         Complete collaborative routines to earn points and climb the leaderboard!
       </Text>
     </View>
@@ -51,34 +51,39 @@ function EmptyLeaderboard(): React.ReactElement {
 }
 
 function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number }): React.ReactElement {
-  const medal = MEDAL_COLORS[item.rank];
-  const rankInfo = resolveCollaborativeRank(item.totalPoints);
-  const isTopThree = item.rank <= 3;
-  const displayCup = item.cup || createLeaderboardCupAward(item.rank, item.totalPoints);
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+  
+    const medal = getMedalColors(item.rank, isDark, colors);
+    const rankInfo = resolveCollaborativeRank(item.totalPoints);
+    const isTopThree = item.rank <= 3;
+    const displayCup = item.cup || createLeaderboardCupAward(item.rank, item.totalPoints);
 
-  return (
-    <Animated.View
-      entering={ZoomIn.delay(index * 40).duration(280).springify()}
-      style={[
-        styles.row,
-        isTopThree && medal && {
-          borderColor: medal.border,
-          borderWidth: 1.5,
-          backgroundColor: medal.bg,
-        },
-      ]}
-    >
+    return (
+      <Animated.View
+        entering={ZoomIn.delay(index * 40).duration(280).springify()}
+        style={[
+          styles.row,
+          { backgroundColor: colors.card, borderColor: colors.border },
+          isTopThree && medal && {
+            borderColor: medal.border,
+            borderWidth: 1.5,
+            backgroundColor: medal.bg,
+          },
+        ]}
+      >
       {/* Rank */}
       <View style={[
         styles.rankBadge,
         isTopThree && medal
           ? { backgroundColor: medal.border }
-          : { backgroundColor: Colors.light.surface, borderWidth: 1, borderColor: Colors.light.border },
+          : { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
       ]}>
         {isTopThree ? (
           <Text style={styles.medalEmoji}>{MEDAL_ICONS[item.rank]}</Text>
         ) : (
-          <Text style={[styles.rankText, { color: Colors.light.icon }]}>{item.rank}</Text>
+          <Text style={[styles.rankText, { color: colors.icon }]}>{item.rank}</Text>
         )}
       </View>
 
@@ -96,22 +101,22 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
       {/* Info */}
       <View style={styles.info}>
         <View style={styles.nameRow}>
-          <Text style={[styles.name, isTopThree && medal && { color: medal.text }]} numberOfLines={1}>
+          <Text style={[styles.name, { color: colors.text }, isTopThree && medal && { color: medal.text }]} numberOfLines={1}>
             {item.name}
           </Text>
           <CupIndicator cup={displayCup} compact />
         </View>
         {item.username && (
-          <Text style={styles.meta} numberOfLines={1}>@{item.username}</Text>
+          <Text style={[styles.meta, { color: colors.icon }]} numberOfLines={1}>@{item.username}</Text>
         )}
       </View>
 
       {/* Points */}
       <View style={styles.pointsWrap}>
-        <Text style={[styles.pointsValue, isTopThree && medal && { color: medal.text }]}>
+        <Text style={[styles.pointsValue, { color: colors.collaborativePrimary }, isTopThree && medal && { color: medal.text }]}>
           {item.totalPoints}
         </Text>
-        <Text style={styles.pointsLabel}>pts</Text>
+        <Text style={[styles.pointsLabel, { color: colors.icon }]}>pts</Text>
       </View>
     </Animated.View>
   );
@@ -120,6 +125,11 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
 export default function LeaderboardScreen(): React.ReactElement {
   const router = useRouter();
   const navigation = useNavigation();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const collaborativePrimary = colors.collaborativePrimary;
+  const isDark = theme === 'dark';
+
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -142,29 +152,29 @@ export default function LeaderboardScreen(): React.ReactElement {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <Animated.View style={styles.header} entering={FadeInDown.duration(400).springify()}>
+      <Animated.View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]} entering={FadeInDown.duration(400).springify()}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} style={styles.backBtn} hitSlop={12}>
-            <Ionicons name="menu" size={26} color={Colors.light.text} />
+            <Ionicons name="menu" size={26} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Leaderboard</Text>
-          <Ionicons name="trophy" size={22} color={COLLABORATIVE_PRIMARY} style={{ marginLeft: 8 }} />
+          <Text style={[styles.title, { color: colors.text }]}>Leaderboard</Text>
+          <Ionicons name="trophy" size={22} color={collaborativePrimary} style={{ marginLeft: 8 }} />
         </View>
-        <HomeButton color={Colors.light.text} />
+        <HomeButton color={colors.text} />
       </Animated.View>
 
       {/* Subtitle pill */}
       <Animated.View style={styles.subtitleWrap} entering={FadeIn.delay(80).duration(320)}>
         <LinearGradient
-          colors={[COLLABORATIVE_PRIMARY, '#D946EF']}
+          colors={[collaborativePrimary, colors.tint]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={styles.subtitlePill}
+          style={[styles.subtitlePill, { shadowColor: collaborativePrimary }]}
         >
-          <Ionicons name="people" size={16} color="#fff" />
-          <Text style={styles.subtitleText}>
+          <Ionicons name="people" size={16} color={colors.white} />
+          <Text style={[styles.subtitleText, { color: colors.white }]}>
             {loading ? 'Loading…' : `${entries.length} participant${entries.length !== 1 ? 's' : ''}`}
           </Text>
         </LinearGradient>
@@ -173,11 +183,11 @@ export default function LeaderboardScreen(): React.ReactElement {
       {/* Content */}
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={COLLABORATIVE_PRIMARY} />
+          <ActivityIndicator size="large" color={collaborativePrimary} />
         </View>
       ) : entries.length === 0 ? (
         <Animated.View entering={FadeIn.delay(80).duration(320)} style={styles.centered}>
-          <EmptyLeaderboard />
+          <EmptyLeaderboard color={collaborativePrimary} textColor={colors.text} />
         </Animated.View>
       ) : (
         <FlatList
@@ -197,7 +207,6 @@ export default function LeaderboardScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -206,9 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     paddingTop: 56,
-    backgroundColor: Colors.light.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -220,7 +227,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.light.text,
   },
   subtitleWrap: {
     paddingHorizontal: 16,
@@ -235,7 +241,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    shadowColor: COLLABORATIVE_PRIMARY,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -244,7 +249,6 @@ const styles = StyleSheet.create({
   subtitleText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#fff',
   },
   centered: {
     flex: 1,
@@ -256,12 +260,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 17,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   emptySubtitle: {
     marginTop: 4,
     fontSize: 14,
-    color: Colors.light.icon,
     textAlign: 'center',
   },
   listContent: {
@@ -272,12 +274,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   rankBadge: {
     width: 36,
@@ -310,7 +310,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarLetter: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: '700',
   },
@@ -326,12 +325,10 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.light.text,
     flexShrink: 1,
   },
   meta: {
     fontSize: 13,
-    color: Colors.light.icon,
     marginTop: 1,
   },
   pointsWrap: {
@@ -341,11 +338,9 @@ const styles = StyleSheet.create({
   pointsValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLLABORATIVE_PRIMARY,
   },
   pointsLabel: {
     fontSize: 11,
-    color: Colors.light.icon,
     fontWeight: '500',
   },
 });

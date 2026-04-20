@@ -1,3 +1,5 @@
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,7 +19,10 @@ import { verificationService } from '../../services/verification.service';
 export default function CameraModal(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams(); 
-  const routineId = params.routineId as string; // We will use this later for API
+  const routineId = params.routineId as string;
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
 
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
@@ -29,17 +34,26 @@ export default function CameraModal(): React.ReactElement {
 
   // 1. Check Permissions
   if (!permission) {
-    return <View />; // Loading state
+    return <View style={[styles.container, { backgroundColor: colors.background }]} />;
   }
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginBottom: 20, color: 'white' }}>
-          We need your permission to show the camera
-        </Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.permissionBtn}>
-          <Text style={styles.btnText}>Grant Permission</Text>
-        </TouchableOpacity>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.permissionContent}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.primary + '15' }]}>
+            <Ionicons name="camera" size={40} color={colors.primary} />
+          </View>
+          <Text style={[styles.permissionTitle, { color: colors.text }]}>Camera Access Needed</Text>
+          <Text style={[styles.permissionText, { color: colors.textSecondary }]}>
+            We need your permission to show the camera so you can verify your habits.
+          </Text>
+          <TouchableOpacity 
+            onPress={requestPermission} 
+            style={[styles.permissionBtn, { backgroundColor: colors.primary }]}
+          >
+            <Text style={[styles.btnText, { color: colors.white }]}>Grant Permission</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -77,8 +91,22 @@ export default function CameraModal(): React.ReactElement {
 
       // 2. Prepare file blob
 
-      const photoResponse = await fetch(photoUri);
-      blob = await photoResponse.blob();
+      let blob;
+      if (photoUri === 'mock-photo') {
+        const asset = require('../../img/true.jpg');
+        const assetSource = Image.resolveAssetSource(asset);
+        const assetResponse = await fetch(assetSource.uri);
+        blob = await assetResponse.blob();
+      } else if (photoUri === 'mock-photo-fail') {
+        const asset = require('../../img/false.png');
+        const assetSource = Image.resolveAssetSource(asset);
+        const assetResponse = await fetch(assetSource.uri);
+        blob = await assetResponse.blob();
+      } else {
+        const photoResponse = await fetch(photoUri);
+        blob = await photoResponse.blob();
+      }
+
 
 
       // 3. Upload to GCS via PUT
@@ -117,29 +145,9 @@ export default function CameraModal(): React.ReactElement {
       }
     } catch (err: unknown) {
       console.error('Full Verification error object:', err);
-      if (typeof err === 'object' && err !== null) {
-        const errorWithResponse = err as { 
-          response?: { status?: number; data?: { message?: string } };
-          message?: string;
-        };
-        
-        if (errorWithResponse.response?.status === 503) {
-          Alert.alert(
-            'AI Service Busy',
-            'The AI verification service is currently unavailable or busy. Your photo has been uploaded, but AI verification failed. Please try again in a few minutes.'
-          );
-        } else {
-          Alert.alert(
-            'Verification Failed',
-            errorWithResponse.response?.data?.message || errorWithResponse.message || 'An unexpected error occurred'
-          );
-        }
-      } else {
-        Alert.alert('Verification Failed', 'An unexpected error occurred');
-      }
       setIsUploading(false);
+      Alert.alert('Verification Failed', 'An unexpected error occurred');
     }
-
   };
 
   const pollVerificationStatus = async (verificationId: string) => {
@@ -170,8 +178,6 @@ export default function CameraModal(): React.ReactElement {
     }
   };
 
-
-
   const toggleCameraFacing = () => {
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
   };
@@ -180,32 +186,38 @@ export default function CameraModal(): React.ReactElement {
   if (photoUri) {
     return (
       <View style={styles.container}>
-        <Image source={{ uri: photoUri }} style={styles.previewImage} />
+        {photoUri === 'mock-photo' ? (
+          <Image source={require('../../img/true.jpg')} style={styles.previewImage} />
+        ) : photoUri === 'mock-photo-fail' ? (
+          <Image source={require('../../img/false.png')} style={styles.previewImage} />
+        ) : (
+          <Image source={{ uri: photoUri }} style={styles.previewImage} />
+        )}
 
         
         {isUploading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#ffffff" />
-            <Text style={styles.loadingText}>{loadingText}</Text>
+          <View style={[styles.loadingOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.7)' }]}>
+            <ActivityIndicator size="large" color={colors.white} />
+            <Text style={[styles.loadingText, { color: colors.white }]}>{loadingText}</Text>
           </View>
         )}
 
         <View style={styles.bottomControls}>
           <TouchableOpacity
-            style={[styles.btn, styles.cancelBtn]}
+            style={[styles.btn, styles.cancelBtn, { backgroundColor: `${colors.white}22`, borderColor: `${colors.white}33`, borderWidth: 1 }]}
             onPress={() => setPhotoUri(null)}
             disabled={isUploading}
           >
-            <Text style={styles.cancelText}>Retake</Text>
+            <Text style={[styles.cancelText, { color: colors.white }]}>Retake</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btn, styles.uploadBtn]}
+            style={[styles.btn, styles.uploadBtn, { backgroundColor: colors.primary }]}
             onPress={handleUpload}
             disabled={isUploading}
           >
-            <Ionicons name="cloud-upload" size={20} color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.btnText}>Upload & Verify</Text>
+            <Ionicons name="cloud-upload" size={20} color={colors.white} style={{ marginRight: 8 }} />
+            <Text style={[styles.btnText, { color: colors.white }]}>Upload & Verify</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -221,17 +233,16 @@ export default function CameraModal(): React.ReactElement {
       <View style={styles.cameraUi}>
         {/* Top Bar: Close & Flip */}
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-            <Ionicons name="close" size={28} color="white" />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.45)' }]}>
+            <Ionicons name="close" size={28} color={colors.white} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={toggleCameraFacing} style={styles.iconBtn}>
-            <Ionicons name="camera-reverse" size={28} color="white" />
+          <TouchableOpacity onPress={toggleCameraFacing} style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.45)' }]}>
+            <Ionicons name="camera-reverse" size={28} color={colors.white} />
           </TouchableOpacity>
         </View>
 
         {/* Bottom Bar: Shutter */}
         <View style={styles.bottomBar}>
-
           <TouchableOpacity onPress={takePicture} style={styles.shutterBtn}>
             <View style={styles.shutterInner} />
           </TouchableOpacity>
@@ -247,82 +258,117 @@ const styles = StyleSheet.create({
   cameraUi: { 
     ...StyleSheet.absoluteFillObject, // Overlay on top
     justifyContent: 'space-between', 
-    padding: 20,
+    padding: 24,
     zIndex: 10,
   },
   
+  permissionContent: {
+    padding: 32,
+    alignItems: 'center',
+    gap: 16,
+  },
+  iconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  permissionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  permissionText: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 8,
+  },
   permissionBtn: {
-    backgroundColor: '#2563eb', // Keep distinct blue for actions
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 16,
   },
   
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40, 
+    paddingTop: 40, 
   },
   iconBtn: {
-    padding: 10,
+    padding: 12,
     backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   bottomBar: {
     alignItems: 'center',
-    marginBottom: 40,
+    paddingBottom: 40,
   },
   shutterBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 5,
-    borderColor: 'white',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 6,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   shutterInner: {
-    width: 65,
-    height: 65,
-    borderRadius: 35,
-    backgroundColor: 'white',
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: '#FFFFFF',
   },
 
-  // Preview Styles
-  previewImage: { flex: 1, resizeMode: 'contain' },
+  previewImage: { flex: 1, resizeMode: 'cover' },
   bottomControls: {
     position: 'absolute',
     bottom: 40,
-    left: 20,
-    right: 20,
+    left: 24,
+    right: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 15,
+    gap: 16,
   },
   btn: {
     flex: 1,
-    paddingVertical: 15,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
-  cancelBtn: { backgroundColor: '#374151' },
-  cancelText: { color: '#fff', fontWeight: '600' },
-  uploadBtn: { backgroundColor: '#2563eb' },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  cancelBtn: { backgroundColor: 'rgba(255, 255, 255, 0.2)' },
+  cancelText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  uploadBtn: {},
+  btnText: { fontWeight: '800', fontSize: 16 },
 
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 16,
   },
   loadingText: {
-    color: 'white',
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
   },
 });

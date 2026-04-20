@@ -1,9 +1,10 @@
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import * as React from 'react';
 import { useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import type { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import ReanimatedSwipeable, { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, {
   FadeOut,
   LinearTransition,
@@ -17,6 +18,8 @@ interface Props {
 }
 
 export function SwipeableNotificationRow({ onDelete, children }: Props): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
   const swipeableRef = useRef<SwipeableMethods>(null);
 
   const handleSwipeOpen = useCallback(
@@ -35,9 +38,9 @@ export function SwipeableNotificationRow({ onDelete, children }: Props): React.R
 
   const renderRightActions = useCallback(
     (_prog: SharedValue<number>, drag: SharedValue<number>) => (
-      <RightActionButton drag={drag} onPress={handleDeletePress} />
+      <RightActionButton drag={drag} onPress={handleDeletePress} colors={colors} />
     ),
-    [handleDeletePress],
+    [handleDeletePress, colors],
   );
 
   return (
@@ -58,9 +61,11 @@ export function SwipeableNotificationRow({ onDelete, children }: Props): React.R
 function RightActionButton({
   drag,
   onPress,
+  colors,
 }: {
   drag: SharedValue<number>;
   onPress: () => void;
+  colors: any;
 }) {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: drag.value + 72 }],
@@ -68,9 +73,9 @@ function RightActionButton({
 
   return (
     <Animated.View style={[styles.rightActionWrapper, animatedStyle]}>
-      <Pressable style={styles.rightAction} onPress={onPress}>
-        <Ionicons name="trash-outline" size={20} color="#fff" />
-        <Text style={styles.deleteText}>Delete</Text>
+      <Pressable style={[styles.rightAction, { backgroundColor: colors.error }]} onPress={onPress}>
+        <Ionicons name="trash-outline" size={20} color={colors.white} />
+        <Text style={[styles.deleteText, { color: colors.white }]}>Delete</Text>
       </Pressable>
     </Animated.View>
   );
@@ -83,16 +88,14 @@ const styles = StyleSheet.create({
   },
   rightAction: {
     flex: 1,
-    backgroundColor: '#EF4444',
     justifyContent: 'center',
     alignItems: 'center',
     borderTopRightRadius: 8,
     borderBottomRightRadius: 8,
   },
   deleteText: {
-    color: '#fff',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 2,
   },
 });

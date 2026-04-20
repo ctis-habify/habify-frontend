@@ -24,6 +24,8 @@ export default function SettingsScreen(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const { user, logout, updateUser } = useAuth();
   const colorScheme = useColorScheme() ?? 'light';
+  const isDark = colorScheme === 'dark';
+  const colors = Colors[colorScheme];
   const { theme, toggleTheme } = useThemeControl();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingField, setEditingField] = useState<'name' | 'birthDate'>('name');
@@ -167,12 +169,13 @@ export default function SettingsScreen(): React.ReactElement {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={styles.menuButton}
+          style={[styles.menuButton, { backgroundColor: Colors[colorScheme].surface }]}
         >
-          <Ionicons name="menu" size={24} color="#fff" />
+          <Ionicons name="menu" size={24} color={Colors[colorScheme].text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <HomeButton color="#fff" style={styles.menuButton} />
+        <Text style={[styles.headerTitle, { color: Colors[colorScheme].text }]}>Settings</Text>
+        <HomeButton color={Colors[colorScheme].text} style={[styles.menuButton, { backgroundColor: Colors[colorScheme].surface }]} />
+
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -223,18 +226,22 @@ export default function SettingsScreen(): React.ReactElement {
             onToggle={handleToggleQuietMode}
           />
           {(user?.quietModeEnabled) && (
-            <View style={styles.quietModeCard}>
+            <View style={[styles.quietModeCard, { 
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'
+            }]}>
               <View style={styles.cardHeader}>
-                <View style={styles.statusBadge}>
+                <View style={[styles.statusBadge, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)' }]}>
                   <View style={[
                     styles.statusDot, 
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.2)' },
                     isCurrentlyQuiet(user.quietModeStart || '22:00', user.quietModeEnd || '08:00') && styles.statusDotActive
                   ]} />
-                  <Text style={styles.statusText}>
+                  <Text style={[styles.statusText, { color: isDark ? 'rgba(255,255,255,0.7)' : colors.textSecondary }]}>
                     {isCurrentlyQuiet(user.quietModeStart || '22:00', user.quietModeEnd || '08:00') ? 'Active' : 'Scheduled'}
                   </Text>
                 </View>
-                <Text style={styles.cardDuration}>
+                <Text style={[styles.cardDuration, { color: isDark ? 'rgba(255,255,255,0.4)' : colors.textTertiary }]}>
                   {calculateQuietDuration(user.quietModeStart || '22:00', user.quietModeEnd || '08:00')}
                 </Text>
               </View>
@@ -244,29 +251,29 @@ export default function SettingsScreen(): React.ReactElement {
                   style={styles.timePickerBtn} 
                   onPress={() => setShowStartTimePicker(true)}
                 >
-                  <View style={styles.timeIconBox}>
+                  <View style={[styles.timeIconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
                     <Ionicons name="moon" size={16} color="#A78BFA" />
                   </View>
                   <View>
-                    <Text style={styles.timeLabel}>Starts At</Text>
-                    <Text style={styles.timeValue}>{user.quietModeStart || '22:00'}</Text>
+                    <Text style={[styles.timeLabel, { color: isDark ? 'rgba(255,255,255,0.5)' : colors.textSecondary }]}>Starts At</Text>
+                    <Text style={[styles.timeValue, { color: isDark ? '#fff' : colors.text }]}>{user.quietModeStart || '22:00'}</Text>
                   </View>
                 </TouchableOpacity>
 
                 <View style={styles.timeSeparator}>
-                  <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.2)" />
+                  <Ionicons name="arrow-forward" size={16} color={isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)"} />
                 </View>
 
                 <TouchableOpacity 
                   style={styles.timePickerBtn} 
                   onPress={() => setShowEndTimePicker(true)}
                 >
-                  <View style={styles.timeIconBox}>
+                  <View style={[styles.timeIconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
                     <Ionicons name="sunny" size={16} color="#FBBF24" />
                   </View>
                   <View>
-                    <Text style={styles.timeLabel}>Ends At</Text>
-                    <Text style={styles.timeValue}>{user.quietModeEnd || '08:00'}</Text>
+                    <Text style={[styles.timeLabel, { color: isDark ? 'rgba(255,255,255,0.5)' : colors.textSecondary }]}>Ends At</Text>
+                    <Text style={[styles.timeValue, { color: isDark ? '#fff' : colors.text }]}>{user.quietModeEnd || '08:00'}</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -324,26 +331,26 @@ export default function SettingsScreen(): React.ReactElement {
         animationType="fade"
         onRequestClose={handleClosePrivacy}
       >
-        <View style={styles.privacyOverlay}>
-          <View style={[styles.privacyModal, theme === 'dark' && styles.privacyModalDark]}>
+        <View style={[styles.privacyOverlay, { backgroundColor: colorScheme === 'dark' ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.privacyModal, { backgroundColor: Colors[colorScheme].card, borderColor: Colors[colorScheme].border, borderWidth: 1 }]}>
             <View style={styles.privacyHeader}>
               <Ionicons
                 name="shield-checkmark-outline"
                 size={22}
-                color={theme === 'dark' ? Colors.dark.tint : Colors.light.primary}
+                color={Colors[colorScheme].tint}
               />
-              <Text style={[styles.privacyTitle, theme === 'dark' && styles.textDark]}>Privacy Policy</Text>
+              <Text style={[styles.privacyTitle, { color: Colors[colorScheme].text }]}>Privacy Policy</Text>
             </View>
 
-            <Text style={[styles.privacyBody, theme === 'dark' && styles.textDark]}>
+            <Text style={[styles.privacyBody, { color: Colors[colorScheme].textSecondary }]}>
               When you take a photo to confirm a habit, Habify uses it to verify completion via AI. Your images are kept private, never shared with third parties, and only stored as long as needed.{'\n\n'}By using the app you agree to this.
             </Text>
 
             <TouchableOpacity
-              style={[styles.privacyClose, theme === 'dark' && styles.privacyCloseDark]}
+              style={[styles.privacyClose, { backgroundColor: Colors[colorScheme].primary }]}
               onPress={handleClosePrivacy}
             >
-              <Text style={styles.privacyCloseText}>Got it</Text>
+              <Text style={[styles.privacyCloseText, { color: Colors[colorScheme].white }]}>Got it</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -396,15 +403,14 @@ const styles = StyleSheet.create({
   menuButton: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '800',
+    letterSpacing: -0.4,
   },
   content: {
     padding: 20,
@@ -412,69 +418,51 @@ const styles = StyleSheet.create({
   },
   privacyOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   privacyModal: {
-    backgroundColor: Colors.light.card,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
     width: '100%',
     maxHeight: '75%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 20,
-    elevation: 10,
-  },
-  privacyModalDark: {
-    backgroundColor: Colors.dark.card,
+    elevation: 8,
   },
   privacyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     marginBottom: 16,
   },
   privacyTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.light.text,
+    fontSize: 18,
+    fontWeight: '800',
   },
   privacyBody: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: Colors.light.icon,
-  },
-  textDark: {
-    color: Colors.dark.text,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   privacyClose: {
-    backgroundColor: Colors.light.primary,
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 20,
   },
-  privacyCloseDark: {
-    backgroundColor: Colors.dark.primary,
-  },
   privacyCloseText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 15,
+    fontWeight: '800',
+    fontSize: 16,
   },
   quietModeCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 20,
     padding: 16,
     marginHorizontal: 10,
     marginBottom: 10,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -486,7 +474,6 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -496,7 +483,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   statusDotActive: {
     backgroundColor: '#34D399',
@@ -508,13 +494,11 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   cardDuration: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.4)',
     fontWeight: '500',
   },
   timerRow: {
@@ -533,19 +517,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   timeLabel: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
     marginBottom: 2,
   },
   timeValue: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#fff',
     letterSpacing: 0.5,
   },
   timeSeparator: {

@@ -47,6 +47,9 @@ export default function EditRoutineScreen(): React.ReactElement {
   const router = useRouter();
   const { token } = useAuth(); 
   const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+  const screenColors = getBackgroundGradient(theme);
   const [isLoading, setIsLoading] = useState(false);
   
   // Form State
@@ -191,8 +194,8 @@ export default function EditRoutineScreen(): React.ReactElement {
     <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
-          <Ionicons name="close" size={24} color={Colors.light.icon} />
+        <TouchableOpacity onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: Colors[theme].surface }]}>
+          <Ionicons name="close" size={24} color={Colors[theme].text} />
         </TouchableOpacity>
         <HomeButton color={Colors.light.icon} />
       </View>
@@ -213,24 +216,25 @@ export default function EditRoutineScreen(): React.ReactElement {
               return (
                 <View key={index} style={styles.chainItem}>
                    {/* Link Line (except for first item) */}
-                  {index > 0 && <View style={[styles.chainLink, filled && styles.activeLink]} />}
+                  {index > 0 && <View style={[styles.chainLink, { backgroundColor: filled ? colors.primary : colors.border }]} />}
                   
                   {/* Node */}
                   <View style={[
                     styles.chainNode,
-                    filled && styles.completedNode,
+                    { borderColor: filled ? colors.success : colors.border },
+                    filled && { backgroundColor: colors.success },
                   ]}>
                     {filled ? (
-                      <Ionicons name="checkmark" size={14} color="white" />
+                      <Ionicons name="checkmark" size={14} color={colors.white} />
                     ) : (
-                      <ThemedText style={styles.chainText}>{index + 1}</ThemedText>
+                      <ThemedText style={[styles.chainText, { color: colors.border }]}>{index + 1}</ThemedText>
                     )}
                   </View>
                 </View>
               );
             })}
           </View>
-          <ThemedText style={styles.streakLabel}>You are on a {streak} day streak!</ThemedText>
+          <ThemedText style={[styles.streakLabel, { color: colors.text }]}>You are on a {streak} day streak!</ThemedText>
         </ThemedView>
 
         {/* 2. Edit Form */}
@@ -243,7 +247,7 @@ export default function EditRoutineScreen(): React.ReactElement {
               <View style={styles.halfInput}>
                 <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>Start Time</ThemedText>
                 <TouchableOpacity
-                  style={styles.timeBox}
+                  style={[styles.timeBox, { backgroundColor: colors.background, borderColor: colors.border }]}
                   onPress={() => setShowStartTimePicker(true)}
                 >
                   <ThemedText>{start_time || '00:00'}</ThemedText>
@@ -252,11 +256,11 @@ export default function EditRoutineScreen(): React.ReactElement {
                 {showStartTimePicker && (
                   Platform.OS === 'ios' ? (
                     <Modal visible={showStartTimePicker} transparent animationType="fade">
-                      <View style={styles.modalOverlay}>
-                        <View style={styles.iosPickerContainer}>
-                          <View style={styles.pickerHeader}>
+                      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)' }]}>
+                        <View style={[styles.iosPickerContainer, { backgroundColor: colors.card }]}>
+                          <View style={[styles.pickerHeader, { borderBottomColor: colors.border, backgroundColor: theme === 'dark' ? colors.card : colors.surface }]}>
                             <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
-                              <ThemedText style={styles.doneButton}>Done</ThemedText>
+                              <ThemedText style={[styles.doneButton, { color: colors.primary }]}>Done</ThemedText>
                             </TouchableOpacity>
                           </View>
                           <DateTimePicker
@@ -269,7 +273,7 @@ export default function EditRoutineScreen(): React.ReactElement {
                               if (d) setStartTime(formatTime(d));
 
                             }}
-                            textColor={Colors.light.text}
+                            textColor={colors.text}
                           />
                         </View>
                       </View>
@@ -293,7 +297,7 @@ export default function EditRoutineScreen(): React.ReactElement {
               <View style={styles.halfInput}>
                 <ThemedText type="defaultSemiBold" style={{ marginBottom: 6 }}>End Time</ThemedText>
                 <TouchableOpacity
-                  style={styles.timeBox}
+                  style={[styles.timeBox, { backgroundColor: colors.background, borderColor: colors.border }]}
                   onPress={() => setShowEndTimePicker(true)}
                 >
                   <ThemedText>{end_time || '00:00'}</ThemedText>
@@ -302,11 +306,11 @@ export default function EditRoutineScreen(): React.ReactElement {
                 {showEndTimePicker && (
                   Platform.OS === 'ios' ? (
                     <Modal visible={showEndTimePicker} transparent animationType="fade">
-                      <View style={styles.modalOverlay}>
-                        <View style={styles.iosPickerContainer}>
-                          <View style={styles.pickerHeader}>
+                      <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(0, 0, 0, 0.5)' }]}>
+                        <View style={[styles.iosPickerContainer, { backgroundColor: colors.card }]}>
+                          <View style={[styles.pickerHeader, { borderBottomColor: colors.border, backgroundColor: theme === 'dark' ? colors.card : colors.surface }]}>
                             <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
-                              <ThemedText style={styles.doneButton}>Done</ThemedText>
+                              <ThemedText style={[styles.doneButton, { color: colors.primary }]}>Done</ThemedText>
                             </TouchableOpacity>
                           </View>
                           <DateTimePicker
@@ -318,7 +322,7 @@ export default function EditRoutineScreen(): React.ReactElement {
                             onChange={(e, d) => {
                               if (d) setEndTime(formatTime(d));
                             }}
-                            textColor={Colors.light.text}
+                            textColor={colors.text}
                           />
                         </View>
                       </View>
@@ -363,14 +367,34 @@ export default function EditRoutineScreen(): React.ReactElement {
               setOpen={setFreqOpen}
               setValue={setFrequencyType}
               placeholder="Select Frequency"
+              theme={theme === 'dark' ? 'DARK' : 'LIGHT'}
               style={{
-                backgroundColor: Colors.light.background,
-                borderColor: Colors.light.border,
+                backgroundColor: Colors[theme].surface,
+                borderColor: Colors[theme].border,
                 borderRadius: 12,
               }}
               dropDownContainerStyle={{
-                backgroundColor: Colors.light.background,
-                borderColor: Colors.light.border,
+                backgroundColor: Colors[theme].surface,
+                borderColor: Colors[theme].border,
+              }}
+              listItemLabelStyle={{
+                color: Colors[theme].text,
+              }}
+              selectedItemLabelStyle={{
+                color: Colors[theme].primary,
+                fontWeight: 'bold',
+              }}
+              textStyle={{
+                color: Colors[theme].text,
+              }}
+              placeholderStyle={{
+                color: Colors[theme].textSecondary,
+              }}
+              arrowIconStyle={{
+                tintColor: Colors[theme].icon,
+              }}
+              tickIconStyle={{
+                tintColor: Colors[theme].primary,
               }}
               listMode="SCROLLVIEW"
             />
@@ -391,7 +415,7 @@ export default function EditRoutineScreen(): React.ReactElement {
             title="Delete Routine"
             onPress={handleDelete}
             variant="destructive"
-            icon={<Ionicons name="trash-outline" size={20} color="#fff" style={{ marginRight: 8 }} />}
+            icon={<Ionicons name="trash-outline" size={20} color={Colors[theme].white} style={{ marginRight: 8 }} />}
             style={{ marginTop: 0 }}
           />
         </ThemedView>
@@ -401,7 +425,7 @@ export default function EditRoutineScreen(): React.ReactElement {
       <Toast 
         visible={toastVisible} 
         message={toastMessage} 
-        onHide={() => setToastVisible(false)} 
+        onClose={() => setToastVisible(false)} 
       />
     </LinearGradient>
   );
@@ -420,7 +444,6 @@ const styles = StyleSheet.create({
   closeBtn: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   scroll: { padding: 20, paddingBottom: 50 },
   
@@ -445,34 +468,22 @@ const styles = StyleSheet.create({
   chainLink: {
     width: 15,
     height: 3,
-    backgroundColor: Colors.light.border,
-  },
-  activeLink: {
-    backgroundColor: Colors.light.primary,
   },
   chainNode: {
     width: 32,
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: Colors.light.border,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'white',
-  },
-  completedNode: {
-    backgroundColor: Colors.light.success,
-    borderColor: Colors.light.success,
   },
 
   chainText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: Colors.light.border,
   },
   streakLabel: {
     marginTop: 8,
-    color: Colors.light.text,
     fontWeight: '600',
   },
 
@@ -487,10 +498,8 @@ const styles = StyleSheet.create({
   
   // Time Picker Styles
   timeBox: {
-    backgroundColor: Colors.light.background,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
     alignItems: 'center',
@@ -500,27 +509,22 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   iosPickerContainer: {
-    backgroundColor: '#ffffff',
     paddingBottom: 40,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
   pickerHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
-    backgroundColor: '#f8f9fa',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
   doneButton: {
-    color: Colors.light.primary,
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: 17,
   },
 });

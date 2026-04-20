@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface Props {
   color?: string;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -13,6 +16,8 @@ interface Props {
  */
 export function HomeButton({ color, style }: Props): React.ReactElement {
   const router = useRouter();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
 
   const handlePress = () => {
     // Navigate to the main routines page
@@ -27,7 +32,7 @@ export function HomeButton({ color, style }: Props): React.ReactElement {
       accessibilityLabel="Go to home"
       accessibilityRole="button"
     >
-      <Ionicons name="home-outline" size={24} color={color || '#fff'} />
+      <Ionicons name="home-outline" size={24} color={color || colors.text} />
     </TouchableOpacity>
   );
 }

@@ -19,18 +19,14 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import Animated, {
-    FadeInDown,
-    FadeInUp,
-    FadeOutDown,
-    FadeOutUp,
-    LinearTransition,
-} from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp, LinearTransition } from "react-native-reanimated";
 
 import { RoutineCompletedAnimation } from '@/components/animations/routine-completed-animation';
 import { ImageFullscreenModal } from '@/components/modals/image-fullscreen-modal';
 import { ChatVerificationItem } from '@/components/routines/chat-verification-item';
 import { useAuth } from '@/hooks/use-auth';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import type { PredefinedRoutineMessage } from '@/services/routine.service';
 import { routineService } from '@/services/routine.service';
 import { RoutineLog } from '@/types/routine';
@@ -38,7 +34,7 @@ import { RoutineLog } from '@/types/routine';
 type ChatMessage = {
   id: string;
   text: string;
-  sender: 'me' | 'system';
+  sender: 'me' | 'system' | 'other';
   senderName: string;
   createdAt?: string;
   isSystemEvent?: boolean;
@@ -147,11 +143,10 @@ const normalizeChatMessages = (
   return value
     .map((item, index) => {
       const msg = (item || {}) as RawChatMessage;
-
       const text = (msg.message || '').trim();
+
+      // Skip empty messages
       if (!text) return null;
-      if (currentRoutineId && msg.routineId && String(msg.routineId) !== String(currentRoutineId))
-        return null;
 
       const senderId = msg.userId || msg.user?.id;
       const senderName =
@@ -166,9 +161,9 @@ const normalizeChatMessages = (
         text: text.replace(/^\[SYSTEM\]\s*/i, ''),
         sender: isSystemMessage
           ? 'system'
-          : currentUserId && senderId === currentUserId
+          : currentUserId && String(senderId) === String(currentUserId)
             ? 'me'
-            : 'system',
+            : 'other',
         senderName: isSystemMessage ? 'System' : senderName,
         createdAt: msg.sentAt,
         isSystemEvent: isSystemMessage,
@@ -240,16 +235,16 @@ const formatMessageTime = (value?: string): string => {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };
 
-const renderChatMessageText = (text: string) => {
+const renderChatMessageText = (text: string, color?: string) => {
   const mentionMatch = text.match(/^(.*?)(\s@[^@\s].*)$/);
   if (!mentionMatch) {
-    return <Text style={styles.chatBubbleText}>{text}</Text>;
+    return <Text style={[styles.chatBubbleText, color ? { color } : {}]}>{text}</Text>;
   }
 
   const [, messageBody, mentionText] = mentionMatch;
 
   return (
-    <Text style={styles.chatBubbleText}>
+    <Text style={[styles.chatBubbleText, color ? { color } : {}]}>
       {messageBody}
       <Text style={styles.chatMentionText}>{mentionText}</Text>
     </Text>
@@ -261,6 +256,11 @@ export default function CollaborativeChatScreen() {
   const routineId = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
   const { user } = useAuth();
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+  const colors = Colors[theme];
+  const gradientColors = getBackgroundGradient(theme, 'collaborative');
+  const collaborativePrimary = colors.collaborativePrimary;
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
@@ -379,7 +379,7 @@ export default function CollaborativeChatScreen() {
       try {
         const messages = await routineService.getRoutineChatMessages(routineId);
         const normalized = sortChatMessagesOldToNew(
-          normalizeChatMessages(messages, user?.id, routineId),
+          normalizeChatMessages(messages, user?.id),
         );
         if (normalized.length === 0 && cached.length > 0) {
           setChatMessages(cached);
@@ -698,179 +698,201 @@ export default function CollaborativeChatScreen() {
   };
 
   return (
-    <LinearGradient colors={['#2e1065', '#200f4a']} style={styles.container}>
+    <LinearGradient colors={gradientColors} style={styles.container}>
       <Animated.View entering={FadeInDown.duration(350)} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} hitSlop={10}>
-          <Ionicons name="arrow-back" size={20} color="#ffffff" />
+        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]} hitSlop={10}>
+          <Ionicons name="arrow-back" size={20} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
+          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
             {headerTitle}
           </Text>
         </View>
         <TouchableOpacity
           onPress={handleCaptureAndUploadImage}
           style={[
-            styles.detailsButton,
-            {
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              borderColor: 'rgba(255, 255, 255, 0.2)',
+            styles.detailsButton, 
+            { 
+              backgroundColor: colors.surface, 
+              borderColor: colors.border, 
               marginRight: 4,
             },
           ]}
         >
-          <Ionicons name="camera-outline" size={20} color="#ffffff" />
+            <Ionicons name="camera-outline" size={20} color={colors.text} />
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.replace(`/(collaborative)/routine/${routineId}` as const)}
-          style={styles.detailsButton}
+        <TouchableOpacity 
+          onPress={() => router.push({
+            pathname: '/(collaborative)/routine/[id]',
+            params: { id: routineId }
+          } as never)} 
+          style={[styles.detailsButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
-          <Ionicons name="information-circle-outline" size={20} color="#ffffff" />
-          <Text style={styles.detailsButtonText}>Details</Text>
+          <Ionicons name="information-circle-outline" size={20} color={colors.text} />
+          <Text style={[styles.detailsButtonText, { color: colors.text }]}>Details</Text>
         </TouchableOpacity>
-        <HomeButton color="#ffffff" style={styles.backButton} />
+        <HomeButton color={colors.text} style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]} />
       </Animated.View>
 
       <View style={styles.chatContainer}>
-        <FlatList
-          ref={chatListRef}
-          data={displayMessages}
-          keyExtractor={(item) => item.id}
-          style={styles.chatList}
-          contentContainerStyle={styles.chatListContent}
-          ListEmptyComponent={
-            chatLoading ? (
-              <View style={styles.chatStateBox}>
-                <ActivityIndicator size="small" color="#ffffff" />
-                <Text style={styles.chatStateText}>Loading group chat...</Text>
-              </View>
-            ) : (
-              <View style={styles.chatStateBox}>
-                <Ionicons name="chatbubble-outline" size={14} color="#e7d0ff" />
-                <Text style={styles.chatStateText}>No messages yet.</Text>
-              </View>
-            )
-          }
-          renderItem={({ item }) => (
-            <View
-              style={
-                item.isSystemEvent
-                  ? styles.chatRowSystemEvent
-                  : item.sender === 'me'
-                    ? styles.chatRowMine
-                    : styles.chatRowOther
-              }
-            >
-              <View
-                style={[
-                  styles.chatBubble,
-                  item.isSystemEvent
-                    ? styles.chatBubbleEvent
-                    : item.sender === 'me'
-                      ? styles.chatBubbleMine
-                      : styles.chatBubbleSystem,
-                ]}
-              >
-                {!item.isSystemEvent ? (
-                  <Text style={styles.chatSender}>
-                    {item.sender === 'me' ? 'You' : item.senderName}
-                  </Text>
-                ) : (
-                  <Text style={styles.chatSystemLabel}>System</Text>
-                )}
-                {(() => {
-                  const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
-                  const isPhotoMessage =
-                    item.text.startsWith('[PHOTO]:') ||
-                    item.text.includes('storage.googleapis.com') ||
-                    imageRegex.test(item.text);
-
-                  if (!isPhotoMessage) {
-                    return renderChatMessageText(item.text);
-                  }
-
-                  const isPrefixed = item.text.startsWith('[PHOTO]:');
-                  let imageUrl = isPrefixed ? item.text.replace('[PHOTO]:', '') : item.text;
-
-                  if (!imageUrl.startsWith('http')) {
-                    imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
-                  }
-
-                  const matchingLog = pendingLogs.find((l) => {
-                    const logUrl = (l.verificationImageUrl || '').toLowerCase();
-                    const msgUrl = imageUrl.toLowerCase();
-                    const logFileName = logUrl.split('/').pop() || '!!!';
-                    const msgFileName = msgUrl.split('/').pop() || '???';
-                    return (
-                      logUrl === msgUrl ||
-                      msgUrl.includes(logUrl) ||
-                      logUrl.includes(msgUrl) ||
-                      logFileName === msgFileName
-                    );
-                  });
-
-                  if (matchingLog) {
-                    return (
-                      <ChatVerificationItem
-                        log={matchingLog}
-                        onApprove={handleApproveLog}
-                        onReject={handleRejectLog}
-                        onViewVotes={(log, tab) => {
-                          setVotersModalTab(tab);
-                          setVotersModalLog(log);
-                        }}
-                        onPressImage={handleImagePreview}
-                        currentUserId={user?.id}
-                      />
-                    );
-                  }
-
-                  return (
-                    <TouchableOpacity
-                      style={styles.chatImageWrapper}
-                      onPress={() => handleImagePreview(imageUrl)}
-                      activeOpacity={0.9}
-                    >
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.chatImage}
-                        resizeMode="contain"
-                      />
-                    </TouchableOpacity>
-                  );
-                })()}
-                {!!item.createdAt && (
-                  <Text style={styles.chatTime}>{formatMessageTime(item.createdAt)}</Text>
-                )}
-              </View>
-            </View>
-          )}
-        />
-
-        {!!chatError && (
-          <View style={styles.chatStateBox}>
-            <Ionicons name="warning-outline" size={14} color="#ffd7de" />
-            <Text style={styles.chatStateText}>{chatError}</Text>
+        {isInitialLoading ? (
+          <View style={styles.centeredBlock}>
+            <ActivityIndicator color={collaborativePrimary} size="large" />
+            <Text style={[styles.loadingText, { color: colors.text, opacity: 0.6 }]}>
+              Loading group chat...
+            </Text>
           </View>
+        ) : (
+          <>
+            <FlatList
+              ref={chatListRef}
+              data={displayMessages}
+              keyExtractor={(item) => item.id}
+              style={styles.chatList}
+              contentContainerStyle={styles.chatListContent}
+              ListEmptyComponent={
+                chatLoading ? (
+                  <View style={styles.chatStateBox}>
+                    <ActivityIndicator size="small" color={colors.text} />
+                    <Text style={[styles.chatStateText, { color: colors.text }]}>Loading group chat...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.chatStateBox}>
+                    <Ionicons name="chatbubble-outline" size={14} color={colors.icon} />
+                    <Text style={[styles.chatStateText, { color: colors.text, opacity: 0.6 }]}>No messages yet.</Text>
+                  </View>
+                )
+              }
+              renderItem={({ item, index }) => (
+                <Animated.View
+                  entering={FadeInDown.delay(Math.min(index, 6) * 15).duration(500).springify().damping(28)}
+                  exiting={FadeOutUp}
+                  layout={LinearTransition.springify().damping(24).stiffness(140).duration(500)}
+                  style={
+                    item.isSystemEvent
+                       ? styles.chatRowSystemEvent
+                      : item.sender === 'me'
+                        ? styles.chatRowMine
+                        : styles.chatRowOther
+                  }
+                >
+                  <View
+                    style={[
+                      styles.chatBubble,
+                      item.isSystemEvent
+                        ? [styles.chatBubbleEvent, { backgroundColor: colors.surface, borderColor: colors.border }]
+                        : item.sender === 'me'
+                          ? [styles.chatBubbleMine, { backgroundColor: collaborativePrimary }]
+                          : [styles.chatBubbleOther, { backgroundColor: colors.card }],
+                    ]}
+                  >
+                    {!item.isSystemEvent ? (
+                      <Text style={[styles.chatSender, { color: item.sender === 'me' ? colors.white : colors.text, opacity: 0.8 }]}>
+                        {item.sender === 'me' ? 'You' : item.senderName}
+                      </Text>
+                    ) : (
+                      <Text style={[styles.chatSystemLabel, { color: colors.icon }]}>System</Text>
+                    )}
+                    
+                    {(() => {
+                      const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
+                      const isPhotoMessage =
+                        item.text.startsWith('[PHOTO]:') ||
+                        item.text.includes('storage.googleapis.com') ||
+                        imageRegex.test(item.text);
+    
+                      if (!isPhotoMessage) {
+                        return renderChatMessageText(item.text, item.sender === 'me' ? colors.white : colors.text);
+                      }
+    
+                      const isPrefixed = item.text.startsWith('[PHOTO]:');
+                      let imageUrl = (isPrefixed ? item.text.replace('[PHOTO]:', '') : item.text).trim();
+    
+                      if (!imageUrl.startsWith('http')) {
+                        imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
+                      }
+    
+                      const matchingLog = pendingLogs.find((l) => {
+                        const logUrl = (l.verificationImageUrl || '').toLowerCase().trim();
+                        const msgUrl = imageUrl.toLowerCase().trim();
+                        const logFileName = logUrl.split('/').pop() || '!!!';
+                        const msgFileName = msgUrl.split('/').pop() || '???';
+                        return (
+                          logUrl === msgUrl ||
+                          msgUrl.includes(logUrl) ||
+                          logUrl.includes(msgUrl) ||
+                          (logFileName !== '!!!' && logFileName === msgFileName)
+                        );
+                      });
+    
+                      if (matchingLog) {
+                        return (
+                          <ChatVerificationItem
+                            log={matchingLog}
+                            onApprove={handleApproveLog}
+                            onReject={handleRejectLog}
+                            onViewVotes={(log, tab) => {
+                              setVotersModalTab(tab);
+                              setVotersModalLog(log);
+                            }}
+                            onPressImage={handleImagePreview}
+                            currentUserId={user?.id}
+                          />
+                        );
+                      }
+    
+                      return (
+                        <View style={styles.chatImageWrapper}>
+                          <View style={styles.imageLoadingPlaceholder}>
+                            <ActivityIndicator color={colors.primary} size="small" />
+                          </View>
+                          <TouchableOpacity
+                            onPress={() => handleImagePreview(imageUrl)}
+                            activeOpacity={0.9}
+                            style={{ zIndex: 2 }}
+                          >
+                            <Image
+                              source={{ uri: imageUrl }}
+                              style={styles.chatImage}
+                              resizeMode="cover"
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })()}
+    
+                    {!!item.createdAt && (
+                      <Text style={[styles.chatTime, { color: item.sender === 'me' ? colors.white : colors.textSecondary, opacity: 0.7 }]}>{formatMessageTime(item.createdAt)}</Text>
+                    )}
+                  </View>
+                </Animated.View>
+              )}
+            />
+    
+            {!!chatError && (
+              <View style={styles.chatStateBox}>
+                <Ionicons name="warning-outline" size={14} color={colors.error} />
+                <Text style={[styles.chatStateText, { color: colors.error }]}>{chatError}</Text>
+              </View>
+            )}
+    
+            {predefinedMessages.length > 0 && (
+              <TouchableOpacity
+                style={[styles.openReplyBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}
+                onPress={() => {
+                  setSelectedPredefinedMessage(null);
+                  setTaggedParticipant(null);
+                  setIsQuickReplyOpen(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.openReplyText, { color: colors.text, opacity: 0.6 }]}>✨ Type a message...</Text>
+                <Ionicons name="chatbubbles" size={20} color={collaborativePrimary} />
+              </TouchableOpacity>
+            )}
+          </>
         )}
 
-        {/* Bottom Bar to open Quick Replies */}
-        {predefinedMessages.length > 0 && (
-          <TouchableOpacity
-            style={styles.openReplyBar}
-            onPress={() => {
-              setSelectedPredefinedMessage(null);
-              setTaggedParticipant(null);
-              setIsQuickReplyOpen(true);
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.openReplyText}>✨ Type a message...</Text>
-            <Ionicons name="chatbubbles" size={20} color="#e7d0ff" />
-          </TouchableOpacity>
-        )}
-
-        {/* Quick Replies Bottom Modal */}
         <Modal visible={isQuickReplyOpen} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <Pressable
@@ -881,22 +903,26 @@ export default function CollaborativeChatScreen() {
                 setTaggedParticipant(null);
               }}
             />
-            <View style={styles.quickReplyBottomSheet}>
-              <View style={styles.bottomSheetHandle} />
+            <View style={[styles.quickReplyBottomSheet, { borderTopColor: colors.border, borderTopWidth: 1, overflow: 'hidden' }]}>
+              <LinearGradient
+                colors={isDark ? ['#1E1B4B', '#0F172A'] : ['#F5F3FF', '#EDE9FE']}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={[styles.bottomSheetHandle, { backgroundColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.1)' }]} />
               <TouchableOpacity
                 onPress={() => {
                   setIsQuickReplyOpen(false);
                   setSelectedPredefinedMessage(null);
                   setTaggedParticipant(null);
                 }}
-                style={styles.floatingCloseBtn}
+                style={[styles.floatingCloseBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
               >
-                <Ionicons name="close" size={20} color="#e7d0ff" />
+                <Ionicons name="close" size={20} color={isDark ? '#e7d0ff' : colors.primary} />
               </TouchableOpacity>
               <View style={styles.bottomSheetHeader}>
                 <View style={styles.bottomSheetTitleWrap}>
-                  <Text style={styles.quickReplyTitle}>Quick replies</Text>
-                  <Text style={styles.quickReplySubtitle}>
+                  <Text style={[styles.quickReplyTitle, { color: colors.text }]}>Quick replies</Text>
+                  <Text style={[styles.quickReplySubtitle, { color: colors.textSecondary }]}>
                     Pick a message, then send it to the group or mention one teammate.
                   </Text>
                 </View>
@@ -904,7 +930,7 @@ export default function CollaborativeChatScreen() {
 
               {predefinedLoading ? (
                 <View style={styles.quickReplyStateBox}>
-                  <ActivityIndicator size="small" color="#e879f9" />
+                  <ActivityIndicator size="small" color={collaborativePrimary} />
                 </View>
               ) : (
                 <Animated.ScrollView
@@ -916,14 +942,14 @@ export default function CollaborativeChatScreen() {
                 >
                   {selectedPredefinedMessage ? (
                     <Animated.View
-                      entering={FadeInUp.duration(300).springify().damping(18).stiffness(140)}
+                      entering={FadeInUp.duration(600).springify().damping(28).stiffness(100)}
                       exiting={FadeOutDown.duration(240)}
-                      style={styles.selectedMessageCard}
+                      style={[styles.selectedMessageCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                     >
-                      <Text style={styles.selectedMessageLabel}>Selected message</Text>
-                      <View style={styles.selectedMessagePreview}>
-                        <Ionicons name="sparkles-outline" size={16} color="#c4b5fd" />
-                        <Text style={styles.selectedMessageText}>{selectedPredefinedMessage}</Text>
+                      <Text style={[styles.selectedMessageLabel, { color: colors.primary }]}>Selected message</Text>
+                      <View style={[styles.selectedMessagePreview, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', padding: 12, borderRadius: 12 }]}>
+                        <Ionicons name="sparkles-outline" size={16} color={isDark ? "#c4b5fd" : colors.primary} />
+                        <Text style={[styles.selectedMessageText, { color: colors.text }]}>{selectedPredefinedMessage}</Text>
                       </View>
 
                       <TouchableOpacity
@@ -939,12 +965,12 @@ export default function CollaborativeChatScreen() {
                         {sendingMessage === selectedPredefinedMessage && !taggedParticipant ? (
                           <ActivityIndicator size="small" color="#ffffff" />
                         ) : null}
-                        <Text style={styles.sendToGroupText}>Send to group</Text>
+                        <Text style={[styles.sendToGroupText, { color: colors.white }]}>Send to group</Text>
                       </TouchableOpacity>
 
                       {participants.length > 0 ? (
                         <View style={styles.tagSection}>
-                          <Text style={styles.tagSectionLabel}>Mention a teammate</Text>
+                          <Text style={[styles.tagSectionLabel, { color: colors.textTertiary }]}>Mention a teammate</Text>
                           <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -955,13 +981,18 @@ export default function CollaborativeChatScreen() {
                               return (
                                 <TouchableOpacity
                                   key={participant.id}
-                                  style={[styles.tagChip, isSelected && styles.tagChipSelected]}
+                                  style={[
+                                    styles.tagChip, 
+                                    { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', borderColor: colors.border },
+                                    isSelected && { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.3)' : colors.primary, borderColor: colors.primary }
+                                  ]}
                                   onPress={() => setTaggedParticipant(participant)}
                                   activeOpacity={0.85}
                                 >
                                   <Text
                                     style={[
                                       styles.tagChipText,
+                                      { color: isSelected ? colors.white : colors.textSecondary },
                                       isSelected && styles.tagChipTextSelected,
                                     ]}
                                   >
@@ -1012,7 +1043,7 @@ export default function CollaborativeChatScreen() {
                         activeOpacity={0.85}
                         disabled={sendingMessage !== null}
                       >
-                        <Text style={styles.changeMessageText}>Choose a different message</Text>
+                        <Text style={[styles.changeMessageText, { color: isDark ? '#c4b5fd' : colors.primary }]}>Choose a different message</Text>
                       </TouchableOpacity>
                     </Animated.View>
                   ) : (
@@ -1029,7 +1060,7 @@ export default function CollaborativeChatScreen() {
 
                         return (
                           <View key={categoryKey} style={styles.quickReplyCategorySection}>
-                            <Text style={styles.quickReplyCategoryTitle}>
+                            <Text style={[styles.quickReplyCategoryTitle, { color: isDark ? '#e7d0ff' : colors.primary }]}>
                               {getCategoryLabel(categoryKey)}
                             </Text>
                             <View style={styles.quickReplyGrid}>
@@ -1058,7 +1089,7 @@ export default function CollaborativeChatScreen() {
                                       <ActivityIndicator size="small" color={accentColor} />
                                     ) : null}
                                     <Text
-                                      style={[styles.quickReplyText, { color: accentColor }]}
+                                      style={[styles.quickReplyBtnText, { color: accentColor }]}
                                       numberOfLines={2}
                                     >
                                       {message.text}
@@ -1078,18 +1109,14 @@ export default function CollaborativeChatScreen() {
           </View>
         </Modal>
 
-        {/* Voters Bottom Modal */}
-        <Modal visible={!!votersModalLog} transparent animationType="slide">
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setVotersModalLog(null)}
-          >
-            <TouchableOpacity activeOpacity={1} style={styles.quickReplyBottomSheet}>
-              <View style={styles.bottomSheetHeader}>
-                <Text style={styles.quickReplyTitle}>Votes</Text>
-                <TouchableOpacity onPress={() => setVotersModalLog(null)} style={styles.closeBtn}>
-                  <Ionicons name="close" size={20} color="#e7d0ff" />
+        <Modal visible={!!votersModalLog} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <Pressable style={styles.modalBackdrop} onPress={() => setVotersModalLog(null)} />
+            <View style={[styles.votersContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.votersHeader}>
+                <Text style={[styles.votersTitle, { color: colors.text }]}>Verification Status</Text>
+                <TouchableOpacity onPress={() => setVotersModalLog(null)}>
+                  <Ionicons name="close" size={20} color={colors.icon} />
                 </TouchableOpacity>
               </View>
 
@@ -1205,12 +1232,12 @@ export default function CollaborativeChatScreen() {
                                   width: 28,
                                   height: 28,
                                   borderRadius: 14,
-                                  backgroundColor: 'rgba(255,255,255,0.1)',
+                                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                 }}
                               >
-                                <Ionicons name="person" size={14} color="#e7d0ff" />
+                                <Ionicons name="person" size={14} color={isDark ? "#e7d0ff" : colors.primary} />
                               </View>
                             )}
                             <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
@@ -1231,33 +1258,55 @@ export default function CollaborativeChatScreen() {
                   </Text>
                 ) : null}
               </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
+
+              <ScrollView style={styles.votersList} showsVerticalScrollIndicator={false}>
+                {votersModalTab === 'approvals' ? (
+                  (votersModalLog?.approvals || []).length > 0 ? (
+                    (votersModalLog?.approvals || []).map((voter: any, idx: number) => (
+                      <View key={idx} style={[styles.voterRow, { borderBottomColor: colors.border }]}>
+                        <View style={[styles.voterAvatar, { backgroundColor: collaborativePrimary }]}>
+                           <Text style={styles.voterLetter}>{(voter.name || voter.username || '?').charAt(0).toUpperCase()}</Text>
+                        </View>
+                        <Text style={[styles.voterName, { color: colors.text }]}>{voter.name || voter.username || 'Member'}</Text>
+                        <Ionicons name="checkmark-circle" size={18} color={getCategoryAccentColor('motivation')} />
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={[styles.votersEmpty, { color: colors.icon }]}>No approvals yet.</Text>
+                  )
+                ) : (
+                  (votersModalLog?.rejections || []).length > 0 ? (
+                    (votersModalLog?.rejections || []).map((voter: any, idx: number) => (
+                      <View key={idx} style={[styles.voterRow, { borderBottomColor: colors.border }]}>
+                         <View style={[styles.voterAvatar, { backgroundColor: getCategoryAccentColor('spicy') }]}>
+                           <Text style={styles.voterLetter}>{(voter.name || voter.username || '?').charAt(0).toUpperCase()}</Text>
+                        </View>
+                        <Text style={[styles.voterName, { color: colors.text }]}>{voter.name || voter.username || 'Member'}</Text>
+                        <Ionicons name="close-circle" size={18} color={getCategoryAccentColor('spicy')} />
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={[styles.votersEmpty, { color: colors.icon }]}>No rejections yet.</Text>
+                  )
+                )}
+              </ScrollView>
+            </View>
+          </View>
         </Modal>
+
+        <ImageFullscreenModal
+          visible={isPreviewVisible}
+          imageUrl={previewImage || ''}
+          onClose={() => setIsPreviewVisible(false)}
+        />
+
+        <RoutineCompletedAnimation
+          visible={showCompletionAnimation}
+          rewardText={completionRewardText}
+          onComplete={() => setShowCompletionAnimation(false)}
+        />
+        
       </View>
-      <RoutineCompletedAnimation
-        visible={showCompletionAnimation}
-        routineName={String(params.routineName || '')}
-        rewardText={completionRewardText || 'Calculating rewards...'}
-        onComplete={() => {
-          setShowCompletionAnimation(false);
-          setCompletionRewardText('');
-        }}
-      />
-
-      <ImageFullscreenModal
-        visible={isPreviewVisible}
-        imageUrl={previewImage}
-        onClose={() => setIsPreviewVisible(false)}
-      />
-
-      {/* Global Initial Loading Overlay */}
-      {isInitialLoading && (
-        <View style={styles.globalLoadingOverlay}>
-          <ActivityIndicator size="large" color="#e879f9" />
-          <Text style={styles.globalLoadingText}>Loading chat...</Text>
-        </View>
-      )}
     </LinearGradient>
   );
 }
@@ -1268,30 +1317,26 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 58,
-    paddingHorizontal: 18,
-    paddingBottom: 15,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    gap: 8,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   titleContainer: {
     flex: 1,
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    color: '#ffffff',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
   },
   detailsButton: {
@@ -1301,158 +1346,168 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(232, 121, 249, 0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(232, 121, 249, 0.4)',
   },
   detailsButtonText: {
-    color: '#ffffff',
     fontSize: 13,
     fontWeight: '700',
   },
   chatContainer: {
     flex: 1,
-    padding: 14,
   },
   chatList: {
     flex: 1,
-    borderRadius: 18,
-    backgroundColor: 'rgba(8,6,18,0.4)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
   chatListContent: {
-    padding: 12,
-    gap: 10,
-    flexGrow: 1,
+    padding: 16,
+    paddingBottom: 24,
   },
   chatRowMine: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 12,
   },
   chatRowOther: {
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 12,
   },
   chatRowSystemEvent: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   chatBubble: {
     maxWidth: '85%',
+    padding: 12,
     borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
   },
   chatBubbleMine: {
-    backgroundColor: 'rgba(232, 121, 249, 0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderBottomRightRadius: 4,
   },
-  chatBubbleSystem: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+  chatBubbleOther: {
+    borderBottomLeftRadius: 4,
   },
   chatBubbleEvent: {
-    backgroundColor: 'rgba(16, 185, 129, 0.14)',
+    maxWidth: '90%',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.32)',
-    maxWidth: '94%',
-  },
-  chatBubbleText: {
-    color: '#ffffff',
-    fontSize: 14,
-    lineHeight: 20,
   },
   chatMentionText: {
-    color: '#c4b5fd',
+    color: '#8B5CF6', // Medium-Dark Violet (Visible on both)
     fontWeight: '800',
   },
   chatSender: {
-    color: 'rgba(255,255,255,0.8)',
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
     marginBottom: 4,
+    letterSpacing: 0.3,
   },
   chatSystemLabel: {
-    color: '#6ee7b7',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
-    marginBottom: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    marginBottom: 4,
+    opacity: 0.6,
+  },
+  chatBubbleText: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   chatTime: {
-    color: 'rgba(255,255,255,0.5)',
     fontSize: 10,
     marginTop: 4,
-    textAlign: 'right',
+    alignSelf: 'flex-end',
   },
   chatStateBox: {
-    borderRadius: 12,
-    padding: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    flexDirection: 'row',
+    padding: 30,
     alignItems: 'center',
-    gap: 10,
-    marginTop: 10,
+    justifyContent: 'center',
+    gap: 8,
   },
   chatStateText: {
-    color: '#f5dfff',
     fontSize: 13,
     fontWeight: '600',
+    textAlign: 'center',
+  },
+  chatImageWrapper: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    marginVertical: 4,
+    width: 200,
+    height: 250,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatImage: {
+    width: 200,
+    height: 250,
+  },
+  imageLoadingPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   openReplyBar: {
-    marginTop: 10,
-    backgroundColor: 'rgba(232, 121, 249, 0.15)',
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 34,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: 'rgba(232, 121, 249, 0.3)',
+    borderTopWidth: 1,
   },
   openReplyText: {
-    color: '#e7d0ff',
     fontSize: 15,
     fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
   },
   modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)', // Standard modal overlay
   },
   quickReplyBottomSheet: {
-    backgroundColor: '#200f4a',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     paddingBottom: 40,
-    maxHeight: '78%',
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 20,
+    minHeight: '60%',
+    maxHeight: '85%',
+  },
+  bottomSheetHeader: {
+    padding: 24,
+    paddingBottom: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  quickReplyTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    color: '#e7d0ff',
   },
   floatingCloseBtn: {
     position: 'absolute',
-    top: 14,
-    right: 14,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
+    top: 20,
+    right: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
-    zIndex: 20,
+    alignItems: 'center',
+    zIndex: 10,
+    borderWidth: 1,
   },
   bottomSheetHandle: {
     alignSelf: 'center',
@@ -1461,9 +1516,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.18)',
     marginBottom: 16,
-  },
-  bottomSheetHeader: {
-    marginBottom: 20,
   },
   bottomSheetTitleWrap: {
     gap: 6,
@@ -1477,10 +1529,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickReplyTitle: {
+  quickReplyScroll: {
+    flex: 1,
+    maxHeight: 420,
+  },
+  quickReplyScrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  quickReplyCategorySection: {
+    marginBottom: 24,
+    width: '100%',
+  },
+  quickReplyCategoryTitle: {
     color: '#e7d0ff',
-    fontSize: 22,
+    fontSize: 12,
     fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    gap: 8,
   },
   quickReplySubtitle: {
     color: 'rgba(231, 208, 255, 0.7)',
@@ -1601,87 +1669,113 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: 'space-between',
   },
-  quickReplyScroll: {
-    maxHeight: 420,
-  },
-  quickReplyScrollContent: {
-    paddingBottom: 12,
-  },
-  quickReplyCategorySection: {
-    width: '100%',
-    marginBottom: 16,
-  },
-  quickReplyCategoryTitle: {
-    color: '#e7d0ff',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
   quickReplyBtn: {
-    backgroundColor: 'rgba(232, 121, 249, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    minHeight: 52,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(232, 121, 249, 0.3)',
-    width: '48%',
+    minWidth: '22%',
+    flexGrow: 1,
   },
   quickReplyBtnSending: {
     opacity: 0.5,
-    backgroundColor: 'rgba(232, 121, 249, 0.05)',
   },
-  quickReplyText: {
-    color: '#f4d8ff',
+  quickReplyBtnText: {
     fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: '700',
   },
   quickReplyStateBox: {
-    justifyContent: 'center',
+    padding: 40,
     alignItems: 'center',
-    paddingVertical: 20,
   },
-  chatImageWrapper: {
-    width: 200,
-    height: 150,
+  votersContent: {
+    position: 'absolute',
+    top: '25%',
+    left: '10%',
+    right: '10%',
+    padding: 20,
+    borderRadius: 24,
+    borderWidth: 1,
+    maxHeight: '50%',
+  },
+  votersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  votersTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  votersTabs: {
+    flexDirection: 'row',
     borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    marginVertical: 4,
-    position: 'relative',
-    justifyContent: 'center',
+    padding: 4,
+    marginBottom: 16,
+  },
+  votersTab: {
+    flex: 1,
+    paddingVertical: 8,
     alignItems: 'center',
+    borderRadius: 8,
   },
-  chatImage: {
-    width: '100%',
-    height: '100%',
-    zIndex: 2,
+  votersTabActive: {
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  chatImageLoading: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
+  votersTabText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
-  globalLoadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8,6,18,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  globalLoadingText: {
-    color: '#e879f9',
-    marginTop: 15,
-    fontSize: 16,
+  votersTabTextActive: {
     fontWeight: '700',
-    letterSpacing: 0.5,
+  },
+  votersList: {
+    flex: 1,
+  },
+  voterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  voterAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  voterLetter: {
+    color: Colors.light.text, // Always bright text for avatar circles if they follow brand colors
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  voterName: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  votersEmpty: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 14,
+  },
+  centeredBlock: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 
 import { RoutineLog } from '@/types/routine';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface ChatVerificationItemProps {
   log: RoutineLog;
@@ -30,6 +32,10 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   onPressImage,
   currentUserId 
 }) => {
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+
   const [loading, setLoading] = React.useState<'approve' | 'reject' | null>(null);
   const badgeScale = React.useRef(new Animated.Value(1)).current;
   const sparkleOpacity = React.useRef(new Animated.Value(0.7)).current;
@@ -126,7 +132,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={styles.imageWrapper} 
+        style={[styles.imageWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]} 
         activeOpacity={0.9} 
         onPress={() => onPressImage && onPressImage(imageUrl)}
       >
@@ -135,51 +141,59 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
           style={styles.image} 
         />
         {log.status === 'approved' && (
-          <Animated.View style={[styles.statusBadgeSuccess, { transform: [{ scale: badgeScale }] }]}>
+          <Animated.View style={[styles.statusBadgeSuccess, { backgroundColor: colors.success, transform: [{ scale: badgeScale }] }]}>
             <Animated.View style={[styles.sparkleWrap, { opacity: sparkleOpacity }]}>
-              <Ionicons name="sparkles" size={12} color="#fff" />
+              <Ionicons name="sparkles" size={12} color={colors.white} />
             </Animated.View>
-            <Ionicons name="checkmark-circle" size={16} color="#fff" />
-            <Text style={styles.statusBadgeText}>Verified</Text>
+            <Ionicons name="checkmark-circle" size={16} color={colors.white} />
+            <Text style={[styles.statusBadgeText, { color: colors.white }]}>Verified</Text>
           </Animated.View>
         )}
         {log.status === 'rejected' && (
-          <View style={styles.statusBadgeError}>
-            <Ionicons name="close-circle" size={16} color="#fff" />
-            <Text style={styles.statusBadgeText}>Rejected</Text>
+          <View style={[styles.statusBadgeError, { backgroundColor: colors.error }]}>
+            <Ionicons name="close-circle" size={16} color={colors.white} />
+            <Text style={[styles.statusBadgeText, { color: colors.white }]}>Rejected</Text>
           </View>
         )}
       </TouchableOpacity>
 
       {!isOwner && isPending ? (
         userHasVoted ? (
-          <View style={styles.votedStatusRow}>
+          <View style={[styles.votedStatusRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
              <Ionicons 
                 name={userHasApproved ? "checkmark-circle" : "close-circle"} 
                 size={16} 
-                color={userHasApproved ? "#4ade80" : "#f87171"} 
+                color={userHasApproved ? colors.success : colors.error} 
               />
-              <Text style={[styles.votedStatusText, { color: userHasApproved ? "#4ade80" : "#f87171" }]}>
+              <Text style={[styles.votedStatusText, { color: userHasApproved ? colors.success : colors.error }]}>
                 {userHasApproved ? 'Approved' : 'Rejected'}
               </Text>
           </View>
         ) : (
           <View style={styles.actionRow}>
             <TouchableOpacity
-              style={[styles.btn, styles.rejectBtn, !isPending && styles.disabledBtn]}
+              style={[
+                styles.btn, 
+                styles.rejectBtn, 
+                { 
+                  backgroundColor: `${colors.error}22`, 
+                  borderColor: isDark ? `${colors.error}4D` : colors.error 
+                },
+                !isPending && styles.disabledBtn
+              ]}
               onPress={handleReject}
               disabled={loading !== null || !isPending}
             >
               {loading === 'reject' ? (
-                <ActivityIndicator size="small" color="#f87171" />
+                <ActivityIndicator size="small" color={colors.error} />
               ) : (
                 <>
                   <Ionicons 
-                    name={hasRejected ? "close-circle" : "close"} 
-                    size={18} 
-                    color={hasRejected ? "#f87171" : "rgba(248, 113, 113, 0.7)"} 
+                    name={hasRejected ? "close-circle" : "close-outline"} 
+                    size={20} 
+                    color={colors.error} 
                   />
-                  <Text style={[styles.btnText, { color: hasRejected ? "#f87171" : "rgba(248, 113, 113, 0.7)" }]}>
+                  <Text style={[styles.btnText, { color: colors.error }]}>
                     {hasRejected ? 'Rejected' : 'Reject'}
                   </Text>
                 </>
@@ -187,20 +201,28 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.btn, styles.approveBtn, !isPending && styles.disabledBtn]}
+              style={[
+                styles.btn, 
+                styles.approveBtn, 
+                { 
+                  backgroundColor: `${colors.success}22`, 
+                  borderColor: isDark ? `${colors.success}4D` : colors.success 
+                },
+                !isPending && styles.disabledBtn
+              ]}
               onPress={handleApprove}
               disabled={loading !== null || !isPending}
             >
               {loading === 'approve' ? (
-                <ActivityIndicator size="small" color="#4ade80" />
+                <ActivityIndicator size="small" color={colors.success} />
               ) : (
                 <>
                   <Ionicons 
-                    name={hasApproved ? "checkmark-circle" : "checkmark"} 
-                    size={18} 
-                    color={hasApproved ? "#4ade80" : "rgba(74, 222, 128, 0.7)"} 
+                    name={hasApproved ? "checkmark-circle" : "checkmark-outline"} 
+                    size={20} 
+                    color={colors.success} 
                   />
-                  <Text style={[styles.btnText, { color: hasApproved ? "#4ade80" : "rgba(74, 222, 128, 0.7)" }]}>
+                  <Text style={[styles.btnText, { color: colors.success }]}>
                     {hasApproved ? 'Approved' : 'Approve'}
                   </Text>
                 </>
@@ -211,25 +233,25 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
       ) : (
         <View style={styles.ownerSummaryRow}>
           <TouchableOpacity
-            style={styles.summaryBadge}
+            style={[styles.summaryBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => onViewVotes?.(log, 'approvals')}
             activeOpacity={0.7}
             disabled={approvalCount === 0}
           >
-            <Ionicons name="checkmark-circle-outline" size={14} color="#4ade80" />
-            <Text style={styles.summaryText}>
+            <Ionicons name="checkmark-circle-outline" size={14} color={colors.success} />
+            <Text style={[styles.summaryText, { color: colors.text }]}>
               {approvalCount}
               {requiredApprovals > 0 ? `/${requiredApprovals}` : ''} Approvals
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.summaryBadge}
+            style={[styles.summaryBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => onViewVotes?.(log, 'rejections')}
             activeOpacity={0.7}
             disabled={rejectionCount === 0}
           >
-            <Ionicons name="close-circle-outline" size={14} color="#f87171" />
-            <Text style={styles.summaryText}>{rejectionCount} Rejections</Text>
+            <Ionicons name="close-circle-outline" size={14} color={colors.error} />
+            <Text style={[styles.summaryText, { color: colors.text }]}>{rejectionCount} Rejections</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -245,7 +267,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
           }
           activeOpacity={0.7}
         >
-            <Text style={styles.progressText}>
+            <Text style={[styles.progressText, { color: colors.textSecondary }]}>
               {approvalCount > 0 &&
                 `${approvalCount}${requiredApprovals > 0 ? `/${requiredApprovals}` : ''} Approvals `}
               {rejectionCount > 0 && `${rejectionCount} Rejections`}
@@ -253,7 +275,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
         </TouchableOpacity>
       )}
       {log.status === 'approved' && approvedNames.length > 0 && (
-        <Text style={styles.approvedByText}>Approved by {approvedNames.join(', ')}</Text>
+        <Text style={[styles.approvedByText, { color: colors.icon }]}>Approved by {approvedNames.join(', ')}</Text>
       )}
     </View>
   );
@@ -269,9 +291,9 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: 'rgba(0,0,0,0.2)',
     marginBottom: 8,
     position: 'relative',
+    borderWidth: 1.5,
   },
   image: {
     width: '100%',
@@ -282,7 +304,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#10B981',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
@@ -297,7 +318,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#EF4444',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
@@ -306,9 +326,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statusBadgeText: {
-    color: '#fff',
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '900',
     textTransform: 'uppercase',
   },
   actionRow: {
@@ -322,32 +341,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 8,
     borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: 1.5,
     gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.1)',
   },
-  approveBtn: {
-    borderColor: 'rgba(74, 222, 128, 0.2)',
-  },
-  rejectBtn: {
-    borderColor: 'rgba(248, 113, 113, 0.2)',
-  },
+  approveBtn: {},
+  rejectBtn: {},
   btnText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   disabledBtn: {
     backgroundColor: 'transparent',
-    borderColor: 'rgba(255,255,255,0.05)',
+    opacity: 0.3,
   },
   progressRow: {
     marginTop: 6,
     paddingHorizontal: 4,
   },
   progressText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
     fontStyle: 'italic',
   },
   ownerSummaryRow: {
@@ -361,48 +374,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1.5,
     gap: 6,
   },
   summaryText: {
-    color: '#fff',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   votedStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1.5,
     gap: 6,
   },
   votedStatusText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   approvedByText: {
     marginTop: 6,
-    color: 'rgba(255,255,255,0.68)',
     fontSize: 11,
     fontStyle: 'italic',
+    opacity: 0.8,
   },
   imageLoadingPlaceholder: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.05)',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     zIndex: 1,
   },
   imageLoadingText: {
-    color: 'rgba(255,255,255,0.4)',
     fontSize: 10,
     fontWeight: '600',
   },

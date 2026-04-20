@@ -1,4 +1,4 @@
-import { getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
@@ -7,9 +7,14 @@ import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Animated, {
+  Easing,
   FadeInDown,
   FadeOutUp,
   LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { ActivityIndicator, Alert, DeviceEventEmitter, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -23,8 +28,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
 import type { RoutineList } from '@/types/routine';
 
-const PERSONAL_GRADIENT = ['#4c1d95', '#7c3aed'] as const;
-const PERSONAL_PRIMARY = '#f9a8ff';
 const TOKEN_KEY = 'habify_access_token';
 
 async function getToken(): Promise<string | null> {
@@ -39,16 +42,32 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const { token: authContextToken } = useAuth();
-  
-  const screenGradient = theme === 'dark' ? getBackgroundGradient(theme) : PERSONAL_GRADIENT;
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+  const screenGradient = getBackgroundGradient(theme);
   const activeTab = 'Personal';
+  // ── Animation Setup ──────────────
+  const opacity = useSharedValue(0);
+  const translateX = useSharedValue(40);
+  const scale = useSharedValue(0.97);
+
+  const ENTER_SPRING = { damping: 35, stiffness: 80, mass: 1.0 };
+
+  const pageStyle = useAnimatedStyle(() => ({
+    flex: 1,
+    opacity: opacity.value,
+    transform: [
+      { translateX: translateX.value },
+      { scale: scale.value },
+    ],
+  }));
+
   const isSwitchingRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [routineLists, setRoutineLists] = useState<RoutineList[]>([]);
   const [selectedListForNewRoutine, setSelectedListForNewRoutine] = useState<{ listId: number; categoryId?: number | null } | null>(null);
   const [editListParams, setEditListParams] = useState<{ listId: number; title: string; categoryId?: number } | null>(null);
-  const [contentAnimationKey, setContentAnimationKey] = useState(0);
 
   const loadLists = useCallback(async () => {
     try {
@@ -70,6 +89,20 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     }
   }, [authContextToken]);
 
+  useFocusEffect(
+    useCallback(() => {
+      opacity.value = 0;
+      translateX.value = 40;
+      scale.value = 0.97;
+
+      opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) });
+      translateX.value = withSpring(0, ENTER_SPRING);
+      scale.value = withSpring(1, ENTER_SPRING);
+
+      loadLists();
+    }, [loadLists]),
+  );
+
   useEffect(() => {
     loadLists();
     
@@ -80,11 +113,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     return () => sub.remove();
   }, [loadLists]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setContentAnimationKey((current) => current + 1);
-    }, []),
-  );
+  // Focus re-trigger is handled by useFocusEffect above
 
   const handleTabSwitch = (tab: string) => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
@@ -137,8 +166,8 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             const t = authContextToken || await getToken();
             if (!t) return;
             await routineService.deleteRoutineList(Number(listId), t);
-            setRoutineLists((current) =>
-              current.filter((item) => {
+            setRoutineLists((current: RoutineList[]) =>
+              current.filter((item: RoutineList) => {
                 const currentId =
                   item.id ?? (item as RoutineList & { routineListId?: number }).routineListId;
                 return Number(currentId) !== Number(listId);
@@ -161,16 +190,16 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const hasNoData = !loading && routineLists.length === 0;
 
   return (
-    <View style={{ flex: 1, backgroundColor: screenGradient[0] }}>
-      <LinearGradient colors={screenGradient} style={styles.container}>
+      <Animated.View style={[{ flex: 1, backgroundColor: screenGradient[0] }, pageStyle]}>
+        <LinearGradient colors={screenGradient} style={styles.container}>
         {/* HEADER */}
         <View style={styles.fixedHeader}>
           <View style={styles.headerTopRow}>
             <TouchableOpacity
-              style={styles.menuBtn}
+              style={[styles.menuBtn, { backgroundColor: colors.surface }]}
               onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
             >
-              <Ionicons name="menu" size={24} color="#fff" />
+              <Ionicons name="menu" size={24} color={colors.text} />
             </TouchableOpacity>
 
             <View style={{ flex: 1 }}>
@@ -178,7 +207,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                 tabs={['Personal', 'Collaborative']}
                 activeTab={activeTab}
                 onTabPress={handleTabSwitch}
-                activeColor={PERSONAL_PRIMARY}
+                activeColor={colors.tint}
               />
             </View>
           </View>
@@ -186,23 +215,22 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
         {/* CONTENT */}
         <Animated.ScrollView
-          key={`routines-content-${contentAnimationKey}`}
-          entering={FadeInDown.delay(140).duration(560).springify()}
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
+          layout={LinearTransition.springify().damping(18)}
         >
           {/* Today's Routines' Header */}
           <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
-            <TouchableOpacity
-            style={styles.sectionHeader}
+          <TouchableOpacity
+            style={[styles.sectionHeader, { backgroundColor: colors.surface, borderColor: colors.border }]}
             activeOpacity={0.85}
             onPress={() => router.push('/(personal)/(drawer)/today-routines')}
           >
-            <Text style={styles.sectionTitle}>Click to See Today&apos;s Routines</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Routines</Text>
           </TouchableOpacity>
           </Animated.View>
 
-          {loading && <ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} />}
+          {loading && <ActivityIndicator size="large" color={colors.textSecondary} style={{ marginTop: 40 }} />}
 
           {!loading && routineLists.map((list, idx) => {
             const accentColor = getCategoryAccentColor(list.categoryName, list.categoryId ?? null);
@@ -226,9 +254,9 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             return (
               <Animated.View
                 key={`list-${list.id ?? idx}-${idx}`}
-                entering={FadeInDown.duration(260).delay(idx * 40)}
-                exiting={FadeOutUp.duration(220)}
-                layout={LinearTransition.duration(260)}
+                entering={FadeInDown.delay(idx * 80).duration(800).springify().damping(28).stiffness(100)}
+                exiting={FadeOutUp}
+                layout={LinearTransition.springify().damping(28).stiffness(120).duration(650)}
               >
                 <RoutineCategoryCard
                   title={list.routineListTitle || list.categoryName || 'List'}
@@ -240,7 +268,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
                   onEditList={() => handleEditList(list)}
                   onDeleteList={() => handleDeleteList(list)}
                   accentColor={accentColor}
-                  variant="light"
+                  variant={theme === 'dark' ? 'glass' : 'light'}
                 />
               </Animated.View>
             );
@@ -248,30 +276,43 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
           {hasNoData && (
             <View style={styles.emptyOuter}>
-              <View style={styles.emptyIconWrapper}>
-                <Ionicons name="calendar-outline" size={64} color={PERSONAL_PRIMARY} />
+              <View style={[styles.emptyIconWrapper, { backgroundColor: colors.surface }]}>
+                <Ionicons name="calendar-outline" size={64} color={colors.primary} />
               </View>
-              <Text style={styles.emptyTitle}>You haven&apos;t created a routine yet.</Text>
-              <Text style={styles.emptySub}>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>You haven&apos;t created a routine yet.</Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                 You can create a new list by clicking the button below.
               </Text>
 
               <TouchableOpacity
-                style={styles.createBtn}
+                style={[
+                   styles.createBtn, 
+                   { 
+                     backgroundColor: colors.surface, 
+                     borderColor: colors.border 
+                   }
+                ]}
                 onPress={() => router.push('/(personal)/create-routine')}
               >
-                <Text style={styles.createBtnText}>Create Routine List</Text>
+                <Text style={[styles.createBtnText, { color: colors.text }]}>Create Routine List</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {!hasNoData && !loading && (
              <Animated.View entering={FadeInDown.delay(220).duration(560).springify()}>
-               <TouchableOpacity
-               style={[styles.createBtn, { marginTop: 10 }]}
+             <TouchableOpacity
+               style={[
+                  styles.createBtn, 
+                  { 
+                    marginTop: 10, 
+                    backgroundColor: colors.surface, 
+                    borderColor: colors.border 
+                  }
+               ]}
                onPress={() => router.push('/(personal)/create-routine')}
              >
-               <Text style={styles.createBtnText}>Create Routine List</Text>
+               <Text style={[styles.createBtnText, { color: colors.text }]}>Create Routine List</Text>
              </TouchableOpacity>
              </Animated.View>
           )}
@@ -289,20 +330,22 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
         {editListParams && (
           <Modal visible={true} transparent animationType="slide" onRequestClose={() => setEditListParams(null)}>
-            <CreateRoutineModal
-              initialRoutineListId={editListParams.listId}
-              initialTitle={editListParams.title}
-              initialCategoryId={editListParams.categoryId}
-              onClose={() => setEditListParams(null)}
-              onCreated={() => {
-                setEditListParams(null);
-                loadLists();
-              }}
-            />
+            <View style={styles.modalOverlay}>
+              <CreateRoutineModal
+                initialRoutineListId={editListParams.listId}
+                initialTitle={editListParams.title}
+                initialCategoryId={editListParams.categoryId}
+                onClose={() => setEditListParams(null)}
+                onCreated={() => {
+                  setEditListParams(null);
+                  loadLists();
+                }}
+              />
+            </View>
           </Modal>
         )}
       </LinearGradient>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -323,11 +366,15 @@ const styles = StyleSheet.create({
   menuBtn: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   scroll: {
     paddingHorizontal: 18,
@@ -335,18 +382,15 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   sectionHeader: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   sectionTitle: {
-    color: '#ffffff',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   emptyOuter: {
     alignItems: 'center',
@@ -354,20 +398,17 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   emptyIconWrapper: {
-    backgroundColor: 'rgba(249,168,255,0.12)',
     padding: 30,
     borderRadius: 100,
     marginBottom: 20,
   },
   emptyTitle: {
-    color: '#ffffff',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
     marginBottom: 8,
   },
   emptySub: {
-    color: 'rgba(255,255,255,0.75)',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 24,
@@ -376,16 +417,13 @@ const styles = StyleSheet.create({
   createBtn: {
     width: '100%',
     borderRadius: 20,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
     borderStyle: 'dashed',
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   createBtnText: {
-    color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

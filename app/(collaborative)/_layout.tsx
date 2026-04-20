@@ -11,13 +11,6 @@ export default function AppLayout(): React.ReactElement {
         }}
       />
       <Stack.Screen
-        name="routine/[id]/chat"
-        options={{
-          animation: 'slide_from_right',
-          gestureEnabled: true,
-        }}
-      />
-      <Stack.Screen
         name="create-routine"
         options={{
           presentation: 'modal',

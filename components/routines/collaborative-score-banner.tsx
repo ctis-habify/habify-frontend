@@ -3,6 +3,8 @@ import React, { useEffect, useRef } from 'react';
 import { Animated as RNAnimated, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedFlame } from '@/components/animations/animated-flame';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CollaborativeRankInfo } from '@/types/collaborative-score';
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -19,7 +21,6 @@ interface Props {
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const ACCENT = '#E879F9'; // Fuchsia-400 default
 const COUNTER_DURATION = 900;
 const COUNTER_INTERVAL = 16; // ~60fps
 
@@ -70,8 +71,11 @@ export function CollaborativeScoreBanner({
   nextBonusPoints,
   rank,
   loading,
-  accentColor = ACCENT,
+  accentColor,
 }: Props): React.ReactElement {
+  const theme = useColorScheme() ?? 'light';
+  const effectiveAccentColor = accentColor || Colors[theme].primary;
+  
   // ── Animated Points Counter ──────────────────────────────────────────────
   const displayPoints = useAnimatedCounter(points, loading);
 
@@ -104,57 +108,58 @@ export function CollaborativeScoreBanner({
 
   if (loading) {
     return (
-      <RNAnimated.View
-        style={[styles.container, styles.shimmerContainer, { opacity: shimmerAnim }]}
-      >
-        <View style={styles.shimmerBar} />
-        <View style={[styles.shimmerBar, styles.shimmerBarShort]} />
-        <View style={styles.shimmerBar} />
+      <RNAnimated.View style={[styles.container, styles.shimmerContainer, { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border, opacity: shimmerAnim }]}>
+        <View style={[styles.shimmerBar, { backgroundColor: Colors[theme].border }]} />
+        <View style={[styles.shimmerBar, styles.shimmerBarShort, { backgroundColor: Colors[theme].border }]} />
+        <View style={[styles.shimmerBar, { backgroundColor: Colors[theme].border }]} />
       </RNAnimated.View>
     );
   }
 
   return (
-    <View>
-      <View style={styles.container}>
+    <View style={styles.wrapper}>
+      <View style={[styles.container, { backgroundColor: Colors[theme].card, borderColor: Colors[theme].border }]}>
         {/* Points Column */}
         <View style={styles.statColumn}>
-          <View style={styles.iconWrap}>
-            <Ionicons name="diamond-outline" size={20} color={accentColor} />
+          <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
+            <Ionicons name="diamond-outline" size={20} color={effectiveAccentColor} />
           </View>
-          <Text style={[styles.statValue, { color: accentColor }]}>{displayPoints}</Text>
-          <Text style={styles.statLabel}>Points</Text>
+          <Text style={[styles.statValue, { color: effectiveAccentColor }]}>{displayPoints}</Text>
+          <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Points</Text>
         </View>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: Colors[theme].border }]} />
 
         {/* Rank Column */}
         <View style={styles.statColumn}>
-          <View style={styles.iconWrap}>
+          <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
             <Ionicons name={rank.icon} size={20} color={rank.color} />
           </View>
           <Text style={[styles.statValue, { color: rank.color }]}>{rank.label}</Text>
-          <Text style={styles.statLabel}>Rank</Text>
+          <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Rank</Text>
         </View>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: Colors[theme].border }]} />
 
         {/* Streak Column */}
         <View style={styles.statColumn}>
-          <View style={styles.iconWrap}>
-            <AnimatedFlame streak={streak} size={20} />
+          <View style={[styles.iconWrap, { backgroundColor: Colors[theme].surface }]}>
+            <AnimatedFlame streak={streak} size={22} />
           </View>
           <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
-          <Text style={styles.statLabel}>Streak</Text>
+          <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Streak</Text>
         </View>
       </View>
 
-      <View style={styles.bonusStrip}>
-        <Ionicons name="gift-outline" size={16} color={accentColor} />
-        <Text style={styles.bonusText}>
-          Next reward: {nextBonusStreak}-day streak for +{nextBonusPoints} points
-        </Text>
-      </View>
+      {/* Bonus Strip */}
+      {nextBonusStreak > 0 && (
+        <View style={[styles.bonusStrip, { backgroundColor: `${effectiveAccentColor}10`, borderColor: `${effectiveAccentColor}30` }]}>
+          <Ionicons name="gift-outline" size={16} color={effectiveAccentColor} />
+          <Text style={[styles.bonusText, { color: Colors[theme].text }]}>
+            Reach <Text style={{ fontWeight: '800', color: effectiveAccentColor }}>{nextBonusStreak} days</Text> streak to get <Text style={{ fontWeight: '800', color: effectiveAccentColor }}>+{nextBonusPoints} bonus points!</Text>
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -163,22 +168,20 @@ export function CollaborativeScoreBanner({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: 16,
+    marginBottom: 4,
   },
   container: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
     paddingVertical: 16,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
     justifyContent: 'space-around',
     alignItems: 'center',
   },
   bonusStrip: {
-    marginTop: 20, // Kart ile bonus satırı arasında daha fazla boşluk
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 4,
     borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
@@ -201,7 +204,6 @@ const styles = StyleSheet.create({
   shimmerBar: {
     width: 60,
     height: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: 7,
   },
   shimmerBarShort: {
@@ -215,7 +217,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
@@ -226,7 +227,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   statLabel: {
-    color: 'rgba(255,255,255,0.5)',
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -235,12 +235,5 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 36,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  // Yukarıda bonusStrip zaten tanımlı, burada tekrar tanımlamaya gerek yok. Çakışmayı önlemek için bu tanımı kaldırıyoruz.
-  bonusText: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 12,
-    fontWeight: '600',
   },
 });

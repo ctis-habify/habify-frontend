@@ -11,6 +11,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
 interface BrokenHeartAnimationProps {
     size?: number;
     color?: string;
@@ -20,10 +23,14 @@ interface BrokenHeartAnimationProps {
 
 export const BrokenHeartAnimation: React.FC<BrokenHeartAnimationProps> = ({
     size = 100,
-    color = '#ef4444', // Default red color
+    color,
     onAnimationComplete,
     play = false,
 }) => {
+    const theme = useColorScheme() ?? 'light';
+    const colors = Colors[theme];
+    const displayColor = color || colors.error;
+
     // Animation values
     const scale = useSharedValue(1);
     const leftHalfRotate = useSharedValue(0);
@@ -120,12 +127,12 @@ export const BrokenHeartAnimation: React.FC<BrokenHeartAnimationProps> = ({
             <View style={styles.svgContainer}>
                 <Animated.View style={[styles.halfContainer, leftHalfStyle]}>
                     <Svg height={size} width={size} viewBox="0 0 24 24">
-                        <Path d={leftHeartCracked} fill={color} />
+                        <Path d={leftHeartCracked} fill={displayColor} />
                     </Svg>
                 </Animated.View>
                 <Animated.View style={[styles.halfContainer, styles.rightHalfContainer, rightHalfStyle]}>
                     <Svg height={size} width={size} viewBox="0 0 24 24">
-                        <Path d={rightHeartCracked} fill={color} />
+                        <Path d={rightHeartCracked} fill={displayColor} />
                     </Svg>
                 </Animated.View>
             </View>

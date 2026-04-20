@@ -85,7 +85,7 @@ export function CreateRoutineInListModal({
   const dropDownStyle = useMemo(
     () => ({
       backgroundColor: colors.card,
-      borderColor: freqOpen ? colors.primary : 'transparent',
+      borderColor: freqOpen ? colors.primary : colors.border,
       borderRadius: 12,
       minHeight: 50,
     }),
@@ -181,7 +181,7 @@ export function CreateRoutineInListModal({
                       ? colors.error
                       : routineNameFocused
                         ? colors.primary
-                        : 'transparent',
+                        : colors.border,
                   },
                 ]}
               >
@@ -250,12 +250,9 @@ export function CreateRoutineInListModal({
                   <Text style={styles.sectionLabel}>Set specific time</Text>
                   <Switch
                     value={hasSpecificTime}
-                    onValueChange={(value) => {
-                      setHasSpecificTime(value);
-                      setErrors((prev) => ({ ...prev, timeRange: undefined }));
-                    }}
-                    trackColor={{ false: '#767577', true: colors.primary }}
-                    thumbColor={hasSpecificTime ? '#fff' : '#f4f3f4'}
+                    onValueChange={setHasSpecificTime}
+                    trackColor={{ false: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', true: colors.primary }}
+                    thumbColor={hasSpecificTime ? colors.white : '#f4f3f4'}
                   />
                 </View>
               )}
@@ -384,9 +381,9 @@ export function CreateRoutineInListModal({
                 disabled={isSubmitting || !routineListId}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                  <Text style={{ color: colors.white, fontWeight: '800', fontSize: 16 }}>
                     Create New Routine
                   </Text>
                 )}

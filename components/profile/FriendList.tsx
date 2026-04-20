@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Friend, FriendItem } from './FriendItem';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface FriendListProps {
     friends: Friend[];
@@ -8,6 +10,9 @@ interface FriendListProps {
 }
 
 export function FriendList({ friends, onPressFriend }: FriendListProps): React.ReactElement {
+    const theme = useColorScheme() ?? 'light';
+    const colors = Colors[theme];
+
     const handlePress = useCallback(
         (friendId: string) => {
             onPressFriend?.(friendId);
@@ -18,8 +23,8 @@ export function FriendList({ friends, onPressFriend }: FriendListProps): React.R
     if (!friends || friends.length === 0) {
         return (
             <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No friends yet</Text>
-                <Text style={styles.emptySubText}>Add friends to see them here!</Text>
+                <Text style={[styles.emptyText, { color: colors.text }]}>No friends yet</Text>
+                <Text style={[styles.emptySubText, { color: colors.textSecondary }]}>Add friends to see them here!</Text>
             </View>
         );
     }
@@ -49,11 +54,9 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#fff',
         marginBottom: 4,
     },
     emptySubText: {
         fontSize: 14,
-        color: 'rgba(255,255,255,0.7)',
     },
 });
