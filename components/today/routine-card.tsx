@@ -144,8 +144,10 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
 
               {(routine.lives ?? 0) > 0 && (
                 <View style={[styles.statBadge, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(220, 38, 38, 0.05)' }]}>
-                  <ThrobbingHeart lives={routine.lives ?? 0} size={12} />
-                  <Text style={[styles.statBadgeText, { color: isDark ? '#f87171' : '#dc2626' }]}>{routine.lives}</Text>
+                  <ThrobbingHeart lives={Math.max(0, (routine.lives ?? 0) - (routine.missedCount ?? 0))} size={12} />
+                  <Text style={[styles.statBadgeText, { color: isDark ? '#f87171' : '#dc2626' }]}>
+                    {Math.max(0, (routine.lives ?? 0) - (routine.missedCount ?? 0))}/{routine.lives}
+                  </Text>
                 </View>
               )}
             </View>
