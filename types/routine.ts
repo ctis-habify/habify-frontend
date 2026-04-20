@@ -27,6 +27,7 @@ export interface Routine {
   routineType?: 'personal' | 'collaborative';
   description?: string;
   lives?: number;
+  maxLives?: number;
   isPublic?: boolean;
   rewardCondition?: string;
   ageRequirement?: number;
