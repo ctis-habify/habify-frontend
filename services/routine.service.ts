@@ -683,6 +683,19 @@ export const routineService = {
     }
   },
 
+  // Handle Creator Defeat (lives === 0) — deletes routine if alone, otherwise promotes a member
+  async handleCreatorDefeat(routineId: string): Promise<{ message: string }> {
+    try {
+      const res = await api.post(`/routines/collaborative/${routineId}/creator-defeat`);
+      return res.data;
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
+      throw err;
+    }
+  },
+
   // ✅ Get Collaborative Routine Leaderboard
   async getCollaborativeRoutineLeaderboard(routineId: string): Promise<any[]> {
     const res = await api.get(`/routines/collaborative/${routineId}/leaderboard`);
