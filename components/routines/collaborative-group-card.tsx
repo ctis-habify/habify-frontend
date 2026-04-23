@@ -29,7 +29,7 @@ interface CollaborativeGroupCardProps {
     accentColor?: string;
 }
 
-export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
+export function CollaborativeGroupCard({
     routine,
     onPress,
     onLeave,
@@ -37,7 +37,7 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     isLeaving = false,
     isDeleting = false,
     accentColor
-}) => {
+}: CollaborativeGroupCardProps): React.ReactElement | null {
     const theme = useColorScheme() ?? 'light';
     const isDark = theme === 'dark';
     const colors = Colors[theme];
@@ -73,11 +73,11 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     const [isDeleteModalVisible, setIsDeleteModalVisible] = React.useState(false);
     const cardScale = useSharedValue(1);
 
-    const formatTime = (time?: string) => {
+    const formatTime = (time?: string): string => {
         if (!time) return '--:--';
-        const normalized = time.includes('T') ? time.split('T')[1] : time;
+        const normalized: string = time.includes('T') ? time.split('T')[1] : time;
         if (!normalized) return '--:--';
-        const hhmm = normalized.split(':').slice(0, 2).join(':');
+        const hhmm: string = normalized.split(':').slice(0, 2).join(':');
         return hhmm || '--:--';
     };
 
@@ -99,23 +99,23 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
     const currentUserId = normalizeId(user?.id);
     const isCreator = !!currentUserId && !!creatorCandidate && currentUserId === creatorCandidate;
 
-    const handleInvite = async () => {
+    const handleInvite = async (): Promise<void> => {
         if (!routine) return;
         try {
             await Share.share({
                 message: `Join my collaborative routine "${routineName}" on Habify! Use code: ${collaborativeKey}`,
                 title: 'Habify Invitation',
             });
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Error sharing:', error);
         }
     };
 
-    const handleManageUsers = () => {
+    const handleManageUsers = (): void => {
         setIsManageModalVisible(true);
     };
 
-    const handleDelete = () => {
+    const handleDelete = (): void => {
         setIsDeleteModalVisible(true);
     };
 
@@ -123,12 +123,12 @@ export const CollaborativeGroupCard: React.FC<CollaborativeGroupCardProps> = ({
         transform: [{ scale: cardScale.value }],
     }));
 
-    const handlePressIn = () => {
+    const handlePressIn = (): void => {
         if (!onPress) return;
         cardScale.value = withSpring(0.985, { damping: 20, stiffness: 260 });
     };
 
-    const handlePressOut = () => {
+    const handlePressOut = (): void => {
         if (!onPress) return;
         cardScale.value = withSpring(1, { damping: 18, stiffness: 220 });
     };

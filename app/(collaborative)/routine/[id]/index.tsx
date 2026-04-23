@@ -69,6 +69,8 @@ type GroupParticipant = {
 type CollaborativeRoutineDetail = Routine & {
   participants?: GroupParticipant[];
   category?: { name?: string } | string;
+  creatorId?: string;
+  userId?: string;
 };
 
 type DetailRow = {
@@ -78,7 +80,7 @@ type DetailRow = {
 
 const toNumber = (value?: string | string[]): number | null => {
   if (typeof value !== 'string') return null;
-  const parsed = Number(value);
+  const parsed: number = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
 
@@ -137,7 +139,7 @@ const toStringOrUndefined = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (value && typeof value === 'object') {
-    const obj = value as Record<string, unknown>;
+    const obj: Record<string, unknown> = value as Record<string, unknown>;
     return toStringOrUndefined(obj.name || obj.value || obj.type || obj.label || obj.text);
   }
   return undefined;
@@ -211,7 +213,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     setLoadingLeaderboard(true);
     setError(null);
     try {
-      const [detail, leaderboardData, globalLeaderboardData, routineLogs] = await Promise.all([
+      const [detail, leaderboardData, globalLeaderboardData, routineLogs]: [CollaborativeRoutineDetail, RoutineLeaderboardEntry[], LeaderboardEntry[], RoutineLog[]] = await Promise.all([
         routineService.getGroupDetail(routineId),
         routineService.getCollaborativeRoutineLeaderboard(routineId).catch(() => []),
         collaborativeScoreService.getLeaderboard(200).catch(() => []),
@@ -226,7 +228,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       if (detail) {
         await checkAndHandleEliminations(detail, leaderboardData);
       }
-    } catch (fetchError) {
+    } catch (fetchError: unknown) {
       setError(getErrorMessage(fetchError));
     } finally {
       setLoading(false);
@@ -234,18 +236,18 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     }
   }, [getErrorMessage, routineId]);
 
-  const checkAndHandleEliminations = async (detail: CollaborativeRoutineDetail, leaderboardData: RoutineLeaderboardEntry[]) => {
+  const checkAndHandleEliminations = async (detail: CollaborativeRoutineDetail, leaderboardData: RoutineLeaderboardEntry[]): Promise<void> => {
     if (!routineId || !detail) return;
 
-    const participants = detail.participants || [];
-    const maxLives = detail.maxLives || detail.lives || 0;
+    const participants: GroupParticipant[] = detail.participants || [];
+    const maxLives: number = detail.maxLives || detail.lives || 0;
     
     // 1. Identify members to remove (lives - missedCount <= 0)
     // We assume the data is available in the participant object or we use global detail if single-user health is tracked differently.
     // Based on user request, it's participant-specific.
-    const toRemove = participants.filter(p => {
-      const pLives = p.lives ?? maxLives;
-      const pMissed = p.missedCount ?? 0;
+    const toRemove: GroupParticipant[] = participants.filter((p: GroupParticipant) => {
+      const pLives: number = p.lives ?? maxLives;
+      const pMissed: number = p.missedCount ?? 0;
       return pLives - pMissed <= 0;
     });
 
@@ -253,15 +255,15 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
       console.log(`[Elimination] Removing ${toRemove.length} members with 0 lives.`);
       
       for (const p of toRemove) {
-        const uid = p.userId || p.user?.id || p.id;
+        const uid: string | undefined = p.userId || p.user?.id || p.id;
         if (!uid) continue;
 
         try {
           // Derive creator status from the live detail object to avoid stale closure issues
-          const detailCreatorId = String(
-            (detail as any).creatorId || (detail as any).userId || ''
+          const detailCreatorId: string = String(
+            detail.creatorId || detail.userId || ''
           ).trim();
-          const isCurrentUserCreator =
+          const isCurrentUserCreator: boolean =
             !!currentUserId &&
             !!detailCreatorId &&
             currentUserId === detailCreatorId;
@@ -281,24 +283,24 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               return; // Stop here as we are redirected
             }
           }
-        } catch (err) {
+        } catch (err: unknown) {
           console.error(`Failed to remove member ${uid}:`, err);
         }
       }
     }
 
     // 2. Check if group is empty
-    const remainingCount = participants.length - toRemove.length;
+    const remainingCount: number = participants.length - toRemove.length;
     if (remainingCount <= 0 && !isDeletingRoutine) {
       console.log(`[Elimination] Group is empty. Deleting routine ${routineId}.`);
       try {
-        const t = await SecureStore.getItemAsync('habify_access_token');
+        const t: string | null = await SecureStore.getItemAsync('habify_access_token');
         if (t) {
           await routineService.deleteRoutine(routineId, t);
           Alert.alert("Group Deleted", "Everyone has been eliminated. The group has been deleted. 💨");
           router.replace('/(collaborative)/(drawer)/routines');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Failed to delete empty group:", err);
       }
     }
@@ -485,16 +487,16 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     });
   }, [uniqueParticipants]);
 
-  const handlePoke = useCallback(async (participant: GroupParticipant) => {
-    const targetUserId = participant.userId || participant.user?.id || participant.id;
+  const handlePoke = useCallback(async (participant: GroupParticipant): Promise<void> => {
+    const targetUserId: string | undefined = participant.userId || participant.user?.id || participant.id;
     if (!targetUserId || !routineId) return;
 
-    const targetName = participant.user?.name || participant.name || participant.user?.username || participant.username || 'User';
+    const targetName: string = participant.user?.name || participant.name || participant.user?.username || participant.username || 'User';
 
     // Optimistic Trigger: Show animation and haptics instantly
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setPokedName(targetName);
-    setPokeTrigger(prev => prev + 1);
+    setPokeTrigger((prev: number) => prev + 1);
     setPokeAnimationVisible(true);
 
     try {
@@ -639,7 +641,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             <RoutineHistory 
               routineId={routineId as string} 
               themeColor={collaborativePrimary} 
-              createdAt={routineDetail?.startDate} 
+              createdAt={routineDetail?.createdAt} 
               endTime={routineDetail?.endTime}
             />
 
@@ -816,17 +818,17 @@ function ParticipantChip({
   name: string;
   participantCup: UserCupAward | null;
   completionStatus?: 'completed' | 'pending' | 'missed' | 'none';
-}) {
+}): React.ReactElement {
   const rippleScale = useSharedValue(0);
   const rippleOpacity = useSharedValue(0);
   const rippleX = useSharedValue(0);
   const rippleY = useSharedValue(0);
 
-  const handlePress = (event: any) => {
+  const handlePress = (event: any): void => {
     if (isSelf || disabled) return;
 
     // Get touch coordinates
-    const { locationX, locationY } = event.nativeEvent;
+    const { locationX, locationY }: { locationX: number; locationY: number } = event.nativeEvent;
     rippleX.value = locationX;
     rippleY.value = locationY;
 
@@ -914,7 +916,7 @@ function ChatFab({
   displayRoutineName: string;
   router: any;
   accentColor: string;
-}) {
+}): React.ReactElement {
   const floatY = useSharedValue(0);
   const pulseScale = useSharedValue(1);
   const glowScale = useSharedValue(0);

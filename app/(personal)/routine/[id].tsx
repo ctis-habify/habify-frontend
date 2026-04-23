@@ -83,28 +83,33 @@ export default function EditRoutineScreen(): React.ReactElement {
   // Moved outside component for performance
 
   // ... (useEffect)
-  useEffect(() => {
+  const fetchData = useCallback(async (): Promise<void> => {
     if (!id || !token) return;
-    const fetchData = async () => {
-      try {
-        const data = await routineService.getRoutineById(id, token || '');
-        setOriginalData(data);
-        
-        setName(data?.routineName || '');
-        setStartTime(data?.startTime || '');
-        setEndTime(data?.endTime || '');
-        setRoutineListId(data?.routineListId || 1);
-        setFrequencyDetail(data?.frequencyDetail || 0);
-        setFrequencyType((data?.frequencyType || 'DAILY').toUpperCase());
-        setIsAiVerified(data?.isAiVerified || false);
-        setStartDate(data?.startDate || '2025-01-01');
-        setStreak(data?.streak || 0);
-      } catch (err) {
-        console.error("Failed to fetch routine:", err);
-      }
-    };
-    fetchData();
+    try {
+      const data: Routine = await routineService.getRoutineById(id, token || '');
+      setOriginalData(data);
+      
+      setName(data?.routineName || '');
+      setStartTime(data?.startTime || '');
+      setEndTime(data?.endTime || '');
+      setRoutineListId(data?.routineListId || 1);
+      setFrequencyDetail(data?.frequencyDetail || 0);
+      setFrequencyType((data?.frequencyType || 'DAILY').toUpperCase());
+      setIsAiVerified(data?.isAiVerified || false);
+      setStartDate(data?.startDate || '2025-01-01');
+      setStreak(data?.streak || 0);
+    } catch (err: unknown) {
+      console.error("Failed to fetch routine:", err);
+    }
   }, [id, token]);
+
+  useEffect(() => {
+    fetchData();
+    const sub = DeviceEventEmitter.addListener('refreshPersonalRoutines', () => {
+      fetchData();
+    });
+    return () => sub.remove();
+  }, [fetchData]);
 
   const handleSave = useCallback(async () => {
     setIsLoading(true);
@@ -147,9 +152,10 @@ export default function EditRoutineScreen(): React.ReactElement {
     try {
       await routineService.updateRoutine(id, payload, token);
       
-      // Update originalData so details card reflects changes immediately
-      const updatedData = await routineService.getRoutineById(id, token || '');
+      // Update local state so details card reflects changes immediately
+      const updatedData: Routine = await routineService.getRoutineById(id, token || '');
       setOriginalData(updatedData);
+      setStreak(updatedData.streak || 0);
 
       DeviceEventEmitter.emit('SHOW_TOAST', 'Routine updated successfully!');
       DeviceEventEmitter.emit('refreshPersonalRoutines');
@@ -248,7 +254,12 @@ export default function EditRoutineScreen(): React.ReactElement {
         </ThemedView>
 
         {/* Routine History Grid */}
-        <RoutineHistory routineId={id as string} themeColor={colors.primary} createdAt={originalData?.startDate} endTime={originalData?.endTime} />
+        <RoutineHistory 
+          routineId={id as string} 
+          themeColor={colors.primary} 
+          createdAt={originalData?.createdAt} 
+          endTime={originalData?.endTime} 
+        />
 
         {/* 3. Fancy Routine Details Card */}
         <Animated.View 

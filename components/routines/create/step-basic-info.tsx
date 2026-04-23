@@ -17,7 +17,7 @@ interface Props {
   loadingCategories: boolean;
 }
 
-export function StepBasicInfo({ formState, updateForm, categories, loadCategories, loadingCategories }: Props) {
+export function StepBasicInfo({ formState, updateForm, categories, loadCategories, loadingCategories }: Props): React.ReactElement {
   const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const isDark = theme === 'dark';
@@ -26,25 +26,25 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
-  const categoryItems = useMemo(() => categories.map(c => ({ label: c.name, value: c.categoryId })), [categories]);
+  const categoryItems: { label: string; value: number }[] = useMemo(() => categories.map(c => ({ label: c.name, value: c.categoryId })), [categories]);
 
-  const handleCreateCategory = async () => {
+  const handleCreateCategory = async (): Promise<void> => {
     if (!newCategoryName.trim()) return;
     try {
-      const formattedName = newCategoryName.trim().charAt(0).toUpperCase() + newCategoryName.trim().slice(1);
+      const formattedName: string = newCategoryName.trim().charAt(0).toUpperCase() + newCategoryName.trim().slice(1);
       await categoryService.createCategory(formattedName, 'collaborative');
       setNewCategoryName('');
       await loadCategories();
-    } catch {
+    } catch (error: unknown) {
       Alert.alert("Error", "Failed to create category");
     }
   };
 
-  const handleDeleteCategory = async () => {
+  const handleDeleteCategory = async (): Promise<void> => {
     if (!formState.categoryId) return;
     Alert.alert("Delete", "Delete this category?", [
       { text: "Cancel" },
-      { text: "Delete", style: 'destructive', onPress: async () => {
+      { text: "Delete", style: 'destructive', onPress: async (): Promise<void> => {
         try {
           await categoryService.deleteCategory(formState.categoryId!, token || '');
           await loadCategories();

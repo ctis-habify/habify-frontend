@@ -8,9 +8,8 @@ export const authService = {
       return response.data;
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'response' in error) {
-        const anyErr = error as any;
-        const data = anyErr.response.data;
-        const message = Array.isArray(data.message) ? data.message[0] : data.message;
+        const responseData: any = (error as { response: { data: any } }).response.data;
+        const message: string = Array.isArray(responseData.message) ? responseData.message[0] : responseData.message;
         throw new Error(message || 'Something went wrong');
       }
       throw error;
@@ -23,9 +22,8 @@ export const authService = {
       return response.data;
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'response' in error) {
-        const anyErr = error as any;
-        const data = anyErr.response.data;
-        const message = Array.isArray(data.message) ? data.message[0] : data.message;
+        const responseData: any = (error as { response: { data: any } }).response.data;
+        const message: string = Array.isArray(responseData.message) ? responseData.message[0] : responseData.message;
         throw new Error(message || 'Login failed');
       }
       throw error;
@@ -38,9 +36,8 @@ export const authService = {
       return response.data;
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'response' in error) {
-        const anyErr = error as any;
-        const data = anyErr.response.data;
-        const message = Array.isArray(data.message) ? data.message[0] : data.message;
+        const responseData: any = (error as { response: { data: any } }).response.data;
+        const message: string = Array.isArray(responseData.message) ? responseData.message[0] : responseData.message;
         throw new Error(message || 'Failed to reset password');
       }
       throw error;

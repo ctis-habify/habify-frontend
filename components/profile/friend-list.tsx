@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Friend, FriendItem } from './FriendItem';
+import { Friend, FriendItem } from './friend-item';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -14,7 +14,7 @@ export function FriendList({ friends, onPressFriend }: FriendListProps): React.R
     const colors = Colors[theme];
 
     const handlePress = useCallback(
-        (friendId: string) => {
+        (friendId: string): void => {
             onPressFriend?.(friendId);
         },
         [onPressFriend],

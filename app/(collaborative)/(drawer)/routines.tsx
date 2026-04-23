@@ -110,34 +110,34 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   }));
 
   // 3. Callbacks (Memoized)
-  const showToast = useCallback((message: string) => {
+  const showToast = useCallback((message: string): void => {
     setToastMessage(message);
     setToastVisible(true);
   }, []);
 
   const loadLists = useCallback(
-    async (refresh = false) => {
+    async (refresh: boolean = false): Promise<void> => {
       if (refresh || routines.length === 0) setLoading(true);
       setIsRefreshing(refresh);
       try {
         const list = await routineService.getCollaborativeRoutines();
         
         // --- Batch Lazy Elimination Cleanup ---
-        const currentUserId = user?.id ? String(user.id).trim() : '';
+        const currentUserId: string = user?.id ? String(user.id).trim() : '';
         const eliminatedNames: string[] = [];
-        const healthyRoutines = list.filter(r => {
-          const health = (r.lives ?? 0) - (r.missedCount ?? 0);
+        const healthyRoutines = list.filter((r: Routine) => {
+          const health: number = (r.lives ?? 0) - (r.missedCount ?? 0);
           if (health <= 0) {
             eliminatedNames.push(r.routineName || 'Unnamed Routine');
             // Silent cleanup in background
-            const isCreator = !!currentUserId && !!r.creatorId && currentUserId === String(r.creatorId).trim();
+            const isCreator: boolean = !!currentUserId && !!r.creatorId && currentUserId === String(r.creatorId).trim();
             if (isCreator) {
               // Creator cannot leave; use the dedicated defeat endpoint instead
-              routineService.handleCreatorDefeat(r.id).catch(err =>
+              routineService.handleCreatorDefeat(r.id).catch((err: unknown) =>
                 console.error(`[Cleanup] Failed to handle creator defeat for routine ${r.id}:`, err)
               );
             } else {
-              routineService.leaveRoutine(r.id).catch(err =>
+              routineService.leaveRoutine(r.id).catch((err: unknown) =>
                 console.error(`[Cleanup] Failed to leave routine ${r.id}:`, err)
               );
             }
@@ -162,7 +162,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         setIsRefreshing(false);
       }
     },
-    [routines.length, showToast],
+    [routines.length, showToast, user?.id],
   );
 
   useFocusEffect(
@@ -179,7 +179,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     }, [loadLists]),
   );
 
-  const fetchPublicRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string) => {
+  const fetchPublicRoutines = useCallback(async (q?: string, catId?: number | '', freq?: string): Promise<void> => {
     setLoadingPublic(true);
     try {
       const data = await routineService.browsePublicRoutines(q || undefined, catId || undefined, freq || undefined);
@@ -192,13 +192,13 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   }, []);
 
   const handleJoin = useCallback(
-    async (id: string) => {
+    async (id: string): Promise<void> => {
       try {
         const res = await routineService.joinPublicRoutine(id);
         showToast(res.message);
         loadLists(false);
-        setPublicRoutines((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, isAlreadyMember: true, memberCount: r.memberCount + 1 } : r)),
+        setPublicRoutines((prev: PublicRoutine[]) =>
+          prev.map((r: PublicRoutine) => (r.id === id ? { ...r, isAlreadyMember: true, memberCount: r.memberCount + 1 } : r)),
         );
         DeviceEventEmitter.emit('SHOW_TOAST', 'Successfully joined the routine!');
       } catch (err: unknown) {
@@ -208,7 +208,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     [loadLists, showToast],
   );
 
-  const handleTabSwitch = (tab: string) => {
+  const handleTabSwitch = useCallback((tab: string): void => {
     if (tab !== 'Personal' || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
@@ -219,10 +219,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         isSwitchingRef.current = false;
       }, 90);
     });
-  };
+  }, [router]);
 
   const handleOpenRoutineView = useCallback(
-    (routine: Routine) => {
+    (routine: Routine): void => {
       if (!routine?.id) return;
       router.push({
         pathname: '/(collaborative)/routine/[id]/chat',
@@ -248,7 +248,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   );
 
   const handleLeaveRoutine = useCallback(
-    (routine: Routine) => {
+    (routine: Routine): void => {
       if (!routine?.id) return;
       setLeavingRoutine(routine);
       setIsLeaveModalVisible(true);
@@ -256,15 +256,15 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     [],
   );
 
-  const confirmDeleteRoutine = useCallback(async (routine: Routine) => {
+  const confirmDeleteRoutine = useCallback(async (routine: Routine): Promise<void> => {
     if (!routine.id || !token) return;
     setDeletingRoutineId(routine.id);
     try {
       await routineService.deleteRoutine(routine.id, token);
       showToast('Routine has been deleted.');
-      setRoutines((prev) => prev.filter((r) => r.id !== routine.id));
+      setRoutines((prev: Routine[]) => prev.filter((r: Routine) => r.id !== routine.id));
     } catch (err: unknown) {
-      const message =
+      const message: string =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: unknown }).message)
           : 'Could not delete the routine. Please try again.';
@@ -275,25 +275,25 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   }, [showToast, token]);
 
   const handleDeleteRoutine = useCallback(
-    (routine: Routine) => {
+    (routine: Routine): void => {
       if (!routine?.id) return;
       confirmDeleteRoutine(routine);
     },
     [confirmDeleteRoutine],
   );
 
-  const confirmLeaveRoutine = useCallback(async () => {
+  const confirmLeaveRoutine = useCallback(async (): Promise<void> => {
     if (!leavingRoutine?.id) return;
     setLeavingRoutineId(leavingRoutine.id);
     try {
       await routineService.leaveRoutine(leavingRoutine.id);
       showToast('You have left the routine.');
-      setRoutines((prev) => prev.filter((r) => r.id !== leavingRoutine.id));
-      setPublicRoutines((prev) =>
-        prev.map(r => r.id === leavingRoutine.id ? { ...r, isAlreadyMember: false, memberCount: Math.max(0, r.memberCount - 1) } : r)
+      setRoutines((prev: Routine[]) => prev.filter((r: Routine) => r.id !== leavingRoutine.id));
+      setPublicRoutines((prev: PublicRoutine[]) =>
+        prev.map((r: PublicRoutine) => r.id === leavingRoutine.id ? { ...r, isAlreadyMember: false, memberCount: Math.max(0, r.memberCount - 1) } : r)
       );
     } catch (err: unknown) {
-      const message =
+      const message: string =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: unknown }).message)
           : 'Could not leave the routine. Please try again.';
@@ -323,8 +323,38 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   // Debounced search logic for global results is removed as per user request to only filter joined routines.
 
 
+  const handleClearCategoryId = useCallback((): void => {
+    setCategoryId('');
+  }, []);
+
+  const handleCategorySelect = useCallback((id: number): void => {
+    setCategoryId(id);
+  }, []);
+
+  const handleFrequencyToggle = useCallback((freq: string): void => {
+    setFrequencyType((prev: string) => prev === freq ? '' : freq);
+  }, []);
+
+  const handleSearchChange = useCallback((text: string): void => {
+    setSearch(text);
+  }, []);
+
+  const handleClearSearch = useCallback((): void => {
+    setSearch('');
+  }, []);
+
+  const handleCreateRoutinePress = useCallback((): void => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    router.push('/(collaborative)/create-routine');
+  }, [router]);
+
+  const handleBrowsePress = useCallback((): void => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(collaborative)/(drawer)/browse');
+  }, [router]);
+
   useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener('SHOW_TOAST', (message: string) => {
+    const subscription: { remove: () => void } = DeviceEventEmitter.addListener('SHOW_TOAST', (message: string) => {
       setTimeout(() => {
         showToast(message);
       }, 500);
@@ -395,10 +425,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           {/* Discovery Entry Point */}
           <TouchableOpacity 
             style={styles.discoveryCard}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/(collaborative)/(drawer)/browse');
-            }}
+            onPress={handleBrowsePress}
             activeOpacity={0.8}
           >
             <LinearGradient
@@ -423,7 +450,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           <View style={{ marginBottom: 12 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
               <TouchableOpacity
-                onPress={() => setCategoryId('')}
+                onPress={handleClearCategoryId}
                 style={[
                   styles.chip,
                   { backgroundColor: colors.card, borderColor: colors.border },
@@ -432,10 +459,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               >
                 <Text style={[styles.chipText, { color: colors.textSecondary }, categoryId === '' && { color: '#fff' }]}>All</Text>
               </TouchableOpacity>
-              {categories.map(c => (
+              {categories.map((c: Category) => (
                 <TouchableOpacity
                   key={c.categoryId}
-                  onPress={() => setCategoryId(c.categoryId)}
+                  onPress={() => handleCategorySelect(c.categoryId)}
                   style={[
                     styles.chip,
                     { backgroundColor: colors.card, borderColor: colors.border },
@@ -454,10 +481,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                <View style={styles.filterGroup}>
                 <Text style={[styles.miniLabel, { color: colors.textTertiary }]}>FREQ</Text>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
-                  {['Daily', 'Weekly'].map(f => (
+                  {['Daily', 'Weekly'].map((f: string) => (
                     <TouchableOpacity
                       key={f}
-                      onPress={() => setFrequencyType(frequencyType === f ? '' : f)}
+                      onPress={() => handleFrequencyToggle(f)}
                       style={[
                         styles.miniChip, 
                         { backgroundColor: colors.card, borderColor: colors.border },
@@ -479,13 +506,13 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               placeholder="Search your routines…"
               placeholderTextColor={colors.icon}
               value={search}
-              onChangeText={setSearch}
+              onChangeText={handleSearchChange}
               autoCorrect={false}
               autoCapitalize="none"
               returnKeyType="search"
             />
             {!!search && (
-              <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <TouchableOpacity onPress={handleClearSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="close-circle" size={18} color={colors.icon} />
               </TouchableOpacity>
             )}
@@ -616,10 +643,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                 shadowColor: collaborativePrimary 
               }
             ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-              router.push('/(collaborative)/create-routine');
-            }}
+            onPress={handleCreateRoutinePress}
             activeOpacity={0.8}
           >
              <Ionicons name="add-circle" size={22} color={colors.white} style={{ marginRight: 8 }} />

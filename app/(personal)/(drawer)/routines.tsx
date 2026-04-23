@@ -91,20 +91,19 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const [hasPendingCelebration, setHasPendingCelebration] = useState(false);
   const isFocused = useIsFocused();
 
-  const loadLists = useCallback(async () => {
+  const loadLists = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       // Use token from context first, fall back to SecureStore only if needed
-      const t = authContextToken || await getToken();
-      
+      const t: string | null = authContextToken || await getToken();
 
       if (t) {
-        const lists = await routineService.getGroupedRoutines(t);
+        const lists: RoutineList[] = await routineService.getGroupedRoutines(t);
         setRoutineLists(lists);
       }
     } catch (e: unknown) {
       console.error('Error loading personal routine lists:', e);
-      const msg = e instanceof Error ? e.message : 'Failed to load routines.';
+      const msg: string = e instanceof Error ? e.message : 'Failed to load routines.';
       Alert.alert('Error', msg);
     } finally {
       setLoading(false);
@@ -154,7 +153,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
   // Focus re-trigger is handled by useFocusEffect above
 
-  const handleTabSwitch = (tab: string) => {
+  const handleTabSwitch = useCallback((tab: string): void => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
 
     isSwitchingRef.current = true;
@@ -164,27 +163,25 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
         isSwitchingRef.current = false;
       }, 90);
     });
-  };
+  }, [router]);
 
-  const handleAddRoutine = (listId: string | number, categoryId?: number | null) => {
-
+  const handleAddRoutine = useCallback((listId: string | number, categoryId?: number | null): void => {
     if (!listId) {
       Alert.alert('Error', 'Routine List ID is missing or null.');
       return;
     }
     setSelectedListForNewRoutine({ listId: Number(listId), categoryId });
-  };
+  }, []);
 
-  const handleEditList = (list: RoutineList) => {
-
-    const listId = list.id ?? (list as RoutineList & { routineListId?: number }).routineListId;
+  const handleEditList = useCallback((list: RoutineList): void => {
+    const listId: number | undefined = list.id ?? (list as RoutineList & { routineListId?: number }).routineListId;
     if (!listId) return;
     setEditListParams({
       listId: Number(listId),
       title: list.routineListTitle || list.categoryName || '',
       categoryId: list.categoryId || undefined,
     });
-  };
+  }, []);
 
   const handleDeleteList = (list: RoutineList) => {
     const listId = list.id ?? (list as RoutineList & { routineListId?: number }).routineListId;

@@ -1,4 +1,4 @@
-import { uploadAsync, FileSystemUploadType } from 'expo-file-system/legacy';
+import { FileSystemUploadType, uploadAsync } from 'expo-file-system/legacy';
 import { api } from './api';
 
 export interface VerificationResponse {
@@ -10,17 +10,14 @@ export interface VerificationResponse {
 }
 
 export const verificationService = {
-  /**
-   * 1. Get Signed URL for upload
-   */
+  // 1. Get Signed URL for upload
+
   async getSignedUrl(ext: string, mimeType: string): Promise<{ signedUrl: string; objectPath: string }> {
     const res = await api.post('/uploads/signed-url', { ext, mimeType });
     return res.data;
   },
 
-  /**
-   * 2. Upload photo to GCS
-   */
+  // 2. Upload photo to GCS
   async uploadToGcs(signedUrl: string, fileUri: string, mimeType: string = 'image/jpeg'): Promise<void> {
     console.log('[VerificationService] Starting GCS upload via FileSystem...', {
       fileUri,
@@ -55,9 +52,7 @@ export const verificationService = {
     }
   },
 
-  /**
-   * 3. Submit verification to backend queue (Unified endpoint)
-   */
+  // 3. Submit verification to backend queue (Unified endpoint)
   async submitVerification(routineId: string, objectPath: string): Promise<VerificationResponse & { id?: string }> {
     const res = await api.post('/routines/verify', {
       routineId,
@@ -88,9 +83,7 @@ export const verificationService = {
     };
   },
 
-  /**
-   * 4. Poll for verification status
-   */
+  // 4. Poll for verification status
   async getVerificationStatus(verificationId: string): Promise<VerificationResponse> {
     const res = await api.get(`/verify/${verificationId}`);
     // Extract data from response if it's wrapped

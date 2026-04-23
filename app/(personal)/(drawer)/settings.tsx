@@ -32,23 +32,23 @@ export default function SettingsScreen(): React.ReactElement {
   const [notifications, setNotifications] = useState(true);
 
   // Quiet Mode Helpers
-  const calculateQuietDuration = useCallback((start: string, end: string) => {
-    const [sH, sM] = start.split(':').map(Number);
-    const [eH, eM] = end.split(':').map(Number);
-    let diff = (eH * 60 + eM) - (sH * 60 + sM);
+  const calculateQuietDuration = useCallback((start: string, end: string): string => {
+    const [sH, sM]: number[] = start.split(':').map(Number);
+    const [eH, eM]: number[] = end.split(':').map(Number);
+    let diff: number = (eH * 60 + eM) - (sH * 60 + sM);
     if (diff <= 0) diff += 24 * 60;
-    const h = Math.floor(diff / 60);
-    const m = diff % 60;
+    const h: number = Math.floor(diff / 60);
+    const m: number = diff % 60;
     return `${h}h ${m}m duration`;
   }, []);
 
-  const isCurrentlyQuiet = useCallback((start: string, end: string) => {
-    const now = new Date();
-    const cur = now.getHours() * 60 + now.getMinutes();
-    const [sH, sM] = start.split(':').map(Number);
-    const s = sH * 60 + sM;
-    const [eH, eM] = end.split(':').map(Number);
-    const e = eH * 60 + eM;
+  const isCurrentlyQuiet = useCallback((start: string, end: string): boolean => {
+    const now: Date = new Date();
+    const cur: number = now.getHours() * 60 + now.getMinutes();
+    const [sH, sM]: number[] = start.split(':').map(Number);
+    const s: number = sH * 60 + sM;
+    const [eH, eM]: number[] = end.split(':').map(Number);
+    const e: number = eH * 60 + eM;
     return s < e ? (cur >= s && cur < e) : (cur >= s || cur < e);
   }, []);
 
@@ -56,7 +56,7 @@ export default function SettingsScreen(): React.ReactElement {
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
-  const handleToggleQuietMode = useCallback(async (enabled: boolean) => {
+  const handleToggleQuietMode = useCallback(async (enabled: boolean): Promise<void> => {
     try {
       await updateUser({ 
         quietModeEnabled: enabled,
@@ -144,11 +144,11 @@ export default function SettingsScreen(): React.ReactElement {
     );
   }, [logout, router]);
 
-  const handleSaveProfile = useCallback(async (data: UserUpdateDto) => {
+  const handleSaveProfile = useCallback(async (data: UserUpdateDto): Promise<void> => {
     try {
-      const updatedUser = await userService.updateUser(data);
+      const updatedUser: User = await userService.updateUser(data);
       await updateUser(updatedUser);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to update profile:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
       throw error;

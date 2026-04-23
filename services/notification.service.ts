@@ -10,7 +10,7 @@ const lastShownAt: Record<NotificationKind, number> = {
   rewards: 0,
 };
 
-let lastCollaborativeCount = 0;
+let lastCollaborativeCount: number = 0;
 
 export type NotificationCategory =
   | 'friend_requests'
@@ -58,7 +58,7 @@ function addNotification(category: NotificationCategory, message: string): void 
 }
 
 function shouldShow(kind: NotificationKind): boolean {
-  const now = Date.now();
+  const now: number = Date.now();
   if (now - lastShownAt[kind] < COOLDOWN_MS) return false;
   lastShownAt[kind] = now;
   return true;
@@ -125,10 +125,10 @@ export const notificationService = {
   // ── Backend API methods ──
 
   async fetchNotifications(
-    limit = 50,
-    offset = 0,
+    limit: number = 50,
+    offset: number = 0,
   ): Promise<{ data: BackendNotification[]; total: number }> {
-    const res = await api.get('/notifications', { params: { limit, offset } });
+    const res: { data: { data: BackendNotification[]; total: number } } = await api.get('/notifications', { params: { limit, offset } });
     return res.data;
   },
 
