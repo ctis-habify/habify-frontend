@@ -260,13 +260,22 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
         >
           {/* Today's Routines' Header */}
           <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
-          <TouchableOpacity
-            style={[styles.sectionHeader, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            activeOpacity={0.85}
-            onPress={() => router.push('/(personal)/(drawer)/today-routines')}
-          >
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Routines</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sectionHeader, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              activeOpacity={0.85}
+              onPress={() => router.push('/(personal)/(drawer)/today-routines')}
+            >
+              <View style={styles.sectionHeaderContent}>
+                <View style={[styles.iconBox, { backgroundColor: colors.primary + '15' }]}>
+                  <Ionicons name="today" size={20} color={colors.primary} />
+                </View>
+                <View style={styles.sectionTextContainer}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Routines</Text>
+                  <Text style={[styles.sectionSubTitle, { color: colors.textSecondary }]}>View your schedule and progress</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} style={{ opacity: 0.6 }} />
+              </View>
+            </TouchableOpacity>
           </Animated.View>
 
           {loading && <ActivityIndicator size="large" color={colors.textSecondary} style={{ marginTop: 40 }} />}
@@ -425,15 +434,43 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   sectionHeader: {
-    borderRadius: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     marginBottom: 24,
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  sectionHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  sectionTextContainer: {
+    flex: 1,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  sectionSubTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
+    opacity: 0.7,
   },
   emptyOuter: {
     alignItems: 'center',

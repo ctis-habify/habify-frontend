@@ -89,17 +89,8 @@ export default function CameraModal(): React.ReactElement {
 
 
 
-      // 2. Prepare file blob
-
-      let blob;
-      const photoResponse = await fetch(photoUri);
-      blob = await photoResponse.blob();
-
-
-
-      // 3. Upload to GCS via PUT
-
-      await verificationService.uploadToGcs(signedUrl, blob);
+      // 2. Upload to GCS via PUT
+      await verificationService.uploadToGcs(signedUrl, photoUri);
 
 
       // 4. Submit verification to Backend
@@ -134,8 +125,9 @@ export default function CameraModal(): React.ReactElement {
       }
     } catch (err: unknown) {
       console.error('Full Verification error object:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setIsUploading(false);
-      Alert.alert('Verification Failed', 'An unexpected error occurred');
+      Alert.alert('Verification Failed', errorMessage);
     }
   };
 

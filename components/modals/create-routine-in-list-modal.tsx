@@ -14,7 +14,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, { FadeInUp, FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { Colors, getBackgroundGradient } from '@/constants/theme';
@@ -36,18 +35,6 @@ type FormErrors = {
   timeRange?: string;
 };
 
-const FREQUENCY_ITEMS = [
-  {
-    label: 'Daily',
-    value: 'DAILY' as FrequencyType,
-    icon: () => <Ionicons name="sunny" size={20} color="#F59E0B" />
-  },
-  {
-    label: 'Weekly',
-    value: 'WEEKLY' as FrequencyType,
-    icon: () => <Ionicons name="calendar-outline" size={20} color="#3B82F6" />
-  },
-];
 
 export function CreateRoutineInListModal({
   visible,
@@ -81,24 +68,12 @@ export function CreateRoutineInListModal({
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
-  const [freqOpen, setFreqOpen] = useState(false);
-
-  const onFreqOpen = useCallback(() => {}, []);
 
   const formatTime = (d: Date) =>
     `${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}`;
   const formatTimeForAPI = (d: Date) => `${formatTime(d)}:00`;
   const formatDateForAPI = (d: Date) => d.toISOString().split('T')[0];
 
-  const dropDownStyle = useMemo(
-    () => ({
-      backgroundColor: colors.card,
-      borderColor: freqOpen ? colors.primary : colors.border,
-      borderRadius: 12,
-      minHeight: 50,
-    }),
-    [colors, freqOpen],
-  );
 
   const validate = () => {
     if (!routineListId) {
@@ -172,7 +147,6 @@ export function CreateRoutineInListModal({
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
               nestedScrollEnabled
-              scrollEnabled={!freqOpen}
             >
               <View style={styles.headerRow}>
                 <Text style={styles.title}>Create Routine</Text>

@@ -24,57 +24,52 @@ export function FriendItem({ friend, onPress }: FriendItemProps): React.ReactEle
 
     return (
         <TouchableOpacity 
-            style={[styles.container, { borderBottomColor: colors.border }]} 
+            style={styles.container} 
             onPress={onPress} 
             activeOpacity={0.7}
         >
-            <View style={styles.avatarContainer}>
+            <View style={styles.avatarWrapper}>
                 <UserAvatar 
                   url={friend.avatar} 
                   name={friend.name} 
-                  size={48} 
+                  size={46} 
                 />
+                {friend.status === 'online' && (
+                    <View style={[styles.statusDot, { backgroundColor: colors.success, borderColor: colors.card }]} />
+                )}
             </View>
             <View style={styles.info}>
                 <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{friend.name}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={isDark ? colors.icon : '#CBD5E1'} />
+            <Ionicons name="chevron-forward" size={16} color={isDark ? colors.icon : '#CBD5E1'} />
         </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-    },
-    avatarContainer: {
-        marginRight: 12,
-    },
-    avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-    },
-    placeholderAvatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        borderWidth: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    initials: {
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    info: {
-        flex: 1,
-    },
-    name: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginRight: 14,
+  },
+  statusDot: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+  },
+  info: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });

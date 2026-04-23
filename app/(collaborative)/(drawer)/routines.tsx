@@ -11,13 +11,13 @@ import {
   DeviceEventEmitter,
   Platform,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, {
   Easing,
   FadeInDown,
@@ -85,14 +85,13 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [frequencyType, setFrequencyType] = useState<string>('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [frequencyOpen, setFrequencyOpen] = useState(false);
   const [eliminationModalVisible, setEliminationModalVisible] = useState(false);
   const [eliminatedRoutineNames, setEliminatedRoutineNames] = useState<string[]>([]);
 
   const activeTab = 'Collaborative';
   const isSwitchingRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasShownEliminationRef = useRef(false);
 
   // ── Animation Setup ──────────────
   const opacity = useSharedValue(0);
@@ -138,9 +137,10 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           return true;
         });
 
-        if (eliminatedNames.length > 0) {
+        if (eliminatedNames.length > 0 && !hasShownEliminationRef.current) {
           setEliminatedRoutineNames(eliminatedNames);
           setEliminationModalVisible(true);
+          hasShownEliminationRef.current = true;
         }
 
         setRoutines([...healthyRoutines].reverse());
@@ -410,52 +410,57 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Filters & Search Integrated */}
-          <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
-            <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
-              <DropDownPicker
-                open={categoryOpen}
-                value={categoryId}
-                items={[{ label: 'All Categories', value: '' }, ...categories.map(c => ({ label: c.name, value: c.categoryId }))] as { label: string; value: string | number }[]}
-                setOpen={setCategoryOpen}
-                setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
-                theme={isDark ? "DARK" : "LIGHT"}
-                style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)' }]}
-                placeholder={loadingCategories ? "Loading..." : "Category"}
-                placeholderStyle={{ color: colors.icon, fontSize: 12, opacity: 0.6 }}
-                textStyle={{ color: colors.text, fontSize: 12 }}
-                labelStyle={{ fontWeight: '600' }}
-                listMode="SCROLLVIEW"
-                zIndex={3000}
-                zIndexInverse={1000}
-                onOpen={() => setFrequencyOpen(false)}
-              />
-            </View>
-            <View style={{ flex: 1, ...(Platform.OS === 'ios' && { zIndex: 2000 }) }}>
-              <DropDownPicker
-                open={frequencyOpen}
-                value={frequencyType}
-                items={[
-                  { label: 'Any Frequency', value: '' },
-                  { label: 'Daily', value: 'Daily' },
-                  { label: 'Weekly', value: 'Weekly' }
-                ] as { label: string; value: string }[]}
-                setOpen={setFrequencyOpen}
-                setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string | null>>}
-                theme={isDark ? "DARK" : "LIGHT"}
-                style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)' }]}
-                placeholder="Frequency"
-                placeholderStyle={{ color: colors.icon, fontSize: 12, opacity: 0.6 }}
-                textStyle={{ color: colors.text, fontSize: 12 }}
-                labelStyle={{ fontWeight: '600' }}
-                listMode="SCROLLVIEW"
-                zIndex={2000}
-                zIndexInverse={2000}
-                onOpen={() => setCategoryOpen(false)}
-              />
-            </View>
+          {/* Category Chips */}
+          <View style={{ marginBottom: 12 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+              <TouchableOpacity
+                onPress={() => setCategoryId('')}
+                style={[
+                  styles.chip,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  categoryId === '' && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
+                ]}
+              >
+                <Text style={[styles.chipText, { color: colors.textSecondary }, categoryId === '' && { color: '#fff' }]}>All</Text>
+              </TouchableOpacity>
+              {categories.map(c => (
+                <TouchableOpacity
+                  key={c.categoryId}
+                  onPress={() => setCategoryId(c.categoryId)}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    categoryId === c.categoryId && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
+                  ]}
+                >
+                  <Text style={[styles.chipText, { color: colors.textSecondary }, categoryId === c.categoryId && { color: '#fff' }]}>{c.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Quick Frequency Filter */}
+          <View style={{ marginBottom: 16 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+               <View style={styles.filterGroup}>
+                <Text style={[styles.miniLabel, { color: colors.textTertiary }]}>FREQ</Text>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {['Daily', 'Weekly'].map(f => (
+                    <TouchableOpacity
+                      key={f}
+                      onPress={() => setFrequencyType(frequencyType === f ? '' : f)}
+                      style={[
+                        styles.miniChip, 
+                        { backgroundColor: colors.card, borderColor: colors.border },
+                        frequencyType === f && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
+                      ]}
+                    >
+                      <Text style={[styles.miniChipText, { color: colors.textSecondary }, frequencyType === f && { color: '#fff' }]}>{f}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
           </View>
 
           <View style={[styles.searchWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -464,7 +469,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               style={[styles.searchInput, { color: colors.text }]}
               placeholder="Search your routines…"
               placeholderTextColor={colors.icon}
-
               value={search}
               onChangeText={setSearch}
               autoCorrect={false}
@@ -745,27 +749,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 4,
   },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '800',
+  miniLabel: {
+    fontSize: 10,
+    fontWeight: '900',
+    marginBottom: 6,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  emptyResultsText: {
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: 4,
-    fontStyle: 'italic',
+  miniChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  badge: {
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginLeft: 10,
-  },
-  badgeText: {
+  miniChipText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   discoveryCard: {
     marginTop: 4,
@@ -806,5 +807,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  filterGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  badge: {
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 10,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

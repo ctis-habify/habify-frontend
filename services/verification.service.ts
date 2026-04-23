@@ -1,3 +1,4 @@
+import { uploadAsync, FileSystemUploadType } from 'expo-file-system/legacy';
 import { api } from './api';
 
 export interface VerificationResponse {
@@ -20,18 +21,37 @@ export const verificationService = {
   /**
    * 2. Upload photo to GCS
    */
-  async uploadToGcs(signedUrl: string, fileBlob: Blob | any): Promise<void> {
-    const response = await fetch(signedUrl, {
-      method: 'PUT',
-      body: fileBlob,
-      headers: {
-        'Content-Type': 'image/jpeg',
-      },
+  async uploadToGcs(signedUrl: string, fileUri: string, mimeType: string = 'image/jpeg'): Promise<void> {
+    console.log('[VerificationService] Starting GCS upload via FileSystem...', {
+      fileUri,
+      mimeType,
+      urlLength: signedUrl?.length
     });
 
-    if (!response.ok) {
-      console.error('[VerificationService] GCS upload failed:', response.status);
-      throw new Error(`Failed to upload to GCS: ${response.statusText}`);
+    try {
+      // Defensive: FileSystemUploadType can be undefined in some environments
+      const BINARY_CONTENT = (FileSystemUploadType as any)?.BINARY_CONTENT ?? 0;
+
+      const response = await uploadAsync(signedUrl, fileUri, {
+        httpMethod: 'PUT',
+        uploadType: BINARY_CONTENT,
+        headers: {
+          'Content-Type': mimeType,
+        },
+      });
+
+      if (response.status < 200 || response.status >= 300) {
+        console.error('[VerificationService] GCS upload failed:', {
+          status: response.status,
+          body: response.body
+        });
+        throw new Error(`Failed to upload to GCS: ${response.status}. ${response.body?.substring(0, 100)}`);
+      }
+      
+      console.log('[VerificationService] GCS upload succeeded');
+    } catch (error) {
+      console.error('[VerificationService] GCS upload error:', error);
+      throw error;
     }
   },
 

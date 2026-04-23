@@ -121,7 +121,7 @@ export function StepGamification({ formState, updateForm }: Props) {
                 return (
                   <TouchableOpacity
                     key={option.value}
-                    onPress={() => updateForm({ genderRequirement: option.value })}
+                    onPress={() => updateForm({ genderRequirement: option.value as any })}
                     style={[
                       styles.segmentedButton,
                       {
