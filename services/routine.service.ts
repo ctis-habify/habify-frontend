@@ -1,4 +1,4 @@
-import { PublicRoutine, Routine, RoutineList, RoutineLog } from '../types/routine';
+import { PublicRoutine, Routine, RoutineList, RoutineLog, TodayScreenResponse } from '../types/routine';
 import { UserCupAward, createCupAwardFromFirstPlaceCount, normalizeCupTier, normalizeLeaderboardMedal } from '../types/collaborative-score';
 import { api } from './api';
 
@@ -24,20 +24,20 @@ export type UpdateRoutinePayload = Partial<{
   lives: number;
 }>;
 
-const getArrayFromResponse = (data: unknown): any[] => {
+const getArrayFromResponse = (data: unknown): unknown[] => {
   const queue: unknown[] = [data];
-  const visited = new Set<unknown>();
-  const priorityKeys = ['data', 'messages', 'predefinedMessages', 'items', 'results'];
+  const visited: Set<unknown> = new Set<unknown>();
+  const priorityKeys: string[] = ['data', 'messages', 'predefinedMessages', 'items', 'results'];
 
   while (queue.length > 0) {
-    const current = queue.shift();
+    const current: unknown = queue.shift();
     if (!current || visited.has(current)) continue;
     visited.add(current);
 
-    if (Array.isArray(current)) return current;
+    if (Array.isArray(current)) return current as unknown[];
     if (typeof current !== 'object') continue;
 
-    const objectValue = current as Record<string, unknown>;
+    const objectValue: Record<string, unknown> = current as Record<string, unknown>;
 
     for (const key of priorityKeys) {
       if (Array.isArray(objectValue[key])) {
@@ -78,10 +78,10 @@ const getCollaborativeRoutinesFromResponse = (data: unknown): Routine[] => {
   return [];
 };
 
-const toNumberOrDefault = (value: unknown, defaultValue = 0): number => {
+const toNumberOrDefault = (value: unknown, defaultValue: number = 0): number => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
-    const parsed = Number(value);
+    const parsed: number = Number(value);
     if (Number.isFinite(parsed)) return parsed;
   }
   return defaultValue;
@@ -183,13 +183,13 @@ const getCupAward = (value: unknown): UserCupAward | null => {
 const enrichParticipantWithCup = (participant: unknown): unknown => {
   if (!participant || typeof participant !== 'object') return participant;
 
-  const source = participant as Record<string, unknown>;
-  const existingUser =
+  const source: Record<string, unknown> = participant as Record<string, unknown>;
+  const existingUser: Record<string, unknown> | null =
     source.user && typeof source.user === 'object'
       ? (source.user as Record<string, unknown>)
       : null;
 
-  const cup =
+  const cup: UserCupAward | null =
     getCupAward(source) ||
     getCupAward(source.cup) ||
     getCupAward(source.userCup) ||
@@ -240,16 +240,11 @@ const normalizeRoutineLeaderboardEntry = (item: unknown): Record<string, unknown
 
 
 
-const normalizeCollaborativeRoutine = (item: unknown): Routine => {
-  const rawSource = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
-  const nestedRoutine = (rawSource.routine && typeof rawSource.routine === 'object' ? rawSource.routine : {}) as Record<string, unknown>;
-  const rules = (rawSource.rules && typeof rawSource.rules === 'object' ? rawSource.rules : {}) as Record<string, unknown>;
+const normalizeRoutine = (item: unknown): Routine => {
+  const source: Record<string, unknown> = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
   
-  // Flatten so we don't need deep paths
-  const source = { ...rules, ...nestedRoutine, ...rawSource } as Record<string, unknown>;
-
-  const categoryValue = source.category;
-  const categoryName =
+  const categoryValue: unknown = source.category;
+  const categoryName: string =
     toStringOrUndefined(source.categoryName || source.category_name) ||
     (categoryValue && typeof categoryValue === 'object'
       ? toStringOrUndefined((categoryValue as Record<string, unknown>).name)
@@ -257,16 +252,52 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
     (typeof categoryValue === 'string' ? categoryValue : undefined) ||
     '';
 
-  const routineName = toStringOrUndefined(source.routineName || source.routine_name || source.title || source.name) || '';
+  const routineName: string = toStringOrUndefined(source.routineName || source.routine_name || source.title || source.name) || '';
 
-  let startTime = toStringOrUndefined(source.startTime || source.start_time || source.startAt || source.time) || '';
-  let endTime = toStringOrUndefined(source.endTime || source.end_time || source.endAt || source.time) || '';
+  let startTime: string = toStringOrUndefined(source.startTime || source.start_time || source.startAt || source.time) || '';
+  let endTime: string = toStringOrUndefined(source.endTime || source.end_time || source.endAt || source.time) || '';
 
   if (startTime && startTime.includes(' - ')) {
-    const parts = startTime.split(' - ');
+    const parts: string[] = startTime.split(' - ');
     startTime = parts[0] || '';
     if (endTime === parts[0] || endTime === startTime || endTime.includes(' - ')) {
       endTime = parts[1] || '';
+    }
+  }
+
+  const rawIsDone = source.isDone === true || source.is_done === true || source.is_completed === true || source.completed === true;
+  
+  // Strict Today Check: We look for ANY field that indicates when this was last touched.
+  let isDone = rawIsDone;
+  const lastTouch = toStringOrUndefined(
+    source.updatedAt || 
+    source.updated_at || 
+    source.lastCompletedAt || 
+    source.last_done || 
+    source.logDate || 
+    source.log_date ||
+    source.completionDate
+  );
+
+  if (isDone) {
+    if (!lastTouch) {
+      // If we have no timestamp at all, we cannot prove it was done TODAY.
+      // Given the legacy 'stuck' issues, we assume it's stale and reset it.
+      isDone = false; 
+    } else {
+      try {
+        const d = new Date(lastTouch);
+        const updateDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        
+        if (updateDateStr !== todayStr) {
+          isDone = false; // Stale completion from a previous day
+        }
+      } catch (e) {
+        isDone = false;
+      }
     }
   }
 
@@ -277,21 +308,37 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
     title: routineName,
     description: toStringOrUndefined(source.description || source.desc) || '',
     lives: toNumberOrDefault(source.lives || source.life || source.remainingLives, 0),
-    maxLives: toNumberOrDefault(source.maxLives || rules.lives || source.lives || 0, 0),
+    maxLives: toNumberOrDefault(source.maxLives || source.lives || 0, 0),
     streak: toNumberOrDefault(source.streak || source.currentStreak || source.current_streak, 0),
     startTime,
     endTime,
-    creatorId: toStringOrUndefined(source.creatorId || source.creator_id || source.userId || source.user_id || source.ownerId || (source.creator as any)?.id || (source.user as any)?.id),
+    isDone, // Use our strictly checked isDone
+    creatorId: toStringOrUndefined(source.creatorId || source.creator_id || source.userId || source.user_id || source.ownerId || (source.creator as Record<string, unknown>)?.id || (source.user as Record<string, unknown>)?.id),
     isPublic: source.isPublic === true || source.is_public === true || String(source.visibility || source.privacy || '').toLowerCase() === 'public',
     categoryName,
     rewardCondition: toStringOrUndefined(source.rewardCondition || source.reward_condition || source.reward) || '',
     frequencyType: toStringOrUndefined(source.frequencyType || source.frequency_type || source.frequency || source.repetition || source.repeat_type || source.repeat) || '',
-    routineType: 'collaborative',
+    createdAt: toStringOrUndefined(source.createdAt || source.created_at || source.startDate || source.start_date),
   } as Routine;
 };
 
+const normalizeCollaborativeRoutine = (item: unknown): Routine => {
+  const rawSource: Record<string, unknown> = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
+  const nestedRoutine: Record<string, unknown> = (rawSource.routine && typeof rawSource.routine === 'object' ? rawSource.routine : {}) as Record<string, unknown>;
+  const rules: Record<string, unknown> = (rawSource.rules && typeof rawSource.rules === 'object' ? rawSource.rules : {}) as Record<string, unknown>;
+  
+  const source: Record<string, unknown> = { ...rules, ...nestedRoutine, ...rawSource } as Record<string, unknown>;
+  const normalized = normalizeRoutine(source);
+  
+  return {
+    ...normalized,
+    maxLives: toNumberOrDefault(rules.lives || source.maxLives || source.lives || 0, 0),
+    routineType: 'collaborative',
+  };
+};
+
 const normalizeRoutineLog = (item: unknown): RoutineLog => {
-  const source = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
+  const source: Record<string, unknown> = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
   
   return {
     ...(source as Partial<RoutineLog>),
@@ -303,11 +350,11 @@ const normalizeRoutineLog = (item: unknown): RoutineLog => {
     isAiVerified: source.isAiVerified === true || source.is_ai_verified === true,
     isVerified: source.isVerified === true || source.is_verified === true || source.isVerifiedAI === true,
     verificationImageUrl: toStringOrUndefined(source.verificationImageUrl || source.verification_image_url || source.imageUrl),
-    status: (toStringOrUndefined(source.status || source.STATUS) || 'pending').toLowerCase() as any,
-    approvals: Array.isArray(source.approvals) ? source.approvals.map(a => typeof a === 'object' ? a : String(a)) : [],
-    rejections: Array.isArray(source.rejections) ? source.rejections.map(r => typeof r === 'object' ? r : String(r)) : [],
-    userName: toStringOrUndefined(source.userName || source.user_name || source.username || (source.user as any)?.name || (source.user as any)?.username),
-    userAvatar: toStringOrUndefined(source.userAvatar || source.user_avatar || (source.user as any)?.avatar || (source.user as any)?.avatarUrl || (source.user as any)?.profileImage || (source.user as any)?.user_avatar || (source.user as any)?.avatar_url),
+    status: (toStringOrUndefined(source.status || source.STATUS) || 'pending').toLowerCase() as 'pending' | 'approved' | 'rejected',
+    approvals: Array.isArray(source.approvals) ? source.approvals.map((a: unknown) => typeof a === 'object' ? a : String(a)) : [],
+    rejections: Array.isArray(source.rejections) ? source.rejections.map((r: unknown) => typeof r === 'object' ? r : String(r)) : [],
+    userName: toStringOrUndefined(source.userName || source.user_name || source.username || (source.user as Record<string, unknown>)?.name || (source.user as Record<string, unknown>)?.username),
+    userAvatar: toStringOrUndefined(source.userAvatar || source.user_avatar || (source.user as Record<string, unknown>)?.avatar || (source.user as Record<string, unknown>)?.avatarUrl || (source.user as Record<string, unknown>)?.profileImage || (source.user as Record<string, unknown>)?.user_avatar || (source.user as Record<string, unknown>)?.avatar_url),
     requiredApprovals: toNumberOrDefault(source.requiredApprovals || source.required_approvals, 0),
     approvalCount: toNumberOrDefault(source.approvalCount || source.approval_count, 0),
     isCompletedByGroup:
@@ -370,46 +417,59 @@ const normalizePredefinedRoutineMessages = (value: unknown): PredefinedRoutineMe
 export const routineService = {
   // Get all routines for the authenticated user
   async getRoutines(): Promise<Routine[]> {
-    const res = await api.get('/routines');
-    return res.data;
+    const res: { data: unknown[] } = await api.get('/routines');
+    return (res.data || []).map(normalizeRoutine);
   },
   // Today's routines
-  async getTodayRoutines(): Promise<Routine[]> {
-    const res = await api.get('/routines/today');
-    return res.data; // backend 'data' içinde döndürüyorsa: res.data.data
+  async getTodayRoutines(): Promise<TodayScreenResponse> {
+    const res: { data: { streak?: number; currentStreak?: number; current_streak?: number; routines: unknown[] } } = await api.get('/routines/today');
+    return {
+      streak: res.data.streak ?? res.data.currentStreak ?? res.data.current_streak ?? 0,
+      routines: (res.data.routines || []).map(normalizeRoutine),
+    };
   },
 
   // Get grouped routines
   async getGroupedRoutines(token?: string): Promise<RoutineList[]> {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    const res = await api.get('/routines/grouped', config);
-    return res.data;
+    const res: { data: RoutineList[] } = await api.get('/routines/grouped', config);
+    
+    return (res.data || []).map(list => ({
+      ...list,
+      routines: (list.routines || []).map(normalizeRoutine)
+    }));
   },
 
   // Get routine by ID
   async getRoutineById(routineId: string, token: string): Promise<Routine> {
-    const res = await api.get(`/routines/${routineId}`, {
+    const res: { data: unknown } = await api.get(`/routines/${routineId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.data;
+    return normalizeRoutine(res.data);
   },
 
   // Get routine lists (routine groups)
   async getRoutineLists(): Promise<RoutineList[]> {
-    const res = await api.get('/routine-lists');
-    return res.data;
+    const res: { data: RoutineList[] } = await api.get('/routine-lists');
+    return (res.data || []).map(list => ({
+      ...list,
+      routines: (list.routines || []).map(normalizeRoutine)
+    }));
   },
   async getRoutineLogs(routineId?: string): Promise<RoutineLog[]> {
     try {
-      const endpoint = routineId ? `/routines/${routineId}/logs` : '/routine-logs';
-      const res = await api.get(endpoint);
-      const data = getArrayFromResponse(res.data);
+      const endpoint: string = routineId ? `/routines/${routineId}/logs` : '/routine-logs';
+      const res: { data: unknown } = await api.get(endpoint);
+      const data: unknown[] = getArrayFromResponse(res.data);
       return data.map(normalizeRoutineLog);
-    } catch (err: any) {
-      if (err.response?.status === 404 && routineId) {
-        const res = await api.get('/routine-logs', { params: { routine_id: routineId } });
-        const data = getArrayFromResponse(res.data);
-        return data.map(normalizeRoutineLog);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const anyErr = err as { response: { status: number } };
+        if (anyErr.response?.status === 404 && routineId) {
+          const res: { data: unknown } = await api.get('/routine-logs', { params: { routine_id: routineId } });
+          const data: unknown[] = getArrayFromResponse(res.data);
+          return data.map(normalizeRoutineLog);
+        }
       }
       throw err;
     }
@@ -417,11 +477,11 @@ export const routineService = {
   
   // ✅ Get Calendar Logs (Unified for Personal & Collaborative)
   async getCalendarLogs(routineId: string, startDate: string, endDate: string, token: string): Promise<{date: string, isDone: boolean}[]> {
-    const res = await api.get(`/routines/${routineId}/calendar`, {
+    const res: { data: unknown } = await api.get(`/routines/${routineId}/calendar`, {
       headers: { Authorization: `Bearer ${token}` },
       params: { startDate, endDate },
     });
-    return getArrayFromResponse(res.data);
+    return getArrayFromResponse(res.data) as { date: string; isDone: boolean }[];
   },
   async createRoutineList(categoryId: number, title: string): Promise<RoutineList> {
     const res = await api.post('/routine-lists', {
@@ -480,22 +540,25 @@ export const routineService = {
   },
 
   // ✅ Join a Group
-  async joinGroup(key: string): Promise<any> {
+  async joinGroup(key: string): Promise<{ message: string; id: string }> {
     try {
-      const res = await api.post('/routines/join', { key });
+      const res: { data: { message: string; id: string } } = await api.post('/routines/join', { key });
       return res.data;
-    } catch (err: any) {
-      if (err.response && err.response.status === 400 && err.response.data?.message) {
-        throw new Error(err.response.data.message);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const responseData: Record<string, unknown> = (err as { response: { data: Record<string, unknown> } }).response.data;
+        if (responseData.message) {
+           throw new Error(String(responseData.message));
+        }
       }
       throw err;
     }
   },
 
   // ✅ Group Detail (Profile View)
-  async getGroupDetail(id: string): Promise<Routine & { participants: any[] }> {
-    const res = await api.get(`/routines/group/${id}`);
-    const normalized = normalizeCollaborativeRoutine(res.data);
+  async getGroupDetail(id: string): Promise<Routine & { participants: unknown[] }> {
+    const res: { data: { participants?: unknown[] } } = await api.get(`/routines/group/${id}`);
+    const normalized: Routine = normalizeCollaborativeRoutine(res.data);
     return {
       ...normalized,
       participants: Array.isArray(res.data?.participants)
@@ -511,50 +574,50 @@ export const routineService = {
   },
 
   // ✅ Get Collaborative Routine Chat Messages
-  async getRoutineChatMessages(routineId: string): Promise<any[]> {
-    const res = await api.get(`/routines/collaborative-chat/${routineId}`);
+  async getRoutineChatMessages(routineId: string): Promise<unknown[]> {
+    const res: { data: unknown } = await api.get(`/routines/collaborative-chat/${routineId}`);
     return getArrayFromResponse(res.data);
   },
 
   // ✅ Send Collaborative Routine Chat Message
-  async sendRoutineChatMessage(routineId: string, message: string): Promise<any> {
-    const res = await api.post(`/routines/collaborative-chat/${routineId}`, { message });
+  async sendRoutineChatMessage(routineId: string, message: string): Promise<{ message: string }> {
+    const res: { data: { message: string } } = await api.post(`/routines/collaborative-chat/${routineId}`, { message });
     return res.data;
   },
 
   // ✅ Unified Verification Flow
-  async verifyRoutine(body: { routineId: string; objectPath: string }): Promise<any> {
-    const res = await api.post('/routines/verify', body);
+  async verifyRoutine(body: { routineId: string; objectPath: string }): Promise<{ message: string }> {
+    const res: { data: { message: string } } = await api.post('/routines/verify', body);
     return res.data;
   },
 
   // ✅ Send Routine Invitation
-  async sendRoutineInvite(routineId: string, toUserId: string): Promise<any> {
-    const res = await api.post('/routine-invitations', { routineId, toUserId });
+  async sendRoutineInvite(routineId: string, toUserId: string): Promise<{ message: string }> {
+    const res: { data: { message: string } } = await api.post('/routine-invitations', { routineId, toUserId });
     return res.data;
   },
 
   // ✅ Remove Member from Collaborative Routine
-  async removeMemberFromRoutine(routineId: string, userId: string): Promise<any> {
-    const res = await api.delete(`/routines/collaborative/${routineId}/members/${userId}`);
+  async removeMemberFromRoutine(routineId: string, userId: string): Promise<{ message: string }> {
+    const res: { data: { message: string } } = await api.delete(`/routines/collaborative/${routineId}/members/${userId}`);
     return res.data;
   },
 
   // ✅ Get Pending Routine Invitations
-  async getPendingRoutineInvites(): Promise<any[]> {
-    const res = await api.get('/routine-invitations/received');
+  async getPendingRoutineInvites(): Promise<unknown[]> {
+    const res: { data: unknown[] } = await api.get('/routine-invitations/received');
     return res.data;
   },
 
   // ✅ Accept Routine Invitation
-  async acceptRoutineInvite(invitationId: string): Promise<any> {
-    const res = await api.patch(`/routine-invitations/${invitationId}/accept`);
+  async acceptRoutineInvite(invitationId: string): Promise<{ message: string }> {
+    const res: { data: { message: string } } = await api.patch(`/routine-invitations/${invitationId}/accept`);
     return res.data;
   },
 
   // ✅ Decline Routine Invitation
-  async declineRoutineInvite(invitationId: string): Promise<any> {
-    const res = await api.patch(`/routine-invitations/${invitationId}/decline`);
+  async declineRoutineInvite(invitationId: string): Promise<{ message: string }> {
+    const res: { data: { message: string } } = await api.patch(`/routine-invitations/${invitationId}/decline`);
     return res.data;
   },
 
@@ -594,8 +657,8 @@ export const routineService = {
     return res.data;
   },
 
-  async updateRoutine(id: string, payload: UpdateRoutinePayload, token: string): Promise<any> {
-    const response = await api.patch(`/routines/${id}`, payload, {
+  async updateRoutine(id: string, payload: UpdateRoutinePayload, token: string): Promise<Routine> {
+    const response: { data: Routine; status: number } = await api.patch(`/routines/${id}`, payload, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -644,7 +707,7 @@ export const routineService = {
     creatorId?: string,
     memberId?: string
   ): Promise<PublicRoutine[]> {
-    const params: any = {};
+    const params: Record<string, unknown> = {};
     if (search) params.search = search;
     if (categoryId) params.categoryId = categoryId;
     if (frequencyType) params.frequencyType = frequencyType;
@@ -653,18 +716,21 @@ export const routineService = {
     if (xp) params.xp = xp;
     if (creatorId) params.creatorId = creatorId;
     if (memberId) params.memberId = memberId;
-    const res = await api.get('/routines/collaborative/public', { params });
+    const res: { data: PublicRoutine[] } = await api.get('/routines/collaborative/public', { params });
     return res.data;
   },
 
   // ✅ Join a Public Routine by ID
   async joinPublicRoutine(routineId: string): Promise<{ message: string }> {
     try {
-      const res = await api.post(`/routines/collaborative/${routineId}/join`);
+      const res: { data: { message: string } } = await api.post(`/routines/collaborative/${routineId}/join`);
       return res.data;
-    } catch (err: any) {
-      if (err.response?.data?.message) {
-        throw new Error(err.response.data.message);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const responseData: Record<string, unknown> = (err as { response: { data: Record<string, unknown> } }).response.data;
+        if (responseData.message) {
+           throw new Error(String(responseData.message));
+        }
       }
       throw err;
     }
@@ -673,11 +739,14 @@ export const routineService = {
   // Leave a Collaborative Routine
   async leaveRoutine(routineId: string): Promise<{ message: string }> {
     try {
-      const res = await api.delete(`/routines/collaborative/${routineId}/leave`);
+      const res: { data: { message: string } } = await api.delete(`/routines/collaborative/${routineId}/leave`);
       return res.data;
-    } catch (err: any) {
-      if (err.response?.data?.message) {
-        throw new Error(err.response.data.message);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const responseData: Record<string, unknown> = (err as { response: { data: Record<string, unknown> } }).response.data;
+        if (responseData.message) {
+           throw new Error(String(responseData.message));
+        }
       }
       throw err;
     }
@@ -686,19 +755,22 @@ export const routineService = {
   // Handle Creator Defeat (lives === 0) — deletes routine if alone, otherwise promotes a member
   async handleCreatorDefeat(routineId: string): Promise<{ message: string }> {
     try {
-      const res = await api.post(`/routines/collaborative/${routineId}/creator-defeat`);
+      const res: { data: { message: string } } = await api.post(`/routines/collaborative/${routineId}/creator-defeat`);
       return res.data;
-    } catch (err: any) {
-      if (err.response?.data?.message) {
-        throw new Error(err.response.data.message);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const responseData: Record<string, unknown> = (err as { response: { data: Record<string, unknown> } }).response.data;
+        if (responseData.message) {
+           throw new Error(String(responseData.message));
+        }
       }
       throw err;
     }
   },
 
   // ✅ Get Collaborative Routine Leaderboard
-  async getCollaborativeRoutineLeaderboard(routineId: string): Promise<any[]> {
-    const res = await api.get(`/routines/collaborative/${routineId}/leaderboard`);
+  async getCollaborativeRoutineLeaderboard(routineId: string): Promise<Record<string, unknown>[]> {
+    const res: { data: unknown } = await api.get(`/routines/collaborative/${routineId}/leaderboard`);
     return getArrayFromResponse(res.data).map(normalizeRoutineLeaderboardEntry);
   },
 };

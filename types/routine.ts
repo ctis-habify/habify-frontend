@@ -34,6 +34,7 @@ export interface Routine {
   genderRequirement?: 'female' | 'male' | 'other' | 'na';
   xpRequirement?: number;
   completionXp?: number;
+  createdAt?: string;
   frequency?: string;
   repetition?: string;
   repeat?: string;

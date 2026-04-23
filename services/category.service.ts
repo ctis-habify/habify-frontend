@@ -12,11 +12,11 @@ type RawCategory = Partial<{
 
 const toCategory = (input: unknown): Category | null => {
   if (!input || typeof input !== 'object') return null;
-  const raw = input as RawCategory;
+  const raw: RawCategory = input as RawCategory;
 
-  const rawId = raw.categoryId ?? raw.id;
-  const id = Number(rawId);
-  const name = (raw.name ?? raw.categoryName ?? raw.title ?? '').toString().trim();
+  const rawId: number | string | undefined = raw.categoryId ?? raw.id;
+  const id: number = Number(rawId);
+  const name: string = (raw.name ?? raw.categoryName ?? raw.title ?? '').toString().trim();
 
   if (!Number.isFinite(id) || !name) return null;
   return { categoryId: id, name };
@@ -26,12 +26,12 @@ const unwrapCategoryList = (payload: unknown): unknown[] => {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== 'object') return [];
 
-  const obj = payload as Record<string, unknown>;
-  const data = obj.data;
+  const obj: Record<string, unknown> = payload as Record<string, unknown>;
+  const data: unknown = obj.data;
 
   if (Array.isArray(data)) return data;
   if (data && typeof data === 'object') {
-    const dataObj = data as Record<string, unknown>;
+    const dataObj: Record<string, unknown> = data as Record<string, unknown>;
     if (Array.isArray(dataObj.categories)) return dataObj.categories;
     if (Array.isArray(dataObj.items)) return dataObj.items;
   }
@@ -43,7 +43,7 @@ const unwrapCategoryList = (payload: unknown): unknown[] => {
 
 const unwrapSingleCategory = (payload: unknown): unknown => {
   if (!payload || typeof payload !== 'object') return payload;
-  const obj = payload as Record<string, unknown>;
+  const obj: Record<string, unknown> = payload as Record<string, unknown>;
   return obj.data ?? obj.category ?? payload;
 };
 

@@ -118,12 +118,11 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         // ignore
       }
 
-      const res = await routineService.getTodayRoutines();
-      const castedRes = res as any;
-
-      const incoming = castedRes?.routines ?? (Array.isArray(res) ? res : []);
+      const res: TodayScreenResponse = await routineService.getTodayRoutines();
+      
+      const incoming: Routine[] = res.routines || [];
       const normalized: Routine[] = incoming;
-      setStreak(castedRes?.streak ?? 0);
+      setStreak(res.streak ?? 0);
 
       const now = new Date();
       const currentHours = now.getHours();

@@ -27,8 +27,8 @@ const COUNTER_INTERVAL = 16; // ~60fps
 // ── Animated Counter Hook ────────────────────────────────────────────────────
 
 function useAnimatedCounter(target: number, loading: boolean): number {
-  const [display, setDisplay] = React.useState(0);
-  const rafRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [display, setDisplay] = React.useState<number>(0);
+  const rafRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null> = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (loading) {
@@ -36,15 +36,15 @@ function useAnimatedCounter(target: number, loading: boolean): number {
       return;
     }
 
-    const startTime = Date.now();
-    const startValue = 0;
+    const startTime: number = Date.now();
+    const startValue: number = 0;
 
     const tick = (): void => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / COUNTER_DURATION, 1);
+      const elapsed: number = Date.now() - startTime;
+      const progress: number = Math.min(elapsed / COUNTER_DURATION, 1);
       // Ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = Math.round(startValue + (target - startValue) * eased);
+      const eased: number = 1 - Math.pow(1 - progress, 3);
+      const current: number = Math.round(startValue + (target - startValue) * eased);
       setDisplay(current);
 
       if (progress < 1) {
@@ -54,7 +54,7 @@ function useAnimatedCounter(target: number, loading: boolean): number {
 
     tick();
 
-    return () => {
+    return (): void => {
       if (rafRef.current) clearTimeout(rafRef.current);
     };
   }, [target, loading]);

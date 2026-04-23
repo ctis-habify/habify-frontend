@@ -1,6 +1,6 @@
 import { CupIndicator } from '@/components/cup-indicator';
 import { HomeButton } from '@/components/navigation/home-button';
-import { FriendList } from '@/components/profile/FriendList';
+import { FriendList } from '@/components/profile/friend-list';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
@@ -24,7 +24,7 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function ProfileScreen() {
+export default function ProfileScreen(): React.ReactElement {
   const { user } = useAuth();
   const navigation = useNavigation();
   const router = useRouter();
@@ -48,12 +48,12 @@ export default function ProfileScreen() {
   const cupInfo = getCupInfoByTier(cup?.tier);
 
   // Helper to calculate age
-  const calculateAge = (birthDateString?: string) => {
+  const calculateAge = (birthDateString?: string): string | number => {
     if (!birthDateString) return 'N/A';
-    const today = new Date();
-    const birthDate = new Date(birthDateString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
+    const today: Date = new Date();
+    const birthDate: Date = new Date(birthDateString);
+    let age: number = today.getFullYear() - birthDate.getFullYear();
+    const m: number = today.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
@@ -62,7 +62,7 @@ export default function ProfileScreen() {
 
   const age = calculateAge(user?.birthDate);
 
-  const getStatus = (pts: number) => {
+  const getStatus = (pts: number): { label: string; color: string } => {
     if (pts >= 100) return { label: 'Pro', color: '#FFD700' };
     if (pts >= 50) return { label: 'Good', color: '#FF8C00' };
     return { label: 'Beginner', color: '#4CAF50' };

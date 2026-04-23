@@ -5,13 +5,14 @@ import {
   createCupAwardFromFirstPlaceCount,
   normalizeLeaderboardMedal,
   normalizeCupTier,
+  CupTier,
 } from '../types/collaborative-score';
 import { api } from './api';
 
-const toNumberOrDefault = (value: unknown, defaultValue = 0): number => {
+const toNumberOrDefault = (value: unknown, defaultValue: number = 0): number => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
-    const parsed = Number(value);
+    const parsed: number = Number(value);
     if (Number.isFinite(parsed)) return parsed;
   }
   return defaultValue;
@@ -25,8 +26,8 @@ const toStringOrNull = (value: unknown): string | null => {
 const getFirstPlaceCount = (value: unknown): number | null => {
   if (!value || typeof value !== 'object') return null;
 
-  const source = value as Record<string, unknown>;
-  const count = toNumberOrDefault(
+  const source: Record<string, unknown> = value as Record<string, unknown>;
+  const count: number = toNumberOrDefault(
     source.firstPlaceCount ||
       source.first_place_count ||
       source.firstPlaces ||
@@ -60,7 +61,7 @@ const getCupAward = (value: unknown): UserCupAward | null => {
   if (!value) return null;
 
   if (typeof value === 'string') {
-    const tierFromString = normalizeCupTier(value);
+    const tierFromString: CupTier | null = normalizeCupTier(value);
     return tierFromString
       ? {
           tier: tierFromString,
@@ -71,9 +72,9 @@ const getCupAward = (value: unknown): UserCupAward | null => {
 
   if (typeof value !== 'object') return null;
 
-  const source = value as Record<string, unknown>;
-  const tierFromResponse = normalizeCupTier(
-    source.tier ||
+  const source: Record<string, unknown> = value as Record<string, unknown>;
+  const tierFromResponse: CupTier | null = normalizeCupTier(
+    String(source.tier ||
       source.cupTier ||
       source.cup_tier ||
       source.cupType ||
@@ -81,14 +82,14 @@ const getCupAward = (value: unknown): UserCupAward | null => {
       source.level ||
       source.type ||
       source.name ||
-      source.label,
+      source.label || '')
   );
 
   if (!tierFromResponse) {
     return null;
   }
 
-  const totalPoints = toNumberOrDefault(
+  const totalPoints: number = toNumberOrDefault(
     source.totalPoints ||
       source.points ||
       source.score ||
@@ -96,10 +97,10 @@ const getCupAward = (value: unknown): UserCupAward | null => {
       source.xp,
     0,
   );
-  const firstPlaceCount = getFirstPlaceCount(source);
+  const firstPlaceCount: number | null = getFirstPlaceCount(source);
 
   if (firstPlaceCount !== null) {
-    const awardFromCount = createCupAwardFromFirstPlaceCount(firstPlaceCount, totalPoints);
+    const awardFromCount: UserCupAward | null = createCupAwardFromFirstPlaceCount(firstPlaceCount, totalPoints);
     if (awardFromCount) {
       return awardFromCount;
     }
@@ -113,7 +114,7 @@ const getCupAward = (value: unknown): UserCupAward | null => {
 };
 
 const normalizeLeaderboardEntry = (value: unknown): LeaderboardEntry => {
-  const source = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
+  const source: Record<string, unknown> = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
 
   return {
     rank: toNumberOrDefault(source.rank || source.position, 0),
@@ -137,7 +138,7 @@ const normalizeLeaderboardEntry = (value: unknown): LeaderboardEntry => {
 };
 
 const normalizeScoreSummary = (value: unknown): CollaborativeScoreSummary => {
-  const source = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
+  const source: Record<string, unknown> = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
 
   return {
     totalPoints: toNumberOrDefault(source.totalPoints || source.points || source.score, 0),
