@@ -22,7 +22,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import DropDownPicker from 'react-native-dropdown-picker';
 import Animated, { FadeIn, FadeInDown, FadeInUp, FadeOut } from 'react-native-reanimated';
 import { RoutineHistory } from '../../../components/routines/routine-history';
 import { routineService } from '../../../services/routine.service';
@@ -75,8 +74,6 @@ export default function EditRoutineScreen(): React.ReactElement {
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   
-  const [freqOpen, setFreqOpen] = useState(false); // Added freqOpen state
-
   // Toast State
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage] = useState("");

@@ -69,7 +69,9 @@ export default function SettingsScreen(): React.ReactElement {
   }, [updateUser, user]);
 
   const handleStartTimeChange = useCallback((event: DateTimePickerEvent, date?: Date) => {
-    setShowStartTimePicker(false);
+    if (Platform.OS === 'android' || event.type === 'set' || event.type === 'dismissed') {
+      setShowStartTimePicker(false);
+    }
     if (date && event.type !== 'dismissed') {
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -78,7 +80,9 @@ export default function SettingsScreen(): React.ReactElement {
   }, [updateUser]);
 
   const handleEndTimeChange = useCallback((event: DateTimePickerEvent, date?: Date) => {
-    setShowEndTimePicker(false);
+    if (Platform.OS === 'android' || event.type === 'set' || event.type === 'dismissed') {
+      setShowEndTimePicker(false);
+    }
     if (date && event.type !== 'dismissed') {
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -249,7 +253,10 @@ export default function SettingsScreen(): React.ReactElement {
               <View style={styles.timerRow}>
                 <TouchableOpacity 
                   style={styles.timePickerBtn} 
-                  onPress={() => setShowStartTimePicker(true)}
+                  onPress={() => {
+                    setShowEndTimePicker(false);
+                    setShowStartTimePicker(true);
+                  }}
                 >
                   <View style={[styles.timeIconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
                     <Ionicons name="moon" size={16} color="#A78BFA" />
@@ -266,7 +273,10 @@ export default function SettingsScreen(): React.ReactElement {
 
                 <TouchableOpacity 
                   style={styles.timePickerBtn} 
-                  onPress={() => setShowEndTimePicker(true)}
+                  onPress={() => {
+                    setShowStartTimePicker(false);
+                    setShowEndTimePicker(true);
+                  }}
                 >
                   <View style={[styles.timeIconBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
                     <Ionicons name="sunny" size={16} color="#FBBF24" />
@@ -369,33 +379,49 @@ export default function SettingsScreen(): React.ReactElement {
       </Modal>
 
       {showStartTimePicker && (
-        <DateTimePicker
-          value={user?.quietModeStart ? (() => {
-            const [h, m] = user.quietModeStart.split(':').map(Number);
-            const d = new Date();
-            d.setHours(h, m);
-            return d;
-          })() : new Date()}
-          mode="time"
-          is24Hour={true}
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleStartTimeChange}
-        />
+        <View style={styles.pickerContainer}>
+          <View style={[styles.pickerHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
+              <Text style={[styles.pickerDone, { color: colors.primary }]}>Done</Text>
+            </TouchableOpacity>
+          </View>
+          <DateTimePicker
+            value={user?.quietModeStart ? (() => {
+              const [h, m] = user.quietModeStart.split(':').map(Number);
+              const d = new Date();
+              d.setHours(h, m);
+              return d;
+            })() : new Date()}
+            mode="time"
+            is24Hour={true}
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleStartTimeChange}
+            textColor={colors.text}
+          />
+        </View>
       )}
 
       {showEndTimePicker && (
-        <DateTimePicker
-          value={user?.quietModeEnd ? (() => {
-            const [h, m] = user.quietModeEnd.split(':').map(Number);
-            const d = new Date();
-            d.setHours(h, m);
-            return d;
-          })() : new Date()}
-          mode="time"
-          is24Hour={true}
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleEndTimeChange}
-        />
+        <View style={styles.pickerContainer}>
+          <View style={[styles.pickerHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
+              <Text style={[styles.pickerDone, { color: colors.primary }]}>Done</Text>
+            </TouchableOpacity>
+          </View>
+          <DateTimePicker
+            value={user?.quietModeEnd ? (() => {
+              const [h, m] = user.quietModeEnd.split(':').map(Number);
+              const d = new Date();
+              d.setHours(h, m);
+              return d;
+            })() : new Date()}
+            mode="time"
+            is24Hour={true}
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleEndTimeChange}
+            textColor={colors.text}
+          />
+        </View>
       )}
     </LinearGradient>
   );
@@ -560,5 +586,30 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,
+  },
+  pickerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white', // Will be adjusted by theme if needed
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20,
+    zIndex: 1000,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  pickerDone: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

@@ -138,67 +138,81 @@ export default function FriendProfileScreen(): React.ReactElement {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View
           entering={FadeInDown.delay(100).duration(600).springify()}
-          style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={styles.heroSection}
         >
-          <View style={[styles.avatarContainer, { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }]}>
-            <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+          <View style={styles.avatarWrapper}>
+            <Image 
+              source={{ uri: avatarUrl }} 
+              style={[styles.avatarImage, { borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)', borderWidth: 4 }]} 
+            />
           </View>
 
-          <Text style={[styles.nameText, { color: colors.text }]}>{displayName}</Text>
-          {displayEmail ? (
-            <Text style={[styles.emailText, { color: colors.icon }]}>{displayEmail}</Text>
-          ) : null}
+          <View style={styles.heroTextContent}>
+            <Text style={[styles.nameText, { color: '#0F172A' }]}>{displayName}</Text>
+            {displayEmail ? (
+              <Text style={[styles.emailText, { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.45)' }]}>{displayEmail}</Text>
+            ) : null}
+          </View>
 
-          <View style={styles.statsContainer}>
+          <View style={[styles.heroStatsContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.92)' }]}>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{age}</Text>
-              <Text style={[styles.statLabel, { color: colors.icon }]}>Age</Text>
+              <Text style={[styles.statValue, { color: '#0F172A' }]}>{age}</Text>
+              <Text style={[styles.statLabel, { color: '#475569' }]}>AGE</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={[styles.statDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{user.totalXp || 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.icon }]}>Total XP</Text>
+              <Text style={[styles.statValue, { color: '#0F172A' }]}>{user.totalXp || 0}</Text>
+              <Text style={[styles.statLabel, { color: '#475569' }]}>TOTAL XP</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={[styles.statDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{user.currentStreak || 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.icon }]}>Streak</Text>
+              <Text style={[styles.statValue, { color: '#0F172A' }]}>{user.currentStreak || 0}</Text>
+              <Text style={[styles.statLabel, { color: '#475569' }]}>STREAK</Text>
             </View>
           </View>
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(200).duration(600).springify()}
-          style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[styles.detailsCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={20} color={colors.icon} />
-            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Member since</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>
-              {new Date(user.createdAt).toLocaleDateString('en-US', {
-                month: 'long',
-                year: 'numeric',
-              })}
-            </Text>
-          </View>
-          {user.gender && user.gender !== 'na' ? (
-            <View style={[styles.infoRow, { borderTopWidth: 1.5, borderTopColor: colors.border, paddingTop: 16 }]}>
-              <Ionicons name="person-outline" size={20} color={colors.icon} />
-              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Gender</Text>
-              <Text style={[styles.infoValue, { color: colors.text }]}>
-                {user.gender.charAt(0).toUpperCase() + user.gender.slice(1)}
+            <View style={[styles.iconBox, { backgroundColor: isDark ? 'rgba(124, 58, 237, 0.1)' : 'rgba(124, 58, 237, 0.05)' }]}>
+              <Ionicons name="calendar" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.infoTextContainer}>
+              <Text style={[styles.infoLabel, { color: '#64748B' }]}>MEMBER SINCE</Text>
+              <Text style={[styles.infoValue, { color: '#1E293B' }]}>
+                {new Date(user.createdAt).toLocaleDateString('en-US', {
+                  month: 'long',
+                  year: 'numeric',
+                })}
               </Text>
+            </View>
+          </View>
+          
+          {user.gender && user.gender !== 'na' ? (
+            <View style={styles.infoRow}>
+              <View style={[styles.iconBox, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)' }]}>
+                <Ionicons name="person" size={18} color={colors.success} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={[styles.infoLabel, { color: '#64748B' }]}>GENDER</Text>
+                <Text style={[styles.infoValue, { color: '#1E293B' }]}>
+                  {user.gender.charAt(0).toUpperCase() + user.gender.slice(1)}
+                </Text>
+              </View>
             </View>
           ) : null}
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(280).duration(600).springify()}
-          style={styles.routinesCard}
+          style={[styles.routinesCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <View style={styles.routinesHeader}>
-            <Ionicons name="list-outline" size={20} color="#fff" />
-            <Text style={styles.routinesTitle}>Public Routines</Text>
+            <Text style={[styles.routinesTitle, { color: colors.text }]}>Public Routines</Text>
+            <Ionicons name="chevron-down" size={20} color={colors.textTertiary} />
           </View>
           {routinesLoading ? (
             <ActivityIndicator color="rgba(255,255,255,0.7)" style={{ paddingVertical: 16 }} />
@@ -229,11 +243,11 @@ export default function FriendProfileScreen(): React.ReactElement {
                   </View>
                   <View style={styles.routineBadges}>
                     <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{routine.frequencyType}</Text>
+                      <Text style={[styles.badgeText, { color: colors.textSecondary }]}>{routine.frequencyType}</Text>
                     </View>
                     <View style={styles.badge}>
-                      <Ionicons name="people-outline" size={12} color="rgba(255,255,255,0.7)" />
-                      <Text style={styles.badgeText}>{routine.memberCount}</Text>
+                      <Ionicons name="people" size={14} color={colors.textTertiary} />
+                      <Text style={[styles.badgeText, { color: colors.textSecondary }]}>{routine.memberCount}</Text>
                     </View>
                     {isJoined ? (
                       <View style={styles.joinedBadge}>
@@ -319,169 +333,202 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  profileCard: {
-    borderRadius: 24,
-    padding: 24,
+  heroSection: {
     alignItems: 'center',
-    borderWidth: 1,
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: 10,
   },
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    overflow: 'hidden',
+  avatarWrapper: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    elevation: 8,
   },
   avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+  },
+  heroTextContent: {
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 4,
   },
   nameText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   emailText: {
     fontSize: 14,
+    fontWeight: '600',
     marginBottom: 24,
   },
-  statsContainer: {
+  heroStatsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    marginTop: 8,
+    paddingVertical: 18,
+    borderRadius: 24,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
   },
   statItem: {
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '800',
   },
   statLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '800',
     marginTop: 4,
+    letterSpacing: 1,
   },
   statDivider: {
     width: 1,
-    height: 30,
+    height: 24,
   },
-  infoCard: {
-    borderRadius: 24,
-    padding: 20,
+  detailsCard: {
+    borderRadius: 28,
+    padding: 24,
     borderWidth: 1,
-    gap: 16,
+    marginBottom: 24,
+    gap: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
+  },
+  infoTextContainer: {
+    flex: 1,
+    gap: 2,
   },
   infoLabel: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   infoValue: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
   },
   routinesCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 28,
+    padding: 22,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    marginTop: 18,
-    gap: 12,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   routinesHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
+    marginBottom: 24,
+    paddingHorizontal: 4,
   },
   routinesTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   emptyText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
     textAlign: 'center',
-    paddingVertical: 8,
+    paddingVertical: 20,
+    opacity: 0.5,
   },
   routineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
   routineInfo: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   routineName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '800',
   },
   routineMeta: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '600',
+    opacity: 0.5,
   },
   routineBadges: {
     flexDirection: 'row',
-    gap: 6,
+    alignItems: 'center',
+    gap: 8,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.05)',
     borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
   },
   badgeText: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '600',
   },
   joinButton: {
-    flexDirection: 'row',
+    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 50,
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    minWidth: 44,
-    justifyContent: 'center',
   },
   joinButtonText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: '700',
+    color: '#7C3AED',
   },
   joinedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(76,175,80,0.15)',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 4,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   joinedText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#4CAF50',
+    fontWeight: '700',
+    color: '#10B981',
   },
 });

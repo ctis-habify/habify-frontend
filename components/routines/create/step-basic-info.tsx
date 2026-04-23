@@ -31,7 +31,8 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
     try {
-      await categoryService.createCategory(newCategoryName.trim(), 'collaborative');
+      const formattedName = newCategoryName.trim().charAt(0).toUpperCase() + newCategoryName.trim().slice(1);
+      await categoryService.createCategory(formattedName, 'collaborative');
       setNewCategoryName('');
       await loadCategories();
     } catch {
@@ -109,6 +110,7 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
               value={newCategoryName}
               onChangeText={setNewCategoryName}
               autoFocus
+              autoCapitalize="words"
             />
             <TouchableOpacity 
               onPress={handleCreateCategory}
@@ -165,6 +167,7 @@ export function StepBasicInfo({ formState, updateForm, categories, loadCategorie
           placeholderTextColor={colors.icon}
           value={formState.routineName}
           onChangeText={(text) => updateForm({ routineName: text })}
+          autoCapitalize="words"
         />
       </View>
 

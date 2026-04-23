@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { DeviceEventEmitter, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import * as Haptics from 'expo-haptics';
 import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
@@ -161,6 +162,22 @@ export function useNotifications(isAuthenticated: boolean) {
                 : null,
             typeof data.notificationId === 'string' ? data.notificationId : undefined,
           );
+        }
+
+        if (data?.type === 'poke' && !data?.isLocalPoke) {
+          // Force a local notification with a unique interaction ID to ensure a banner "drops" 
+          // even if the OS groups the original remote notifications.
+          Notifications.scheduleNotificationAsync({
+            content: {
+              title: notification.request.content.title || 'Poke!',
+              body,
+              data: { ...data, isLocalPoke: true },
+              sound: true,
+              priority: Notifications.AndroidNotificationPriority.MAX,
+            },
+            trigger: null, // show immediately
+          });
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
 
         emitToast(body, 'bell');

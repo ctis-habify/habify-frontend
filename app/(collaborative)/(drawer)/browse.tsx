@@ -8,6 +8,7 @@ import {
     DeviceEventEmitter,
     FlatList,
     Platform,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -22,8 +23,6 @@ import Animated, {
     withSpring,
     withTiming,
 } from 'react-native-reanimated';
-
-import DropDownPicker from 'react-native-dropdown-picker';
 
 import { PublicRoutineCard } from '@/components/routines/public-routine-card';
 import { Toast } from '@/components/ui/toast';
@@ -65,9 +64,6 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     // Dropdown options
     const [categories, setCategories] = useState<Category[]>([]);
     const [loadingCategories, setLoadingCategories] = useState(false);
-    const [categoryOpen, setCategoryOpen] = useState(false);
-    const [frequencyOpen, setFrequencyOpen] = useState(false);
-    const [genderOpen, setGenderOpen] = useState(false);
 
     // Incremented on every focus so FlatList items remount and re-trigger entering animations
     const [listKey, setListKey] = useState(0);
@@ -90,7 +86,8 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                 ageVal ? parseInt(ageVal, 10) : undefined, 
                 xpVal ? parseInt(xpVal, 10) : undefined
             );
-            setRoutines(data);
+            // Filter out routines the user has already joined
+            setRoutines(data.filter(r => !r.isAlreadyMember));
         } catch (e) {
             console.error('Failed to load public routines', e);
         } finally {
@@ -187,9 +184,8 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                 const res = await routineService.joinPublicRoutine(id);
                 showToast(res.message);
                 // Flip to "Joined" badge — stays visible in this session
-                setRoutines((prev) =>
-                    prev.map((r) => (r.id === id ? { ...r, isAlreadyMember: true, memberCount: r.memberCount + 1 } : r)),
-                );
+                // Remove from browse list since user has joined
+                setRoutines((prev) => prev.filter((r) => r.id !== id));
                 DeviceEventEmitter.emit('SHOW_TOAST', 'Successfully joined the routine!');
             } catch (err: unknown) {
                 showToast(err instanceof Error ? err.message : 'Failed to join routine');
@@ -256,109 +252,105 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                     </View>
                 </View>
 
-                {/* Filters */}
-                <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 3000 }) }]}>
-                    <View style={{ flex: 1, marginRight: 8, ...(Platform.OS === 'ios' && { zIndex: 3000 }) }}>
-                        <DropDownPicker
-                            open={categoryOpen}
-                            value={categoryId}
-                            items={[{ label: 'All Categories', value: '' }, ...categoryItems]}
-                            setOpen={setCategoryOpen}
-                            setValue={setCategoryId as React.Dispatch<React.SetStateAction<number | "">>}
-                            theme={isDark ? "DARK" : "LIGHT"}
-                            style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                            dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                            placeholder={loadingCategories ? "Loading..." : "Category"}
-                            placeholderStyle={{ color: colors.icon, fontSize: 13, opacity: 0.6 }}
-                            textStyle={{ color: colors.text, fontSize: 13 }}
-                            labelStyle={{ fontWeight: '600' }}
-                            listMode="SCROLLVIEW"
-                            zIndex={3000}
-                            zIndexInverse={1000}
-                            onOpen={() => {
-                                setFrequencyOpen(false);
-                                setGenderOpen(false);
-                            }}
-                        />
-                    </View>
-                    <View style={{ flex: 1, ...(Platform.OS === 'ios' && { zIndex: 2000 }) }}>
-                        <DropDownPicker
-                            open={frequencyOpen}
-                            value={frequencyType}
-                            items={[
-                                { label: 'Any Frequency', value: '' },
-                                { label: 'Daily', value: 'Daily' },
-                                { label: 'Weekly', value: 'Weekly' }
-                            ] as { label: string; value: string }[]}
-                            setOpen={setFrequencyOpen}
-                            setValue={setFrequencyType as React.Dispatch<React.SetStateAction<string>>}
-                            theme={isDark ? "DARK" : "LIGHT"}
-                            style={[styles.dropdown, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                            dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                            placeholder="Frequency"
-                            placeholderStyle={{ color: colors.icon, fontSize: 13, opacity: 0.6 }}
-                            textStyle={{ color: colors.text, fontSize: 13 }}
-                            labelStyle={{ fontWeight: '600' }}
-                            listMode="SCROLLVIEW"
-                            zIndex={2000}
-                            zIndexInverse={2000}
-                            onOpen={() => {
-                                setCategoryOpen(false);
-                                setGenderOpen(false);
-                            }}
-                        />
-                    </View>
+                {/* Category Chips */}
+                <View style={styles.filterSection}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryChips}>
+                        <TouchableOpacity
+                            onPress={() => setCategoryId('')}
+                            style={[
+                                styles.chip,
+                                { backgroundColor: colors.card, borderColor: colors.border },
+                                categoryId === '' && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
+                            ]}
+                        >
+                            <Text style={[styles.chipText, { color: colors.text }, categoryId === '' && { color: '#fff' }]}>All</Text>
+                        </TouchableOpacity>
+                        {categories.map(c => (
+                            <TouchableOpacity
+                                key={c.categoryId}
+                                onPress={() => setCategoryId(c.categoryId)}
+                                style={[
+                                    styles.chip,
+                                    { backgroundColor: colors.card, borderColor: colors.border },
+                                    categoryId === c.categoryId && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
+                                ]}
+                            >
+                                <Text style={[styles.chipText, { color: colors.text }, categoryId === c.categoryId && { color: '#fff' }]}>{c.name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
                 </View>
 
-                {/* Second Row of Filters */}
-                <View style={[styles.filtersWrap, { ...(Platform.OS === 'ios' && { zIndex: 1000 }), marginTop: -8 }]}>
-                    <View style={{ flex: 1.2, ...(Platform.OS === 'ios' && { zIndex: 1000 }) }}>
-                        <DropDownPicker
-                            open={genderOpen}
-                            value={gender}
-                            items={[
-                                { label: 'All Genders', value: '' },
-                                { label: 'Female Only', value: 'female' },
-                                { label: 'Male Only', value: 'male' }
-                            ] as { label: string; value: string }[]}
-                            setOpen={setGenderOpen}
-                            setValue={setGender as React.Dispatch<React.SetStateAction<string>>}
-                            theme="DARK"
-                            style={styles.dropdown}
-                            dropDownContainerStyle={styles.dropdownContainer}
-                            placeholder="Gender"
-                            placeholderStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
-                            textStyle={{ color: '#fff', fontSize: 13 }}
-                            labelStyle={{ fontWeight: '600' }}
-                            listMode="SCROLLVIEW"
-                            zIndex={1000}
-                            zIndexInverse={3000}
-                            onOpen={() => {
-                                setCategoryOpen(false);
-                                setFrequencyOpen(false);
-                            }}
-                        />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 8 }}>
-                        <TextInput
-                            style={styles.numericInput}
-                            placeholder="Min Age"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
-                            keyboardType="numeric"
-                            value={age}
-                            onChangeText={setAge}
-                        />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 8 }}>
-                        <TextInput
-                            style={styles.numericInput}
-                            placeholder="Min XP"
-                            placeholderTextColor="rgba(255,255,255,0.3)"
-                            keyboardType="numeric"
-                            value={xp}
-                            onChangeText={setXp}
-                        />
-                    </View>
+                {/* Secondary Filters (Frequency, Gender, Age, XP) */}
+                <View style={[styles.compactFiltersRow, { paddingHorizontal: 20, marginBottom: 8 }]}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                        {/* Frequency */}
+                        <View style={styles.filterGroup}>
+                            <Text style={[styles.miniLabel, { color: colors.textTertiary }]}>FREQ</Text>
+                            <View style={{ flexDirection: 'row', gap: 6 }}>
+                                {['Daily', 'Weekly'].map(f => (
+                                    <TouchableOpacity
+                                        key={f}
+                                        onPress={() => setFrequencyType(frequencyType === f ? '' : f)}
+                                        style={[
+                                            styles.miniChip, 
+                                            { backgroundColor: colors.card, borderColor: colors.border },
+                                            frequencyType === f && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
+                                        ]}
+                                    >
+                                        <Text style={[styles.miniChipText, { color: colors.textSecondary }, frequencyType === f && { color: '#fff' }]}>{f}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
+                        {/* Gender */}
+                        <View style={styles.filterGroup}>
+                            <Text style={[styles.miniLabel, { color: colors.textTertiary }]}>GENDER</Text>
+                            <View style={{ flexDirection: 'row', gap: 6 }}>
+                                {[
+                                    { label: 'All', value: '' },
+                                    { label: 'F', value: 'female' },
+                                    { label: 'M', value: 'male' }
+                                ].map(g => (
+                                    <TouchableOpacity
+                                        key={g.value}
+                                        onPress={() => setGender(g.value)}
+                                        style={[
+                                            styles.miniChip, 
+                                            { backgroundColor: colors.card, borderColor: colors.border },
+                                            gender === g.value && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
+                                        ]}
+                                    >
+                                        <Text style={[styles.miniChipText, { color: colors.textSecondary }, gender === g.value && { color: '#fff' }]}>{g.label}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
+                        {/* Age & XP */}
+                        <View style={styles.filterGroup}>
+                            <Text style={[styles.miniLabel, { color: colors.textTertiary }]}>LIMITS</Text>
+                            <View style={{ flexDirection: 'row', gap: 6 }}>
+                                <TextInput
+                                    style={[styles.miniNumericInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+                                    placeholder="Age"
+                                    placeholderTextColor={colors.icon}
+                                    keyboardType="numeric"
+                                    value={age}
+                                    onChangeText={setAge}
+                                />
+                                <TextInput
+                                    style={[styles.miniNumericInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+                                    placeholder="XP"
+                                    placeholderTextColor={colors.icon}
+                                    keyboardType="numeric"
+                                    value={xp}
+                                    onChangeText={setXp}
+                                />
+                            </View>
+                        </View>
+                    </ScrollView>
                 </View>
 
                 {/* Search Bar */}
@@ -462,31 +454,59 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         padding: 0,
     },
-    filtersWrap: {
-        flexDirection: 'row',
+    filterSection: {
         paddingHorizontal: 20,
-        marginBottom: 16,
-        zIndex: 1000,
+        marginBottom: 12,
     },
-    dropdown: {
-        borderRadius: 12,
-        minHeight: 40,
-        height: 40,
-        paddingHorizontal: 12,
+    categoryChips: {
+        gap: 8,
+        paddingBottom: 4,
     },
-    dropdownContainer: {
-        borderRadius: 12,
-        marginTop: 4,
-    },
-    numericInput: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderColor: 'rgba(255,255,255,0.1)',
+    chip: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
         borderWidth: 1,
-        borderRadius: 12,
-        height: 40,
-        paddingHorizontal: 10,
-        color: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    chipText: {
         fontSize: 13,
+        fontWeight: '600',
+    },
+    compactFiltersRow: {
+        marginBottom: 12,
+    },
+    filterGroup: {
+        marginRight: 16,
+    },
+    miniLabel: {
+        fontSize: 10,
+        fontWeight: '900',
+        marginBottom: 6,
+        letterSpacing: 1,
+    },
+    miniChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    miniChipText: {
+        fontSize: 12,
+        fontWeight: '800',
+    },
+    miniNumericInput: {
+        borderWidth: 1,
+        borderRadius: 10,
+        width: 60,
+        height: 34,
+        paddingHorizontal: 8,
+        fontSize: 12,
+        textAlign: 'center',
+        fontWeight: '800',
     },
     list: {
         paddingHorizontal: 18,

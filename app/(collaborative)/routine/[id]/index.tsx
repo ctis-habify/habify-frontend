@@ -1,8 +1,8 @@
-import { HomeButton } from '@/components/navigation/home-button';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,7 +15,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import {
   Gesture,
   GestureDetector,
@@ -554,7 +553,6 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             ) : (
               <>
                 <Ionicons name="exit-outline" size={16} color={colors.white} />
-                <Text style={[styles.leaveButtonText, { color: colors.white }]}>Leave</Text>
               </>
             )}
           </TouchableOpacity>
@@ -575,7 +573,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             )}
           </TouchableOpacity>
         )}
-        <HomeButton color={colors.text} style={[styles.backButton, { backgroundColor: colors.surface }]} />
+
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

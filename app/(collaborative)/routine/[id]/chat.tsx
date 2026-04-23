@@ -58,6 +58,9 @@ type RawChatMessage = {
     profileImage?: string;
     user_avatar?: string;
   };
+  userAvatar?: string;
+  profileImage?: string;
+  user_avatar?: string;
 };
 
 type RoutineParticipant = {
@@ -991,6 +994,7 @@ export default function CollaborativeChatScreen() {
                       <TouchableOpacity
                         style={[
                           styles.sendToGroupButton,
+                          { backgroundColor: collaborativePrimary },
                           sendingMessage === selectedPredefinedMessage &&
                             styles.quickReplyBtnSending,
                         ]}
@@ -999,7 +1003,7 @@ export default function CollaborativeChatScreen() {
                         disabled={sendingMessage !== null}
                       >
                         {sendingMessage === selectedPredefinedMessage && !taggedParticipant ? (
-                          <ActivityIndicator size="small" color="#ffffff" />
+                          <ActivityIndicator size="small" color={colors.white} />
                         ) : null}
                         <Text style={[styles.sendToGroupText, { color: colors.white }]}>Send to group</Text>
                       </TouchableOpacity>
@@ -1042,6 +1046,7 @@ export default function CollaborativeChatScreen() {
                           <TouchableOpacity
                             style={[
                               styles.sendTaggedButton,
+                              { backgroundColor: taggedParticipant ? collaborativePrimary : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)') },
                               !taggedParticipant && styles.sendTaggedButtonDisabled,
                               sendingMessage === selectedPredefinedMessage &&
                                 taggedParticipant &&
@@ -1059,9 +1064,9 @@ export default function CollaborativeChatScreen() {
                             disabled={!taggedParticipant || sendingMessage !== null}
                           >
                             {sendingMessage === selectedPredefinedMessage && taggedParticipant ? (
-                              <ActivityIndicator size="small" color="#ffffff" />
+                              <ActivityIndicator size="small" color={colors.white} />
                             ) : null}
-                            <Text style={styles.sendTaggedText}>
+                            <Text style={[styles.sendTaggedText, { color: taggedParticipant ? colors.white : colors.textSecondary }]}>
                               {taggedParticipant
                                 ? `Send to @${taggedParticipant.name}`
                                 : 'Select a teammate above'}
@@ -1653,7 +1658,6 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   sendTaggedText: {
-    color: '#fffaff',
     fontSize: 14,
     fontWeight: '700',
   },

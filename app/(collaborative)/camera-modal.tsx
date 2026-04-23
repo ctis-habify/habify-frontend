@@ -80,12 +80,8 @@ export default function CollaborativeCameraModal(): React.ReactElement {
       // 1. Get Signed URL
       const { signedUrl, objectPath } = await verificationService.getSignedUrl('jpg', 'image/jpeg');
 
-      // 2. Prepare file blob
-      const photoResponse = await fetch(photoUri);
-      const blob = await photoResponse.blob();
-
-      // 3. Upload to GCS via PUT
-      await verificationService.uploadToGcs(signedUrl, blob);
+      // 2. Upload to GCS via PUT
+      await verificationService.uploadToGcs(signedUrl, photoUri);
 
       // 4. Submit verification to Backend
       setLoadingText('Submitting to group...');
@@ -113,9 +109,11 @@ export default function CollaborativeCameraModal(): React.ReactElement {
       
     } catch (err: unknown) {
       console.error('Collaborative Verification error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const responseMessage = (err as any)?.response?.data?.message;
       Alert.alert(
         'Post Failed',
-        err.response?.data?.message || err.message || 'An unexpected error occurred'
+        responseMessage || errorMessage
       );
       setIsUploading(false);
     }
