@@ -258,12 +258,29 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
         if (!uid) continue;
 
         try {
-          await routineService.removeMemberFromRoutine(routineId, uid);
-          
-          if (uid === currentUserId) {
-             Alert.alert("Eliminated!", "You have run out of lives and have been removed from the group. 💔");
-             router.replace('/(collaborative)/(drawer)/routines');
-             return; // Stop here as we are redirected
+          // Derive creator status from the live detail object to avoid stale closure issues
+          const detailCreatorId = String(
+            (detail as any).creatorId || (detail as any).userId || ''
+          ).trim();
+          const isCurrentUserCreator =
+            !!currentUserId &&
+            !!detailCreatorId &&
+            currentUserId === detailCreatorId;
+
+          if (uid === currentUserId && isCurrentUserCreator) {
+            // Creator cannot be removed via the standard endpoint — use the defeat endpoint instead
+            await routineService.handleCreatorDefeat(routineId);
+            Alert.alert("Eliminated!", "You have run out of lives. The group has been updated. 💔");
+            router.replace('/(collaborative)/(drawer)/routines');
+            return; // Stop here as we are redirected
+          } else {
+            await routineService.removeMemberFromRoutine(routineId, uid);
+
+            if (uid === currentUserId) {
+              Alert.alert("Eliminated!", "You have run out of lives and have been removed from the group. 💔");
+              router.replace('/(collaborative)/(drawer)/routines');
+              return; // Stop here as we are redirected
+            }
           }
         } catch (err) {
           console.error(`Failed to remove member ${uid}:`, err);

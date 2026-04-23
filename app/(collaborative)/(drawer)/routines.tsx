@@ -51,7 +51,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   // 1. Hooks
   const router = useRouter();
   const navigation = useNavigation();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const isDark = theme === 'dark';
   const colors = Colors[theme];
@@ -124,15 +124,24 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
         const list = await routineService.getCollaborativeRoutines();
         
         // --- Batch Lazy Elimination Cleanup ---
+        const currentUserId = user?.id ? String(user.id).trim() : '';
         const eliminatedNames: string[] = [];
         const healthyRoutines = list.filter(r => {
           const health = (r.lives ?? 0) - (r.missedCount ?? 0);
           if (health <= 0) {
             eliminatedNames.push(r.routineName || 'Unnamed Routine');
             // Silent cleanup in background
-            routineService.leaveRoutine(r.id).catch(err => 
-              console.error(`[Cleanup] Failed to leave routine ${r.id}:`, err)
-            );
+            const isCreator = !!currentUserId && !!r.creatorId && currentUserId === String(r.creatorId).trim();
+            if (isCreator) {
+              // Creator cannot leave; use the dedicated defeat endpoint instead
+              routineService.handleCreatorDefeat(r.id).catch(err =>
+                console.error(`[Cleanup] Failed to handle creator defeat for routine ${r.id}:`, err)
+              );
+            } else {
+              routineService.leaveRoutine(r.id).catch(err =>
+                console.error(`[Cleanup] Failed to leave routine ${r.id}:`, err)
+              );
+            }
             return false;
           }
           return true;
