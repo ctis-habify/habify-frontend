@@ -1,4 +1,5 @@
 import { FileSystemUploadType, uploadAsync } from 'expo-file-system/legacy';
+import { getInfoAsync } from 'expo-file-system';
 import { api } from './api';
 
 export interface VerificationResponse {
@@ -10,6 +11,40 @@ export interface VerificationResponse {
 }
 
 export const verificationService = {
+  // 0. Validate file size and format
+  async validateFile(fileUri: string): Promise<{ valid: boolean; error?: string }> {
+    try {
+      const info = await getInfoAsync(fileUri);
+      if (!info.exists) {
+        return { valid: false, error: 'File does not exist' };
+      }
+
+      // Check size (2MB = 2 * 1024 * 1024 bytes)
+      const sizeInMB = info.size / (1024 * 1024);
+      if (sizeInMB > 2) {
+        return { 
+          valid: false, 
+          error: `File size too large (${sizeInMB.toFixed(2)}MB). Maximum allowed is 2MB.` 
+        };
+      }
+
+      // Check format (basic extension check from URI)
+      const ext = fileUri.split('.').pop()?.toLowerCase();
+      const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+      if (!ext || !allowedExts.includes(ext)) {
+        return { 
+          valid: false, 
+          error: `Invalid file format (.${ext}). Supported: JPG, JPEG, PNG, WEBP.` 
+        };
+      }
+
+      return { valid: true };
+    } catch (error) {
+      console.error('[VerificationService] Validation error:', error);
+      return { valid: false, error: 'Failed to validate file' };
+    }
+  },
+
   // 1. Get Signed URL for upload
 
   async getSignedUrl(ext: string, mimeType: string): Promise<{ signedUrl: string; objectPath: string }> {

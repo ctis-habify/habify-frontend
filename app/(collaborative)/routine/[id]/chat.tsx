@@ -847,14 +847,14 @@ export default function CollaborativeChatScreen() {
                       let imageUrl = (isPrefixed ? item.text.replace(/^\[photo\]:/i, '') : item.text).trim();
     
                       if (!imageUrl.startsWith('http')) {
-                        imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
+                        imageUrl = `https://storage.googleapis.com/habify-photo-uploads/${imageUrl.trim()}`;
                       }
     
                       const matchingLog = pendingLogs.find((l) => {
                         const logUrl = (l.verificationImageUrl || '').toLowerCase().trim();
                         const msgUrl = imageUrl.toLowerCase().trim();
-                        const logFileName = logUrl.split('/').pop() || '!!!';
-                        const msgFileName = msgUrl.split('/').pop() || '???';
+                        const logFileName = logUrl.split('/').pop()?.split('?')[0] || '!!!';
+                        const msgFileName = msgUrl.split('/').pop()?.split('?')[0] || '???';
                         return (
                           logUrl === msgUrl ||
                           msgUrl.includes(logUrl) ||

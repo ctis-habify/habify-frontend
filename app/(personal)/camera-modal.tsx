@@ -80,6 +80,16 @@ export default function CameraModal(): React.ReactElement {
 
     try {
       setIsUploading(true);
+      setLoadingText('Validating photo...');
+
+      // 0. Validate File
+      const validation = await verificationService.validateFile(photoUri);
+      if (!validation.valid) {
+        setIsUploading(false);
+        Alert.alert('Invalid Photo', validation.error || 'Please try taking the photo again.');
+        return;
+      }
+
       setLoadingText('Uploading to cloud...');
 
       // 1. Get Signed URL

@@ -75,7 +75,7 @@ export const ChatVerificationItem: React.FC<ChatVerificationItemProps> = ({
   const rawImageUrl = log.verificationImageUrl;
   const imageUrl = (rawImageUrl || '').startsWith('http') 
     ? (rawImageUrl as string)
-    : `https://storage.googleapis.com/habify-verification-photos/${rawImageUrl || ''}`;
+    : `https://storage.googleapis.com/habify-photo-uploads/${rawImageUrl || ''}`;
 
   const isOwner = log.userId === currentUserId;
   const approvalCount = log.approvals?.length || 0;
