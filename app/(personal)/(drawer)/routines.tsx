@@ -1,12 +1,12 @@
-import { Colors, getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient, ThemeColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions, useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, DeviceEventEmitter, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, DeviceEventEmitter, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
@@ -42,20 +42,21 @@ async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync(TOKEN_KEY);
 }
 
-const ENTER_SPRING = { damping: 35, stiffness: 80, mass: 1.0 };
-
 export default function PersonalRoutinesScreen(): React.ReactElement {
   const router = useRouter();
-  const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const { token: authContextToken } = useAuth();
-  const colors = Colors[theme];
+  const colors: ThemeColors = Colors[theme];
+  const isDark = theme === 'dark';
   const screenGradient = getBackgroundGradient(theme);
   const activeTab = 'Personal';
+
   // ── Animation Setup ──────────────
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(40);
   const scale = useSharedValue(0.97);
+
+  const ENTER_SPRING = { damping: 35, stiffness: 80, mass: 1.0 };
 
   const pageStyle = useAnimatedStyle(() => ({
     flex: 1,
@@ -72,7 +73,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
       -1,
       true
     );
-  }, [trophyY]);
+  }, []);
 
   const trophyStyle = useAnimatedStyle(() => ({
     transform: [
@@ -90,10 +91,6 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [celebrationTrigger, setCelebrationTrigger] = useState(0);
   const [hasPendingCelebration, setHasPendingCelebration] = useState(false);
-  const [deleteListModalVisible, setDeleteListModalVisible] = useState(false);
-  const [cannotDeleteModalVisible, setCannotDeleteModalVisible] = useState(false);
-  const [listToDelete, setListToDelete] = useState<RoutineList | null>(null);
-  const [isDeletingList, setIsDeletingList] = useState(false);
   const isFocused = useIsFocused();
 
   const loadLists = useCallback(async (): Promise<void> => {
@@ -126,7 +123,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
       scale.value = withSpring(1, ENTER_SPRING);
 
       loadLists();
-    }, [loadLists, opacity, translateX, scale]),
+    }, [loadLists]),
   );
 
   useEffect(() => {
@@ -148,15 +145,12 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   useEffect(() => {
     if (isFocused && hasPendingCelebration) {
       setHasPendingCelebration(false);
-      // Delay to ensure any entrance animation is mostly done
       setTimeout(() => {
         setCelebrationTrigger(prev => prev + 1);
         setCelebrationVisible(true);
       }, 500);
     }
   }, [isFocused, hasPendingCelebration]);
-
-  // Focus re-trigger is handled by useFocusEffect above
 
   const handleTabSwitch = useCallback((tab: string): void => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
@@ -188,7 +182,12 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     });
   }, []);
 
-  const handleDeleteList = (list: RoutineList) => {
+  const [deleteListModalVisible, setDeleteListModalVisible] = useState(false);
+  const [cannotDeleteModalVisible, setCannotDeleteModalVisible] = useState(false);
+  const [listToDelete, setListToDelete] = useState<RoutineList | null>(null);
+  const [isDeletingList, setIsDeletingList] = useState(false);
+
+  const handleDeleteList = useCallback((list: RoutineList): void => {
     if (list.routines && list.routines.length > 0) {
       setCannotDeleteModalVisible(true);
       return;
@@ -196,16 +195,16 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
     setListToDelete(list);
     setDeleteListModalVisible(true);
-  };
+  }, []);
 
-  const confirmDeleteList = async () => {
+  const confirmDeleteList = useCallback(async (): Promise<void> => {
     if (!listToDelete) return;
-    const listId = listToDelete.id ?? (listToDelete as RoutineList & { routineListId?: number }).routineListId;
+    const listId: number | undefined = listToDelete.id ?? (listToDelete as RoutineList & { routineListId?: number }).routineListId;
     if (!listId) return;
 
     try {
       setIsDeletingList(true);
-      const token = authContextToken || await getToken();
+      const token: string | null = authContextToken || await getToken();
       if (!token) return;
       await routineService.deleteRoutineList(Number(listId), token);
       setRoutineLists((current: RoutineList[]) =>
@@ -217,17 +216,17 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
       );
       await loadLists();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to delete list.';
+      const msg: string = err instanceof Error ? err.message : 'Failed to delete list.';
       Alert.alert('Error', msg);
       throw err; // Re-throw to handle animation stop in modal
     } finally {
       setIsDeletingList(false);
     }
-  };
+  }, [authContextToken, listToDelete, loadLists]);
 
-  const handlePressRoutine = (routineId: string) => {
+  const handlePressRoutine = useCallback((routineId: string): void => {
     router.push({ pathname: '/(personal)/routine/[id]', params: { id: routineId } });
-  };
+  }, [router]);
 
   const hasNoData = !loading && routineLists.length === 0;
 
@@ -239,7 +238,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           <View style={styles.headerTopRow}>
             <TouchableOpacity
               style={[styles.menuBtn, { backgroundColor: colors.surface }]}
-              onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+              onPress={() => router.push('/_drawer')}
             >
               <Ionicons name="menu" size={24} color={colors.text} />
             </TouchableOpacity>
@@ -261,7 +260,6 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           showsVerticalScrollIndicator={false}
           layout={LinearTransition.springify().damping(18)}
         >
-          {/* Today's Routines' Header */}
           <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
             <TouchableOpacity
               style={[styles.sectionHeader, { backgroundColor: colors.surface, borderColor: colors.border }]}
@@ -442,6 +440,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
   scroll: {
     paddingHorizontal: 18,
     paddingTop: 10,
@@ -491,6 +494,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 10,
   },
+  emptyIconWrapper: {
+    padding: 30,
+    borderRadius: 100,
+    marginBottom: 20,
+  },
   trophyWrapper: {
       width: 180,
       height: 180,
@@ -505,6 +513,11 @@ const styles = StyleSheet.create({
       shadowOpacity: 0.2,
       shadowRadius: 20,
       elevation: 10,
+  },
+  trophyImage: {
+      width: 160,
+      height: 160,
+      resizeMode: 'contain',
   },
   emptyTitle: {
     fontSize: 18,

@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
 import { Alert, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { authService } from '../../services/auth.service';
+import { authService } from '@/services/auth.service';
 
 type RegisterErrors = {
   name?: string;
@@ -254,7 +254,7 @@ export default function SignupScreen(): React.ReactElement {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {GENDER_OPTIONS.map((option) => {
               const isSelected = gender === option.value;
-              let iconName: any = 'male';
+              let iconName: keyof typeof Ionicons.glyphMap = 'male';
               let activeColor = colors.primary;
               
               if (option.value === 'female') {
@@ -379,17 +379,6 @@ const styles = StyleSheet.create({
   dropdownLabel: {
     marginBottom: 8,
     marginLeft: 4,
-  },
-  dropdown: {
-    borderRadius: 12,
-    borderWidth: 1.5,
-    height: 52,
-  },
-  dropdownContainer: {
-    borderRadius: 12,
-  },
-  placeholderStyle: {
-    fontSize: 16,
   },
   dropdownText: {
     fontSize: 16,

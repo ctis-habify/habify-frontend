@@ -3,7 +3,6 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View, Platform, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNetwork } from '@/hooks/use-network';
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function OfflineBanner(): React.ReactElement | null {

@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { CircularCheckbox } from '@/components/ui/circular-checkbox';
-import { Colors } from '@/constants/theme';
+import { Colors, ThemeColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import { AnimatedFlame } from '../animations/animated-flame';
@@ -59,7 +59,7 @@ const getHoursFromLabel = (label?: string) => {
   return 0;
 };
 
-const getBadgeColor = (label: string | undefined, hours: number | undefined, colors: any) => {
+const getBadgeColor = (label: string | undefined, hours: number | undefined, colors: ThemeColors): string => {
   if (!label || hours === undefined) return colors.textTertiary;
   if (label.startsWith('Starts')) return colors.primary;
   if (hours <= 1) return colors.error;
