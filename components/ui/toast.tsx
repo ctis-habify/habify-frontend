@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/theme';
+import { Colors, ThemeColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
@@ -12,7 +12,8 @@ type Props = {
   duration?: number;
 };
 
-const getIconConfig = (icon: string) => {
+const getIconConfig = (icon: string, colors: ThemeColors) => {
+  const isDark = colors.background === '#0F172A'; // Simple check for dark mode if needed
   switch (icon) {
     case 'bell':
       return { name: 'notifications' as const, color: '#A78BFA' };
@@ -60,7 +61,7 @@ export function Toast({ visible, message, icon = 'check', onClose, duration = 35
 
   if (!visible) return null;
 
-  const iconConfig = getIconConfig(icon);
+  const iconConfig = getIconConfig(icon, colors);
 
   return (
     <Animated.View

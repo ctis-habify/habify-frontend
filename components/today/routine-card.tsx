@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/theme';
+import { Colors, ThemeColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
@@ -6,9 +6,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedFlame } from '../animations/animated-flame';
 import { ThrobbingHeart } from '../animations/throbbing-heart';
-import type { Routine } from '../../types/routine';
+import type { Routine } from '@/types/routine';
 
-function remainingColor(mins: number, colors: any) {
+function remainingColor(mins: number, colors: ThemeColors) {
   if (mins <= 30) return colors.error; 
   if (mins <= 60) return '#F97316'; // Orange-500
   if (mins <= 240) return '#EAB308'; // Yellow-500

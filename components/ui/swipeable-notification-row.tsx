@@ -66,7 +66,7 @@ function RightActionButton({
   drag: SharedValue<number>;
   onPress: () => void;
   colors: ThemeColors;
-}) {
+}): React.ReactElement {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: drag.value + 72 }],
   }));

@@ -13,7 +13,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     // headers'ı Record olarak ele al
     const headers: Record<string, string> = (config.headers ?? {}) as Record<string, string>;
 
@@ -55,7 +55,7 @@ const keysToCamel = (o: unknown): unknown => {
 };
 
 api.interceptors.response.use(
-  (response: AxiosResponse) => {
+  (response: AxiosResponse): AxiosResponse => {
     if (response.data) {
       response.data = keysToCamel(response.data);
     }

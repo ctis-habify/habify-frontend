@@ -5,8 +5,8 @@ import * as Haptics from 'expo-haptics';
 import * as Device from 'expo-device';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
-import { notificationService } from '../services/notification.service';
-import { emitToast } from './use-toast';
+import { notificationService } from '@/services/notification.service';
+import { emitToast } from '@/hooks/use-toast';
 import { useRouter } from 'expo-router';
 
 const USER_KEY = 'habify_user';
@@ -210,5 +210,5 @@ export function useNotifications(isAuthenticated: boolean) {
       notificationListener.current?.remove();
       responseListener.current?.remove();
     };
-  }, [setupPush]);
+  }, [setupPush, router]);
 }

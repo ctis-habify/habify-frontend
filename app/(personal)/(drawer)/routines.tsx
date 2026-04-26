@@ -1,4 +1,4 @@
-import { Colors, getBackgroundGradient, ThemeColors } from '@/constants/theme';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions, useIsFocused } from '@react-navigation/native';
@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, DeviceEventEmitter, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, DeviceEventEmitter, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
@@ -24,8 +24,6 @@ import Animated, {
 import { CelebrationAnimation } from '@/components/animations/celebration-animation';
 import { CreateRoutineInListModal } from '@/components/modals/create-routine-in-list-modal';
 import { CreateRoutineModal } from '@/components/modals/create-routine-modal';
-import { DeleteListModal } from '@/components/modals/delete-list-modal';
-import { CannotDeleteListModal } from '@/components/modals/cannot-delete-list-modal';
 import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { getCategoryAccentColor } from '@/constants/category-colors';
@@ -42,21 +40,21 @@ async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync(TOKEN_KEY);
 }
 
-const ENTER_SPRING = { damping: 35, stiffness: 80, mass: 1.0 };
-
 export default function PersonalRoutinesScreen(): React.ReactElement {
   const router = useRouter();
   const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const { token: authContextToken } = useAuth();
-  const colors: ThemeColors = Colors[theme];
-  const screenGradient: readonly [string, string] = getBackgroundGradient(theme);
+  const colors = Colors[theme];
+  const isDark = theme === 'dark';
+  const screenGradient = getBackgroundGradient(theme);
   const activeTab = 'Personal';
-
   // ── Animation Setup ──────────────
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(40);
   const scale = useSharedValue(0.97);
+
+  const ENTER_SPRING = { damping: 35, stiffness: 80, mass: 1.0 };
 
   const pageStyle = useAnimatedStyle(() => ({
     flex: 1,
@@ -73,7 +71,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
       -1,
       true
     );
-  }, [trophyY]);
+  }, []);
 
   const trophyStyle = useAnimatedStyle(() => ({
     transform: [
@@ -91,19 +89,16 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [celebrationTrigger, setCelebrationTrigger] = useState(0);
   const [hasPendingCelebration, setHasPendingCelebration] = useState(false);
-  const [deleteListModalVisible, setDeleteListModalVisible] = useState(false);
-  const [cannotDeleteModalVisible, setCannotDeleteModalVisible] = useState(false);
-  const [listToDelete, setListToDelete] = useState<RoutineList | null>(null);
-  const [isDeletingList, setIsDeletingList] = useState(false);
   const isFocused = useIsFocused();
 
   const loadLists = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      const token: string | null = authContextToken || await getToken();
+      // Use token from context first, fall back to SecureStore only if needed
+      const t: string | null = authContextToken || await getToken();
 
-      if (token) {
-        const lists: RoutineList[] = await routineService.getGroupedRoutines(token);
+      if (t) {
+        const lists: RoutineList[] = await routineService.getGroupedRoutines(t);
         setRoutineLists(lists);
       }
     } catch (e: unknown) {
@@ -126,7 +121,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
       scale.value = withSpring(1, ENTER_SPRING);
 
       loadLists();
-    }, [loadLists, opacity, translateX, scale]),
+    }, [loadLists]),
   );
 
   useEffect(() => {
@@ -148,12 +143,15 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   useEffect(() => {
     if (isFocused && hasPendingCelebration) {
       setHasPendingCelebration(false);
+      // Delay to ensure any entrance animation is mostly done
       setTimeout(() => {
         setCelebrationTrigger(prev => prev + 1);
         setCelebrationVisible(true);
       }, 500);
     }
   }, [isFocused, hasPendingCelebration]);
+
+  // Focus re-trigger is handled by useFocusEffect above
 
   const handleTabSwitch = useCallback((tab: string): void => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
@@ -185,46 +183,45 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     });
   }, []);
 
-  const handleDeleteList = useCallback((list: RoutineList): void => {
+  const handleDeleteList = (list: RoutineList) => {
+    const listId = list.id ?? (list as RoutineList & { routineListId?: number }).routineListId;
+    if (!listId) return;
+
     if (list.routines && list.routines.length > 0) {
-      setCannotDeleteModalVisible(true);
+      Alert.alert('Cannot Delete', 'This list contains routines. Please delete or move them first.');
       return;
     }
 
-    setListToDelete(list);
-    setDeleteListModalVisible(true);
-  }, []);
+    Alert.alert('Delete List', 'Are you sure you want to delete this empty list?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const t = authContextToken || await getToken();
+            if (!t) return;
+            await routineService.deleteRoutineList(Number(listId), t);
+            setRoutineLists((current: RoutineList[]) =>
+              current.filter((item: RoutineList) => {
+                const currentId =
+                  item.id ?? (item as RoutineList & { routineListId?: number }).routineListId;
+                return Number(currentId) !== Number(listId);
+              }),
+            );
+            await loadLists();
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Failed to delete list.';
+            Alert.alert('Error', msg);
+          }
+        },
+      },
+    ]);
+  };
 
-  const confirmDeleteList = useCallback(async (): Promise<void> => {
-    if (!listToDelete) return;
-    const listId: number | undefined = listToDelete.id ?? (listToDelete as RoutineList & { routineListId?: number }).routineListId;
-    if (!listId) return;
-
-    try {
-      setIsDeletingList(true);
-      const token: string | null = authContextToken || await getToken();
-      if (!token) return;
-      await routineService.deleteRoutineList(Number(listId), token);
-      setRoutineLists((current: RoutineList[]) =>
-        current.filter((item: RoutineList) => {
-          const currentId =
-            item.id ?? (item as RoutineList & { routineListId?: number }).routineListId;
-          return Number(currentId) !== Number(listId);
-        }),
-      );
-      await loadLists();
-    } catch (err: unknown) {
-      const msg: string = err instanceof Error ? err.message : 'Failed to delete list.';
-      Alert.alert('Error', msg);
-      throw err; // Re-throw to handle animation stop in modal
-    } finally {
-      setIsDeletingList(false);
-    }
-  }, [authContextToken, listToDelete, loadLists]);
-
-  const handlePressRoutine = useCallback((routineId: string): void => {
+  const handlePressRoutine = (routineId: string) => {
     router.push({ pathname: '/(personal)/routine/[id]', params: { id: routineId } });
-  }, [router]);
+  };
 
   const hasNoData = !loading && routineLists.length === 0;
 
@@ -258,6 +255,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           showsVerticalScrollIndicator={false}
           layout={LinearTransition.springify().damping(18)}
         >
+          {/* Today's Routines' Header */}
           <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
             <TouchableOpacity
               style={[styles.sectionHeader, { backgroundColor: colors.surface, borderColor: colors.border }]}
@@ -390,22 +388,6 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           />
         )}
 
-        <DeleteListModal
-          visible={deleteListModalVisible}
-          listTitle={listToDelete?.routineListTitle || listToDelete?.categoryName || 'List'}
-          onClose={() => {
-            setDeleteListModalVisible(false);
-            setListToDelete(null);
-          }}
-          onConfirm={confirmDeleteList}
-          isLoading={isDeletingList}
-        />
-
-        <CannotDeleteListModal
-          visible={cannotDeleteModalVisible}
-          onClose={() => setCannotDeleteModalVisible(false)}
-        />
-
         <CelebrationAnimation 
           play={celebrationVisible} 
           triggerKey={celebrationTrigger} 
@@ -437,6 +419,11 @@ const styles = StyleSheet.create({
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   scroll: {
     paddingHorizontal: 18,
@@ -487,6 +474,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 10,
   },
+  emptyIconWrapper: {
+    padding: 30,
+    borderRadius: 100,
+    marginBottom: 20,
+  },
   trophyWrapper: {
       width: 180,
       height: 180,
@@ -501,6 +493,11 @@ const styles = StyleSheet.create({
       shadowOpacity: 0.2,
       shadowRadius: 20,
       elevation: 10,
+  },
+  trophyImage: {
+      width: 160,
+      height: 160,
+      resizeMode: 'contain',
   },
   emptyTitle: {
     fontSize: 18,
