@@ -55,6 +55,8 @@ export const Colors = {
   },
 };
 
+export type ThemeColors = typeof Colors.light;
+
 export const BrandColors = {
   gradientTop: '#A78BFA', 
   gradientBottom: '#C4B5FD', 

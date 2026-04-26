@@ -1,4 +1,4 @@
-import { Colors, getBackgroundGradient } from '@/constants/theme';
+import { Colors, getBackgroundGradient, ThemeColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions, useIsFocused } from '@react-navigation/native';
@@ -49,9 +49,10 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const navigation = useNavigation();
   const theme = useColorScheme() ?? 'light';
   const { token: authContextToken } = useAuth();
-  const colors = Colors[theme];
-  const screenGradient = getBackgroundGradient(theme);
+  const colors: ThemeColors = Colors[theme];
+  const screenGradient: readonly [string, string] = getBackgroundGradient(theme);
   const activeTab = 'Personal';
+
   // ── Animation Setup ──────────────
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(40);
@@ -99,7 +100,6 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const loadLists = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      // Use token from context first, fall back to SecureStore only if needed
       const token: string | null = authContextToken || await getToken();
 
       if (token) {
@@ -148,15 +148,12 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   useEffect(() => {
     if (isFocused && hasPendingCelebration) {
       setHasPendingCelebration(false);
-      // Delay to ensure any entrance animation is mostly done
       setTimeout(() => {
         setCelebrationTrigger(prev => prev + 1);
         setCelebrationVisible(true);
       }, 500);
     }
   }, [isFocused, hasPendingCelebration]);
-
-  // Focus re-trigger is handled by useFocusEffect above
 
   const handleTabSwitch = useCallback((tab: string): void => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
@@ -188,7 +185,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     });
   }, []);
 
-  const handleDeleteList = (list: RoutineList) => {
+  const handleDeleteList = useCallback((list: RoutineList): void => {
     if (list.routines && list.routines.length > 0) {
       setCannotDeleteModalVisible(true);
       return;
@@ -196,16 +193,16 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
     setListToDelete(list);
     setDeleteListModalVisible(true);
-  };
+  }, []);
 
-  const confirmDeleteList = async () => {
+  const confirmDeleteList = useCallback(async (): Promise<void> => {
     if (!listToDelete) return;
-    const listId = listToDelete.id ?? (listToDelete as RoutineList & { routineListId?: number }).routineListId;
+    const listId: number | undefined = listToDelete.id ?? (listToDelete as RoutineList & { routineListId?: number }).routineListId;
     if (!listId) return;
 
     try {
       setIsDeletingList(true);
-      const token = authContextToken || await getToken();
+      const token: string | null = authContextToken || await getToken();
       if (!token) return;
       await routineService.deleteRoutineList(Number(listId), token);
       setRoutineLists((current: RoutineList[]) =>
@@ -217,17 +214,17 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
       );
       await loadLists();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to delete list.';
+      const msg: string = err instanceof Error ? err.message : 'Failed to delete list.';
       Alert.alert('Error', msg);
       throw err; // Re-throw to handle animation stop in modal
     } finally {
       setIsDeletingList(false);
     }
-  };
+  }, [authContextToken, listToDelete, loadLists]);
 
-  const handlePressRoutine = (routineId: string) => {
+  const handlePressRoutine = useCallback((routineId: string): void => {
     router.push({ pathname: '/(personal)/routine/[id]', params: { id: routineId } });
-  };
+  }, [router]);
 
   const hasNoData = !loading && routineLists.length === 0;
 
@@ -261,7 +258,6 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           showsVerticalScrollIndicator={false}
           layout={LinearTransition.springify().damping(18)}
         >
-          {/* Today's Routines' Header */}
           <Animated.View entering={FadeInDown.delay(180).duration(560).springify()}>
             <TouchableOpacity
               style={[styles.sectionHeader, { backgroundColor: colors.surface, borderColor: colors.border }]}
