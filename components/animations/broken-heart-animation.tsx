@@ -41,37 +41,37 @@ export const BrokenHeartAnimation: React.FC<BrokenHeartAnimationProps> = ({
 
     useEffect(() => {
         if (play) {
-            // 1. Initial Heartbeat pump
+            // 1. Initial Heartbeat pump (2 quick beats)
             scale.value = withSequence(
-                withTiming(1.1, { duration: 150, easing: Easing.out(Easing.ease) }),
-                withTiming(1, { duration: 150, easing: Easing.in(Easing.ease) }),
-                withTiming(1.1, { duration: 150, easing: Easing.out(Easing.ease) }),
-                withTiming(1, { duration: 150, easing: Easing.in(Easing.ease) })
+                withTiming(1.15, { duration: 100, easing: Easing.out(Easing.ease) }),
+                withTiming(1, { duration: 100, easing: Easing.in(Easing.ease) }),
+                withTiming(1.15, { duration: 100, easing: Easing.out(Easing.ease) }),
+                withTiming(1, { duration: 100, easing: Easing.in(Easing.ease) })
             );
 
-            // 2. Crack and Split
+            // 2. Crack and Split (starts sooner, snappier bounce)
             leftHalfRotate.value = withDelay(
-                700,
-                withTiming(-15, { duration: 400, easing: Easing.bounce })
+                350,
+                withTiming(-15, { duration: 250, easing: Easing.bounce })
             );
             rightHalfRotate.value = withDelay(
-                700,
-                withTiming(15, { duration: 400, easing: Easing.bounce })
+                350,
+                withTiming(15, { duration: 250, easing: Easing.bounce })
             );
 
             leftHalfX.value = withDelay(
-                700,
-                withTiming(-10, { duration: 400, easing: Easing.out(Easing.ease) })
+                350,
+                withTiming(-10, { duration: 250, easing: Easing.out(Easing.ease) })
             );
             rightHalfX.value = withDelay(
-                700,
-                withTiming(10, { duration: 400, easing: Easing.out(Easing.ease) })
+                350,
+                withTiming(10, { duration: 250, easing: Easing.out(Easing.ease) })
             );
 
-            // 3. Fade out
+            // 3. Fade out (starts earlier, shorter duration)
             opacity.value = withDelay(
-                1500,
-                withTiming(0, { duration: 500, easing: Easing.out(Easing.ease) }, (finished) => {
+                650,
+                withTiming(0, { duration: 250, easing: Easing.out(Easing.ease) }, (finished) => {
                     if (finished && onAnimationComplete) {
                         runOnJS(onAnimationComplete)();
                     }
