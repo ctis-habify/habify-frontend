@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
+import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { TextInput } from '@/components/ui/text-input';
 import { Toast } from '@/components/ui/toast';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
@@ -78,6 +79,8 @@ export default function EditRoutineScreen(): React.ReactElement {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage] = useState("");
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
   // Time Helpers (Fake UTC Pattern to avoid timezone shifts)
   // Moved outside component for performance
@@ -178,34 +181,32 @@ export default function EditRoutineScreen(): React.ReactElement {
     frequency_detail, isAiVerified, start_date
   ]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDeletePress = useCallback(() => {
     if (!token) {
-      Alert.alert('Not Authenticated', 'Please login again.');
       router.push('/(auth)');
       return;
     }
-    Alert.alert(
-      'Delete Routine',
-      'Are you sure you want to delete this routine?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await routineService.deleteRoutine(id as string, token);
-              DeviceEventEmitter.emit('refreshPersonalRoutines');
-              router.back();
-            } catch (error: unknown) {
-              const msg = error instanceof Error ? error.message : "Failed to delete routine";
-              Alert.alert('Error', msg);
-            }
-          },
-        },
-      ]
-    );
-  }, [token, router, id]);
+    // Close the edit modal first; iOS cannot reliably stack two Modals.
+    // Wait for the close animation to finish before showing the delete modal.
+    setIsEditModalVisible(false);
+    setTimeout(() => {
+      setIsDeleteModalVisible(true);
+    }, 350);
+  }, [token, router]);
+
+  const handleDeleteConfirm = useCallback(async (): Promise<void> => {
+    if (!token) return;
+    setIsDeleteLoading(true);
+    try {
+      await routineService.deleteRoutine(id as string, token);
+      DeviceEventEmitter.emit('refreshPersonalRoutines');
+      // Navigation is handled by onAnimationFinished after the animation plays
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Failed to delete routine';
+      DeviceEventEmitter.emit('SHOW_TOAST', msg);
+      setIsDeleteLoading(false);
+    }
+  }, [token, id]);
 
   return (
     <LinearGradient colors={getBackgroundGradient(theme)} style={styles.container}>
@@ -539,7 +540,7 @@ export default function EditRoutineScreen(): React.ReactElement {
                 {/* Delete Button */}
                 <Button
                   title="Delete Routine"
-                  onPress={handleDelete}
+                  onPress={handleDeletePress}
                   variant="destructive"
                   icon={<Ionicons name="trash-outline" size={20} color="#fff" style={{ marginRight: 8 }} />}
                   style={{ marginBottom: 40 }}
@@ -555,6 +556,15 @@ export default function EditRoutineScreen(): React.ReactElement {
         visible={toastVisible} 
         message={toastMessage} 
         onClose={() => setToastVisible(false)} 
+      />
+
+      <DeleteRoutineModal
+        visible={isDeleteModalVisible}
+        routineName={routine_name}
+        onClose={() => setIsDeleteModalVisible(false)}
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleteLoading}
+        onAnimationFinished={() => router.back()}
       />
 
     </LinearGradient>
