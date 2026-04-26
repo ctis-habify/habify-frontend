@@ -62,20 +62,7 @@ const getArrayFromResponse = (data: unknown): unknown[] => {
 };
 
 const getCollaborativeRoutinesFromResponse = (data: unknown): Routine[] => {
-  if (Array.isArray(data)) return data.map(normalizeCollaborativeRoutine);
-  if (data && typeof data === 'object') {
-    const obj = data as {
-      routines?: unknown[];
-      data?: unknown[];
-      items?: unknown[];
-      result?: unknown[];
-    };
-    if (Array.isArray(obj.routines)) return obj.routines.map(normalizeCollaborativeRoutine);
-    if (Array.isArray(obj.data)) return obj.data.map(normalizeCollaborativeRoutine);
-    if (Array.isArray(obj.items)) return obj.items.map(normalizeCollaborativeRoutine);
-    if (Array.isArray(obj.result)) return obj.result.map(normalizeCollaborativeRoutine);
-  }
-  return [];
+  return getArrayFromResponse(data).map(normalizeCollaborativeRoutine);
 };
 
 const toNumberOrDefault = (value: unknown, defaultValue: number = 0): number => {

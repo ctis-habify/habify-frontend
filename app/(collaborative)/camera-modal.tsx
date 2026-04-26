@@ -75,6 +75,16 @@ export default function CollaborativeCameraModal(): React.ReactElement {
 
     try {
       setIsUploading(true);
+      setLoadingText('Validating photo...');
+
+      // 0. Validate File
+      const validation = await verificationService.validateFile(photoUri);
+      if (!validation.valid) {
+        setIsUploading(false);
+        Alert.alert('Invalid Photo', validation.error || 'Please try taking the photo again.');
+        return;
+      }
+
       setLoadingText('Uploading to cloud...');
 
       // 1. Get Signed URL
@@ -86,7 +96,7 @@ export default function CollaborativeCameraModal(): React.ReactElement {
       // 4. Submit verification to Backend
       setLoadingText('Submitting to group...');
       
-      const publicUrl = `https://storage.googleapis.com/habify-verification-photos/${objectPath}`;
+      const publicUrl = `https://storage.googleapis.com/habify-photo-uploads/${objectPath}`;
       
       // Submit to unified verification flow (Backend handles collaborative directly)
       await verificationService.submitVerification(routineId, objectPath);
@@ -98,6 +108,7 @@ export default function CollaborativeCameraModal(): React.ReactElement {
       DeviceEventEmitter.emit('refreshCollaborativeRoutines');
       
       try {
+          // Send the GCS object path or the public URL as a chat message
           await routineService.sendRoutineChatMessage(routineId, publicUrl);
       } catch {
           // ignore notification failure

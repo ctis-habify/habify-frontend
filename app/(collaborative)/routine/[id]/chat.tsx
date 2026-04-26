@@ -78,25 +78,27 @@ const PREDEFINED_CATEGORY_ORDER = [
   'general',
 ] as const;
 
-const getCategoryLabel = (category: string): string => {
-  const normalized = category.trim().toLowerCase();
-  if (normalized === 'motivation') return 'Motivation';
-  if (normalized === 'checkin') return 'Check-in';
-  if (normalized === 'support') return 'Support';
-  if (normalized === 'spicy') return 'Spicy';
-  if (normalized === 'funny') return 'Funny';
-  return 'General';
+const CATEGORY_LABELS: Record<string, string> = {
+  motivation: 'Motivation',
+  checkin: 'Check-in',
+  support: 'Support',
+  spicy: 'Spicy',
+  funny: 'Funny',
 };
 
-const getCategoryAccentColor = (category: string): string => {
-  const normalized = category.trim().toLowerCase();
-  if (normalized === 'motivation') return '#22c55e';
-  if (normalized === 'checkin') return '#3b82f6';
-  if (normalized === 'support') return '#f59e0b';
-  if (normalized === 'spicy') return '#ef4444';
-  if (normalized === 'funny') return '#e879f9';
-  return '#a78bfa';
+const getCategoryLabel = (category: string): string => 
+  CATEGORY_LABELS[category.trim().toLowerCase()] || 'General';
+
+const CATEGORY_COLORS: Record<string, string> = {
+  motivation: '#22c55e',
+  checkin: '#3b82f6',
+  support: '#f59e0b',
+  spicy: '#ef4444',
+  funny: '#e879f9',
 };
+
+const getCategoryAccentColor = (category: string): string =>
+  CATEGORY_COLORS[category.trim().toLowerCase()] || '#a78bfa';
 
 const inferCategoryFromMessageText = (text: string): string => {
   const lower = text.toLowerCase();
@@ -847,14 +849,14 @@ export default function CollaborativeChatScreen() {
                       let imageUrl = (isPrefixed ? item.text.replace(/^\[photo\]:/i, '') : item.text).trim();
     
                       if (!imageUrl.startsWith('http')) {
-                        imageUrl = `https://storage.googleapis.com/habify-verification-photos/${imageUrl.trim()}`;
+                        imageUrl = `https://storage.googleapis.com/habify-photo-uploads/${imageUrl.trim()}`;
                       }
     
                       const matchingLog = pendingLogs.find((l) => {
                         const logUrl = (l.verificationImageUrl || '').toLowerCase().trim();
                         const msgUrl = imageUrl.toLowerCase().trim();
-                        const logFileName = logUrl.split('/').pop() || '!!!';
-                        const msgFileName = msgUrl.split('/').pop() || '???';
+                        const logFileName = logUrl.split('/').pop()?.split('?')[0] || '!!!';
+                        const msgFileName = msgUrl.split('/').pop()?.split('?')[0] || '???';
                         return (
                           logUrl === msgUrl ||
                           msgUrl.includes(logUrl) ||
