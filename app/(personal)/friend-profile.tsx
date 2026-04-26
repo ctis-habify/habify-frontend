@@ -1,6 +1,7 @@
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { HomeButton } from '@/components/navigation/home-button';
 
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { useUserPublicRoutines } from '@/hooks/use-user-public-routines';
@@ -66,11 +67,7 @@ export default function FriendProfileScreen(): React.ReactElement {
 
   const age = calculateAge(user?.birthDate);
 
-  const getAvatarUrl = (name: string): string => {
-    return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(name)}`;
-  };
-
-  const avatarUrl = getAvatarUrl(displayName);
+  const avatarUrl = user?.avatar || displayName;
 
   if (loading) {
     return (
@@ -141,9 +138,12 @@ export default function FriendProfileScreen(): React.ReactElement {
           style={styles.heroSection}
         >
           <View style={styles.avatarWrapper}>
-            <Image 
-              source={{ uri: avatarUrl }} 
-              style={[styles.avatarImage, { borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)', borderWidth: 4 }]} 
+            <UserAvatar 
+              url={user.avatar} 
+              name={displayName} 
+              size={110} 
+              borderColor={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)'}
+              borderWidth={4}
             />
           </View>
 
