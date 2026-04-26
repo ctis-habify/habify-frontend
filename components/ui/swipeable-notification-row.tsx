@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/theme';
+import { Colors, ThemeColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import * as React from 'react';
@@ -65,7 +65,7 @@ function RightActionButton({
 }: {
   drag: SharedValue<number>;
   onPress: () => void;
-  colors: any;
+  colors: ThemeColors;
 }) {
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: drag.value + 72 }],

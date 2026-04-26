@@ -12,7 +12,7 @@ type Props = {
   duration?: number;
 };
 
-const getIconConfig = (icon: string, colors: any) => {
+const getIconConfig = (icon: string) => {
   switch (icon) {
     case 'bell':
       return { name: 'notifications' as const, color: '#A78BFA' };
@@ -60,7 +60,7 @@ export function Toast({ visible, message, icon = 'check', onClose, duration = 35
 
   if (!visible) return null;
 
-  const iconConfig = getIconConfig(icon, colors);
+  const iconConfig = getIconConfig(icon);
 
   return (
     <Animated.View
