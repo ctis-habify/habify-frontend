@@ -6,8 +6,7 @@ export const setAuthToken = (token: string | null): void => {
   authToken = token;
 };
 
-// const BASE_URL = 'https://habify-backend.onrender.com';k
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'https://habify-backend.onrender.com';
 
 export const api = axios.create({
   baseURL: BASE_URL,
