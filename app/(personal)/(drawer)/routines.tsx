@@ -31,7 +31,7 @@ import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { getCategoryAccentColor } from '@/constants/category-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
-import type { RoutineList } from '@/types/routine';
+import type { Routine, RoutineList, RoutineLog } from '@/types/routine';
 
 const TOKEN_KEY = 'habify_access_token';
 
@@ -99,12 +99,38 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const loadLists = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      // Use token from context first, fall back to SecureStore only if needed
       const token: string | null = authContextToken || await getToken();
 
       if (token) {
-        const lists: RoutineList[] = await routineService.getGroupedRoutines(token);
-        setRoutineLists(lists);
+        const [lists, logs] = await Promise.all([
+          routineService.getGroupedRoutines(token),
+          routineService.getRoutineLogs().catch((): RoutineLog[] => []),
+        ]);
+
+        // Build a set of routine IDs completed today (using local date for timezone safety)
+        const now = new Date();
+        const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        const completedToday = new Set<string>(
+          logs
+            .filter(log => {
+              if (!log.logDate) return false;
+              const d = new Date(log.logDate);
+              const logStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              return logStr === localTodayStr;
+            })
+            .map(log => log.routineId)
+        );
+
+        const listsWithCompletion = lists.map(list => ({
+          ...list,
+          routines: list.routines.map(r => ({
+            ...r,
+            isDone: r.isDone || r.isCompleted || completedToday.has(r.id),
+          })),
+        }));
+
+        setRoutineLists(listsWithCompletion);
       }
     } catch (e: unknown) {
       console.error('Error loading personal routine lists:', e);

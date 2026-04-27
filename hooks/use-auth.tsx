@@ -9,10 +9,11 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
-  avatar?: string;
-  birthDate?: string;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  birthDate?: string | null;
   totalXp?: number;
-  currentStreak?: number;
+  currentStreak?: number | null;
   quietModeEnabled?: boolean;
   quietModeStart?: string; // HH:mm
   quietModeEnd?: string;   // HH:mm

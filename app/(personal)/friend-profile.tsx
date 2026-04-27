@@ -65,9 +65,9 @@ export default function FriendProfileScreen(): React.ReactElement {
     return age;
   };
 
-  const age = calculateAge(user?.birthDate);
+  const age = calculateAge(user?.birthDate ?? undefined);
 
-  const avatarUrl = user?.avatar || displayName;
+  const avatarUrl = user?.avatarUrl || user?.avatar || displayName;
 
   if (loading) {
     return (
@@ -139,7 +139,7 @@ export default function FriendProfileScreen(): React.ReactElement {
         >
           <View style={styles.avatarWrapper}>
             <UserAvatar 
-              url={user.avatar} 
+              url={user.avatarUrl || user.avatar} 
               name={displayName} 
               size={110} 
               borderColor={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)'}
@@ -148,26 +148,26 @@ export default function FriendProfileScreen(): React.ReactElement {
           </View>
 
           <View style={styles.heroTextContent}>
-            <Text style={[styles.nameText, { color: '#0F172A' }]}>{displayName}</Text>
+            <Text style={[styles.nameText, { color: colors.text }]}>{displayName}</Text>
             {displayEmail ? (
-              <Text style={[styles.emailText, { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.45)' }]}>{displayEmail}</Text>
+              <Text style={[styles.emailText, { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15, 23, 42, 0.5)' }]}>{displayEmail}</Text>
             ) : null}
           </View>
 
           <View style={[styles.heroStatsContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.92)' }]}>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: '#0F172A' }]}>{age}</Text>
-              <Text style={[styles.statLabel, { color: '#475569' }]}>AGE</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{age}</Text>
+              <Text style={[styles.statLabel, { color: isDark ? 'rgba(255,255,255,0.5)' : '#475569' }]}>AGE</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: '#0F172A' }]}>{user.totalXp || 0}</Text>
-              <Text style={[styles.statLabel, { color: '#475569' }]}>TOTAL XP</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{user.totalXp || 0}</Text>
+              <Text style={[styles.statLabel, { color: isDark ? 'rgba(255,255,255,0.5)' : '#475569' }]}>TOTAL XP</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: '#0F172A' }]}>{user.currentStreak || 0}</Text>
-              <Text style={[styles.statLabel, { color: '#475569' }]}>STREAK</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{user.currentStreak || 0}</Text>
+              <Text style={[styles.statLabel, { color: isDark ? 'rgba(255,255,255,0.5)' : '#475569' }]}>STREAK</Text>
             </View>
           </View>
         </Animated.View>
@@ -181,8 +181,8 @@ export default function FriendProfileScreen(): React.ReactElement {
               <Ionicons name="calendar" size={18} color={colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.infoLabel, { color: '#64748B' }]}>MEMBER SINCE</Text>
-              <Text style={[styles.infoValue, { color: '#1E293B' }]}>
+              <Text style={[styles.infoLabel, { color: isDark ? 'rgba(255,255,255,0.4)' : '#64748B' }]}>MEMBER SINCE</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
                 {new Date(user.createdAt).toLocaleDateString('en-US', {
                   month: 'long',
                   year: 'numeric',
@@ -197,8 +197,8 @@ export default function FriendProfileScreen(): React.ReactElement {
                 <Ionicons name="person" size={18} color={colors.success} />
               </View>
               <View style={styles.infoTextContainer}>
-                <Text style={[styles.infoLabel, { color: '#64748B' }]}>GENDER</Text>
-                <Text style={[styles.infoValue, { color: '#1E293B' }]}>
+                <Text style={[styles.infoLabel, { color: isDark ? 'rgba(255,255,255,0.4)' : '#64748B' }]}>GENDER</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>
                   {user.gender.charAt(0).toUpperCase() + user.gender.slice(1)}
                 </Text>
               </View>
@@ -236,9 +236,9 @@ export default function FriendProfileScreen(): React.ReactElement {
                   activeOpacity={isJoined ? 0.7 : 1}
                 >
                   <View style={styles.routineInfo}>
-                    <Text style={styles.routineName}>{routine.routineName}</Text>
+                    <Text style={[styles.routineName, { color: colors.text }]}>{routine.routineName}</Text>
                     {routine.category ? (
-                      <Text style={styles.routineMeta}>{routine.category}</Text>
+                      <Text style={[styles.routineMeta, { color: colors.textSecondary }]}>{routine.category}</Text>
                     ) : null}
                   </View>
                   <View style={styles.routineBadges}>
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 20,
-    opacity: 0.5,
+    color: 'rgba(255,255,255,0.4)',
   },
   routineRow: {
     flexDirection: 'row',
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   routineInfo: {
     flex: 1,
@@ -484,7 +484,6 @@ const styles = StyleSheet.create({
   routineMeta: {
     fontSize: 12,
     fontWeight: '600',
-    opacity: 0.5,
   },
   routineBadges: {
     flexDirection: 'row',
@@ -495,7 +494,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -505,7 +504,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   joinButton: {
-    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+    backgroundColor: 'rgba(124, 58, 237, 0.15)',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -515,13 +514,13 @@ const styles = StyleSheet.create({
   joinButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#7C3AED',
+    color: '#a78bfa',
   },
   joinedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -529,6 +528,6 @@ const styles = StyleSheet.create({
   joinedText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#10B981',
+    color: '#34d399',
   },
 });

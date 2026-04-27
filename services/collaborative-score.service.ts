@@ -42,15 +42,31 @@ const getFirstPlaceCount = (value: unknown): number | null => {
 };
 
 const getArrayFromResponse = (data: unknown): unknown[] => {
-  if (Array.isArray(data)) return data;
-  if (!data || typeof data !== 'object') return [];
+  // BFS through the response to find the first array, prioritising known keys
+  const priorityKeys = ['data', 'leaderboard', 'items', 'results', 'entries', 'users', 'scores', 'list'];
+  const queue: unknown[] = [data];
+  const visited = new Set<unknown>();
 
-  const source = data as Record<string, unknown>;
-  const candidates = [source.data, source.items, source.results, source.leaderboard];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || visited.has(current)) continue;
+    visited.add(current);
 
-  for (const candidate of candidates) {
-    if (Array.isArray(candidate)) {
-      return candidate;
+    if (Array.isArray(current)) return current;
+    if (typeof current !== 'object') continue;
+
+    const obj = current as Record<string, unknown>;
+
+    for (const key of priorityKeys) {
+      if (Array.isArray(obj[key])) return obj[key] as unknown[];
+    }
+    for (const key of priorityKeys) {
+      if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+        queue.push(obj[key]);
+      }
+    }
+    for (const val of Object.values(obj)) {
+      if (val && typeof val === 'object') queue.push(val);
     }
   }
 
@@ -115,25 +131,48 @@ const getCupAward = (value: unknown): UserCupAward | null => {
 
 const normalizeLeaderboardEntry = (value: unknown): LeaderboardEntry => {
   const source: Record<string, unknown> = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
+  // Support nested user object: { rank, user: { id, name, ... }, totalPoints }
+  const nested: Record<string, unknown> = (source.user && typeof source.user === 'object'
+    ? source.user
+    : {}) as Record<string, unknown>;
+
+  const userId = String(
+    source.userId || source.user_id ||
+    nested.id || nested.userId ||
+    source.id || ''
+  );
+  const name = String(
+    source.name || source.fullName || source.userName ||
+    nested.name || nested.fullName || nested.userName || nested.username ||
+    source.username || 'Unnamed User'
+  );
+  const username = toStringOrNull(
+    source.username || source.user_name || nested.username || nested.user_name
+  );
+  const avatarUrl = toStringOrNull(
+    source.avatarUrl || source.avatar_url || source.profileImage ||
+    nested.avatarUrl || nested.avatar_url || nested.profileImage
+  );
 
   return {
     rank: toNumberOrDefault(source.rank || source.position, 0),
-    userId: String(source.userId || source.user_id || source.id || ''),
-    name: String(source.name || source.fullName || source.userName || source.username || 'Unnamed User'),
-    username: toStringOrNull(source.username || source.user_name),
-    avatarUrl: toStringOrNull(source.avatarUrl || source.avatar_url || source.profileImage),
+    userId,
+    name,
+    username,
+    avatarUrl,
     totalPoints: toNumberOrDefault(source.totalPoints || source.points || source.score, 0),
     cup:
-      getCupAward(source) ||
       getCupAward(source.cup) ||
       getCupAward(source.userCup) ||
       getCupAward(source.user_cup) ||
       getCupAward(source.badge) ||
-      getCupAward(source.user) ||
+      getCupAward(nested.cup) ||
+      getCupAward(nested) ||
       null,
     leaderboardMedal: normalizeLeaderboardMedal(
       source.leaderboardMedal || source.medal || source.rankMedal,
     ),
+    isDoneToday: !!(source.isDoneToday || source.is_done_today || source.doneToday || source.done),
   };
 };
 
@@ -170,10 +209,10 @@ export const collaborativeScoreService = {
   },
 
   // Get global leaderboard ranked by collaborative score
-  getLeaderboard: async (limit: number = 50): Promise<LeaderboardEntry[]> => {
-    const res = await api.get('/collaborative/score/leaderboard', {
-      params: { limit },
-    });
+  getLeaderboard: async (limit?: number): Promise<LeaderboardEntry[]> => {
+    const params: Record<string, number> = {};
+    if (limit !== undefined) params.limit = limit;
+    const res = await api.get('/collaborative/score/leaderboard', { params });
     return getArrayFromResponse(res.data).map(normalizeLeaderboardEntry);
   },
 };

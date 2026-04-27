@@ -213,12 +213,12 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     setLoadingLeaderboard(true);
     setError(null);
     try {
-      const [detail, leaderboardData, globalLeaderboardData, routineLogs]: [CollaborativeRoutineDetail, RoutineLeaderboardEntry[], LeaderboardEntry[], RoutineLog[]] = await Promise.all([
+      const [detail, leaderboardData, globalLeaderboardData, routineLogs] = await Promise.all([
         routineService.getGroupDetail(routineId),
         routineService.getCollaborativeRoutineLeaderboard(routineId).catch(() => []),
         collaborativeScoreService.getLeaderboard(200).catch(() => []),
         routineService.getRoutineLogs(routineId).catch(() => []),
-      ]);
+      ]) as any;
       setRoutineDetail(detail);
       setLeaderboard(leaderboardData);
       setGlobalLeaderboard(globalLeaderboardData);
@@ -842,10 +842,10 @@ function ParticipantChip({
   };
 
   const rippleStyle = useAnimatedStyle(() => ({
-    top: rippleY.value - 10,
-    left: rippleX.value - 10,
-    transform: [{ scale: rippleScale.value }],
-    opacity: rippleOpacity.value,
+    top: (rippleY.value ?? 0) - 10,
+    left: (rippleX.value ?? 0) - 10,
+    transform: [{ scale: rippleScale.value ?? 0 }],
+    opacity: rippleOpacity.value ?? 0,
   }));
 
   const theme = useColorScheme() ?? 'light';
@@ -975,8 +975,8 @@ function ChatFab({
 
   const animatedFabStyle = useAnimatedStyle(() => ({
     transform: [
-      { rotateZ: `${jiggleRotation.value}deg` },
-      { scale: pressScale.value }
+      { rotateZ: `${jiggleRotation.value ?? 0}deg` },
+      { scale: pressScale.value ?? 1 }
     ],
   }));
 
