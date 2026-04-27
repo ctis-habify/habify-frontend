@@ -73,7 +73,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps): React.R
         >
           <View style={styles.headerTopRow}>
             <UserAvatar 
-              url={user?.avatar} 
+              url={user?.avatarUrl || user?.avatar} 
               name={displayName} 
               size={64} 
               borderWidth={2}

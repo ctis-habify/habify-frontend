@@ -27,6 +27,7 @@ export type RoutineLeaderboardEntry = {
   avatarUrl: string | null;
   score: number;
   cup?: UserCupAward | null;
+  isDoneToday?: boolean;
 };
 
 type RoutineScoreListProps = {
@@ -67,6 +68,7 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
             const isSelf = !!currentUserId && currentUserId === entry.userId;
             const displayName = entry.name || entry.username || 'Unnamed User';
             const displayCup = entry.cup || null;
+            const isDone = entry.isDoneToday === true;
 
             return (
               <Animated.View
@@ -101,6 +103,7 @@ export const RoutineScoreList: React.FC<RoutineScoreListProps> = ({
 
                 <View style={styles.nameContainer}>
                   <View style={styles.nameRow}>
+                    <View style={[styles.statusDot, { backgroundColor: isDone ? '#22c55e' : isDark ? '#334155' : '#cbd5e1' }]} />
                     <Text style={[styles.nameText, { color: colors.text }, isSelf && { color: collaborativePrimary, fontWeight: '800' }]} numberOfLines={1}>
                       {displayName} {isSelf ? '(You)' : ''}
                     </Text>
@@ -224,5 +227,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: -2,
     textTransform: 'uppercase',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

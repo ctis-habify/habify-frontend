@@ -9,6 +9,8 @@ export interface User {
   currentStreak: number;
   birthDate?: string;
   fcmToken?: string;
+  avatarUrl?: string | null;
+  avatar?: string | null; // For legacy compatibility
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;

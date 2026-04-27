@@ -60,7 +60,7 @@ export default function ProfileScreen(): React.ReactElement {
     return age;
   };
 
-  const age = calculateAge(user?.birthDate);
+  const age = calculateAge(user?.birthDate ?? undefined);
 
   const getStatus = (pts: number): { label: string; color: string } => {
     if (pts >= 100) return { label: 'Pro', color: '#FFD700' };
@@ -100,7 +100,7 @@ export default function ProfileScreen(): React.ReactElement {
         >
           <View style={styles.avatarWrapper}>
             <UserAvatar 
-              url={user?.avatar} 
+              url={user?.avatarUrl || user?.avatar} 
               name={displayName} 
               size={110} 
               borderColor={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)'}

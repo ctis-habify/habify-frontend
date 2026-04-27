@@ -88,6 +88,8 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
 
   const color = useMemo(() => remainingColor(minsLeft, colors), [minsLeft, colors]);
 
+  const isDone = routine.isCompleted || routine.isDone;
+
   return (
     <Pressable
       onPress={onPress}
@@ -95,7 +97,7 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
         styles.container,
         {
           backgroundColor: colors.card,
-          borderColor: colors.border,
+          borderColor: isDone ? colors.success + '40' : colors.border,
           shadowOpacity: isDark ? 0 : 0.06,
         },
         pressed && styles.pressed,
@@ -103,9 +105,28 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
     >
       <View style={styles.contentRow}>
         <View style={styles.textWrap}>
-          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <Text 
+              style={[
+                styles.name, 
+                { color: colors.text, marginBottom: 0 },
+                isDone && { textDecorationLine: 'line-through', opacity: 0.6 }
+              ]} 
+              numberOfLines={1}
+            >
+              {title}
+            </Text>
+            {isDone && (
+              <Ionicons 
+                name="checkmark-circle" 
+                size={20} 
+                color={colors.success} 
+                style={{ marginLeft: 8 }} 
+              />
+            )}
+          </View>
           
-          {label !== 'Pending' && (
+          {label !== 'Pending' && !isDone && (
             <View style={styles.badgeRow}>
               {label !== 'Weekly' && (
                 <View
@@ -118,7 +139,7 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
                    <Text style={[styles.duration, { color: isDark ? colors.white : color }]}>{label}</Text>
                 </View>
               )}
-
+              
               {!!routine.collaborativeKey && (
                 <View
                   style={[
@@ -134,7 +155,10 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
                   <Text style={[styles.groupBadgeText, { color: isDark ? '#38bdf8' : '#0284c7' }]}>Group</Text>
                 </View>
               )}
+            </View>
+          )}
 
+          <View style={[styles.badgeRow, isDone && { marginTop: 4 }]}>
               {(routine.streak ?? 0) > 0 && (
                 <View style={[styles.statBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(217, 119, 6, 0.05)' }]}>
                   <AnimatedFlame streak={routine.streak} size={12} />
@@ -150,17 +174,18 @@ export function RoutineCard({ routine, onPress, onPressCamera }: Props): React.R
                   </Text>
                 </View>
               )}
-            </View>
-          )}
+          </View>
         </View>
 
-        <Pressable
-          onPress={() => onPressCamera?.(routine.id)}
-          style={[styles.cameraBtn, { backgroundColor: isDark ? colors.background : colors.surface, borderColor: colors.border, borderWidth: 1 }]}
-          hitSlop={10}
-        >
-          <Ionicons name="camera" size={20} color={colors.primary} />
-        </Pressable>
+        {!isDone && (
+          <Pressable
+            onPress={() => onPressCamera?.(routine.id)}
+            style={[styles.cameraBtn, { backgroundColor: isDark ? colors.background : colors.surface, borderColor: colors.border, borderWidth: 1 }]}
+            hitSlop={10}
+          >
+            <Ionicons name="camera" size={20} color={colors.primary} />
+          </Pressable>
+        )}
       </View>
     </Pressable>
   );

@@ -52,6 +52,7 @@ export interface LeaderboardEntry {
   totalPoints: number;
   cup?: UserCupAward | null;
   leaderboardMedal?: LeaderboardMedal | null;
+  isDoneToday?: boolean;
 }
 
 export const CUP_TIERS: readonly CupInfo[] = [

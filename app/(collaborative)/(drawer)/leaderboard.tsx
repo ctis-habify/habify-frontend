@@ -135,7 +135,7 @@ export default function LeaderboardScreen(): React.ReactElement {
   const fetchLeaderboard = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
-      const data = await collaborativeScoreService.getLeaderboard(50);
+      const data = await collaborativeScoreService.getLeaderboard();
       setEntries(data);
     } catch {
       setEntries([]);

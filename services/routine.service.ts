@@ -1,5 +1,5 @@
-import { PublicRoutine, Routine, RoutineList, RoutineLog, TodayScreenResponse } from '../types/routine';
 import { UserCupAward, createCupAwardFromFirstPlaceCount, normalizeCupTier, normalizeLeaderboardMedal } from '../types/collaborative-score';
+import { PublicRoutine, Routine, RoutineList, RoutineLog, TodayScreenResponse } from '../types/routine';
 import { api } from './api';
 
 export type PredefinedRoutineMessage = {
@@ -222,6 +222,7 @@ const normalizeRoutineLeaderboardEntry = (item: unknown): Record<string, unknown
     leaderboardMedal: normalizeLeaderboardMedal(
       source.leaderboardMedal || source.medal || source.rankMedal,
     ),
+    isDoneToday: !!(source.isDoneToday || source.is_done_today || source.doneToday || source.done),
   };
 };
 
@@ -253,38 +254,37 @@ const normalizeRoutine = (item: unknown): Routine => {
   }
 
   const rawIsDone = source.isDone === true || source.is_done === true || source.is_completed === true || source.completed === true;
-  
-  // Strict Today Check: We look for ANY field that indicates when this was last touched.
+
   let isDone = rawIsDone;
-  const lastTouch = toStringOrUndefined(
-    source.updatedAt || 
-    source.updated_at || 
-    source.lastCompletedAt || 
-    source.last_done || 
-    source.logDate || 
+
+  // Strict Today Check: only validate against completion-specific timestamps.
+  // We intentionally exclude updatedAt/updated_at because those reflect the routine's
+  // last edit time, not completion time — using them caused false resets.
+  const completionTouch = toStringOrUndefined(
+    source.lastCompletedAt ||
+    source.lastCompletedDate ||
+    source.last_completed_date ||
+    source.last_done ||
+    source.logDate ||
     source.log_date ||
     source.completionDate
   );
 
-  if (isDone) {
-    if (!lastTouch) {
-      // If we have no timestamp at all, we cannot prove it was done TODAY.
-      // Given the legacy 'stuck' issues, we assume it's stale and reset it.
-      isDone = false; 
-    } else {
-      try {
-        const d = new Date(lastTouch);
-        const updateDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  if (isDone && completionTouch) {
+    try {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-        const now = new Date();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        
-        if (updateDateStr !== todayStr) {
-          isDone = false; // Stale completion from a previous day
+      // Always parse as Date so local timezone is used (avoids UTC-vs-local mismatch).
+      const d = new Date(completionTouch);
+      if (!isNaN(d.getTime())) {
+        const completionDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (completionDateStr !== todayStr) {
+          isDone = false;
         }
-      } catch (e) {
-        isDone = false;
       }
+    } catch (e) {
+      // If we can't parse, leave isDone as-is (trust the backend).
     }
   }
 
@@ -462,7 +462,7 @@ export const routineService = {
     }
   },
   
-  // ✅ Get Calendar Logs (Unified for Personal & Collaborative)
+  // Get Calendar Logs (Unified for Personal & Collaborative)
   async getCalendarLogs(routineId: string, startDate: string, endDate: string, token: string): Promise<{date: string, isDone: boolean}[]> {
     const res: { data: unknown } = await api.get(`/routines/${routineId}/calendar`, {
       headers: { Authorization: `Bearer ${token}` },

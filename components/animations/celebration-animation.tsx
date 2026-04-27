@@ -240,7 +240,7 @@ export function CelebrationAnimation({
 
     return (
         <View style={styles.fullScreen} pointerEvents="none">
-            <Animated.View style={[styles.backdrop, { opacity: overlayOpacity.value }]}>
+            <Animated.View style={[styles.backdrop, overlayStyle]}>
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
             </Animated.View>
             

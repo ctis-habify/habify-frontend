@@ -593,25 +593,31 @@ export default function FriendsScreen(): React.ReactElement {
               renderItem={({ item, index }) => (
                 <Animated.View
                   entering={ZoomIn.delay(index * 50).duration(280).springify()}
-                  style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
-                  <View style={styles.avatarWrap}>
-                    <UserAvatar 
-                      url={item.avatarUrl} 
-                      name={item.name} 
-                      size={48} 
-                    />
-                  </View>
-                  <View style={styles.info}>
-                    <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    {item.username && (
-                      <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
-                        @{item.username}
+                  <TouchableOpacity
+                    style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    onPress={() => router.push({ pathname: '/(personal)/friend-profile', params: { userId: item.id } })}
+                    activeOpacity={0.75}
+                  >
+                    <View style={styles.avatarWrap}>
+                      <UserAvatar
+                        url={item.avatarUrl}
+                        name={item.name}
+                        size={48}
+                      />
+                    </View>
+                    <View style={styles.info}>
+                      <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
+                        {item.name}
                       </Text>
-                    )}
-                  </View>
+                      {item.username && (
+                        <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
+                          @{item.username}
+                        </Text>
+                      )}
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.icon} style={{ opacity: 0.4 }} />
+                  </TouchableOpacity>
                 </Animated.View>
               )}
             />

@@ -1,5 +1,4 @@
-import { FileSystemUploadType, uploadAsync } from 'expo-file-system/legacy';
-import { getInfoAsync } from 'expo-file-system';
+import { FileSystemUploadType, uploadAsync, getInfoAsync } from 'expo-file-system/legacy';
 import { api } from './api';
 
 export interface VerificationResponse {

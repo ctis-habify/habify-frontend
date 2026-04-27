@@ -122,7 +122,7 @@ export function RoutineHistory({ routineId, themeColor, createdAt, endTime }: Ro
 
     // Include months that have logs
     logs.forEach(log => {
-      const d = new Date(log.logDate);
+      const d = new Date(log.date);
       if (!isNaN(d.getTime())) {
         const key = `${d.getFullYear()}-${d.getMonth()}`;
         monthsMap.set(key, { month: d.getMonth(), year: d.getFullYear() });
