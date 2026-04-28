@@ -24,9 +24,9 @@ export default function LoginScreen(): React.ReactElement {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<LoginErrors>({});
   const [remember, setRemember] = useState(false);
-  
+
   const { login, loading, user, initialized } = useAuth();
-  
+
   React.useEffect(() => {
     if (initialized && user) {
       router.replace('/(personal)/(drawer)/routines');
@@ -56,9 +56,9 @@ export default function LoginScreen(): React.ReactElement {
     } catch (error: unknown) {
       let msg = 'Something went wrong.';
       if (error instanceof Error) {
-          msg = error.message;
+        msg = error.message;
       } else if (typeof error === 'object' && error !== null && 'message' in error) {
-          msg = String((error as { message: unknown }).message);
+        msg = String((error as { message: unknown }).message);
       }
       Alert.alert('Login failed', msg);
     }
@@ -69,7 +69,7 @@ export default function LoginScreen(): React.ReactElement {
       <AuthHeader />
 
       <View style={{ width: '100%' }}>
-        <TextInput 
+        <TextInput
           label="Email Address"
           value={email}
           onChangeText={(value) => {
@@ -83,7 +83,7 @@ export default function LoginScreen(): React.ReactElement {
           error={errors.email}
         />
 
-        <TextInput 
+        <TextInput
           label="Password"
           value={password}
           onChangeText={(value) => {
@@ -95,7 +95,7 @@ export default function LoginScreen(): React.ReactElement {
           icon="lock-closed-outline"
           error={errors.password}
         />
-        
+
         <View style={styles.rowBetween}>
           <View style={styles.rememberRow}>
             <Checkbox
@@ -111,10 +111,10 @@ export default function LoginScreen(): React.ReactElement {
           </TouchableOpacity>
         </View>
 
-        <Button 
-          title="Log In" 
-          onPress={handleLogin} 
-          isLoading={loading} 
+        <Button
+          title="Log In"
+          onPress={handleLogin}
+          isLoading={loading}
           style={{ marginTop: 24 }}
         />
 

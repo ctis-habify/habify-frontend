@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -12,6 +11,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StepBasicInfo } from '@/components/routines/create/step-basic-info';
 import { StepGamification } from '@/components/routines/create/step-gamification';
@@ -30,24 +30,24 @@ export default function CreateCollaborativeRoutineScreen() {
     const screenGradient = getBackgroundGradient(theme, 'collaborative');
     const collaborativePrimary = Colors[theme].collaborativePrimary;
     const categoryIdParam = Array.isArray(params.categoryId) ? params.categoryId[0] : params.categoryId;
-    
-    const { 
-        step, 
-        nextStep, 
-        prevStep, 
-        submit, 
-        isSubmitting, 
-        formState, 
-        updateForm, 
-        categories, 
-        loadCategories, 
-        loadingCategories 
+
+    const {
+        step,
+        nextStep,
+        prevStep,
+        submit,
+        isSubmitting,
+        formState,
+        updateForm,
+        categories,
+        loadCategories,
+        loadingCategories
     } = useCreateRoutine(categoryIdParam);
 
     const renderHeader = () => (
         <View style={[styles.header, { paddingTop: Math.max(insets.top + 10, 40) }]}>
-            <TouchableOpacity 
-                onPress={() => router.back()} 
+            <TouchableOpacity
+                onPress={() => router.back()}
                 style={[styles.backBtn, { backgroundColor: Colors[theme].surface }]}
             >
                 <Ionicons name="arrow-back" size={24} color={Colors[theme].text} />
@@ -63,17 +63,17 @@ export default function CreateCollaborativeRoutineScreen() {
     return (
         <LinearGradient colors={screenGradient} style={styles.container}>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-                
+
                 {renderHeader()}
                 <WizardProgress currentStep={step} steps={['Basics', 'Schedule', 'Rules']} />
 
-                <ScrollView 
+                <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
                     nestedScrollEnabled={true}
                 >
                     {step === 0 && (
-                        <StepBasicInfo 
+                        <StepBasicInfo
                             formState={formState}
                             updateForm={updateForm}
                             categories={categories}
@@ -91,14 +91,14 @@ export default function CreateCollaborativeRoutineScreen() {
 
                 {/* Footer Buttons */}
                 <View style={styles.footer}>
-                     {step > 0 && (
-                         <TouchableOpacity onPress={prevStep} style={[styles.backStepBtn, { backgroundColor: Colors[theme].surface, borderColor: Colors[theme].border }]}>
-                             <Text style={[styles.backStepText, { color: Colors[theme].textSecondary }]}>Back</Text>
-                         </TouchableOpacity>
-                     )}
-                     
-                     <TouchableOpacity 
-                        onPress={step === 2 ? submit : nextStep} 
+                    {step > 0 && (
+                        <TouchableOpacity onPress={prevStep} style={[styles.backStepBtn, { backgroundColor: Colors[theme].surface, borderColor: Colors[theme].border }]}>
+                            <Text style={[styles.backStepText, { color: Colors[theme].textSecondary }]}>Back</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity
+                        onPress={step === 2 ? submit : nextStep}
                         disabled={isSubmitting}
                         style={{ flex: 1, marginLeft: step > 0 ? 15 : 0 }}
                     >
@@ -112,7 +112,7 @@ export default function CreateCollaborativeRoutineScreen() {
                             )}
                             {!isSubmitting && step < 2 && <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />}
                         </View>
-                     </TouchableOpacity>
+                    </TouchableOpacity>
                 </View>
 
             </KeyboardAvoidingView>
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     headerTitle: {
-        fontSize: 18, 
+        fontSize: 18,
         fontWeight: '700',
         textAlign: 'center',
     },
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     footer: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
         padding: 24,
-        paddingBottom: Platform.OS === 'ios' ? 40 : 24, // Safe area
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -162,10 +162,10 @@ const styles = StyleSheet.create({
         paddingVertical: 16, paddingHorizontal: 32,
         borderRadius: 20,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        shadowOpacity: 0.3, 
+        shadowOpacity: 0.3,
         shadowRadius: 10,
         elevation: 8,
-        borderWidth: 1, 
+        borderWidth: 1,
     },
     nextStepText: { fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5, color: '#FFFFFF' },
 });

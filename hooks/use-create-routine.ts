@@ -9,16 +9,13 @@ import { useAuth } from './use-auth';
 export function useCreateRoutine(initialCategoryId?: string) {
   const router = useRouter();
   const { token } = useAuth();
-  
-  // Steps
+
   const [step, setStep] = useState<CreateRoutineStep>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Data
+
   const [categories, setCategories] = useState<import('@/types/category').Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
-  // Form State
   const [formState, setFormState] = useState<CreateRoutineFormState>({
     categoryId: initialCategoryId ? Number(initialCategoryId) : null,
     routineName: '',
@@ -36,7 +33,6 @@ export function useCreateRoutine(initialCategoryId?: string) {
     completionXp: '10',
   });
 
-  // Load Categories
   const loadCategories = useCallback(async () => {
     try {
       setLoadingCategories(true);
@@ -54,12 +50,9 @@ export function useCreateRoutine(initialCategoryId?: string) {
     loadCategories();
   }, [loadCategories]);
 
-  // Update Form Helper
   const updateForm = useCallback((updates: Partial<CreateRoutineFormState>) => {
     setFormState(prev => ({ ...prev, ...updates }));
   }, []);
-
-  // Validation
   const validateStep = useCallback((currentStep: number): boolean => {
     if (currentStep === 0) {
       if (!formState.categoryId) { Alert.alert("Missing Field", "Please select a category."); return false; }
@@ -71,70 +64,67 @@ export function useCreateRoutine(initialCategoryId?: string) {
     }
     return true;
   }, [formState]);
-  
-  // Navigation
+
   const nextStep = useCallback(() => {
-      if (validateStep(step)) {
-           setStep(s => Math.min(s + 1, 2) as CreateRoutineStep);
-      }
+    if (validateStep(step)) {
+      setStep(s => Math.min(s + 1, 2) as CreateRoutineStep);
+    }
   }, [step, validateStep]);
 
   const prevStep = useCallback(() => {
     setStep(s => Math.max(s - 1, 0) as CreateRoutineStep);
   }, []);
 
-  // Submit
   const submit = useCallback(async () => {
     if (!validateStep(step)) return;
     setIsSubmitting(true);
 
     try {
-        const allLists = await routineService.getGroupedRoutines();
-        
-        // Try to find a list 
-        const selectedCategory = categories.find(c => c.categoryId === formState.categoryId);
-        if (!selectedCategory) throw new Error("Category not found");
+      const allLists = await routineService.getGroupedRoutines();
 
-        const existingList = allLists.find((l: { categoryId: number; routineListTitle: string; id: number }) => 
-            (l.categoryId === formState.categoryId) || (l.routineListTitle === selectedCategory.name)
-        );
+      const selectedCategory = categories.find(c => c.categoryId === formState.categoryId);
+      if (!selectedCategory) throw new Error("Category not found");
 
-        const targetListId = existingList ? existingList.id : undefined;
+      const existingList = allLists.find((l: { categoryId: number; routineListTitle: string; id: number }) =>
+        (l.categoryId === formState.categoryId) || (l.routineListTitle === selectedCategory.name)
+      );
 
-        const formatTime = (d: Date) => 
-           `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:00`;
+      const targetListId = existingList ? existingList.id : undefined;
 
-        const formatDate = (d: Date) => d.toISOString().split('T')[0];
+      const formatTime = (d: Date) =>
+        `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:00`;
 
-        const payload = {
-            routineListId: targetListId,
-            categoryId: formState.categoryId!,
-            routineName: formState.routineName.trim(),
-            description: formState.description.trim(),
-            frequencyType: formState.frequency.charAt(0) + formState.frequency.slice(1).toLowerCase(),
-            startTime: formState.frequency === 'Weekly' ? '00:00:00' : formatTime(formState.startTime),
-            endTime: formState.frequency === 'Weekly' ? '23:59:59' : formatTime(formState.endTime),
-            startDate: formatDate(formState.startDate),
-            lives: formState.lives,
-            isPublic: formState.isPublic,
-            rewardCondition: formState.rewardCondition.trim(),
-            ageRequirement: formState.ageRequirement ? parseInt(formState.ageRequirement) : undefined,
-            genderRequirement: formState.genderRequirement === 'na' ? undefined : formState.genderRequirement,
-            xpRequirement: formState.xpRequirement ? parseInt(formState.xpRequirement) : undefined,
-            completionXp: formState.completionXp ? parseInt(formState.completionXp) : undefined,
-        };
+      const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
-        await routineService.createCollaborativeRoutine(payload);
+      const payload = {
+        routineListId: targetListId,
+        categoryId: formState.categoryId!,
+        routineName: formState.routineName.trim(),
+        description: formState.description.trim(),
+        frequencyType: formState.frequency.charAt(0) + formState.frequency.slice(1).toLowerCase(),
+        startTime: formState.frequency === 'Weekly' ? '00:00:00' : formatTime(formState.startTime),
+        endTime: formState.frequency === 'Weekly' ? '23:59:59' : formatTime(formState.endTime),
+        startDate: formatDate(formState.startDate),
+        lives: formState.lives,
+        isPublic: formState.isPublic,
+        rewardCondition: formState.rewardCondition.trim(),
+        ageRequirement: formState.ageRequirement ? parseInt(formState.ageRequirement) : undefined,
+        genderRequirement: formState.genderRequirement === 'na' ? undefined : formState.genderRequirement,
+        xpRequirement: formState.xpRequirement ? parseInt(formState.xpRequirement) : undefined,
+        completionXp: formState.completionXp ? parseInt(formState.completionXp) : undefined,
+      };
 
-        DeviceEventEmitter.emit('SHOW_TOAST', "Collaborative routine created!");
-        router.replace('/(collaborative)/(drawer)/routines');
+      await routineService.createCollaborativeRoutine(payload);
+
+      DeviceEventEmitter.emit('SHOW_TOAST', "Collaborative routine created!");
+      router.replace('/(collaborative)/(drawer)/routines');
     } catch (err: unknown) {
-        console.error(err);
-        let msg = "Failed to create routine";
-        if (err instanceof Error) msg = err.message;
-        Alert.alert("Error", msg);
+      console.error(err);
+      let msg = "Failed to create routine";
+      if (err instanceof Error) msg = err.message;
+      Alert.alert("Error", msg);
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   }, [step, validateStep, formState, categories, router]);
 
@@ -148,6 +138,6 @@ export function useCreateRoutine(initialCategoryId?: string) {
     updateForm,
     categories,
     loadingCategories,
-    loadCategories, // Exported to allow manual refresh if needed (e.g. after creating category)
+    loadCategories,
   };
 }

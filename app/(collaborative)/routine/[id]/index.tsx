@@ -193,7 +193,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const [pokeAnimationVisible, setPokeAnimationVisible] = useState(false);
   const [pokeTrigger, setPokeTrigger] = useState(0);
   const [pokedName, setPokedName] = useState('');
-  
+
   const [leaderboard, setLeaderboard] = useState<RoutineLeaderboardEntry[]>([]);
   const [globalLeaderboard, setGlobalLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
@@ -241,10 +241,8 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
 
     const participants: GroupParticipant[] = detail.participants || [];
     const maxLives: number = detail.maxLives || detail.lives || 0;
-    
-    // 1. Identify members to remove (lives - missedCount <= 0)
-    // We assume the data is available in the participant object or we use global detail if single-user health is tracked differently.
-    // Based on user request, it's participant-specific.
+
+    // 1. Identify members to remove 
     const toRemove: GroupParticipant[] = participants.filter((p: GroupParticipant) => {
       const pLives: number = p.lives ?? maxLives;
       const pMissed: number = p.missedCount ?? 0;
@@ -253,7 +251,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
 
     if (toRemove.length > 0) {
       console.log(`[Elimination] Removing ${toRemove.length} members with 0 lives.`);
-      
+
       for (const p of toRemove) {
         const uid: string | undefined = p.userId || p.user?.id || p.id;
         if (!uid) continue;
@@ -269,18 +267,17 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
             currentUserId === detailCreatorId;
 
           if (uid === currentUserId && isCurrentUserCreator) {
-            // Creator cannot be removed via the standard endpoint — use the defeat endpoint instead
             await routineService.handleCreatorDefeat(routineId);
             Alert.alert("Eliminated!", "You have run out of lives. The group has been updated. 💔");
             router.replace('/(collaborative)/(drawer)/routines');
-            return; // Stop here as we are redirected
+            return;
           } else {
             await routineService.removeMemberFromRoutine(routineId, uid);
 
             if (uid === currentUserId) {
               Alert.alert("Eliminated!", "You have run out of lives and have been removed from the group. 💔");
               router.replace('/(collaborative)/(drawer)/routines');
-              return; // Stop here as we are redirected
+              return;
             }
           }
         } catch (err: unknown) {
@@ -309,7 +306,6 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   useEffect(() => {
     loadRoutineDetail();
 
-    // Also listen for refresh events
     const sub = DeviceEventEmitter.addListener('refreshCollaborativeRoutines', () => {
       loadRoutineDetail();
     });
@@ -493,19 +489,15 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
 
     const targetName: string = participant.user?.name || participant.name || participant.user?.username || participant.username || 'User';
 
-    // Optimistic Trigger: Show animation and haptics instantly
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setPokedName(targetName);
     setPokeTrigger((prev: number) => prev + 1);
     setPokeAnimationVisible(true);
 
     try {
-      // Background Request: Don't wait for completion to enable subsequent pokes
       await notificationService.sendPoke(targetUserId, routineId);
     } catch (err: unknown) {
-      // Revert if critical? No, poking is social. Just log?
       console.warn('Poke request failed:', err);
-      // Optional: Show error only if they aren't spamming
     }
   }, [routineId]);
 
@@ -546,7 +538,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
           ? String((leaveError as { message: unknown }).message)
           : 'Could not leave the routine. Please try again.';
       Alert.alert('Error', message);
-      throw leaveError; // Re-throw to handle in modal
+      throw leaveError;
     } finally {
       setIsLeavingRoutine(false);
     }
@@ -638,10 +630,10 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               </View>
             </Animated.View>
 
-            <RoutineHistory 
-              routineId={routineId as string} 
-              themeColor={collaborativePrimary} 
-              createdAt={routineDetail?.createdAt} 
+            <RoutineHistory
+              routineId={routineId as string}
+              themeColor={collaborativePrimary}
+              createdAt={routineDetail?.createdAt}
               endTime={routineDetail?.endTime}
             />
 
@@ -662,7 +654,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                     // Get today's completion status for each participant
                     const todayStr = new Date().toISOString().split('T')[0];
                     const statusMap = new Map<string, 'completed' | 'pending' | 'missed' | 'none'>();
-                    
+
                     const now = new Date();
                     const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                     const isTimePassed = routineDetail?.endTime ? currentTimeStr > routineDetail.endTime : false;
@@ -687,7 +679,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
                         globalCupByUserId.get(uidStr) ||
                         null;
                       const isSelf = !!currentUserId && currentUserId === uidStr;
-                      
+
                       let status: 'completed' | 'pending' | 'missed' | 'none' = statusMap.get(uidStr) || 'none';
                       if (status === 'none' && isTimePassed) {
                         status = 'missed';
@@ -720,7 +712,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               <View style={styles.sectionHeaderRow}>
                 <Text style={[styles.sectionTitle, { color: collaborativePrimary }]}>Routine Details</Text>
                 {isCreator && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => router.push(`/(personal)/routine/${routineId}`)}
                     style={[styles.editIconBtn, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}
                   >
@@ -740,10 +732,10 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               ))}
             </Animated.View>
 
-            <RoutineScoreList 
-              leaderboard={leaderboardWithGlobalCups} 
-              currentUserId={currentUserId} 
-              loading={loadingLeaderboard} 
+            <RoutineScoreList
+              leaderboard={leaderboardWithGlobalCups}
+              currentUserId={currentUserId}
+              loading={loadingLeaderboard}
             />
           </>
         ) : null}
@@ -827,12 +819,10 @@ function ParticipantChip({
   const handlePress = (event: any): void => {
     if (isSelf || disabled) return;
 
-    // Get touch coordinates
     const { locationX, locationY }: { locationX: number; locationY: number } = event.nativeEvent;
     rippleX.value = locationX;
     rippleY.value = locationY;
 
-    // Trigger ripple
     rippleScale.value = 0;
     rippleOpacity.value = 0.4;
     rippleScale.value = withTiming(2.5, { duration: 400 });
@@ -877,29 +867,29 @@ function ParticipantChip({
               <Ionicons name="sparkles" size={12} color={collaborativePrimary} style={{ opacity: 0.8 }} />
             )}
           </View>
-            <View style={styles.participantNameRow}>
-              <Text
-                style={[
-                  styles.participantChipText,
-                  { color: colors.text },
-                  isSelf && { color: collaborativePrimary, fontWeight: '700' },
-                ]}
-                numberOfLines={1}
-              >
-                {name}
-                {isSelf ? ' (You)' : ''}
-              </Text>
-              {completionStatus === 'completed' && (
-                <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-              )}
-              {completionStatus === 'pending' && (
-                <Ionicons name="time" size={16} color="#fbbf24" />
-              )}
-              {completionStatus === 'missed' && (
-                <Ionicons name="close-circle" size={16} color={colors.error} />
-              )}
-              <CupIndicator cup={participantCup} compact transparent />
-            </View>
+          <View style={styles.participantNameRow}>
+            <Text
+              style={[
+                styles.participantChipText,
+                { color: colors.text },
+                isSelf && { color: collaborativePrimary, fontWeight: '700' },
+              ]}
+              numberOfLines={1}
+            >
+              {name}
+              {isSelf ? ' (You)' : ''}
+            </Text>
+            {completionStatus === 'completed' && (
+              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+            )}
+            {completionStatus === 'pending' && (
+              <Ionicons name="time" size={16} color="#fbbf24" />
+            )}
+            {completionStatus === 'missed' && (
+              <Ionicons name="close-circle" size={16} color={colors.error} />
+            )}
+            <CupIndicator cup={participantCup} compact transparent />
+          </View>
         </>
       )}
     </Pressable>
@@ -925,13 +915,11 @@ function ChatFab({
   const pressScale = useSharedValue(1);
 
   React.useEffect(() => {
-    // Continuous floating animation
     floatY.value = withRepeat(
       withTiming(-6, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     );
-    // Continuous subtle pulse
     pulseScale.value = withRepeat(
       withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
       -1,
@@ -939,8 +927,7 @@ function ChatFab({
     );
   }, [floatY, pulseScale]);
 
-  // Optional: Link this to routine-specific unread message state when available
-  const hasUnread = false; 
+  const hasUnread = false;
 
   React.useEffect(() => {
     if (hasUnread) {
@@ -1105,7 +1092,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1.5,
     marginBottom: 16,
-    shadowColor: '#1E1B4B', // Indigo-950 for tinted shadow
+    shadowColor: '#1E1B4B',
     shadowOpacity: 0.06,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -1212,8 +1199,8 @@ const styles = StyleSheet.create({
   },
   pokeHint: {
     fontSize: 11,
-    marginTop: 2, // Reduced from 4
-    marginBottom: 4, // Increased slightly
+    marginTop: 2,
+    marginBottom: 4,
     fontStyle: 'italic',
   },
   infoRow: {

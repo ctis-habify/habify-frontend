@@ -14,7 +14,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { routineService } from '../../../services/routine.service';
-import type { Routine } from '../../../types/routine';
+import type { Routine, TodayScreenResponse } from '../../../types/routine';
 
 
 import { Toast } from '@/components/ui/toast';
@@ -44,7 +44,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   const colors = Colors[theme];
   const screenColors = getBackgroundGradient(theme);
 
-  // ── Animation Setup ──────────────
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(40);
   const scale = useSharedValue(0.97);
@@ -79,15 +78,15 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         });
       } else {
         // Navigate to Personal Detail
-        router.push({ 
-          pathname: '/(personal)/routine/[id]', 
-          params: { id: routine.id } 
+        router.push({
+          pathname: '/(personal)/routine/[id]',
+          params: { id: routine.id }
         });
       }
     },
     [router, collabIds],
   );
-  
+
   const handleCameraPress = useCallback(
     (id: string) => {
       router.push({ pathname: '/(personal)/camera-modal', params: { routineId: id } });
@@ -108,18 +107,16 @@ export default function TodayRoutinesScreen(): React.ReactElement {
 
       // Token'ı interceptor'a set et
       setAuthToken(token);
-      
-      // Fetch collab IDs for reliable detection
+
       try {
         const joinedCollab = await routineService.getCollaborativeRoutines();
         const cIds = new Set(joinedCollab.map(r => r.id));
         setCollabIds(cIds);
       } catch (_ce) {
-        // ignore
       }
 
       const res: TodayScreenResponse = await routineService.getTodayRoutines();
-      
+
       const incoming: Routine[] = res.routines || [];
       const normalized: Routine[] = incoming;
       setStreak(res.streak ?? 0);
@@ -134,7 +131,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         // Show if not completed today and not failed
         if (r.isCompleted || r.isDone || r.isFailed) return false;
 
-        // Time-based filtering: hide if not started yet OR if deadline passed (Failed)
         if (r.startTime) {
           const [sh, sm, ss] = r.startTime.split(':').map(Number);
           const startInSeconds = (sh || 0) * 3600 + (sm || 0) * 60 + (ss || 0);
@@ -147,9 +143,9 @@ export default function TodayRoutinesScreen(): React.ReactElement {
           if (currentTimeInSeconds > endInSeconds) return false;
         }
 
-        return true; 
+        return true;
       });
-      
+
       setItems(filtered);
 
       const reminder = notificationService.getUnfinishedTaskReminder(filtered.length);
@@ -186,15 +182,12 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   }, [isFocused, triggerEntrance, load]);
 
   useEffect(() => {
-    // Also listen for cross-screen events like successful AI verification in camera-modal
     const sub = DeviceEventEmitter.addListener('refreshPersonalRoutines', () => {
       load();
     });
-    
+
     return () => sub.remove();
   }, [load, isFocused]);
-
-  // Handled by useEffect above
 
   return (
     <View style={styles.root}>
@@ -206,32 +199,32 @@ export default function TodayRoutinesScreen(): React.ReactElement {
           style={StyleSheet.absoluteFill}
         />
 
-      <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <View style={styles.content}>
-          <TodayRoutinesList
-            items={items}
-            streak={streak}
-            loading={loading}
-            onRefresh={load}
-            onPressRoutine={goToRoutineDetail}
-            onPressCamera={handleCameraPress}
-          />
+        <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          <View style={styles.content}>
+            <TodayRoutinesList
+              items={items}
+              streak={streak}
+              loading={loading}
+              onRefresh={load}
+              onPressRoutine={goToRoutineDetail}
+              onPressCamera={handleCameraPress}
+            />
 
-          <BottomReturnButton
-            label="Return Routine Lists"
-            onPress={() => router.replace('/(personal)/(drawer)/routines')}
+            <BottomReturnButton
+              label="Return Routine Lists"
+              onPress={() => router.replace('/(personal)/(drawer)/routines')}
+            />
+          </View>
+
+          <Toast
+            visible={toastVisible}
+            message={toastMessage}
+            onClose={() => setToastVisible(false)}
           />
         </View>
-
-        <Toast 
-          visible={toastVisible} 
-          message={toastMessage} 
-          onClose={() => setToastVisible(false)} 
-        />
-      </View>
-    </Animated.View>
-  </View>
-);
+      </Animated.View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

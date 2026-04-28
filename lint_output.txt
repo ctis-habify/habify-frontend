@@ -1,0 +1,262 @@
+
+> mobile@1.0.0 lint
+> eslint "**/*.{ts,tsx,js,jsx}"
+
+
+/Users/durukirci/Desktop/habify-frontend/app/(auth)/register.tsx
+  252:29  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  378:3   warning  Unused style detected: styles.dropdown           react-native/no-unused-styles
+  383:3   warning  Unused style detected: styles.dropdownContainer  react-native/no-unused-styles
+  386:3   warning  Unused style detected: styles.placeholderStyle   react-native/no-unused-styles
+  389:3   warning  Unused style detected: styles.dropdownText       react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/(drawer)/add-friend.tsx
+   29:9  error    'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  275:3  warning  Unused style detected: styles.avatar                                               react-native/no-unused-styles
+  280:3  warning  Unused style detected: styles.avatarPlaceholder                                    react-native/no-unused-styles
+  287:3  warning  Unused style detected: styles.avatarLetter                                         react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/(drawer)/browse.tsx
+   42:11  error    'navigation' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                      @typescript-eslint/no-unused-vars
+   45:11  error    'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                          @typescript-eslint/no-unused-vars
+   65:12  error    'loadingCategories' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                               @typescript-eslint/no-unused-vars
+  111:12  warning  React Hook useCallback has missing dependencies: 'age', 'categoryId', 'frequencyType', 'gender', 'opacity', 'scale', 'search', 'translateX', and 'xp'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  132:11  error    'categoryItems' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                   @typescript-eslint/no-unused-vars
+  151:21  error    Empty block statement                                                                                                                                                                                      no-empty
+  158:8   warning  React Hook useEffect has missing dependencies: 'age', 'categoryId', 'fetchRoutines', 'frequencyType', 'gender', 'search', and 'xp'. Either include them or remove the dependency array                     react-hooks/exhaustive-deps
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/(drawer)/friends.tsx
+  207:9  error    'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  842:3  warning  Unused style detected: styles.avatar                                               react-native/no-unused-styles
+  847:3  warning  Unused style detected: styles.avatarPlaceholder                                    react-native/no-unused-styles
+  854:3  warning  Unused style detected: styles.avatarLetter                                         react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/(drawer)/leaderboard.tsx
+   28:56  error    'colors' is defined but never used. Allowed unused args must match /^_/u             @typescript-eslint/no-unused-vars
+   28:64  warning  Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+   59:9   error    'rankInfo' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  124:9   error    'router' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  129:9   error    'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  298:3   warning  Unused style detected: styles.avatar                                                 react-native/no-unused-styles
+  303:3   warning  Unused style detected: styles.avatarPlaceholder                                      react-native/no-unused-styles
+  310:3   warning  Unused style detected: styles.avatarLetter                                           react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/(drawer)/routines.tsx
+   79:10  error    'publicRoutines' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                  @typescript-eslint/no-unused-vars
+   80:10  error    'loadingPublic' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                   @typescript-eslint/no-unused-vars
+   85:10  error    'loadingCategories' is assigned a value but never used. Allowed unused vars must match /^_/u                                                               @typescript-eslint/no-unused-vars
+   91:9   error    'debounceRef' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                     @typescript-eslint/no-unused-vars
+  175:8   warning  React Hook useCallback has missing dependencies: 'ENTER_SPRING', 'opacity', 'scale', and 'translateX'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  178:9   error    'fetchPublicRoutines' is assigned a value but never used. Allowed unused vars must match /^_/u                                                             @typescript-eslint/no-unused-vars
+  183:13  error    Empty block statement                                                                                                                                      no-empty
+  189:9   error    'handleJoin' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                      @typescript-eslint/no-unused-vars
+  731:3   warning  Unused style detected: styles.filtersWrap                                                                                                                  react-native/no-unused-styles
+  736:3   warning  Unused style detected: styles.dropdown                                                                                                                     react-native/no-unused-styles
+  743:3   warning  Unused style detected: styles.dropdownContainer                                                                                                            react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/camera-modal.tsx
+  124:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/create-routine.tsx
+  29:11  error  'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/routine/[id]/chat.tsx
+   151:3   error    'currentRoutineId' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  1185:31  error    'avatarUrl' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  1199:46  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  1199:71  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  1199:99  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  1230:31  error    'avatarUrl' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  1244:46  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  1244:71  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  1244:99  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  1270:67  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  1287:68  warning  Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  1535:3   warning  Unused style detected: styles.closeBtn                                                react-native/no-unused-styles
+  1636:3   warning  Unused style detected: styles.tagChipSelected                                         react-native/no-unused-styles
+  1723:3   warning  Unused style detected: styles.votersTabs                                              react-native/no-unused-styles
+  1729:3   warning  Unused style detected: styles.votersTab                                               react-native/no-unused-styles
+  1735:3   warning  Unused style detected: styles.votersTabActive                                         react-native/no-unused-styles
+  1741:3   warning  Unused style detected: styles.votersTabText                                           react-native/no-unused-styles
+  1745:3   warning  Unused style detected: styles.votersTabTextActive                                     react-native/no-unused-styles
+  1765:3   warning  Unused style detected: styles.voterLetter                                             react-native/no-unused-styles
+  1800:3   warning  Unused style detected: styles.chatAvatar                                              react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(collaborative)/routine/[id]/index.tsx
+   179:9   error    'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u                                                               @typescript-eslint/no-unused-vars
+   192:10  error    'pokingUserId' is assigned a value but never used. Allowed unused vars must match /^_/u                                                         @typescript-eslint/no-unused-vars
+   192:24  error    'setPokingUserId' is assigned a value but never used. Allowed unused vars must match /^_/u                                                      @typescript-eslint/no-unused-vars
+   221:13  warning  Unexpected any. Specify a different type                                                                                                        @typescript-eslint/no-explicit-any
+   237:6   warning  React Hook useCallback has a missing dependency: 'checkAndHandleEliminations'. Either include it or remove the dependency array                 react-hooks/exhaustive-deps
+   239:81  error    'leaderboardData' is defined but never used. Allowed unused args must match /^_/u                                                               @typescript-eslint/no-unused-vars
+   460:6   warning  React Hook useMemo has missing dependencies: 'displayMaxLives' and 'displayRemainingLives'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+   819:31  warning  Unexpected any. Specify a different type                                                                                                        @typescript-eslint/no-explicit-any
+   907:11  warning  Unexpected any. Specify a different type                                                                                                        @typescript-eslint/no-explicit-any
+  1183:3   warning  Unused style detected: styles.participantChipTextSelf                                                                                           react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(personal)/(drawer)/notifications.tsx
+  514:3  warning  Unused style detected: styles.actionAvatar             react-native/no-unused-styles
+  519:3  warning  Unused style detected: styles.actionAvatarPlaceholder  react-native/no-unused-styles
+  526:3  warning  Unused style detected: styles.actionAvatarLetter       react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(personal)/(drawer)/profile.tsx
+  47:9  error  'initial' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/app/(personal)/(drawer)/settings.tsx
+  99:13  error  Empty block statement  no-empty
+
+/Users/durukirci/Desktop/habify-frontend/app/(personal)/(drawer)/today-routines.tsx
+   44:9   error    'colors' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                          @typescript-eslint/no-unused-vars
+  115:21  error    Empty block statement                                                                                                                                      no-empty
+  175:6   warning  React Hook useCallback has missing dependencies: 'ENTER_SPRING', 'opacity', 'scale', and 'translateX'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  233:3   warning  Unused style detected: styles.header                                                                                                                       react-native/no-unused-styles
+  238:3   warning  Unused style detected: styles.menuButton                                                                                                                   react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(personal)/friend-profile.tsx
+   17:3  error    'Image' is defined but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   70:9  error    'avatarUrl' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  348:3  warning  Unused style detected: styles.avatarImage                                             react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/(personal)/routine/[id].tsx
+   30:7  error    'FREQUENCY_ITEMS' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   61:9  error    'screenColors' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  616:3  warning  Unused style detected: styles.historyGrid                                                   react-native/no-unused-styles
+  623:3  warning  Unused style detected: styles.historyCell                                                   react-native/no-unused-styles
+  631:3  warning  Unused style detected: styles.historyLegend                                                 react-native/no-unused-styles
+  637:3  warning  Unused style detected: styles.legendItem                                                    react-native/no-unused-styles
+  642:3  warning  Unused style detected: styles.legendColor                                                   react-native/no-unused-styles
+  647:3  warning  Unused style detected: styles.legendText                                                    react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/app/_layout.tsx
+  10:16  error  'Platform' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/animations/animated-flame.tsx
+    9:5   error  'useDerivedValue' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+   20:7   error  'AnimatedPath' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   80:11  error  'flamePath' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  130:7   error  'styles' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/animations/celebration-animation.tsx
+    4:34  error    'Text' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                  @typescript-eslint/no-unused-vars
+    4:46  error    'Image' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                 @typescript-eslint/no-unused-vars
+  121:8   warning  React Hook useEffect has missing dependencies: 'opacity', 'rotateX', 'rotateY', 'rotateZ', 'scale', 'translateX', and 'translateY'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  157:11  error    'colors' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                       @typescript-eslint/no-unused-vars
+  225:8   warning  React Hook useEffect has missing dependencies: 'overlayOpacity', 'trophyFloat', and 'trophyScale'. Either include them or remove the dependency array                                   react-hooks/exhaustive-deps
+
+/Users/durukirci/Desktop/habify-frontend/components/animations/poke-animation.tsx
+  170:11  error  'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/animations/routine-completed-animation.tsx
+  7:16  error  'SCREEN_WIDTH' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  7:38  error  'SCREEN_HEIGHT' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/animations/throbbing-heart.tsx
+  71:7  error  'styles' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/modals/create-routine-in-list-modal.tsx
+   4:17  error  'useCallback' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  50:9   error  'screenColors' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/modals/create-routine-modal.tsx
+   14:10  error  'LinearGradient' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   61:9   error  'screenColors' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   73:19  error  'setCatOpen' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  257:9   error  'dropDownStyle' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/modals/manage-routine-users-modal.tsx
+   11:5  error    'Image' is defined but never used. Allowed unused vars must match /^_/u                           @typescript-eslint/no-unused-vars
+   20:7  error    'COLLABORATIVE_PRIMARY' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  360:5  warning  Unused style detected: styles.avatar                                                              react-native/no-unused-styles
+  365:5  warning  Unused style detected: styles.avatarPlaceholder                                                   react-native/no-unused-styles
+  372:5  warning  Unused style detected: styles.avatarLetter                                                        react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/components/navigation/custom-drawer-content.tsx
+   11:17  error    'Image' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   40:9   error    'handleComingSoon' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   44:9   error    'initial' is assigned a value but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  128:81  warning  Unexpected any. Specify a different type                                                     @typescript-eslint/no-explicit-any
+  271:3   warning  Unused style detected: styles.avatarPlaceholder                                              react-native/no-unused-styles
+  289:3   warning  Unused style detected: styles.avatarImage                                                    react-native/no-unused-styles
+  294:3   warning  Unused style detected: styles.avatarText                                                     react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/components/profile/friend-item.tsx
+  3:10  error  'Image' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/routine-score-list.tsx
+    2:34  error    'Image' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+    6:5   error    'useAnimatedStyle' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+    7:5   error    'useSharedValue' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+    8:5   error    'withRepeat' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+    9:5   error    'withSequence' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   10:5   error    'withTiming' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+   11:5   error    'interpolateColor' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  182:3   warning  Unused style detected: styles.avatar                                                react-native/no-unused-styles
+  189:3   warning  Unused style detected: styles.avatarPlaceholder                                     react-native/no-unused-styles
+  197:3   warning  Unused style detected: styles.avatarPlaceholderText                                 react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/components/routines/chat-verification-item.tsx
+  483:3  warning  Unused style detected: styles.imageLoadingPlaceholder  react-native/no-unused-styles
+  490:3  warning  Unused style detected: styles.imageLoadingText         react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/components/routines/collaborative-group-card.tsx
+  178:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  179:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/durukirci/Desktop/habify-frontend/components/routines/create/step-basic-info.tsx
+   29:9   error    'categoryItems' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   38:14  error    'error' is defined but never used. Allowed unused caught errors must match /^_/u          @typescript-eslint/no-unused-vars
+  211:3   warning  Unused style detected: styles.dropdown                                                    react-native/no-unused-styles
+  215:3   warning  Unused style detected: styles.dropdownContainer                                           react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/components/routines/create/step-gamification.tsx
+    5:17  error    'useState' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   23:9   error    'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  107:31  warning  Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  124:84  warning  Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  193:3   warning  Unused style detected: styles.dropdown                                             react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/components/routines/create/wizard-progress.tsx
+  15:9  error  'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/routines/public-routine-card.tsx
+  128:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/durukirci/Desktop/habify-frontend/components/routines/routine-history.tsx
+    2:65  error    'Dimensions' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+    8:32  error    'ZoomIn' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+   17:7   error    'WEEKDAYS' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   20:68  error    'endTime' is defined but never used. Allowed unused args must match /^_/u            @typescript-eslint/no-unused-vars
+   94:9   error    'weeks' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  166:34  error    'idx' is defined but never used. Allowed unused args must match /^_/u                @typescript-eslint/no-unused-vars
+  389:3   warning  Unused style detected: styles.subtitle                                               react-native/no-unused-styles
+
+/Users/durukirci/Desktop/habify-frontend/components/routines/routine-row.tsx
+  62:86  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/durukirci/Desktop/habify-frontend/components/settings/settings-item.tsx
+  32:11  error  'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/settings/settings-section.tsx
+  15:11  error  'isDark' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/today/routine-card.tsx
+  11:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/durukirci/Desktop/habify-frontend/components/ui/button.tsx
+  90:3  error  'isDark' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/ui/offline-banner.tsx
+  6:10  error  'Colors' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/durukirci/Desktop/habify-frontend/components/ui/swipeable-notification-row.tsx
+  68:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/durukirci/Desktop/habify-frontend/components/ui/toast.tsx
+  15:38  error    'colors' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  15:46  warning  Unexpected any. Specify a different type                                  @typescript-eslint/no-explicit-any
+
+/Users/durukirci/Desktop/habify-frontend/hooks/use-notifications.ts
+  211:6  warning  React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 167 problems (81 errors, 86 warnings)
+

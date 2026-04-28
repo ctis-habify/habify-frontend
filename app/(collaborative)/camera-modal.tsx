@@ -1,25 +1,25 @@
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    DeviceEventEmitter,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  DeviceEventEmitter,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { verificationService } from '../../services/verification.service';
 import { routineService } from '../../services/routine.service';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Colors } from '@/constants/theme';
+import { verificationService } from '../../services/verification.service';
 
 export default function CollaborativeCameraModal(): React.ReactElement {
   const router = useRouter();
-  const params = useLocalSearchParams(); 
+  const params = useLocalSearchParams();
   const routineIdRaw = params.routineId;
   const routineId = Array.isArray(routineIdRaw) ? routineIdRaw[0] : routineIdRaw;
   const theme = useColorScheme() ?? 'light';
@@ -28,7 +28,7 @@ export default function CollaborativeCameraModal(): React.ReactElement {
 
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-  
+
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loadingText, setLoadingText] = useState('Processing...');
@@ -95,29 +95,29 @@ export default function CollaborativeCameraModal(): React.ReactElement {
 
       // 4. Submit verification to Backend
       setLoadingText('Submitting to group...');
-      
+
       const publicUrl = `https://storage.googleapis.com/habify-photo-uploads/${objectPath}`;
-      
+
       // Submit to unified verification flow (Backend handles collaborative directly)
       await verificationService.submitVerification(routineId, objectPath);
 
       // 5. Success
       setIsUploading(false);
-      
+
       // Notify chat to refresh and main list
       DeviceEventEmitter.emit('refreshCollaborativeRoutines');
-      
+
       try {
-          // Send the GCS object path or the public URL as a chat message
-          await routineService.sendRoutineChatMessage(routineId, publicUrl);
+        // Send the GCS object path or the public URL as a chat message
+        await routineService.sendRoutineChatMessage(routineId, publicUrl);
       } catch {
-          // ignore notification failure
+        // ignore notification failure
       }
 
       Alert.alert('Success', 'Photo posted to group! Waiting for approvals.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-      
+
     } catch (err: unknown) {
       console.error('Collaborative Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -134,12 +134,12 @@ export default function CollaborativeCameraModal(): React.ReactElement {
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
   };
 
-  // --- RENDER: PREVIEW MODE (Photo Taken) ---
+  // ENDER: PREVIEW MODE (Photo Taken)
   if (photoUri) {
     return (
       <View style={[styles.container, { backgroundColor: '#000' }]}>
         <Image source={{ uri: photoUri }} style={styles.previewImage} />
-        
+
         {isUploading && (
           <View style={[styles.loadingOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.7)' }]}>
             <ActivityIndicator size="large" color={colors.collaborativePrimary} />
@@ -169,11 +169,11 @@ export default function CollaborativeCameraModal(): React.ReactElement {
     );
   }
 
-  // --- RENDER: CAMERA MODE ---
+  // RENDER: CAMERA MODE
   return (
     <View style={styles.container}>
       <CameraView style={StyleSheet.absoluteFill} facing={facing} ref={cameraRef} />
-      
+
       {/* UI Overlay */}
       <View style={styles.cameraUi}>
         {/* Top Bar: Close & Flip */}
@@ -199,9 +199,9 @@ export default function CollaborativeCameraModal(): React.ReactElement {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
-  cameraUi: { 
+  cameraUi: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between', 
+    justifyContent: 'space-between',
     padding: 20,
     zIndex: 10,
   },

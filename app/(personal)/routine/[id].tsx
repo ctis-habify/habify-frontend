@@ -1,7 +1,7 @@
+import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
-import { DeleteRoutineModal } from '@/components/modals/delete-routine-modal';
 import { TextInput } from '@/components/ui/text-input';
 import { Toast } from '@/components/ui/toast';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
@@ -28,15 +28,15 @@ import { RoutineHistory } from '../../../components/routines/routine-history';
 import { routineService } from '../../../services/routine.service';
 
 const FREQUENCY_ITEMS = [
-  { 
-    label: 'Daily', 
+  {
+    label: 'Daily',
     value: 'DAILY',
-    icon: () => <Ionicons name="sunny" size={20} color="#F59E0B" /> 
+    icon: () => <Ionicons name="sunny" size={20} color="#F59E0B" />
   },
-  { 
-    label: 'Weekly', 
+  {
+    label: 'Weekly',
     value: 'WEEKLY',
-    icon: () => <Ionicons name="calendar-outline" size={20} color="#3B82F6" /> 
+    icon: () => <Ionicons name="calendar-outline" size={20} color="#3B82F6" />
   },
 ];
 
@@ -54,13 +54,13 @@ const formatTime = (d: Date) => {
 export default function EditRoutineScreen(): React.ReactElement {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { token } = useAuth(); 
+  const { token } = useAuth();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const isDark = theme === 'dark';
   const screenColors = getBackgroundGradient(theme);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Form State
   const [routine_name, setName] = useState('');
   const [start_time, setStartTime] = useState('');
@@ -74,7 +74,7 @@ export default function EditRoutineScreen(): React.ReactElement {
   const [originalData, setOriginalData] = useState<Routine | null>(null);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-  
+
   // Toast State
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage] = useState("");
@@ -82,16 +82,12 @@ export default function EditRoutineScreen(): React.ReactElement {
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
-  // Time Helpers (Fake UTC Pattern to avoid timezone shifts)
-  // Moved outside component for performance
-
-  // ... (useEffect)
   const fetchData = useCallback(async (): Promise<void> => {
     if (!id || !token) return;
     try {
       const data: Routine = await routineService.getRoutineById(id, token || '');
       setOriginalData(data);
-      
+
       setName(data?.routineName || '');
       setStartTime(data?.startTime || '');
       setEndTime(data?.endTime || '');
@@ -121,8 +117,7 @@ export default function EditRoutineScreen(): React.ReactElement {
       router.push('/(auth)');
       return;
     }
-    
-    // Construct partial payload
+
     const payload: Partial<Routine> = {};
     const origName = originalData?.routineName;
     const origStartTime = originalData?.startTime;
@@ -134,28 +129,25 @@ export default function EditRoutineScreen(): React.ReactElement {
     const origStartDate = originalData?.startDate;
 
     if (start_time !== origStartTime || end_time !== origEndTime) {
-        payload.startTime = start_time;
-        payload.endTime = end_time;
+      payload.startTime = start_time;
+      payload.endTime = end_time;
     }
-    
+
     if (routine_name !== origName) payload.routineName = routine_name;
     if (routineListId !== origListId) payload.routineListId = routineListId;
     if (frequency_type !== origFreqType) payload.frequencyType = frequency_type;
     if (frequency_detail !== origFreqDetail) payload.frequencyDetail = frequency_detail;
     if (isAiVerified !== origAi) payload.isAiVerified = isAiVerified;
     if (start_date !== origStartDate) payload.startDate = start_date;
-    
-    // Always send at least one field or handle empty? 
-    // If empty, maybe just back?
+
     if (Object.keys(payload).length === 0) {
-        router.back();
-        return;
+      router.back();
+      return;
     }
 
     try {
       await routineService.updateRoutine(id, payload, token);
-      
-      // Update local state so details card reflects changes immediately
+
       const updatedData: Routine = await routineService.getRoutineById(id, token || '');
       setOriginalData(updatedData);
       setStreak(updatedData.streak || 0);
@@ -163,7 +155,7 @@ export default function EditRoutineScreen(): React.ReactElement {
       DeviceEventEmitter.emit('SHOW_TOAST', 'Routine updated successfully!');
       DeviceEventEmitter.emit('refreshPersonalRoutines');
       DeviceEventEmitter.emit('refreshCollaborativeRoutines');
-      setIsEditModalVisible(false); // Close modal on success
+      setIsEditModalVisible(false);
 
     } catch (error: unknown) {
       let msg = 'Failed to update routine';
@@ -176,7 +168,7 @@ export default function EditRoutineScreen(): React.ReactElement {
       setIsLoading(false);
     }
   }, [
-    token, router, originalData, id, start_time, end_time, 
+    token, router, originalData, id, start_time, end_time,
     routine_name, routineListId, frequency_type,
     frequency_detail, isAiVerified, start_date
   ]);
@@ -186,8 +178,6 @@ export default function EditRoutineScreen(): React.ReactElement {
       router.push('/(auth)');
       return;
     }
-    // Close the edit modal first; iOS cannot reliably stack two Modals.
-    // Wait for the close animation to finish before showing the delete modal.
     setIsEditModalVisible(false);
     setTimeout(() => {
       setIsDeleteModalVisible(true);
@@ -200,7 +190,6 @@ export default function EditRoutineScreen(): React.ReactElement {
     try {
       await routineService.deleteRoutine(id as string, token);
       DeviceEventEmitter.emit('refreshPersonalRoutines');
-      // Navigation is handled by onAnimationFinished after the animation plays
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Failed to delete routine';
       DeviceEventEmitter.emit('SHOW_TOAST', msg);
@@ -218,23 +207,20 @@ export default function EditRoutineScreen(): React.ReactElement {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        
+
         {/* 1. Routine Tracker (Chain Design) */}
         <ThemedView variant="card" style={styles.trackerCard}>
           <ThemedText type="subtitle" style={styles.trackerTitle}>Current Streak</ThemedText>
           <View style={styles.chainContainer}>
-             {/* Mock Chain of 7 days */}
-              {Array.from({ length: 7 }).map((_, index) => {
-                // Visualize streak
-              // If streak is larger than 7, show all filled, or maybe we want to show the last 7 days?
-              // For now, let's just show up to 7 "filled" blocks if streak >= index+1
+            {/* Mock Chain of 7 days */}
+            {Array.from({ length: 7 }).map((_, index) => {
               const filled = index < Math.min(streak, 7);
-              
+
               return (
                 <View key={index} style={styles.chainItem}>
-                   {/* Link Line (except for first item) */}
+                  {/* Link Line (except for first item) */}
                   {index > 0 && <View style={[styles.chainLink, { backgroundColor: filled ? colors.primary : colors.border }]} />}
-                  
+
                   {/* Node */}
                   <View style={[
                     styles.chainNode,
@@ -255,19 +241,19 @@ export default function EditRoutineScreen(): React.ReactElement {
         </ThemedView>
 
         {/* Routine History Grid */}
-        <RoutineHistory 
-          routineId={id as string} 
-          themeColor={colors.primary} 
-          createdAt={originalData?.createdAt} 
-          endTime={originalData?.endTime} 
+        <RoutineHistory
+          routineId={id as string}
+          themeColor={colors.primary}
+          createdAt={originalData?.createdAt}
+          endTime={originalData?.endTime}
         />
 
         {/* 3. Fancy Routine Details Card */}
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.duration(800).delay(200).springify()}
           style={[
-            styles.detailsCard, 
-            { 
+            styles.detailsCard,
+            {
               backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.8)',
               borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
               shadowColor: colors.primary,
@@ -280,12 +266,12 @@ export default function EditRoutineScreen(): React.ReactElement {
               <ThemedText type="subtitle" style={styles.detailsTitle}>Routine Details</ThemedText>
               <ThemedText style={{ fontSize: 13, opacity: 0.5 }}>Manage your habit settings</ThemedText>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setIsEditModalVisible(true)}
               activeOpacity={0.7}
               style={[
-                styles.editIconBtn, 
-                { 
+                styles.editIconBtn,
+                {
                   backgroundColor: colors.primary + '15',
                   borderColor: colors.primary + '30',
                 }
@@ -369,10 +355,10 @@ export default function EditRoutineScreen(): React.ReactElement {
                   <View style={[styles.row, { gap: 12 }]}>
                     <View style={[styles.halfInput, { flex: 1 }]}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 8 }}>
-                         <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#10B98120', alignItems: 'center', justifyContent: 'center' }}>
-                            <Ionicons name="time-outline" size={16} color="#10B981" />
-                         </View>
-                         <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Start Time</ThemedText>
+                        <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#10B98120', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="time-outline" size={16} color="#10B981" />
+                        </View>
+                        <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Start Time</ThemedText>
                       </View>
                       <TouchableOpacity
                         style={[styles.timeBox, { backgroundColor: colors.surface, borderColor: colors.border }]}
@@ -380,7 +366,7 @@ export default function EditRoutineScreen(): React.ReactElement {
                       >
                         <ThemedText>{start_time || '00:00'}</ThemedText>
                       </TouchableOpacity>
-                      
+
                       {showStartTimePicker && (
                         Platform.OS === 'ios' ? (
                           <Modal visible={showStartTimePicker} transparent animationType="fade">
@@ -422,10 +408,10 @@ export default function EditRoutineScreen(): React.ReactElement {
 
                     <View style={styles.halfInput}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 8 }}>
-                         <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#EF444420', alignItems: 'center', justifyContent: 'center' }}>
-                            <Ionicons name="time-outline" size={16} color="#EF4444" />
-                         </View>
-                         <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>End Time</ThemedText>
+                        <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#EF444420', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="time-outline" size={16} color="#EF4444" />
+                        </View>
+                        <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>End Time</ThemedText>
                       </View>
                       <TouchableOpacity
                         style={[styles.timeBox, { backgroundColor: colors.surface, borderColor: colors.border }]}
@@ -477,10 +463,10 @@ export default function EditRoutineScreen(): React.ReactElement {
 
                 {/* Name */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 20, marginBottom: 8 }}>
-                   <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#8B5CF620', alignItems: 'center', justifyContent: 'center' }}>
-                      <Ionicons name="text-outline" size={16} color="#8B5CF6" />
-                   </View>
-                   <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Routine Name</ThemedText>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#8B5CF620', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="text-outline" size={16} color="#8B5CF6" />
+                  </View>
+                  <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Routine Name</ThemedText>
                 </View>
                 <TextInput
                   value={routine_name}
@@ -489,12 +475,12 @@ export default function EditRoutineScreen(): React.ReactElement {
                 />
 
                 {/* Frequency */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                     <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#F59E0B20', alignItems: 'center', justifyContent: 'center' }}>
-                        <Ionicons name="repeat" size={16} color="#F59E0B" />
-                     </View>
-                     <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Frequency</ThemedText>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#F59E0B20', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="repeat" size={16} color="#F59E0B" />
                   </View>
+                  <ThemedText style={{ fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5, color: isDark ? 'rgba(255,255,255,0.5)' : '#8B5CF6' }}>Frequency</ThemedText>
+                </View>
                 <View style={{ flexDirection: 'row', gap: 12, marginTop: 10, marginBottom: 15 }}>
                   <TouchableOpacity
                     style={[
@@ -552,10 +538,10 @@ export default function EditRoutineScreen(): React.ReactElement {
 
       </ScrollView>
 
-      <Toast 
-        visible={toastVisible} 
-        message={toastMessage} 
-        onClose={() => setToastVisible(false)} 
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        onClose={() => setToastVisible(false)}
       />
 
       <DeleteRoutineModal
@@ -586,8 +572,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   scroll: { padding: 20, paddingBottom: 50 },
-  
-  // Tracker Card (Chain)
+
   trackerCard: {
     padding: 24,
     marginBottom: 20,
@@ -628,7 +613,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // History Grid
   historyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -637,7 +621,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   historyCell: {
-    width: Math.floor((100 - 8*6) / 7) + 5,
+    width: Math.floor((100 - 8 * 6) / 7) + 5,
     minWidth: 28,
     height: 20,
     borderRadius: 6,
@@ -664,7 +648,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // Details Card
   detailsCard: {
     padding: 24,
     marginTop: 5,
@@ -733,7 +716,6 @@ const styles = StyleSheet.create({
     left: 24,
   },
 
-  // Edit Modal Styles
   editModalContainer: {
     width: '90%',
     maxWidth: 400,
@@ -763,8 +745,7 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', gap: 15, marginBottom: 15 },
   halfInput: { flex: 1 },
-  
-  // Time Picker Styles
+
   timeBox: {
     borderRadius: 12,
     borderWidth: 1,

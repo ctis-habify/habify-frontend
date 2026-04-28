@@ -22,16 +22,16 @@ import Animated, {
 
 // UI
 import { CelebrationAnimation } from '@/components/animations/celebration-animation';
+import { CannotDeleteListModal } from '@/components/modals/cannot-delete-list-modal';
 import { CreateRoutineInListModal } from '@/components/modals/create-routine-in-list-modal';
 import { CreateRoutineModal } from '@/components/modals/create-routine-modal';
 import { DeleteListModal } from '@/components/modals/delete-list-modal';
-import { CannotDeleteListModal } from '@/components/modals/cannot-delete-list-modal';
 import { RoutineCategoryCard } from '@/components/routines/routine-category-card';
 import { AnimatedTabSwitcher } from '@/components/ui/animated-tab-switcher';
 import { getCategoryAccentColor } from '@/constants/category-colors';
 import { useAuth } from '@/hooks/use-auth';
 import { routineService } from '@/services/routine.service';
-import type { Routine, RoutineList, RoutineLog } from '@/types/routine';
+import type { RoutineList, RoutineLog } from '@/types/routine';
 
 const TOKEN_KEY = 'habify_access_token';
 
@@ -52,7 +52,6 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const colors = Colors[theme];
   const screenGradient = getBackgroundGradient(theme);
   const activeTab = 'Personal';
-  // ── Animation Setup ──────────────
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(40);
   const scale = useSharedValue(0.97);
@@ -64,7 +63,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
       { translateX: translateX.value },
     ],
   }));
-  
+
   const trophyY = useSharedValue(0);
   useEffect(() => {
     trophyY.value = withRepeat(
@@ -107,7 +106,6 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           routineService.getRoutineLogs().catch((): RoutineLog[] => []),
         ]);
 
-        // Build a set of routine IDs completed today (using local date for timezone safety)
         const now = new Date();
         const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
@@ -174,15 +172,12 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   useEffect(() => {
     if (isFocused && hasPendingCelebration) {
       setHasPendingCelebration(false);
-      // Delay to ensure any entrance animation is mostly done
       setTimeout(() => {
         setCelebrationTrigger(prev => prev + 1);
         setCelebrationVisible(true);
       }, 500);
     }
   }, [isFocused, hasPendingCelebration]);
-
-  // Focus re-trigger is handled by useFocusEffect above
 
   const handleTabSwitch = useCallback((tab: string): void => {
     if (tab !== 'Collaborative' || isSwitchingRef.current) return;
@@ -245,7 +240,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to delete list.';
       Alert.alert('Error', msg);
-      throw err; // Re-throw to handle animation stop in modal
+      throw err;
     } finally {
       setIsDeletingList(false);
     }
@@ -258,8 +253,8 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
   const hasNoData = !loading && routineLists.length === 0;
 
   return (
-      <Animated.View style={[{ flex: 1, backgroundColor: screenGradient[0] }, pageStyle]}>
-        <LinearGradient colors={screenGradient} style={styles.container}>
+    <Animated.View style={[{ flex: 1, backgroundColor: screenGradient[0] }, pageStyle]}>
+      <LinearGradient colors={screenGradient} style={styles.container}>
         {/* HEADER */}
         <View style={styles.fixedHeader}>
           <View style={styles.headerTopRow}>
@@ -355,7 +350,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
             <View style={styles.emptyOuter}>
               <Animated.View style={trophyStyle}>
                 <View style={[styles.trophyWrapper, { borderColor: colors.primary + '30', backgroundColor: colors.surface }]}>
-                    <Ionicons name="trophy" size={80} color={colors.primary} />
+                  <Ionicons name="trophy" size={80} color={colors.primary} />
                 </View>
               </Animated.View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>You haven&apos;t created a routine yet.</Text>
@@ -365,11 +360,11 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
 
               <TouchableOpacity
                 style={[
-                   styles.createBtn, 
-                   { 
-                     backgroundColor: colors.surface, 
-                     borderColor: colors.border 
-                   }
+                  styles.createBtn,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border
+                  }
                 ]}
                 onPress={() => router.push('/(personal)/create-routine')}
               >
@@ -379,21 +374,21 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           )}
 
           {!hasNoData && !loading && (
-             <Animated.View entering={FadeInDown.delay(220).duration(560).springify()}>
-             <TouchableOpacity
-               style={[
-                  styles.createBtn, 
-                  { 
-                    marginTop: 10, 
-                    backgroundColor: colors.surface, 
-                    borderColor: colors.border 
+            <Animated.View entering={FadeInDown.delay(220).duration(560).springify()}>
+              <TouchableOpacity
+                style={[
+                  styles.createBtn,
+                  {
+                    marginTop: 10,
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border
                   }
-               ]}
-               onPress={() => router.push('/(personal)/create-routine')}
-             >
-               <Text style={[styles.createBtnText, { color: colors.text }]}>Create Routine List</Text>
-             </TouchableOpacity>
-             </Animated.View>
+                ]}
+                onPress={() => router.push('/(personal)/create-routine')}
+              >
+                <Text style={[styles.createBtnText, { color: colors.text }]}>Create Routine List</Text>
+              </TouchableOpacity>
+            </Animated.View>
           )}
         </Animated.ScrollView>
         <CreateRoutineInListModal
@@ -403,7 +398,7 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           onClose={() => setSelectedListForNewRoutine(null)}
           onCreated={() => {
             setSelectedListForNewRoutine(null);
-            loadLists(); 
+            loadLists();
           }}
         />
 
@@ -436,10 +431,10 @@ export default function PersonalRoutinesScreen(): React.ReactElement {
           onClose={() => setCannotDeleteModalVisible(false)}
         />
 
-        <CelebrationAnimation 
-          play={celebrationVisible} 
-          triggerKey={celebrationTrigger} 
-          onComplete={() => setCelebrationVisible(false)} 
+        <CelebrationAnimation
+          play={celebrationVisible}
+          triggerKey={celebrationTrigger}
+          onComplete={() => setCelebrationVisible(false)}
         />
       </LinearGradient>
     </Animated.View>
@@ -518,19 +513,19 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   trophyWrapper: {
-      width: 180,
-      height: 180,
-      borderRadius: 90,
-      backgroundColor: '#fff',
-      borderWidth: 4,
-      overflow: 'hidden',
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.2,
-      shadowRadius: 20,
-      elevation: 10,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: '#fff',
+    borderWidth: 4,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
   },
   emptyTitle: {
     fontSize: 18,

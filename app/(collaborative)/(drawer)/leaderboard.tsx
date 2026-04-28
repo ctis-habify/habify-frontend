@@ -1,12 +1,12 @@
+import { CupIndicator } from '@/components/cup-indicator';
 import { HomeButton } from '@/components/navigation/home-button';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { CupIndicator } from '@/components/cup-indicator';
 import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { collaborativeScoreService } from '@/services/collaborative-score.service';
 import { LeaderboardEntry, createLeaderboardCupAward, resolveCollaborativeRank } from '@/types/collaborative-score';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
@@ -14,11 +14,10 @@ import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Animated, {
   FadeIn,
@@ -55,25 +54,25 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
   const isDark = theme === 'dark';
-  
-    const medal = getMedalColors(item.rank, isDark, colors);
-    const rankInfo = resolveCollaborativeRank(item.totalPoints);
-    const isTopThree = item.rank <= 3;
-    const displayCup = item.cup || createLeaderboardCupAward(item.rank, item.totalPoints);
 
-    return (
-      <Animated.View
-        entering={ZoomIn.delay(index * 40).duration(280).springify()}
-        style={[
-          styles.row,
-          { backgroundColor: colors.card, borderColor: colors.border },
-          isTopThree && medal && {
-            borderColor: medal.border,
-            borderWidth: 1.5,
-            backgroundColor: medal.bg,
-          },
-        ]}
-      >
+  const medal = getMedalColors(item.rank, isDark, colors);
+  const rankInfo = resolveCollaborativeRank(item.totalPoints);
+  const isTopThree = item.rank <= 3;
+  const displayCup = item.cup || createLeaderboardCupAward(item.rank, item.totalPoints);
+
+  return (
+    <Animated.View
+      entering={ZoomIn.delay(index * 40).duration(280).springify()}
+      style={[
+        styles.row,
+        { backgroundColor: colors.card, borderColor: colors.border },
+        isTopThree && medal && {
+          borderColor: medal.border,
+          borderWidth: 1.5,
+          backgroundColor: medal.bg,
+        },
+      ]}
+    >
       {/* Rank */}
       <View style={[
         styles.rankBadge,
@@ -90,10 +89,10 @@ function LeaderboardRow({ item, index }: { item: LeaderboardEntry; index: number
 
       {/* Avatar */}
       <View style={styles.avatarWrap}>
-        <UserAvatar 
-          url={item.avatarUrl} 
-          name={item.name} 
-          size={44} 
+        <UserAvatar
+          url={item.avatarUrl}
+          name={item.name}
+          size={44}
         />
       </View>
 

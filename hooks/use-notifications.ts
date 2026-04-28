@@ -1,13 +1,13 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { DeviceEventEmitter, Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
-import * as Haptics from 'expo-haptics';
-import * as Device from 'expo-device';
-import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import * as Device from 'expo-device';
+import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import { useCallback, useEffect, useRef } from 'react';
+import { DeviceEventEmitter, Platform } from 'react-native';
 import { notificationService } from '../services/notification.service';
 import { emitToast } from './use-toast';
-import { useRouter } from 'expo-router';
 
 const USER_KEY = 'habify_user';
 
@@ -35,10 +35,10 @@ async function getQuietModeSettings(): Promise<QuietModeSettings | null> {
 function isNowInQuietRange(start: string, end: string): boolean {
   const now = new Date();
   const currentTime = now.getHours() * 60 + now.getMinutes();
-  
+
   const [startH, startM] = start.split(':').map(Number);
   const startTime = startH * 60 + startM;
-  
+
   const [endH, endM] = end.split(':').map(Number);
   const endTime = endH * 60 + endM;
 
@@ -97,7 +97,7 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
     });
     pushToken = tokenData.data;
   } catch (err) {
-    // Expo Go without a projectId — push tokens unavailable, not a crash
+    // Expo Go without a projectId 
     console.warn('Could not get push token (expected in Expo Go):', err);
     return null;
   }
@@ -165,8 +165,6 @@ export function useNotifications(isAuthenticated: boolean) {
         }
 
         if (data?.type === 'poke' && !data?.isLocalPoke) {
-          // Force a local notification with a unique interaction ID to ensure a banner "drops" 
-          // even if the OS groups the original remote notifications.
           Notifications.scheduleNotificationAsync({
             content: {
               title: notification.request.content.title || 'Poke!',
@@ -175,7 +173,7 @@ export function useNotifications(isAuthenticated: boolean) {
               sound: true,
               priority: Notifications.AndroidNotificationPriority.MAX,
             },
-            trigger: null, // show immediately
+            trigger: null,
           });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
@@ -187,7 +185,7 @@ export function useNotifications(isAuthenticated: boolean) {
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data as Record<string, unknown>;
-        
+
         if (data?.routineId && typeof data.routineId === 'string') {
           if (data.type === 'streak_bonus') {
             router.push(`/(personal)/routine/${data.routineId}`);

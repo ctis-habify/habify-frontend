@@ -1,6 +1,6 @@
 import { HomeButton } from '@/components/navigation/home-button';
-import { UserAvatar } from '@/components/ui/user-avatar';
 import { SwipeableNotificationRow } from '@/components/ui/swipeable-notification-row';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FriendRequestReceivedItem, friendService } from '@/services/friend.service';
@@ -17,10 +17,8 @@ import { DrawerActions } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-// Removed hardcoded COLLABORATIVE_PRIMARY
 
 const categoryTitle: Record<NotificationCategory, string> = {
   friend_requests: 'Requests & Invitations',
@@ -89,7 +87,7 @@ export default function NotificationsScreen(): React.ReactElement {
     routineService
       .getPendingRoutineInvites()
       .then((data) => {
-        setRoutineInvitations(data);
+        setRoutineInvitations(data as RoutineInvitationItem[]);
         setLoadedSections((prev) => ({ ...prev, invitations: true }));
       })
       .catch(() => {
@@ -210,14 +208,12 @@ export default function NotificationsScreen(): React.ReactElement {
       rewards: [],
     };
 
-    // Add local items
     items.forEach((item) => {
       if (byCategory[item.category]) {
         byCategory[item.category].push(item);
       }
     });
 
-    // Merge backend items into correct categories (deduped)
     const seenIds = new Set(items.map((i) => i.id));
     for (const mapped of backendMappedItems) {
       if (!seenIds.has(mapped.id) && byCategory[mapped.category]) {
@@ -225,7 +221,6 @@ export default function NotificationsScreen(): React.ReactElement {
       }
     }
 
-    // Sort each category by createdAt descending
     for (const key of Object.keys(byCategory) as NotificationCategory[]) {
       byCategory[key].sort((a, b) => b.createdAt - a.createdAt);
     }
@@ -278,10 +273,10 @@ export default function NotificationsScreen(): React.ReactElement {
                     {pendingRequests.map((item) => (
                       <View key={`fr-${item.id}`} style={[styles.actionRow, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
                         <View style={styles.actionAvatarWrap}>
-                          <UserAvatar 
-                            url={item.fromUser.avatarUrl} 
-                            name={item.fromUser.name} 
-                            size={36} 
+                          <UserAvatar
+                            url={item.fromUser.avatarUrl}
+                            name={item.fromUser.name}
+                            size={36}
                           />
                         </View>
                         <View style={styles.actionInfo}>
@@ -311,10 +306,10 @@ export default function NotificationsScreen(): React.ReactElement {
                     {routineInvitations.map((item) => (
                       <View key={`ri-${item.id}`} style={[styles.actionRow, { backgroundColor: Colors[theme].surface, borderColor: colors.border }]}>
                         <View style={styles.actionAvatarWrap}>
-                          <UserAvatar 
-                            url={item.fromUserAvatarUrl} 
-                            name={item.fromUserName || 'User'} 
-                            size={36} 
+                          <UserAvatar
+                            url={item.fromUserAvatarUrl}
+                            name={item.fromUserName || 'User'}
+                            size={36}
                           />
                         </View>
                         <View style={styles.actionInfo}>

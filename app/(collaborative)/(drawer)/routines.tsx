@@ -7,9 +7,7 @@ import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   DeviceEventEmitter,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -57,13 +55,13 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const colors = Colors[theme];
   const collaborativePrimary = colors.collaborativePrimary;
   const screenGradient = getBackgroundGradient(theme, 'collaborative');
-  const { 
-    points: collabPoints, 
-    streak: collabStreak, 
-    nextBonusStreak, 
-    nextBonusPoints, 
-    rank: collabRank, 
-    loading: collabScoreLoading 
+  const {
+    points: collabPoints,
+    streak: collabStreak,
+    nextBonusStreak,
+    nextBonusPoints,
+    rank: collabRank,
+    loading: collabScoreLoading
   } = useCollaborativeScore();
 
   // 2. State
@@ -76,7 +74,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const [leavingRoutine, setLeavingRoutine] = useState<Routine | null>(null);
   const [isLeaveModalVisible, setIsLeaveModalVisible] = useState(false);
   const [deletingRoutineId, setDeletingRoutineId] = useState<string | null>(null);
-  
+
   // Public Search State
   const [publicRoutines, setPublicRoutines] = useState<PublicRoutine[]>([]);
   const [loadingPublic, setLoadingPublic] = useState(false);
@@ -93,7 +91,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownEliminationRef = useRef(false);
 
-  // ── Animation Setup ──────────────
+  // Animation Setup 
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(40);
   const scale = useSharedValue(0.97);
@@ -121,8 +119,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       setIsRefreshing(refresh);
       try {
         const list = await routineService.getCollaborativeRoutines();
-        
-        // --- Batch Lazy Elimination Cleanup ---
+
+        // Batch Lazy Elimination Cleanup
         const currentUserId: string = user?.id ? String(user.id).trim() : '';
         const eliminatedNames: string[] = [];
         const healthyRoutines = list.filter((r: Routine) => {
@@ -132,7 +130,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
             // Silent cleanup in background
             const isCreator: boolean = !!currentUserId && !!r.creatorId && currentUserId === String(r.creatorId).trim();
             if (isCreator) {
-              // Creator cannot leave; use the dedicated defeat endpoint instead
               routineService.handleCreatorDefeat(r.id).catch((err: unknown) =>
                 console.error(`[Cleanup] Failed to handle creator defeat for routine ${r.id}:`, err)
               );
@@ -167,7 +164,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
   useFocusEffect(
     useCallback(() => {
-      // Only trigger entrance animation if we're not already visible to avoid 'double flash'
       if (opacity.value === 0) {
         translateX.value = 40;
         scale.value = 0.97;
@@ -185,7 +181,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       const data = await routineService.browsePublicRoutines(q || undefined, catId || undefined, freq || undefined);
       setPublicRoutines(data);
     } catch {
-      // ignore
     } finally {
       setLoadingPublic(false);
     }
@@ -320,7 +315,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
     loadCats();
   }, []);
 
-  // Debounced search logic for global results is removed as per user request to only filter joined routines.
 
 
   const handleClearCategoryId = useCallback((): void => {
@@ -370,8 +364,6 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
       leaveSubscription.remove();
     };
   }, [showToast, loadLists]);
-
-  // Focus re-trigger is handled by useFocusEffect at the top
 
   // 5. Render
   return (
@@ -423,7 +415,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           />
 
           {/* Discovery Entry Point */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.discoveryCard}
             onPress={handleBrowsePress}
             activeOpacity={0.8}
@@ -478,7 +470,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           {/* Quick Frequency Filter */}
           <View style={{ marginBottom: 16 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-               <View style={styles.filterGroup}>
+              <View style={styles.filterGroup}>
                 <Text style={[styles.miniLabel, { color: colors.textTertiary }]}>FREQ</Text>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   {['Daily', 'Weekly'].map((f: string) => (
@@ -486,7 +478,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                       key={f}
                       onPress={() => handleFrequencyToggle(f)}
                       style={[
-                        styles.miniChip, 
+                        styles.miniChip,
                         { backgroundColor: colors.card, borderColor: colors.border },
                         frequencyType === f && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
                       ]}
@@ -517,13 +509,13 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
               </TouchableOpacity>
             )}
           </View>
- 
+
           {/* Loading State Overlay to prevent 'Double Pass' feeling */}
           {loading && (
-             <View style={{ paddingVertical: 100, alignItems: 'center', justifyContent: 'center' }}>
-                <ActivityIndicator size="large" color={collaborativePrimary} />
-                <Text style={{ marginTop: 15, color: colors.text, opacity: 0.5, fontWeight: '500' }}>Loading routines...</Text>
-             </View>
+            <View style={{ paddingVertical: 100, alignItems: 'center', justifyContent: 'center' }}>
+              <ActivityIndicator size="large" color={collaborativePrimary} />
+              <Text style={{ marginTop: 15, color: colors.text, opacity: 0.5, fontWeight: '500' }}>Loading routines...</Text>
+            </View>
           )}
 
 
@@ -551,8 +543,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                     .map((routine, index) => {
                       const accentColor = getCategoryAccentColor(routine.categoryName, null);
                       return (
-                        <Animated.View 
-                          key={routine.id} 
+                        <Animated.View
+                          key={routine.id}
                           entering={FadeInDown.delay(index * 80).duration(800).springify().damping(28).stiffness(100)}
                           exiting={FadeOutUp}
                           layout={LinearTransition.springify().damping(28).stiffness(120).duration(650)}
@@ -592,8 +584,8 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
                     .map((routine, index) => {
                       const accentColor = getCategoryAccentColor(routine.categoryName, null);
                       return (
-                        <Animated.View 
-                          key={routine.id} 
+                        <Animated.View
+                          key={routine.id}
                           entering={FadeInDown.delay(index * 80).duration(800).springify().damping(28).stiffness(100)}
                           exiting={FadeOutUp}
                           layout={LinearTransition.springify().damping(28).stiffness(120).duration(650)}
@@ -637,16 +629,16 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
 
           <TouchableOpacity
             style={[
-              styles.createBtn, 
-              { 
+              styles.createBtn,
+              {
                 backgroundColor: collaborativePrimary,
-                shadowColor: collaborativePrimary 
+                shadowColor: collaborativePrimary
               }
             ]}
             onPress={handleCreateRoutinePress}
             activeOpacity={0.8}
           >
-             <Ionicons name="add-circle" size={22} color={colors.white} style={{ marginRight: 8 }} />
+            <Ionicons name="add-circle" size={22} color={colors.white} style={{ marginRight: 8 }} />
             <Text style={[styles.createBtnText, { color: colors.white }]}>Create Collaborative List</Text>
           </TouchableOpacity>
         </Animated.ScrollView>
@@ -664,7 +656,7 @@ export default function CollaborativeRoutinesScreen(): React.ReactElement {
           message={toastMessage}
           onClose={() => setToastVisible(false)}
         />
-        
+
         <EliminationModal
           visible={eliminationModalVisible}
           routines={eliminatedRoutineNames}

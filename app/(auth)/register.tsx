@@ -28,15 +28,15 @@ const GENDER_OPTIONS = [
 ];
 
 export default function SignupScreen(): React.ReactElement {
-  const router = useRouter(); 
+  const router = useRouter();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  
+
   // Date State
-  const [birthDate, setBirthDate] = useState(''); 
+  const [birthDate, setBirthDate] = useState('');
   const [dateObject, setDateObject] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -97,29 +97,26 @@ export default function SignupScreen(): React.ReactElement {
         password: password,
         gender: gender.toLowerCase(),
         birthDate: birthDate,
-        avatar: selectedAvatar // Send selected avatar ID (or URL if backend supports it directly, but ID is cleaner if mapping locally, though we used URLs above so let's send URI or ID. Let's send ID or URI. Plan said ID, but user wants to see it. Let's send the URI for simplicity if backend blindly accepts string)
-        // Actually, backend might not have this column yet. But 'any' payload allows sending it.
-        // Assuming backend handles or ignores extra fields.
+        avatar: selectedAvatar
       };
 
       await authService.register(payload);
-      
-      // Persist avatar locally in case backend doesn't support it yet
+
       const safeEmail = email.toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
       await SecureStore.setItemAsync(`avatar_${safeEmail}`, selectedAvatar);
 
       Alert.alert('Success', 'Account created successfully!', [
-         { text: 'OK', onPress: () => router.replace('/') }
+        { text: 'OK', onPress: () => router.replace('/') }
       ]);
 
     } catch (error: unknown) {
-       let msg = 'Registration Failed';
-       if (error instanceof Error) {
-           msg = error.message;
-       } else if (typeof error === 'object' && error !== null && 'message' in error) {
-           msg = String((error as { message: unknown }).message);
-       }
-       Alert.alert('Registration Failed', msg);
+      let msg = 'Registration Failed';
+      if (error instanceof Error) {
+        msg = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        msg = String((error as { message: unknown }).message);
+      }
+      Alert.alert('Registration Failed', msg);
     } finally {
       setIsLoading(false);
     }
@@ -127,8 +124,8 @@ export default function SignupScreen(): React.ReactElement {
 
   return (
     <AuthLayout>
-      <TouchableOpacity 
-        style={[styles.backButton, { backgroundColor: colors.surface }]} 
+      <TouchableOpacity
+        style={[styles.backButton, { backgroundColor: colors.surface }]}
         onPress={() => router.back()}
       >
         <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -137,7 +134,7 @@ export default function SignupScreen(): React.ReactElement {
       <AuthHeader />
 
       <View style={{ width: '100%', zIndex: 1000 }}>
-        <TextInput 
+        <TextInput
           label="Name Surname"
           value={name}
           onChangeText={(value) => {
@@ -150,7 +147,7 @@ export default function SignupScreen(): React.ReactElement {
           error={errors.name}
         />
 
-        <TextInput 
+        <TextInput
           label="Email"
           value={email}
           onChangeText={(value) => {
@@ -181,10 +178,10 @@ export default function SignupScreen(): React.ReactElement {
               setShowDatePicker(true);
             }}
           >
-             <Ionicons name="calendar-outline" size={20} color={colors.icon} style={{ marginRight: 10 }} />
-             <Text style={birthDate ? [styles.dateText, { color: colors.text }] : [styles.placeholderText, { color: colors.icon }]}>
-               {birthDate || 'YYYY-MM-DD'}
-             </Text>
+            <Ionicons name="calendar-outline" size={20} color={colors.icon} style={{ marginRight: 10 }} />
+            <Text style={birthDate ? [styles.dateText, { color: colors.text }] : [styles.placeholderText, { color: colors.icon }]}>
+              {birthDate || 'YYYY-MM-DD'}
+            </Text>
           </TouchableOpacity>
           {errors.birthDate ? (
             <ThemedText style={[styles.errorText, { color: colors.error }]}>
@@ -193,59 +190,57 @@ export default function SignupScreen(): React.ReactElement {
           ) : null}
 
           {showDatePicker && (
-             Platform.OS === 'ios' ? (
-                <Modal transparent animationType="fade">
-                   <View style={styles.modalOverlay}>
-                      <View style={[styles.datePickerContainer, { backgroundColor: colors.card }]}>
-                         <View style={[styles.pickerHeader, { borderBottomColor: colors.border }]}>
-                            <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                              <Text style={{ color: colors.primary, fontWeight: '600' }}>Done</Text>
-                            </TouchableOpacity>
-                         </View>
-                         <DateTimePicker
-                           value={dateObject}
-                           mode="date"
-                           display="spinner"
-                           maximumDate={new Date()}
-                           textColor={colors.text}
-                           themeVariant={theme === 'dark' ? 'dark' : 'light'}
-                           onChange={(e, d) => {
-                             if (d) {
-                               setDateObject(d);
-                               // Format locally to avoid timezone shifts
-                               const year = d.getFullYear();
-                               const month = String(d.getMonth() + 1).padStart(2, '0');
-                               const day = String(d.getDate()).padStart(2, '0');
-                               setBirthDate(`${year}-${month}-${day}`);
-                               setErrors((prev) => ({ ...prev, birthDate: undefined }));
-                             }
-                           }}
-                         />
-                      </View>
-                   </View>
-                </Modal>
-             ) : (
-                <DateTimePicker
-                  value={dateObject}
-                  mode="date"
-                  display="default"
-                  maximumDate={new Date()}
-                  onChange={(e, d) => {
-                     if (Platform.OS === 'android') {
-                       setShowDatePicker(false);
-                     }
-                     if (d) {
-                       setDateObject(d);
-                       // Format locally to avoid timezone shifts
-                       const year = d.getFullYear();
-                       const month = String(d.getMonth() + 1).padStart(2, '0');
-                       const day = String(d.getDate()).padStart(2, '0');
-                       setBirthDate(`${year}-${month}-${day}`);
-                       setErrors((prev) => ({ ...prev, birthDate: undefined }));
-                     }
-                  }}
-                />
-             )
+            Platform.OS === 'ios' ? (
+              <Modal transparent animationType="fade">
+                <View style={styles.modalOverlay}>
+                  <View style={[styles.datePickerContainer, { backgroundColor: colors.card }]}>
+                    <View style={[styles.pickerHeader, { borderBottomColor: colors.border }]}>
+                      <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                        <Text style={{ color: colors.primary, fontWeight: '600' }}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      value={dateObject}
+                      mode="date"
+                      display="spinner"
+                      maximumDate={new Date()}
+                      textColor={colors.text}
+                      themeVariant={theme === 'dark' ? 'dark' : 'light'}
+                      onChange={(e, d) => {
+                        if (d) {
+                          setDateObject(d);
+                          const year = d.getFullYear();
+                          const month = String(d.getMonth() + 1).padStart(2, '0');
+                          const day = String(d.getDate()).padStart(2, '0');
+                          setBirthDate(`${year}-${month}-${day}`);
+                          setErrors((prev) => ({ ...prev, birthDate: undefined }));
+                        }
+                      }}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              <DateTimePicker
+                value={dateObject}
+                mode="date"
+                display="default"
+                maximumDate={new Date()}
+                onChange={(e, d) => {
+                  if (Platform.OS === 'android') {
+                    setShowDatePicker(false);
+                  }
+                  if (d) {
+                    setDateObject(d);
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    setBirthDate(`${year}-${month}-${day}`);
+                    setErrors((prev) => ({ ...prev, birthDate: undefined }));
+                  }
+                }}
+              />
+            )
           )}
         </View>
 
@@ -256,7 +251,7 @@ export default function SignupScreen(): React.ReactElement {
               const isSelected = gender === option.value;
               let iconName: any = 'male';
               let activeColor = colors.primary;
-              
+
               if (option.value === 'female') {
                 iconName = 'female';
                 activeColor = '#F472B6'; // Pink for female
@@ -281,14 +276,14 @@ export default function SignupScreen(): React.ReactElement {
                     errors.gender && !isSelected && { borderColor: colors.error }
                   ]}
                 >
-                  <Ionicons 
-                    name={iconName} 
-                    size={20} 
-                    color={isSelected ? '#fff' : colors.icon} 
-                    style={{ marginRight: 8 }} 
+                  <Ionicons
+                    name={iconName}
+                    size={20}
+                    color={isSelected ? '#fff' : colors.icon}
+                    style={{ marginRight: 8 }}
                   />
                   <Text style={[
-                    styles.segmentedButtonText, 
+                    styles.segmentedButtonText,
                     { color: isSelected ? '#fff' : colors.text }
                   ]}>
                     {option.label}
@@ -304,7 +299,7 @@ export default function SignupScreen(): React.ReactElement {
           ) : null}
         </View>
 
-        <TextInput 
+        <TextInput
           label="Password"
           value={password}
           onChangeText={(value) => {
@@ -323,8 +318,8 @@ export default function SignupScreen(): React.ReactElement {
           <ThemedText type="label" style={{ marginBottom: 12, marginLeft: 4, color: colors.icon }}>
             Select Avatar
           </ThemedText>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 12, paddingRight: 20 }}
           >
@@ -339,24 +334,24 @@ export default function SignupScreen(): React.ReactElement {
                   padding: 2,
                 }}
               >
-               <Image 
-                 source={{ uri: av.uri }} 
-                 style={{
-                   width: 54,
-                   height: 54,
-                   borderRadius: 27,
-                   backgroundColor: colors.surface,
-                 }} 
-               />
+                <Image
+                  source={{ uri: av.uri }}
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: 27,
+                    backgroundColor: colors.surface,
+                  }}
+                />
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
-        <Button 
-          title="Sign Up" 
-          onPress={handleRegister} 
-          isLoading={isLoading} 
+        <Button
+          title="Sign Up"
+          onPress={handleRegister}
+          isLoading={isLoading}
           style={{ marginTop: 10 }}
         />
       </View>

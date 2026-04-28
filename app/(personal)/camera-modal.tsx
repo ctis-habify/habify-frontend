@@ -18,7 +18,7 @@ import { verificationService } from '../../services/verification.service';
 
 export default function CameraModal(): React.ReactElement {
   const router = useRouter();
-  const params = useLocalSearchParams(); 
+  const params = useLocalSearchParams();
   const routineId = params.routineId as string;
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
@@ -26,7 +26,7 @@ export default function CameraModal(): React.ReactElement {
 
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-  
+
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loadingText, setLoadingText] = useState('Verifying with AI...');
@@ -47,8 +47,8 @@ export default function CameraModal(): React.ReactElement {
           <Text style={[styles.permissionText, { color: colors.textSecondary }]}>
             We need your permission to show the camera so you can verify your habits.
           </Text>
-          <TouchableOpacity 
-            onPress={requestPermission} 
+          <TouchableOpacity
+            onPress={requestPermission}
             style={[styles.permissionBtn, { backgroundColor: colors.primary }]}
           >
             <Text style={[styles.btnText, { color: colors.white }]}>Grant Permission</Text>
@@ -63,8 +63,8 @@ export default function CameraModal(): React.ReactElement {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.7, // Basic compression
-          skipProcessing: true, // Faster capture
+          quality: 0.7,
+          skipProcessing: true,
         });
         setPhotoUri(photo?.uri || null);
       } catch (error) {
@@ -74,7 +74,6 @@ export default function CameraModal(): React.ReactElement {
     }
   };
 
-  // ... (handleUpload logic unchanged) ...
   const handleUpload = async () => {
     if (!photoUri) return;
 
@@ -95,9 +94,6 @@ export default function CameraModal(): React.ReactElement {
       // 1. Get Signed URL
 
       const { signedUrl, objectPath } = await verificationService.getSignedUrl('jpg', 'image/jpeg');
-
-
-
 
       // 2. Upload to GCS via PUT
       await verificationService.uploadToGcs(signedUrl, photoUri);
@@ -174,13 +170,13 @@ export default function CameraModal(): React.ReactElement {
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
   };
 
-  // --- RENDER: PREVIEW MODE (Photo Taken) ---
+  // RENDER: PREVIEW MODE
   if (photoUri) {
     return (
       <View style={styles.container}>
         <Image source={{ uri: photoUri }} style={styles.previewImage} />
 
-        
+
         {isUploading && (
           <View style={[styles.loadingOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.7)' }]}>
             <ActivityIndicator size="large" color={colors.white} />
@@ -210,11 +206,11 @@ export default function CameraModal(): React.ReactElement {
     );
   }
 
-  // --- RENDER: CAMERA MODE ---
+  // RENDER: CAMERA MODE
   return (
     <View style={styles.container}>
       <CameraView style={StyleSheet.absoluteFill} facing={facing} ref={cameraRef} />
-      
+
       {/* UI Overlay */}
       <View style={styles.cameraUi}>
         {/* Top Bar: Close & Flip */}
@@ -241,13 +237,13 @@ export default function CameraModal(): React.ReactElement {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', justifyContent: 'center' },
 
-  cameraUi: { 
-    ...StyleSheet.absoluteFillObject, // Overlay on top
-    justifyContent: 'space-between', 
+  cameraUi: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'space-between',
     padding: 24,
     zIndex: 10,
   },
-  
+
   permissionContent: {
     padding: 32,
     alignItems: 'center',
@@ -280,11 +276,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
   },
-  
+
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 40, 
+    paddingTop: 40,
   },
   iconBtn: {
     padding: 12,
@@ -293,7 +289,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   bottomBar: {
     alignItems: 'center',
     paddingBottom: 40,

@@ -122,7 +122,7 @@ export const notificationService = {
     return message;
   },
 
-  // ── Backend API methods ──
+  // Backend API methods
 
   async fetchNotifications(
     limit: number = 50,

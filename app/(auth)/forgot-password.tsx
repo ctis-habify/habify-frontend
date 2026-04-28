@@ -20,14 +20,14 @@ export default function ForgotPasswordScreen(): React.ReactElement {
   const router = useRouter();
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<ResetErrors>({});
-  
+
   const { resetPassword, loading } = useAuth();
-  
+
   const handleReset = async () => {
     const nextErrors: ResetErrors = {};
 
@@ -61,9 +61,9 @@ export default function ForgotPasswordScreen(): React.ReactElement {
     } catch (err: unknown) {
       let msg = 'Something went wrong.';
       if (err instanceof Error) {
-          msg = err.message;
+        msg = err.message;
       } else if (typeof err === 'object' && err !== null && 'message' in err) {
-          msg = String((err as { message: unknown }).message);
+        msg = String((err as { message: unknown }).message);
       }
       Alert.alert('Reset failed', msg);
     }
@@ -78,7 +78,7 @@ export default function ForgotPasswordScreen(): React.ReactElement {
           Enter your email and a new password to reset it directly.
         </ThemedText>
 
-        <TextInput 
+        <TextInput
           label="Email Address"
           value={email}
           onChangeText={(value) => {
@@ -92,7 +92,7 @@ export default function ForgotPasswordScreen(): React.ReactElement {
           error={errors.email}
         />
 
-        <TextInput 
+        <TextInput
           label="New Password"
           value={password}
           onChangeText={(value) => {
@@ -107,7 +107,7 @@ export default function ForgotPasswordScreen(): React.ReactElement {
           error={errors.password}
         />
 
-        <TextInput 
+        <TextInput
           label="Re-enter New Password"
           value={confirmPassword}
           onChangeText={(value) => {
@@ -121,11 +121,11 @@ export default function ForgotPasswordScreen(): React.ReactElement {
           icon="lock-closed-outline"
           error={errors.confirmPassword}
         />
-        
-        <Button 
-          title="Reset Password" 
-          onPress={handleReset} 
-          isLoading={loading} 
+
+        <Button
+          title="Reset Password"
+          onPress={handleReset}
+          isLoading={loading}
           style={{ marginTop: 24 }}
         />
 

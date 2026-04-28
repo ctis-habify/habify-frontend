@@ -5,7 +5,7 @@ import { SplashScreen } from '@/components/splash/splash-screen';
 import { getBackgroundGradient } from '@/constants/theme';
 import { ThemeProvider, useColorScheme } from '@/hooks/use-color-scheme';
 import { useToast } from '@/hooks/use-toast';
-import { Stack, Head } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as React from 'react';
 import { View, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -20,7 +20,7 @@ function NotificationSetup(): null {
 
 function GlobalToast(): React.ReactElement | null {
   const { visible, message, icon, hide } = useToast();
-  return <Toast visible={visible} message={message} icon={icon} onHide={hide} />;
+  return <Toast visible={visible} message={message} icon={icon} onClose={hide} />;
 }
 
 function RootContent(): React.ReactElement {
@@ -40,20 +40,6 @@ function RootContent(): React.ReactElement {
 
   return (
     <View style={{ flex: 1, backgroundColor: topColor }}>
-      {Platform.OS === 'web' && (
-        <Head>
-          <style>{`
-            input:-webkit-autofill,
-            input:-webkit-autofill:hover, 
-            input:-webkit-autofill:focus, 
-            input:-webkit-autofill:active {
-              -webkit-box-shadow: 0 0 0 1000px #1E1B4B inset !important;
-              -webkit-text-fill-color: #F9FAFB !important;
-              transition: background-color 5000s ease-in-out 0s;
-            }
-          `}</style>
-        </Head>
-      )}
       <NotificationSetup />
       <Stack
         screenOptions={{

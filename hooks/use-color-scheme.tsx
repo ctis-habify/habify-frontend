@@ -71,13 +71,11 @@ export function ThemeProvider({ children }: { children: ReactNode }): React.Reac
     );
 }
 
-// Hook to get the current scheme (overrides RN one)
 export function useColorScheme(): ColorSchemeName {
     const ctx = useContext(ThemeContext);
     return ctx?.theme ?? 'light';
 }
 
-// Hook to control theme
 export function useThemeControl(): ThemeContextType {
     const ctx = useContext(ThemeContext);
     if (!ctx) {
