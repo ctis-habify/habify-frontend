@@ -18,6 +18,7 @@ import { DeleteRoutineModal } from '../modals/delete-routine-modal';
 import { ManageRoutineUsersModal } from '../modals/manage-routine-users-modal';
 import { ThrobbingHeart } from '../animations/throbbing-heart';
 import { AnimatedFlame } from '../animations/animated-flame';
+import { routineService } from '@/services/routine.service';
 
 interface CollaborativeGroupCardProps {
     routine: Routine | null;
@@ -43,6 +44,11 @@ export function CollaborativeGroupCard({
     const colors = Colors[theme];
     const effectiveAccentColor = accentColor || colors.primary;
     const safeRoutine = routine ?? ({} as Routine);
+    const normalizeId = (value?: string | number | null): string => {
+        if (value === undefined || value === null) return '';
+        return String(value).trim();
+    };
+
     const {
         id,
         routineName,
@@ -71,7 +77,30 @@ export function CollaborativeGroupCard({
 
     const [isManageModalVisible, setIsManageModalVisible] = React.useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = React.useState(false);
+    const [fetchedStreak, setFetchedStreak] = React.useState<number | null>(null);
     const cardScale = useSharedValue(1);
+
+    const currentUserId = normalizeId(user?.id);
+
+    React.useEffect(() => {
+        if (id && (safeRoutine as any).routineType === 'collaborative') {
+            routineService.getGroupDetail(id.toString())
+                .then(detail => {
+                    const me = (detail.participants as any[]).find((p: any) => 
+                        normalizeId(p.userId || p.user?.id || p.id) === currentUserId
+                    );
+                    if (me && typeof (me as any).streak === 'number') {
+                        setFetchedStreak((me as any).streak);
+                    }
+                })
+                .catch(err => {
+                    // Fail silently or log minimally
+                    console.debug('Failed to fetch streak for group card', id, err);
+                });
+        }
+    }, [id, currentUserId]);
+
+    const displayStreak = fetchedStreak !== null ? fetchedStreak : streak;
 
     const formatTime = (time?: string): string => {
         if (!time) return '--:--';
@@ -81,10 +110,6 @@ export function CollaborativeGroupCard({
         return hhmm || '--:--';
     };
 
-    const normalizeId = (value?: string | number | null): string => {
-        if (value === undefined || value === null) return '';
-        return String(value).trim();
-    };
 
     const creatorCandidate = normalizeId(
         creatorId
@@ -96,7 +121,6 @@ export function CollaborativeGroupCard({
         || (safeRoutine as { creator?: { id?: string } }).creator?.id
         || (safeRoutine as { user?: { id?: string } }).user?.id
     );
-    const currentUserId = normalizeId(user?.id);
     const isCreator = !!currentUserId && !!creatorCandidate && currentUserId === creatorCandidate;
 
     const handleInvite = async (): Promise<void> => {
@@ -184,9 +208,9 @@ export function CollaborativeGroupCard({
                     </View>
                     <View style={[styles.divider, { height: '60%', backgroundColor: colors.border }]} />
                     <View style={styles.statItem}>
-                        <AnimatedFlame streak={streak} size={16} />
+                        <AnimatedFlame streak={displayStreak} size={16} />
                         <Text style={[styles.statLabel, { color: colors.icon }]}>Streak: </Text>
-                        <Text style={[styles.statValue, { color: colors.text }]}>{streak}</Text>
+                        <Text style={[styles.statValue, { color: colors.text }]}>{displayStreak}</Text>
                     </View>
                     <View style={[styles.divider, { height: '60%', backgroundColor: colors.border }]} />
                     <View style={styles.statItem}>

@@ -230,7 +230,6 @@ const normalizeRoutineLeaderboardEntry = (item: unknown): Record<string, unknown
 
 const normalizeRoutine = (item: unknown): Routine => {
   const source: Record<string, unknown> = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
-
   const categoryValue: unknown = source.category;
   const categoryName: string =
     toStringOrUndefined(source.categoryName || source.category_name) ||
@@ -278,9 +277,7 @@ const normalizeRoutine = (item: unknown): Routine => {
           isDone = false;
         }
       }
-    } catch (e) {
-      // If we can't parse, leave isDone as-is (trust the backend).
-    }
+    } catch (e) {}
   }
 
   return {
@@ -296,7 +293,12 @@ const normalizeRoutine = (item: unknown): Routine => {
     endTime,
     isDone,
     creatorId: toStringOrUndefined(source.creatorId || source.creator_id || source.userId || source.user_id || source.ownerId || (source.creator as Record<string, unknown>)?.id || (source.user as Record<string, unknown>)?.id),
-    isPublic: source.isPublic === true || source.is_public === true || String(source.visibility || source.privacy || '').toLowerCase() === 'public',
+    isPublic: 
+      source.isPublic === true || 
+      source.is_public === true || 
+      String(source.isPublic || source.is_public || '').toUpperCase() === 'TRUE' ||
+      String(source.isPublic || source.is_public || '') === '1' ||
+      String(source.visibility || source.privacy || '').toLowerCase() === 'public',
     categoryName,
     rewardCondition: toStringOrUndefined(source.rewardCondition || source.reward_condition || source.reward) || '',
     frequencyType: toStringOrUndefined(source.frequencyType || source.frequency_type || source.frequency || source.repetition || source.repeat_type || source.repeat) || '',
