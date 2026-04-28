@@ -7,13 +7,12 @@ import {
     ActivityIndicator,
     DeviceEventEmitter,
     FlatList,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import Animated, {
     Easing,
@@ -34,9 +33,9 @@ import { routineService } from '@/services/routine.service';
 import type { Category } from '@/types/category';
 import { PublicRoutine } from '@/types/routine';
 
-// Spring config for the enter animation – feels snappy and physical
+// Spring config for the enter animation 
 const ENTER_SPRING = { damping: 22, stiffness: 200, mass: 0.8 };
-// Exit timing – quick and decisive
+// Exit timing 
 const EXIT_TIMING = { duration: 220, easing: Easing.in(Easing.cubic) };
 
 export default function BrowsePublicRoutinesScreen(): React.ReactElement {
@@ -53,14 +52,14 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
     const [search, setSearch] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
-    
+
     // Filters
     const [categoryId, setCategoryId] = useState<number | ''>('');
     const [frequencyType, setFrequencyType] = useState<string>('');
     const [gender, setGender] = useState<string>('');
     const [age, setAge] = useState<string>('');
     const [xp, setXp] = useState<string>('');
-    
+
     // Dropdown options
     const [categories, setCategories] = useState<Category[]>([]);
     const [loadingCategories, setLoadingCategories] = useState(false);
@@ -70,7 +69,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
 
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // ── Shared animation values (run on UI thread) ──────────────
+    // Shared animation values (run on UI thread)
     const opacity = useSharedValue(0);
     const translateX = useSharedValue(40);   // slide in from the right
     const scale = useSharedValue(0.97);
@@ -79,11 +78,11 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
         setLoading(true);
         try {
             const data = await routineService.browsePublicRoutines(
-                q || undefined, 
-                catId || undefined, 
-                freq || undefined, 
-                gen || undefined, 
-                ageVal ? parseInt(ageVal, 10) : undefined, 
+                q || undefined,
+                catId || undefined,
+                freq || undefined,
+                gen || undefined,
+                ageVal ? parseInt(ageVal, 10) : undefined,
                 xpVal ? parseInt(xpVal, 10) : undefined
             );
             // Filter out routines the user has already joined
@@ -97,7 +96,6 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
 
     // useFocusEffect fires on every visit (the drawer keeps the component mounted,
     // so useEffect([]) only runs once and leaves shared values at their exit state).
-    // We reset to the hidden start position first, then animate in fresh each time.
     useFocusEffect(
         useCallback(() => {
             opacity.value = 0;
@@ -108,12 +106,8 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
             translateX.value = withSpring(0, ENTER_SPRING);
             scale.value = withSpring(1, ENTER_SPRING);
 
-            // Re-fetch on every focus so the backend filter (joined routines excluded) applies
             fetchRoutines(search.trim() || undefined, categoryId, frequencyType, gender, age, xp);
-
-            // Remount FlatList items so their entering animations fire fresh each visit
             setListKey((k) => k + 1);
-            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [fetchRoutines]),
     );
 
@@ -126,7 +120,6 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
         ],
     }));
 
-    // Exit: animate out, then navigate on the JS side via runOnJS
     const goBack = useCallback(() => {
         'worklet';
         opacity.value = withTiming(0, EXIT_TIMING);
@@ -135,14 +128,13 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
             if (finished) runOnJS(router.back)();
         });
     }, [opacity, translateX, scale, router]);
-    // ────────────────────────────────────────────────────────────
 
-    const categoryItems = useMemo(() => 
-        categories.map(c => ({ 
-            label: c.name, 
-            value: c.categoryId 
-        })), 
-    [categories]);
+    const categoryItems = useMemo(() =>
+        categories.map(c => ({
+            label: c.name,
+            value: c.categoryId
+        })),
+        [categories]);
 
     const showToast = useCallback((msg: string) => {
         setToastMessage(msg);
@@ -157,17 +149,14 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                 const cats = await categoryService.getCategories('collaborative');
                 setCategories(cats);
             } catch {
-                // ignore
             } finally {
                 setLoadingCategories(false);
             }
         };
         loadCats();
         fetchRoutines(search.trim() || undefined, categoryId, frequencyType, gender, age, xp);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Debounced search
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
@@ -183,7 +172,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
             try {
                 const res = await routineService.joinPublicRoutine(id);
                 showToast(res.message);
-                // Flip to "Joined" badge — stays visible in this session
+                // Flip to "Joined" badge 
                 // Remove from browse list since user has joined
                 setRoutines((prev) => prev.filter((r) => r.id !== id));
                 DeviceEventEmitter.emit('SHOW_TOAST', 'Successfully joined the routine!');
@@ -293,7 +282,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                                         key={f}
                                         onPress={() => setFrequencyType(frequencyType === f ? '' : f)}
                                         style={[
-                                            styles.miniChip, 
+                                            styles.miniChip,
                                             { backgroundColor: colors.card, borderColor: colors.border },
                                             frequencyType === f && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
                                         ]}
@@ -317,7 +306,7 @@ export default function BrowsePublicRoutinesScreen(): React.ReactElement {
                                         key={g.value}
                                         onPress={() => setGender(g.value)}
                                         style={[
-                                            styles.miniChip, 
+                                            styles.miniChip,
                                             { backgroundColor: colors.card, borderColor: colors.border },
                                             gender === g.value && { backgroundColor: collaborativePrimary, borderColor: collaborativePrimary }
                                         ]}

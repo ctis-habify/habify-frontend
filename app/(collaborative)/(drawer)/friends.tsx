@@ -320,69 +320,69 @@ export default function FriendsScreen(): React.ReactElement {
         style={styles.segmentBarWrapper}
         entering={FadeIn.delay(80).duration(320)}
       >
-      {/* Segment bar: Add Friends | Sent | Friends */}
-      <View style={[styles.segmentBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <TouchableOpacity
-          style={[styles.segmentTab, segment === 'add' && { backgroundColor: collaborativePrimary }]}
-          onPress={() => setSegment('add')}
-          onPressIn={() => { tabScaleAdd.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
-          onPressOut={() => { tabScaleAdd.value = withSpring(1); }}
-        >
-          <Animated.View style={[styles.segmentTabInner, animatedTabAdd]}>
-            <Ionicons
-              name="person-add-outline"
-              size={18}
-              color={segment === 'add' ? colors.white : colors.icon}
-            />
-            <Text
-              style={[styles.segmentLabel, { color: colors.icon }, segment === 'add' && { color: colors.white }]}
-              numberOfLines={1}
-            >
-              Add Friends
-            </Text>
-          </Animated.View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.segmentTab, segment === 'sent' && { backgroundColor: collaborativePrimary }]}
-          onPress={() => setSegment('sent')}
-          onPressIn={() => { tabScaleSent.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
-          onPressOut={() => { tabScaleSent.value = withSpring(1); }}
-        >
-          <Animated.View style={[styles.segmentTabInner, animatedTabSent]}>
-            <Ionicons
-              name="send"
-              size={18}
-              color={segment === 'sent' ? colors.white : colors.icon}
-            />
-            <Text
-              style={[styles.segmentLabel, { color: colors.icon }, segment === 'sent' && { color: colors.white }]}
-              numberOfLines={1}
-            >
-              Sent
-            </Text>
-          </Animated.View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.segmentTab, segment === 'list' && { backgroundColor: collaborativePrimary }]}
-          onPress={() => setSegment('list')}
-          onPressIn={() => { tabScaleList.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
-          onPressOut={() => { tabScaleList.value = withSpring(1); }}
-        >
-          <Animated.View style={[styles.segmentTabInner, animatedTabList]}>
-            <Ionicons
-              name="people"
-              size={18}
-              color={segment === 'list' ? colors.white : colors.icon}
-            />
-            <Text
-              style={[styles.segmentLabel, { color: colors.icon }, segment === 'list' && { color: colors.white }]}
-              numberOfLines={1}
-            >
-              Friends
-            </Text>
-          </Animated.View>
-        </TouchableOpacity>
-      </View>
+        {/* Segment bar: Add Friends | Sent | Friends */}
+        <View style={[styles.segmentBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.segmentTab, segment === 'add' && { backgroundColor: collaborativePrimary }]}
+            onPress={() => setSegment('add')}
+            onPressIn={() => { tabScaleAdd.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
+            onPressOut={() => { tabScaleAdd.value = withSpring(1); }}
+          >
+            <Animated.View style={[styles.segmentTabInner, animatedTabAdd]}>
+              <Ionicons
+                name="person-add-outline"
+                size={18}
+                color={segment === 'add' ? colors.white : colors.icon}
+              />
+              <Text
+                style={[styles.segmentLabel, { color: colors.icon }, segment === 'add' && { color: colors.white }]}
+                numberOfLines={1}
+              >
+                Add Friends
+              </Text>
+            </Animated.View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segmentTab, segment === 'sent' && { backgroundColor: collaborativePrimary }]}
+            onPress={() => setSegment('sent')}
+            onPressIn={() => { tabScaleSent.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
+            onPressOut={() => { tabScaleSent.value = withSpring(1); }}
+          >
+            <Animated.View style={[styles.segmentTabInner, animatedTabSent]}>
+              <Ionicons
+                name="send"
+                size={18}
+                color={segment === 'sent' ? colors.white : colors.icon}
+              />
+              <Text
+                style={[styles.segmentLabel, { color: colors.icon }, segment === 'sent' && { color: colors.white }]}
+                numberOfLines={1}
+              >
+                Sent
+              </Text>
+            </Animated.View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segmentTab, segment === 'list' && { backgroundColor: collaborativePrimary }]}
+            onPress={() => setSegment('list')}
+            onPressIn={() => { tabScaleList.value = withSpring(0.94, { damping: 14, stiffness: 320 }); }}
+            onPressOut={() => { tabScaleList.value = withSpring(1); }}
+          >
+            <Animated.View style={[styles.segmentTabInner, animatedTabList]}>
+              <Ionicons
+                name="people"
+                size={18}
+                color={segment === 'list' ? colors.white : colors.icon}
+              />
+              <Text
+                style={[styles.segmentLabel, { color: colors.icon }, segment === 'list' && { color: colors.white }]}
+                numberOfLines={1}
+              >
+                Friends
+              </Text>
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
 
       {/* 1. Add Friends: arama + sonuçlar */}
@@ -392,239 +392,239 @@ export default function FriendsScreen(): React.ReactElement {
           style={styles.flex1}
           entering={FadeIn.duration(280)}
         >
-        <KeyboardAvoidingView
-          style={styles.flex1}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={0}
-        >
-          <View style={styles.searchRow}>
-            <View style={[styles.inputWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Ionicons name="search" size={20} color={colors.icon} style={styles.searchIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                placeholder="Search by name or username..."
-                placeholderTextColor={colors.icon}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                returnKeyType="search"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSearchQuery('');
-                    setSearchResults([]);
-                  }}
-                  style={styles.clearBtn}
-                >
-                  <Ionicons name="close-circle" size={20} color={colors.icon} />
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-          <ScrollView
+          <KeyboardAvoidingView
             style={styles.flex1}
-            contentContainerStyle={styles.searchResultsContent}
-            keyboardShouldPersistTaps="handled"
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={0}
           >
-            {searchLoading && (
-              <Animated.View style={styles.centeredMinimal} entering={FadeIn.duration(200)}>
-                <ActivityIndicator size="large" color={collaborativePrimary} />
-              </Animated.View>
-            )}
-            {!searchLoading && searchQuery.trim() && searchResults.length === 0 && (
-              <Animated.View entering={FadeIn.delay(100).duration(280)} style={styles.emptySearchWrap}>
-                <EmptyStateIllustration type="search" color={collaborativePrimary} />
-                <Text style={[styles.emptyText, { color: colors.icon }]}>No users found.</Text>
-              </Animated.View>
-            )}
-            {!searchLoading && !searchQuery.trim() && (
-              <Animated.View entering={FadeIn.duration(280)}>
-                <Text style={[styles.hintText, { color: colors.icon }]}>Type a name or username to search.</Text>
-              </Animated.View>
-            )}
-            {!searchLoading &&
-              searchResults.map((user, index) => {
-                const isFriend = friendIds.has(user.id);
-                return (
-                  <Animated.View
-                    key={user.id}
-                    entering={ZoomIn.delay(index * 50).duration(280).springify()}
-                    style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
+            <View style={styles.searchRow}>
+              <View style={[styles.inputWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Ionicons name="search" size={20} color={colors.icon} style={styles.searchIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="Search by name or username..."
+                  placeholderTextColor={colors.icon}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  returnKeyType="search"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                    }}
+                    style={styles.clearBtn}
                   >
-                    <View style={styles.avatarWrap}>
-                      <UserAvatar 
-                        url={user.avatarUrl} 
-                        name={user.name} 
-                        size={48} 
-                      />
-                    </View>
-                    <View style={styles.info}>
-                      <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-                        {user.name}
-                      </Text>
-                      {(user.username || user.id) && (
-                        <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
-                          @{user.username || user.id.slice(0, 8)}
-                        </Text>
-                      )}
-                      <Text style={[styles.xpText, { color: collaborativePrimary }]}>{user.totalXp} XP</Text>
-                    </View>
-                    {isFriend ? (
-                      <View style={styles.friendsBadge}>
-                        <Ionicons name="people" size={18} color={collaborativePrimary} />
-                        <Text style={[styles.friendsBadgeText, { color: collaborativePrimary }]}>Friends</Text>
+                    <Ionicons name="close-circle" size={20} color={colors.icon} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+            <ScrollView
+              style={styles.flex1}
+              contentContainerStyle={styles.searchResultsContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {searchLoading && (
+                <Animated.View style={styles.centeredMinimal} entering={FadeIn.duration(200)}>
+                  <ActivityIndicator size="large" color={collaborativePrimary} />
+                </Animated.View>
+              )}
+              {!searchLoading && searchQuery.trim() && searchResults.length === 0 && (
+                <Animated.View entering={FadeIn.delay(100).duration(280)} style={styles.emptySearchWrap}>
+                  <EmptyStateIllustration type="search" color={collaborativePrimary} />
+                  <Text style={[styles.emptyText, { color: colors.icon }]}>No users found.</Text>
+                </Animated.View>
+              )}
+              {!searchLoading && !searchQuery.trim() && (
+                <Animated.View entering={FadeIn.duration(280)}>
+                  <Text style={[styles.hintText, { color: colors.icon }]}>Type a name or username to search.</Text>
+                </Animated.View>
+              )}
+              {!searchLoading &&
+                searchResults.map((user, index) => {
+                  const isFriend = friendIds.has(user.id);
+                  return (
+                    <Animated.View
+                      key={user.id}
+                      entering={ZoomIn.delay(index * 50).duration(280).springify()}
+                      style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    >
+                      <View style={styles.avatarWrap}>
+                        <UserAvatar
+                          url={user.avatarUrl}
+                          name={user.name}
+                          size={48}
+                        />
                       </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={[styles.sendBtn, { backgroundColor: collaborativePrimary }, sendingId === user.id && styles.sendBtnDisabled]}
-                        onPress={() => sendRequest(user)}
-                        disabled={sendingId !== null}
-                      >
-                        {sendingId === user.id ? (
-                          <ActivityIndicator size="small" color={colors.white} />
-                        ) : (
-                          <>
-                            <Ionicons name="person-add" size={18} color={colors.white} />
-                            <Text style={[styles.sendBtnText, { color: colors.white }]}>Add</Text>
-                          </>
+                      <View style={styles.info}>
+                        <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
+                          {user.name}
+                        </Text>
+                        {(user.username || user.id) && (
+                          <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
+                            @{user.username || user.id.slice(0, 8)}
+                          </Text>
                         )}
-                      </TouchableOpacity>
-                    )}
-                  </Animated.View>
-                );
-              })}
-          </ScrollView>
-        </KeyboardAvoidingView>
+                        <Text style={[styles.xpText, { color: collaborativePrimary }]}>{user.totalXp} XP</Text>
+                      </View>
+                      {isFriend ? (
+                        <View style={styles.friendsBadge}>
+                          <Ionicons name="people" size={18} color={collaborativePrimary} />
+                          <Text style={[styles.friendsBadgeText, { color: collaborativePrimary }]}>Friends</Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={[styles.sendBtn, { backgroundColor: collaborativePrimary }, sendingId === user.id && styles.sendBtnDisabled]}
+                          onPress={() => sendRequest(user)}
+                          disabled={sendingId !== null}
+                        >
+                          {sendingId === user.id ? (
+                            <ActivityIndicator size="small" color={colors.white} />
+                          ) : (
+                            <>
+                              <Ionicons name="person-add" size={18} color={colors.white} />
+                              <Text style={[styles.sendBtnText, { color: colors.white }]}>Add</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      )}
+                    </Animated.View>
+                  );
+                })}
+            </ScrollView>
+          </KeyboardAvoidingView>
         </Animated.View>
       )}
 
       {segment === 'sent' && (
         <Animated.View key="sent" style={styles.flex1} entering={FadeIn.duration(280)}>
-        <>
-          {loading ? (
-            <View style={styles.centered}>
-              <ActivityIndicator size="large" color={collaborativePrimary} />
-            </View>
-          ) : sentRequests.length === 0 ? (
-            <Animated.View style={styles.centered} entering={FadeIn.delay(80).duration(320)}>
-              <EmptyStateIllustration type="sent" color={collaborativePrimary} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No sent requests</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.icon }]}>
-                Requests you send from Add Friend will appear here.
-              </Text>
-            </Animated.View>
-          ) : (
-            <FlatList
-              data={sentRequests}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-              renderItem={({ item, index }) => (
-                <Animated.View
-                  entering={ZoomIn.delay(index * 50).duration(280).springify()}
-                  style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
-                >
-                  <View style={styles.avatarWrap}>
-                    <UserAvatar 
-                      url={item.toUser.avatarUrl} 
-                      name={item.toUser.name} 
-                      size={48} 
-                    />
-                  </View>
-                  <View style={styles.info}>
-                    <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-                      {item.toUser.name}
-                    </Text>
-                    {item.toUser.username && (
-                      <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
-                        @{item.toUser.username}
-                      </Text>
-                    )}
-                    <View style={[styles.pendingBadge, { backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-                      <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
-                      <Text style={[styles.pendingBadgeText, { color: colors.textTertiary }]}>Pending</Text>
-                    </View>
-                  </View>
-                </Animated.View>
-              )}
-            />
-          )
-        }
-        </>
-        </Animated.View>
-      )}
-
-      {segment === 'list' && (
-        <Animated.View key="list" style={styles.flex1} entering={FadeIn.duration(280)}>
-        <>
-          {loading ? (
-            <View style={styles.centered}>
-              <ActivityIndicator size="large" color={collaborativePrimary} />
-            </View>
-          ) : friendsList.length === 0 ? (
-            <Animated.View style={styles.centered} entering={FadeIn.delay(80).duration(320)}>
-              <EmptyStateIllustration type="friends" color={collaborativePrimary} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No friends yet</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.icon }]}>
-                Accept invitations to see your friends here.
-              </Text>
-            </Animated.View>
-          ) : (
-            <>
-              <Animated.View
-                style={styles.friendsCountWrap}
-                entering={FadeInDown.delay(50).duration(300).springify()}
-              >
-                <LinearGradient
-                  colors={[collaborativePrimary, colors.tint]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.friendsCountPill, { shadowColor: collaborativePrimary }]}
-                >
-                  <Ionicons name="heart" size={16} color={colors.white} />
-                  <Text style={[styles.friendsCountText, { color: colors.white }]}>{friendsList.length} friend{friendsList.length !== 1 ? 's' : ''}</Text>
-                </LinearGradient>
+          <>
+            {loading ? (
+              <View style={styles.centered}>
+                <ActivityIndicator size="large" color={collaborativePrimary} />
+              </View>
+            ) : sentRequests.length === 0 ? (
+              <Animated.View style={styles.centered} entering={FadeIn.delay(80).duration(320)}>
+                <EmptyStateIllustration type="sent" color={collaborativePrimary} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No sent requests</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.icon }]}>
+                  Requests you send from Add Friend will appear here.
+                </Text>
               </Animated.View>
-            <FlatList
-              data={friendsList}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-              renderItem={({ item, index }) => (
-                <Animated.View
-                  entering={ZoomIn.delay(index * 50).duration(280).springify()}
-                >
-                  <TouchableOpacity
+            ) : (
+              <FlatList
+                data={sentRequests}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
+                renderItem={({ item, index }) => (
+                  <Animated.View
+                    entering={ZoomIn.delay(index * 50).duration(280).springify()}
                     style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => router.push({ pathname: '/(personal)/friend-profile', params: { userId: item.id } })}
-                    activeOpacity={0.75}
                   >
                     <View style={styles.avatarWrap}>
                       <UserAvatar
-                        url={item.avatarUrl}
-                        name={item.name}
+                        url={item.toUser.avatarUrl}
+                        name={item.toUser.name}
                         size={48}
                       />
                     </View>
                     <View style={styles.info}>
                       <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-                        {item.name}
+                        {item.toUser.name}
                       </Text>
-                      {item.username && (
+                      {item.toUser.username && (
                         <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
-                          @{item.username}
+                          @{item.toUser.username}
                         </Text>
                       )}
+                      <View style={[styles.pendingBadge, { backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                        <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
+                        <Text style={[styles.pendingBadgeText, { color: colors.textTertiary }]}>Pending</Text>
+                      </View>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={colors.icon} style={{ opacity: 0.4 }} />
-                  </TouchableOpacity>
+                  </Animated.View>
+                )}
+              />
+            )
+            }
+          </>
+        </Animated.View>
+      )}
+
+      {segment === 'list' && (
+        <Animated.View key="list" style={styles.flex1} entering={FadeIn.duration(280)}>
+          <>
+            {loading ? (
+              <View style={styles.centered}>
+                <ActivityIndicator size="large" color={collaborativePrimary} />
+              </View>
+            ) : friendsList.length === 0 ? (
+              <Animated.View style={styles.centered} entering={FadeIn.delay(80).duration(320)}>
+                <EmptyStateIllustration type="friends" color={collaborativePrimary} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No friends yet</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.icon }]}>
+                  Accept invitations to see your friends here.
+                </Text>
+              </Animated.View>
+            ) : (
+              <>
+                <Animated.View
+                  style={styles.friendsCountWrap}
+                  entering={FadeInDown.delay(50).duration(300).springify()}
+                >
+                  <LinearGradient
+                    colors={[collaborativePrimary, colors.tint]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.friendsCountPill, { shadowColor: collaborativePrimary }]}
+                  >
+                    <Ionicons name="heart" size={16} color={colors.white} />
+                    <Text style={[styles.friendsCountText, { color: colors.white }]}>{friendsList.length} friend{friendsList.length !== 1 ? 's' : ''}</Text>
+                  </LinearGradient>
                 </Animated.View>
-              )}
-            />
-            </>
-          )
-        }
-        </>
+                <FlatList
+                  data={friendsList}
+                  keyExtractor={(item) => item.id}
+                  contentContainerStyle={styles.listContent}
+                  renderItem={({ item, index }) => (
+                    <Animated.View
+                      entering={ZoomIn.delay(index * 50).duration(280).springify()}
+                    >
+                      <TouchableOpacity
+                        style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
+                        onPress={() => router.push({ pathname: '/(personal)/friend-profile', params: { userId: item.id } })}
+                        activeOpacity={0.75}
+                      >
+                        <View style={styles.avatarWrap}>
+                          <UserAvatar
+                            url={item.avatarUrl}
+                            name={item.name}
+                            size={48}
+                          />
+                        </View>
+                        <View style={styles.info}>
+                          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
+                            {item.name}
+                          </Text>
+                          {item.username && (
+                            <Text style={[styles.meta, { color: colors.text, opacity: 0.6 }]} numberOfLines={1}>
+                              @{item.username}
+                            </Text>
+                          )}
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color={colors.icon} style={{ opacity: 0.4 }} />
+                      </TouchableOpacity>
+                    </Animated.View>
+                  )}
+                />
+              </>
+            )
+            }
+          </>
         </Animated.View>
       )}
     </View>

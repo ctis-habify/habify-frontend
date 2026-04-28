@@ -7,27 +7,27 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    DeviceEventEmitter,
-    FlatList,
-    Image,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  DeviceEventEmitter,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp, LinearTransition } from "react-native-reanimated";
 
 import { RoutineCompletedAnimation } from '@/components/animations/routine-completed-animation';
 import { ImageFullscreenModal } from '@/components/modals/image-fullscreen-modal';
 import { ChatVerificationItem } from '@/components/routines/chat-verification-item';
+import { Colors, getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Colors, getBackgroundGradient } from '@/constants/theme';
 import type { PredefinedRoutineMessage } from '@/services/routine.service';
 import { routineService } from '@/services/routine.service';
 import { RoutineLog } from '@/types/routine';
@@ -86,7 +86,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   funny: 'Funny',
 };
 
-const getCategoryLabel = (category: string): string => 
+const getCategoryLabel = (category: string): string =>
   CATEGORY_LABELS[category.trim().toLowerCase()] || 'General';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -168,9 +168,9 @@ const normalizeChatMessages = (
         (senderId ? `User ${String(senderId).slice(0, 6)}` : 'Unknown User');
       const isSystemMessage = /^\[SYSTEM\]\s*/i.test(text);
 
-      const senderAvatar = 
-        msg.user?.avatar || 
-        msg.user?.avatarUrl || 
+      const senderAvatar =
+        msg.user?.avatar ||
+        msg.user?.avatarUrl ||
         msg.user?.avatar_url ||
         msg.user?.profileImage ||
         msg.user?.user_avatar ||
@@ -322,7 +322,7 @@ export default function CollaborativeChatScreen() {
 
         return {
           id: `virtual-log-${log.id}`,
-          text: imageUrl, 
+          text: imageUrl,
           sender: log.userId === user?.id ? 'me' : 'system',
           senderName: log.userName || 'Member',
           senderAvatar: log.userAvatar,
@@ -336,12 +336,12 @@ export default function CollaborativeChatScreen() {
       const text = m.text.toLowerCase();
       const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
       const isPhoto = /^\[photo\]:/i.test(text) || text.includes('storage.googleapis.com') || imageRegex.test(text);
-      
+
       if (!isPhoto) return true;
 
       // Extract filename for comparison
       const msgFileName = text.split('/').pop()?.split('?')[0] || '???';
-      
+
       // If this photo message exists in our pending logs, skip this raw message
       const isAlreadyInLogs = pendingLogs.some(log => {
         const logUrl = (log.verificationImageUrl || '').toLowerCase();
@@ -393,7 +393,7 @@ export default function CollaborativeChatScreen() {
         setChatLoading(true);
       }
 
-      // Read from cache immediately for initial load to avoid flicker (optional if we cover it, but good to have)
+      // Read from cache immediately for initial load to avoid flicker
       const cached = await readCachedChatMessages(routineId);
       if (isInitial && cached.length > 0) {
         setChatMessages(cached);
@@ -504,28 +504,28 @@ export default function CollaborativeChatScreen() {
       const groupDetail = await routineService.getGroupDetail(routineId);
       const normalizedParticipants = Array.isArray(groupDetail?.participants)
         ? groupDetail.participants
-            .map((participant) => {
-              const source =
-                participant && typeof participant === 'object'
-                  ? (participant as Record<string, unknown>)
-                  : {};
-              const userInfo =
-                source.user && typeof source.user === 'object'
-                  ? (source.user as Record<string, unknown>)
-                  : {};
+          .map((participant) => {
+            const source =
+              participant && typeof participant === 'object'
+                ? (participant as Record<string, unknown>)
+                : {};
+            const userInfo =
+              source.user && typeof source.user === 'object'
+                ? (source.user as Record<string, unknown>)
+                : {};
 
-              const id = String(source.userId || source.id || userInfo.id || '').trim();
-              const name = String(
-                source.username || source.name || userInfo.username || userInfo.name || '',
-              ).trim();
+            const id = String(source.userId || source.id || userInfo.id || '').trim();
+            const name = String(
+              source.username || source.name || userInfo.username || userInfo.name || '',
+            ).trim();
 
-              if (!id || !name || id === user?.id) {
-                return null;
-              }
+            if (!id || !name || id === user?.id) {
+              return null;
+            }
 
-              return { id, name } satisfies RoutineParticipant;
-            })
-            .filter((participant): participant is RoutineParticipant => participant !== null)
+            return { id, name } satisfies RoutineParticipant;
+          })
+          .filter((participant): participant is RoutineParticipant => participant !== null)
         : [];
 
       setParticipants(normalizedParticipants);
@@ -560,7 +560,7 @@ export default function CollaborativeChatScreen() {
 
     initPage();
 
-    // Listen for manual refreshes (e.g. after camera upload)
+    // Listen for manual refreshes 
     const sub = DeviceEventEmitter.addListener('refreshCollaborativeRoutines', () => {
       fetchPendingLogs();
       loadChatMessages();
@@ -735,21 +735,21 @@ export default function CollaborativeChatScreen() {
         <TouchableOpacity
           onPress={handleCaptureAndUploadImage}
           style={[
-            styles.detailsButton, 
-            { 
-              backgroundColor: colors.surface, 
-              borderColor: colors.border, 
+            styles.detailsButton,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
               marginRight: 4,
             },
           ]}
         >
-            <Ionicons name="camera-outline" size={20} color={colors.text} />
+          <Ionicons name="camera-outline" size={20} color={colors.text} />
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => router.push({
             pathname: '/(collaborative)/routine/[id]',
             params: { id: routineId }
-          } as never)} 
+          } as never)}
           style={[styles.detailsButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           <Ionicons name="information-circle-outline" size={20} color={colors.text} />
@@ -794,22 +794,22 @@ export default function CollaborativeChatScreen() {
                   layout={LinearTransition.springify().damping(24).stiffness(140).duration(500)}
                   style={
                     item.isSystemEvent
-                       ? styles.chatRowSystemEvent
+                      ? styles.chatRowSystemEvent
                       : item.sender === 'me'
                         ? styles.chatRowMine
                         : styles.chatRowOther
                   }
                 >
                   <View style={[
-                    styles.chatRowWrapper, 
+                    styles.chatRowWrapper,
                     item.sender === 'me' ? { justifyContent: 'flex-end' } : { justifyContent: 'flex-start' }
                   ]}>
                     {item.sender === 'other' && !item.isSystemEvent && (
                       <View style={styles.chatAvatarWrapper}>
-                        <UserAvatar 
-                          url={item.senderAvatar} 
-                          name={item.senderName} 
-                          size={32} 
+                        <UserAvatar
+                          url={item.senderAvatar}
+                          name={item.senderName}
+                          size={32}
                           borderColor="rgba(255,255,255,0.1)"
                           borderWidth={1}
                         />
@@ -833,90 +833,90 @@ export default function CollaborativeChatScreen() {
                       ) : (
                         <Text style={[styles.chatSystemLabel, { color: colors.icon }]}>System</Text>
                       )}
-                    
-                    {(() => {
-                      const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
-                      const isPhotoMessage =
-                        /^\[photo\]:/i.test(item.text) ||
-                        item.text.includes('storage.googleapis.com') ||
-                        imageRegex.test(item.text);
-    
-                      if (!isPhotoMessage) {
-                        return renderChatMessageText(item.text, item.sender === 'me' ? colors.white : colors.text);
-                      }
-    
-                      const isPrefixed = /^\[photo\]:/i.test(item.text);
-                      let imageUrl = (isPrefixed ? item.text.replace(/^\[photo\]:/i, '') : item.text).trim();
-    
-                      if (!imageUrl.startsWith('http')) {
-                        imageUrl = `https://storage.googleapis.com/habify-photo-uploads/${imageUrl.trim()}`;
-                      }
-    
-                      const matchingLog = pendingLogs.find((l) => {
-                        const logUrl = (l.verificationImageUrl || '').toLowerCase().trim();
-                        const msgUrl = imageUrl.toLowerCase().trim();
-                        const logFileName = logUrl.split('/').pop()?.split('?')[0] || '!!!';
-                        const msgFileName = msgUrl.split('/').pop()?.split('?')[0] || '???';
-                        return (
-                          logUrl === msgUrl ||
-                          msgUrl.includes(logUrl) ||
-                          logUrl.includes(msgUrl) ||
-                          (logFileName !== '!!!' && logFileName === msgFileName)
-                        );
-                      });
-    
-                      if (matchingLog) {
-                        return (
-                          <ChatVerificationItem
-                            log={matchingLog}
-                            onApprove={handleApproveLog}
-                            onReject={handleRejectLog}
-                            onViewVotes={(log, tab) => {
-                              setVotersModalTab(tab);
-                              setVotersModalLog(log);
-                            }}
-                            onPressImage={handleImagePreview}
-                            currentUserId={user?.id}
-                          />
-                        );
-                      }
-    
-                      return (
-                        <View style={styles.chatImageWrapper}>
-                          <View style={styles.imageLoadingPlaceholder}>
-                            <ActivityIndicator color={colors.primary} size="small" />
-                          </View>
-                          <TouchableOpacity
-                            onPress={() => handleImagePreview(imageUrl)}
-                            activeOpacity={0.9}
-                            style={{ zIndex: 2 }}
-                          >
-                            <Image
-                              source={{ uri: imageUrl }}
-                              style={styles.chatImage}
-                              resizeMode="cover"
+
+                      {(() => {
+                        const imageRegex = /\.(jpg|jpeg|png|gif|webp|heic|heif)(\?.*)?$/i;
+                        const isPhotoMessage =
+                          /^\[photo\]:/i.test(item.text) ||
+                          item.text.includes('storage.googleapis.com') ||
+                          imageRegex.test(item.text);
+
+                        if (!isPhotoMessage) {
+                          return renderChatMessageText(item.text, item.sender === 'me' ? colors.white : colors.text);
+                        }
+
+                        const isPrefixed = /^\[photo\]:/i.test(item.text);
+                        let imageUrl = (isPrefixed ? item.text.replace(/^\[photo\]:/i, '') : item.text).trim();
+
+                        if (!imageUrl.startsWith('http')) {
+                          imageUrl = `https://storage.googleapis.com/habify-photo-uploads/${imageUrl.trim()}`;
+                        }
+
+                        const matchingLog = pendingLogs.find((l) => {
+                          const logUrl = (l.verificationImageUrl || '').toLowerCase().trim();
+                          const msgUrl = imageUrl.toLowerCase().trim();
+                          const logFileName = logUrl.split('/').pop()?.split('?')[0] || '!!!';
+                          const msgFileName = msgUrl.split('/').pop()?.split('?')[0] || '???';
+                          return (
+                            logUrl === msgUrl ||
+                            msgUrl.includes(logUrl) ||
+                            logUrl.includes(msgUrl) ||
+                            (logFileName !== '!!!' && logFileName === msgFileName)
+                          );
+                        });
+
+                        if (matchingLog) {
+                          return (
+                            <ChatVerificationItem
+                              log={matchingLog}
+                              onApprove={handleApproveLog}
+                              onReject={handleRejectLog}
+                              onViewVotes={(log, tab) => {
+                                setVotersModalTab(tab);
+                                setVotersModalLog(log);
+                              }}
+                              onPressImage={handleImagePreview}
+                              currentUserId={user?.id}
                             />
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    })()}
-    
-                    {!!item.createdAt && (
-                      <Text style={[styles.chatTime, { color: item.sender === 'me' ? colors.white : colors.textSecondary, opacity: 0.7 }]}>{formatMessageTime(item.createdAt)}</Text>
-                    )}
+                          );
+                        }
+
+                        return (
+                          <View style={styles.chatImageWrapper}>
+                            <View style={styles.imageLoadingPlaceholder}>
+                              <ActivityIndicator color={colors.primary} size="small" />
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => handleImagePreview(imageUrl)}
+                              activeOpacity={0.9}
+                              style={{ zIndex: 2 }}
+                            >
+                              <Image
+                                source={{ uri: imageUrl }}
+                                style={styles.chatImage}
+                                resizeMode="cover"
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })()}
+
+                      {!!item.createdAt && (
+                        <Text style={[styles.chatTime, { color: item.sender === 'me' ? colors.white : colors.textSecondary, opacity: 0.7 }]}>{formatMessageTime(item.createdAt)}</Text>
+                      )}
+                    </View>
                   </View>
-                </View>
-              </Animated.View>
+                </Animated.View>
               )}
             />
-    
+
             {!!chatError && (
               <View style={styles.chatStateBox}>
                 <Ionicons name="warning-outline" size={14} color={colors.error} />
                 <Text style={[styles.chatStateText, { color: colors.error }]}>{chatError}</Text>
               </View>
             )}
-    
+
             {predefinedMessages.length > 0 && (
               <TouchableOpacity
                 style={[styles.openReplyBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}
@@ -998,7 +998,7 @@ export default function CollaborativeChatScreen() {
                           styles.sendToGroupButton,
                           { backgroundColor: collaborativePrimary },
                           sendingMessage === selectedPredefinedMessage &&
-                            styles.quickReplyBtnSending,
+                          styles.quickReplyBtnSending,
                         ]}
                         onPress={() => handleSendPredefinedMessage(selectedPredefinedMessage, null)}
                         activeOpacity={0.85}
@@ -1024,7 +1024,7 @@ export default function CollaborativeChatScreen() {
                                 <TouchableOpacity
                                   key={participant.id}
                                   style={[
-                                    styles.tagChip, 
+                                    styles.tagChip,
                                     { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', borderColor: colors.border },
                                     isSelected && { backgroundColor: isDark ? 'rgba(167, 139, 250, 0.3)' : colors.primary, borderColor: colors.primary }
                                   ]}
@@ -1051,15 +1051,15 @@ export default function CollaborativeChatScreen() {
                               { backgroundColor: taggedParticipant ? collaborativePrimary : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)') },
                               !taggedParticipant && styles.sendTaggedButtonDisabled,
                               sendingMessage === selectedPredefinedMessage &&
-                                taggedParticipant &&
-                                styles.quickReplyBtnSending,
+                              taggedParticipant &&
+                              styles.quickReplyBtnSending,
                             ]}
                             onPress={() =>
                               taggedParticipant
                                 ? handleSendPredefinedMessage(
-                                    selectedPredefinedMessage,
-                                    taggedParticipant,
-                                  )
+                                  selectedPredefinedMessage,
+                                  taggedParticipant,
+                                )
                                 : undefined
                             }
                             activeOpacity={0.85}
@@ -1119,7 +1119,7 @@ export default function CollaborativeChatScreen() {
                                         borderColor: `${accentColor}55`,
                                       },
                                       sendingMessage === message.text &&
-                                        styles.quickReplyBtnSending,
+                                      styles.quickReplyBtnSending,
                                     ]}
                                     onPress={() => {
                                       setSelectedPredefinedMessage(message.text);
@@ -1195,10 +1195,10 @@ export default function CollaborativeChatScreen() {
                               gap: 10,
                             }}
                           >
-                            <UserAvatar 
-                              url={(voter as any).avatar || (voter as any).avatarUrl || (voter as any).profileImage} 
-                              name={name} 
-                              size={28} 
+                            <UserAvatar
+                              url={(voter as any).avatar || (voter as any).avatarUrl || (voter as any).profileImage}
+                              name={name}
+                              size={28}
                             />
                             <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
                               {name}
@@ -1240,10 +1240,10 @@ export default function CollaborativeChatScreen() {
                               gap: 10,
                             }}
                           >
-                            <UserAvatar 
-                              url={(voter as any).avatar || (voter as any).avatarUrl || (voter as any).profileImage} 
-                              name={name} 
-                              size={28} 
+                            <UserAvatar
+                              url={(voter as any).avatar || (voter as any).avatarUrl || (voter as any).profileImage}
+                              name={name}
+                              size={28}
                             />
                             <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
                               {name}
@@ -1255,7 +1255,7 @@ export default function CollaborativeChatScreen() {
                   )}
 
                 {(votersModalTab === 'approvals' && !votersModalLog?.approvals?.length) ||
-                (votersModalTab === 'rejections' && !votersModalLog?.rejections?.length) ? (
+                  (votersModalTab === 'rejections' && !votersModalLog?.rejections?.length) ? (
                   <Text
                     style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 10 }}
                   >
@@ -1269,12 +1269,12 @@ export default function CollaborativeChatScreen() {
                   (votersModalLog?.approvals || []).length > 0 ? (
                     (votersModalLog?.approvals || []).map((voter: any, idx: number) => (
                       <View key={idx} style={[styles.voterRow, { borderBottomColor: colors.border }]}>
-                        <UserAvatar 
-                           url={voter.avatar || voter.avatarUrl || voter.profileImage} 
-                           name={voter.name || voter.username} 
-                           size={32} 
-                           style={styles.voterAvatar}
-                         />
+                        <UserAvatar
+                          url={voter.avatar || voter.avatarUrl || voter.profileImage}
+                          name={voter.name || voter.username}
+                          size={32}
+                          style={styles.voterAvatar}
+                        />
                         <Text style={[styles.voterName, { color: colors.text }]}>{voter.name || voter.username || 'Member'}</Text>
                         <Ionicons name="checkmark-circle" size={18} color={getCategoryAccentColor('motivation')} />
                       </View>
@@ -1286,12 +1286,12 @@ export default function CollaborativeChatScreen() {
                   (votersModalLog?.rejections || []).length > 0 ? (
                     (votersModalLog?.rejections || []).map((voter: any, idx: number) => (
                       <View key={idx} style={[styles.voterRow, { borderBottomColor: colors.border }]}>
-                        <UserAvatar 
-                           url={voter.avatar || voter.avatarUrl || voter.profileImage} 
-                           name={voter.name || voter.username} 
-                           size={32} 
-                           style={styles.voterAvatar}
-                         />
+                        <UserAvatar
+                          url={voter.avatar || voter.avatarUrl || voter.profileImage}
+                          name={voter.name || voter.username}
+                          size={32}
+                          style={styles.voterAvatar}
+                        />
                         <Text style={[styles.voterName, { color: colors.text }]}>{voter.name || voter.username || 'Member'}</Text>
                         <Ionicons name="close-circle" size={18} color={getCategoryAccentColor('spicy')} />
                       </View>
@@ -1316,7 +1316,7 @@ export default function CollaborativeChatScreen() {
           rewardText={completionRewardText}
           onComplete={() => setShowCompletionAnimation(false)}
         />
-        
+
       </View>
     </LinearGradient>
   );
@@ -1483,7 +1483,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)', // Standard modal overlay
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   quickReplyBottomSheet: {
     position: 'absolute',
@@ -1763,7 +1763,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   voterLetter: {
-    color: Colors.light.text, // Always bright text for avatar circles if they follow brand colors
+    color: Colors.light.text,
     fontSize: 15,
     fontWeight: '800',
   },

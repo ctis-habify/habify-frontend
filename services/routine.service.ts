@@ -78,8 +78,8 @@ const toStringOrUndefined = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (value && typeof value === 'object') {
-     const obj = value as Record<string, unknown>;
-     return toStringOrUndefined(obj.name || obj.value || obj.type || obj.label || obj.text || obj.message);
+    const obj = value as Record<string, unknown>;
+    return toStringOrUndefined(obj.name || obj.value || obj.type || obj.label || obj.text || obj.message);
   }
   return undefined;
 };
@@ -100,12 +100,12 @@ const getFirstPlaceCount = (value: unknown): number | null => {
   const count =
     toOptionalNumber(
       source.firstPlaceCount ||
-        source.first_place_count ||
-        source.firstPlaces ||
-        source.first_places ||
-        source.winCount ||
-        source.win_count ||
-        source.wins,
+      source.first_place_count ||
+      source.firstPlaces ||
+      source.first_places ||
+      source.winCount ||
+      source.win_count ||
+      source.wins,
     ) ?? null;
 
   return count !== null && count >= 0 ? count : null;
@@ -118,9 +118,9 @@ const getCupAward = (value: unknown): UserCupAward | null => {
     const tierFromString = normalizeCupTier(value);
     return tierFromString
       ? {
-          tier: tierFromString,
-          totalPoints: 0,
-        }
+        tier: tierFromString,
+        totalPoints: 0,
+      }
       : null;
   }
 
@@ -129,14 +129,14 @@ const getCupAward = (value: unknown): UserCupAward | null => {
   const source = value as Record<string, unknown>;
   const tierFromResponse = normalizeCupTier(
     source.tier ||
-      source.cupTier ||
-      source.cup_tier ||
-      source.cupType ||
-      source.cup_type ||
-      source.level ||
-      source.type ||
-      source.name ||
-      source.label,
+    source.cupTier ||
+    source.cup_tier ||
+    source.cupType ||
+    source.cup_type ||
+    source.level ||
+    source.type ||
+    source.name ||
+    source.label,
   );
 
   if (!tierFromResponse) {
@@ -146,10 +146,10 @@ const getCupAward = (value: unknown): UserCupAward | null => {
   const totalPoints =
     toOptionalNumber(
       source.totalPoints ||
-        source.points ||
-        source.score ||
-        source.totalXp ||
-        source.xp,
+      source.points ||
+      source.score ||
+      source.totalXp ||
+      source.xp,
     ) ?? 0;
   const firstPlaceCount = getFirstPlaceCount(source);
 
@@ -193,9 +193,9 @@ const enrichParticipantWithCup = (participant: unknown): unknown => {
     cup,
     user: existingUser
       ? {
-          ...existingUser,
-          cup: cup || getCupAward(existingUser.cup) || null,
-        }
+        ...existingUser,
+        cup: cup || getCupAward(existingUser.cup) || null,
+      }
       : source.user,
   };
 };
@@ -230,7 +230,7 @@ const normalizeRoutineLeaderboardEntry = (item: unknown): Record<string, unknown
 
 const normalizeRoutine = (item: unknown): Routine => {
   const source: Record<string, unknown> = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
-  
+
   const categoryValue: unknown = source.category;
   const categoryName: string =
     toStringOrUndefined(source.categoryName || source.category_name) ||
@@ -256,10 +256,6 @@ const normalizeRoutine = (item: unknown): Routine => {
   const rawIsDone = source.isDone === true || source.is_done === true || source.is_completed === true || source.completed === true;
 
   let isDone = rawIsDone;
-
-  // Strict Today Check: only validate against completion-specific timestamps.
-  // We intentionally exclude updatedAt/updated_at because those reflect the routine's
-  // last edit time, not completion time — using them caused false resets.
   const completionTouch = toStringOrUndefined(
     source.lastCompletedAt ||
     source.lastCompletedDate ||
@@ -275,7 +271,6 @@ const normalizeRoutine = (item: unknown): Routine => {
       const now = new Date();
       const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-      // Always parse as Date so local timezone is used (avoids UTC-vs-local mismatch).
       const d = new Date(completionTouch);
       if (!isNaN(d.getTime())) {
         const completionDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -299,7 +294,7 @@ const normalizeRoutine = (item: unknown): Routine => {
     streak: toNumberOrDefault(source.streak || source.currentStreak || source.current_streak, 0),
     startTime,
     endTime,
-    isDone, // Use our strictly checked isDone
+    isDone,
     creatorId: toStringOrUndefined(source.creatorId || source.creator_id || source.userId || source.user_id || source.ownerId || (source.creator as Record<string, unknown>)?.id || (source.user as Record<string, unknown>)?.id),
     isPublic: source.isPublic === true || source.is_public === true || String(source.visibility || source.privacy || '').toLowerCase() === 'public',
     categoryName,
@@ -313,10 +308,10 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
   const rawSource: Record<string, unknown> = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
   const nestedRoutine: Record<string, unknown> = (rawSource.routine && typeof rawSource.routine === 'object' ? rawSource.routine : {}) as Record<string, unknown>;
   const rules: Record<string, unknown> = (rawSource.rules && typeof rawSource.rules === 'object' ? rawSource.rules : {}) as Record<string, unknown>;
-  
+
   const source: Record<string, unknown> = { ...rules, ...nestedRoutine, ...rawSource } as Record<string, unknown>;
   const normalized = normalizeRoutine(source);
-  
+
   return {
     ...normalized,
     maxLives: toNumberOrDefault(rules.lives || source.maxLives || source.lives || 0, 0),
@@ -326,7 +321,7 @@ const normalizeCollaborativeRoutine = (item: unknown): Routine => {
 
 const normalizeRoutineLog = (item: unknown): RoutineLog => {
   const source: Record<string, unknown> = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
-  
+
   return {
     ...(source as Partial<RoutineLog>),
     id: toNumberOrDefault(source.id || source.logId || source.log_id || source.LOG_ID),
@@ -420,7 +415,7 @@ export const routineService = {
   async getGroupedRoutines(token?: string): Promise<RoutineList[]> {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     const res: { data: RoutineList[] } = await api.get('/routines/grouped', config);
-    
+
     return (res.data || []).map(list => ({
       ...list,
       routines: (list.routines || []).map(normalizeRoutine)
@@ -461,9 +456,9 @@ export const routineService = {
       throw err;
     }
   },
-  
-  // Get Calendar Logs (Unified for Personal & Collaborative)
-  async getCalendarLogs(routineId: string, startDate: string, endDate: string, token: string): Promise<{date: string, isDone: boolean}[]> {
+
+  // Get Calendar Logs 
+  async getCalendarLogs(routineId: string, startDate: string, endDate: string, token: string): Promise<{ date: string, isDone: boolean }[]> {
     const res: { data: unknown } = await api.get(`/routines/${routineId}/calendar`, {
       headers: { Authorization: `Bearer ${token}` },
       params: { startDate, endDate },
@@ -478,7 +473,7 @@ export const routineService = {
     return res.data;
   },
 
-  // ✅ Create Routine
+  // Create Routine
   async createRoutine(body: {
     routineListId: number;
     routineName: string;
@@ -494,7 +489,7 @@ export const routineService = {
     return res.data;
   },
 
-  // ✅ Create Collaborative Routine
+  // Create Collaborative Routine
   async createCollaborativeRoutine(body: {
     routineListId?: number;
     categoryId?: number;
@@ -520,13 +515,13 @@ export const routineService = {
     return res.data;
   },
 
-  // ✅ Get Collaborative Routines
+  // Get Collaborative Routines
   async getCollaborativeRoutines(): Promise<Routine[]> {
     const res = await api.get('/routines/collaborative');
     return getCollaborativeRoutinesFromResponse(res.data);
   },
 
-  // ✅ Join a Group
+  // Join a Group
   async joinGroup(key: string): Promise<{ message: string; id: string }> {
     try {
       const res: { data: { message: string; id: string } } = await api.post('/routines/join', { key });
@@ -535,14 +530,14 @@ export const routineService = {
       if (err && typeof err === 'object' && 'response' in err) {
         const responseData: Record<string, unknown> = (err as { response: { data: Record<string, unknown> } }).response.data;
         if (responseData.message) {
-           throw new Error(String(responseData.message));
+          throw new Error(String(responseData.message));
         }
       }
       throw err;
     }
   },
 
-  // ✅ Group Detail (Profile View)
+  // Group Detail (Profile View)
   async getGroupDetail(id: string): Promise<Routine & { participants: unknown[] }> {
     const res: { data: { participants?: unknown[] } } = await api.get(`/routines/group/${id}`);
     const normalized: Routine = normalizeCollaborativeRoutine(res.data);
@@ -554,61 +549,61 @@ export const routineService = {
     };
   },
 
-  // ✅ Get Predefined Messages for Collaborative Routine Chat
+  // Get Predefined Messages for Collaborative Routine Chat
   async getRoutinePredefinedMessages(): Promise<PredefinedRoutineMessage[]> {
     const res = await api.get('/routines/collaborative-chat/predefined');
     return normalizePredefinedRoutineMessages(res.data);
   },
 
-  // ✅ Get Collaborative Routine Chat Messages
+  // Get Collaborative Routine Chat Messages
   async getRoutineChatMessages(routineId: string): Promise<unknown[]> {
     const res: { data: unknown } = await api.get(`/routines/collaborative-chat/${routineId}`);
     return getArrayFromResponse(res.data);
   },
 
-  // ✅ Send Collaborative Routine Chat Message
+  // Send Collaborative Routine Chat Message
   async sendRoutineChatMessage(routineId: string, message: string): Promise<{ message: string }> {
     const res: { data: { message: string } } = await api.post(`/routines/collaborative-chat/${routineId}`, { message });
     return res.data;
   },
 
-  // ✅ Unified Verification Flow
+  // Unified Verification Flow
   async verifyRoutine(body: { routineId: string; objectPath: string }): Promise<{ message: string }> {
     const res: { data: { message: string } } = await api.post('/routines/verify', body);
     return res.data;
   },
 
-  // ✅ Send Routine Invitation
+  // Send Routine Invitation
   async sendRoutineInvite(routineId: string, toUserId: string): Promise<{ message: string }> {
     const res: { data: { message: string } } = await api.post('/routine-invitations', { routineId, toUserId });
     return res.data;
   },
 
-  // ✅ Remove Member from Collaborative Routine
+  // Remove Member from Collaborative Routine
   async removeMemberFromRoutine(routineId: string, userId: string): Promise<{ message: string }> {
     const res: { data: { message: string } } = await api.delete(`/routines/collaborative/${routineId}/members/${userId}`);
     return res.data;
   },
 
-  // ✅ Get Pending Routine Invitations
+  // Get Pending Routine Invitations
   async getPendingRoutineInvites(): Promise<unknown[]> {
     const res: { data: unknown[] } = await api.get('/routine-invitations/received');
     return res.data;
   },
 
-  // ✅ Accept Routine Invitation
+  // Accept Routine Invitation
   async acceptRoutineInvite(invitationId: string): Promise<{ message: string }> {
     const res: { data: { message: string } } = await api.patch(`/routine-invitations/${invitationId}/accept`);
     return res.data;
   },
 
-  // ✅ Decline Routine Invitation
+  // Decline Routine Invitation
   async declineRoutineInvite(invitationId: string): Promise<{ message: string }> {
     const res: { data: { message: string } } = await api.patch(`/routine-invitations/${invitationId}/decline`);
     return res.data;
   },
 
-  // Create routine log (mark routine as completed) - LEGACY (Consider using verifyRoutine)
+  // Create routine log 
   async createRoutineLog(
     routineId: string,
     logDate: string,
@@ -635,7 +630,7 @@ export const routineService = {
     return res.data;
   },
 
-  // ✅ Verify Collaborative Log (Voting)
+  // Verify Collaborative Log (Voting)
   async verifyCollaborativeLog(
     logId: number,
     status: 'approved' | 'rejected',
@@ -660,7 +655,7 @@ export const routineService = {
 
     if (response.status !== 200 && response.status !== 204)
       throw new Error('Failed to delete routine');
-    return true; // Success
+    return true;
   },
 
   async deleteRoutineList(id: number, token: string): Promise<boolean> {
@@ -683,7 +678,7 @@ export const routineService = {
     return res.data;
   },
 
-  // ✅ Browse Public Collaborative Routines (with optional search)
+  // Browse Public Collaborative Routines (with optional search)
   async browsePublicRoutines(
     search?: string,
     categoryId?: number,
@@ -707,7 +702,7 @@ export const routineService = {
     return res.data;
   },
 
-  // ✅ Join a Public Routine by ID
+  // Join a Public Routine by ID
   async joinPublicRoutine(routineId: string): Promise<{ message: string }> {
     try {
       const res: { data: { message: string } } = await api.post(`/routines/collaborative/${routineId}/join`);
@@ -716,7 +711,7 @@ export const routineService = {
       if (err && typeof err === 'object' && 'response' in err) {
         const responseData: Record<string, unknown> = (err as { response: { data: Record<string, unknown> } }).response.data;
         if (responseData.message) {
-           throw new Error(String(responseData.message));
+          throw new Error(String(responseData.message));
         }
       }
       throw err;
@@ -732,7 +727,7 @@ export const routineService = {
       if (err && typeof err === 'object' && 'response' in err) {
         const responseData: Record<string, unknown> = (err as { response: { data: Record<string, unknown> } }).response.data;
         if (responseData.message) {
-           throw new Error(String(responseData.message));
+          throw new Error(String(responseData.message));
         }
       }
       throw err;
@@ -748,14 +743,14 @@ export const routineService = {
       if (err && typeof err === 'object' && 'response' in err) {
         const responseData: Record<string, unknown> = (err as { response: { data: Record<string, unknown> } }).response.data;
         if (responseData.message) {
-           throw new Error(String(responseData.message));
+          throw new Error(String(responseData.message));
         }
       }
       throw err;
     }
   },
 
-  // ✅ Get Collaborative Routine Leaderboard
+  // Get Collaborative Routine Leaderboard
   async getCollaborativeRoutineLeaderboard(routineId: string): Promise<Record<string, unknown>[]> {
     const res: { data: unknown } = await api.get(`/routines/collaborative/${routineId}/leaderboard`);
     return getArrayFromResponse(res.data).map(normalizeRoutineLeaderboardEntry);

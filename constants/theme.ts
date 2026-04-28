@@ -1,8 +1,3 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
 
 const tintColorLight = '#0a7ea4';
@@ -10,31 +5,31 @@ const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
-    text: '#1E1B4B', // Midnight Indigo
-    textSecondary: '#4F46E5', // Indigo-600
-    textTertiary: '#818CF8', // Indigo-400
+    text: '#1E1B4B',
+    textSecondary: '#4F46E5',
+    textTertiary: '#818CF8',
     white: '#FFFFFF',
-    background: '#F5F3FF', // Lavender-50
-    tint: '#7C3AED', 
-    icon: '#4F46E5', 
+    background: '#F5F3FF',
+    tint: '#7C3AED',
+    icon: '#4F46E5',
     tabIconDefault: '#94A3B8',
     tabIconSelected: '#7C3AED',
-    primary: '#7C3AED', // Violet-600
-    secondary: '#A78BFA', // Violet-400
+    primary: '#7C3AED',
+    secondary: '#A78BFA',
     success: '#10B981',
     error: '#EF4444',
-    border: '#DDD6FE', // Lavender-200
-    card: '#FAF9FF', // Subtle Lavender tint (Avoids pure white)
-    surface: '#EDE9FE', // Lavender-100 (For fields/chips)
-    collaborativePrimary: '#DB2777', // Deep Pink
-    collaborativeGradient: ['#F5F3FF', '#EDE9FE'] as const, // Consistent lavender gradient
+    border: '#DDD6FE',
+    card: '#FAF9FF',
+    surface: '#EDE9FE',
+    collaborativePrimary: '#DB2777',
+    collaborativeGradient: ['#F5F3FF', '#EDE9FE'] as const,
     gold: '#F59E0B',
     warning: '#F97316',
   },
   dark: {
     text: '#F9FAFB',
-    textSecondary: '#D1D5DB', // Gray-300
-    textTertiary: '#9CA3AF', // Gray-400
+    textSecondary: '#D1D5DB',
+    textTertiary: '#9CA3AF',
     white: '#FFFFFF',
     background: '#0F172A',
     tint: '#A78BFA',
@@ -48,16 +43,16 @@ export const Colors = {
     border: 'rgba(167, 139, 250, 0.25)',
     card: '#1E1B4B',
     surface: '#1E1B4B',
-    collaborativePrimary: '#E879F9', // Fuchsia-400
-    collaborativeGradient: ['#2E1065', '#581C87'] as const, // Violet-950 -> Violet-900
+    collaborativePrimary: '#E879F9',
+    collaborativeGradient: ['#2E1065', '#581C87'] as const,
     gold: '#fbbf24',
     warning: '#fbbf24',
   },
 };
 
 export const BrandColors = {
-  gradientTop: '#A78BFA', 
-  gradientBottom: '#C4B5FD', 
+  gradientTop: '#A78BFA',
+  gradientBottom: '#C4B5FD',
 };
 
 export const BACKGROUND_GRADIENT = [
@@ -68,7 +63,7 @@ export const BACKGROUND_GRADIENT = [
 export const BACKGROUND_GRADIENT_DARK = ['#1E1B4B', '#0F172A'] as const;
 
 export function getBackgroundGradient(
-  theme: 'light' | 'dark', 
+  theme: 'light' | 'dark',
   section: 'personal' | 'collaborative' = 'personal'
 ): readonly [string, string] {
   if (section === 'collaborative') {
@@ -79,13 +74,9 @@ export function getBackgroundGradient(
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {

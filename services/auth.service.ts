@@ -31,7 +31,6 @@ export const authService = {
   },
   async resetPassword(email: string, newPassword: string): Promise<{ message: string }> {
     try {
-      // Simplified: token is not required by user choice (mock emails)
       const response = await api.post('/auth/reset-password', { email, newPassword });
       return response.data;
     } catch (error: unknown) {

@@ -36,14 +36,12 @@ api.interceptors.request.use(
   (error: unknown) => Promise.reject(error),
 );
 
-// Global Interceptor: Convert all incoming snake_case responses to camelCase
 const toCamelCase = (str: string): string => str.replace(/_([a-z])/g, (g: string) => g[1].toUpperCase());
 
 const keysToCamel = (o: unknown): unknown => {
   if (o === Object(o) && !Array.isArray(o) && typeof o !== 'function') {
     const n: Record<string, unknown> = {};
     Object.keys(o as object).forEach((k: string) => {
-      // Don't modify keys that start with '$' or are already camelCase mapped
       const newKey: string = toCamelCase(k);
       n[newKey] = keysToCamel((o as Record<string, unknown>)[k]);
     });

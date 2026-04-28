@@ -47,7 +47,6 @@ export default function ProfileScreen(): React.ReactElement {
   const initial = displayName.charAt(0).toUpperCase();
   const cupInfo = getCupInfoByTier(cup?.tier);
 
-  // Helper to calculate age
   const calculateAge = (birthDateString?: string): string | number => {
     if (!birthDateString) return 'N/A';
     const today: Date = new Date();
@@ -99,15 +98,15 @@ export default function ProfileScreen(): React.ReactElement {
           style={styles.heroSection}
         >
           <View style={styles.avatarWrapper}>
-            <UserAvatar 
-              url={user?.avatarUrl || user?.avatar} 
-              name={displayName} 
-              size={110} 
+            <UserAvatar
+              url={user?.avatarUrl || user?.avatar}
+              name={displayName}
+              size={110}
               borderColor={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)'}
               borderWidth={4}
             />
           </View>
-          
+
           <View style={styles.heroTextContent}>
             <Text style={[styles.nameText, { color: colors.text }]}>{displayName}</Text>
             <Text style={[styles.emailText, { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.45)' }]}>{displayEmail}</Text>
@@ -168,7 +167,7 @@ export default function ProfileScreen(): React.ReactElement {
           </View>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(240).duration(600).springify()}
           style={[styles.friendsCard, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
@@ -178,7 +177,7 @@ export default function ProfileScreen(): React.ReactElement {
               <Text style={[styles.seeAllText, { color: colors.primary }]}>View All</Text>
             </TouchableOpacity>
           </View>
-          
+
           {friendsLoading ? (
             <ActivityIndicator color={colors.textTertiary} style={styles.loadingIndicator} />
           ) : (

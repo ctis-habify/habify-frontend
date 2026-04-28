@@ -58,7 +58,7 @@ export default function SettingsScreen(): React.ReactElement {
 
   const handleToggleQuietMode = useCallback(async (enabled: boolean): Promise<void> => {
     try {
-      await updateUser({ 
+      await updateUser({
         quietModeEnabled: enabled,
         quietModeStart: user?.quietModeStart || '22:00',
         quietModeEnd: user?.quietModeEnd || '08:00'
@@ -97,7 +97,6 @@ export default function SettingsScreen(): React.ReactElement {
         await notificationService.removePushToken();
       }
     } catch {
-      // Silently ignore – toggle still reflects the user's preference locally
     }
   }, []);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
@@ -230,14 +229,14 @@ export default function SettingsScreen(): React.ReactElement {
             onToggle={handleToggleQuietMode}
           />
           {(user?.quietModeEnabled) && (
-            <View style={[styles.quietModeCard, { 
+            <View style={[styles.quietModeCard, {
               backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
               borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'
             }]}>
               <View style={styles.cardHeader}>
                 <View style={[styles.statusBadge, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)' }]}>
                   <View style={[
-                    styles.statusDot, 
+                    styles.statusDot,
                     { backgroundColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.2)' },
                     isCurrentlyQuiet(user.quietModeStart || '22:00', user.quietModeEnd || '08:00') && styles.statusDotActive
                   ]} />
@@ -251,8 +250,8 @@ export default function SettingsScreen(): React.ReactElement {
               </View>
 
               <View style={styles.timerRow}>
-                <TouchableOpacity 
-                  style={styles.timePickerBtn} 
+                <TouchableOpacity
+                  style={styles.timePickerBtn}
                   onPress={() => {
                     setShowEndTimePicker(false);
                     setShowStartTimePicker(true);
@@ -271,8 +270,8 @@ export default function SettingsScreen(): React.ReactElement {
                   <Ionicons name="arrow-forward" size={16} color={isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)"} />
                 </View>
 
-                <TouchableOpacity 
-                  style={styles.timePickerBtn} 
+                <TouchableOpacity
+                  style={styles.timePickerBtn}
                   onPress={() => {
                     setShowStartTimePicker(false);
                     setShowEndTimePicker(true);
@@ -305,10 +304,10 @@ export default function SettingsScreen(): React.ReactElement {
             type="info"
           />
           <View style={[styles.policyInfoCard, { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.05)' : 'rgba(52, 211, 153, 0.05)', borderColor: isDark ? 'rgba(52, 211, 153, 0.1)' : 'rgba(52, 211, 153, 0.2)' }]}>
-             <Ionicons name="information-circle" size={16} color="#10b981" />
-             <Text style={[styles.policyInfoText, { color: isDark ? '#34d399' : '#059669' }]}>
-               Your streaks, history, and analytics are preserved indefinitely to support your growth.
-             </Text>
+            <Ionicons name="information-circle" size={16} color="#10b981" />
+            <Text style={[styles.policyInfoText, { color: isDark ? '#34d399' : '#059669' }]}>
+              Your streaks, history, and analytics are preserved indefinitely to support your growth.
+            </Text>
           </View>
         </SettingsSection>
 
@@ -592,7 +591,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'white', // Will be adjusted by theme if needed
+    backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000',

@@ -24,7 +24,7 @@ export default function DrawerLayout(): React.ReactElement {
         },
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.textSecondary,
-        drawerActiveBackgroundColor: `${colors.primary}22`, 
+        drawerActiveBackgroundColor: `${colors.primary}22`,
         drawerLabelStyle: {
           marginLeft: 0,
           fontWeight: '600',
@@ -48,7 +48,7 @@ export default function DrawerLayout(): React.ReactElement {
       <Drawer.Screen
         name="today-routines"
         options={{
-          drawerItemStyle: { display: 'none' }, // Hide from menu
+          drawerItemStyle: { display: 'none' },
           drawerLabel: "Today",
           drawerIcon: ({ color, size }) => <Ionicons name="today-outline" size={size} color={color} />,
         }}

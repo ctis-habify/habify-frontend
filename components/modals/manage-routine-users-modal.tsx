@@ -65,7 +65,7 @@ export const ManageRoutineUsersModal: React.FC<ManageRoutineUsersModalProps> = (
                 routineService.getGroupDetail(routineId).catch(() => ({ participants: [] }))
             ]);
             setFriendsList(friendsRes || []);
-            setParticipants(groupRes?.participants || []);
+            setParticipants((groupRes?.participants as Participant[]) || []);
             setInvitedUserIds(new Set()); // Reset on fresh fetch
         } catch {
             setFriendsList([]);

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { routineService } from '@/services/routine.service';
 import { PublicRoutine } from '@/types/routine';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseUserPublicRoutinesResult {
   readonly routines: PublicRoutine[];
@@ -24,18 +24,17 @@ export function useUserPublicRoutines(userId: string): UseUserPublicRoutinesResu
       setLoading(true);
       setError(null);
       const data = await routineService.browsePublicRoutines(
-        undefined, 
-        undefined, 
-        undefined, 
-        undefined, 
-        undefined, 
-        undefined, 
-        undefined, 
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
         userId
       );
       const list: PublicRoutine[] = Array.isArray(data) ? data : [];
 
-      // Re-apply joined cache so navigating away and back preserves Joined state
       const merged = list.map((r) =>
         joinedCacheRef.current.has(r.id) ? { ...r, isAlreadyMember: true } : r,
       );

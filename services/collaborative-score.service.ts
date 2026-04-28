@@ -1,11 +1,11 @@
 import {
   CollaborativeScoreSummary,
+  CupTier,
   LeaderboardEntry,
   UserCupAward,
   createCupAwardFromFirstPlaceCount,
-  normalizeLeaderboardMedal,
   normalizeCupTier,
-  CupTier,
+  normalizeLeaderboardMedal,
 } from '../types/collaborative-score';
 import { api } from './api';
 
@@ -29,12 +29,12 @@ const getFirstPlaceCount = (value: unknown): number | null => {
   const source: Record<string, unknown> = value as Record<string, unknown>;
   const count: number = toNumberOrDefault(
     source.firstPlaceCount ||
-      source.first_place_count ||
-      source.firstPlaces ||
-      source.first_places ||
-      source.winCount ||
-      source.win_count ||
-      source.wins,
+    source.first_place_count ||
+    source.firstPlaces ||
+    source.first_places ||
+    source.winCount ||
+    source.win_count ||
+    source.wins,
     -1,
   );
 
@@ -42,7 +42,6 @@ const getFirstPlaceCount = (value: unknown): number | null => {
 };
 
 const getArrayFromResponse = (data: unknown): unknown[] => {
-  // BFS through the response to find the first array, prioritising known keys
   const priorityKeys = ['data', 'leaderboard', 'items', 'results', 'entries', 'users', 'scores', 'list'];
   const queue: unknown[] = [data];
   const visited = new Set<unknown>();
@@ -80,9 +79,9 @@ const getCupAward = (value: unknown): UserCupAward | null => {
     const tierFromString: CupTier | null = normalizeCupTier(value);
     return tierFromString
       ? {
-          tier: tierFromString,
-          totalPoints: 0,
-        }
+        tier: tierFromString,
+        totalPoints: 0,
+      }
       : null;
   }
 
@@ -107,10 +106,10 @@ const getCupAward = (value: unknown): UserCupAward | null => {
 
   const totalPoints: number = toNumberOrDefault(
     source.totalPoints ||
-      source.points ||
-      source.score ||
-      source.totalXp ||
-      source.xp,
+    source.points ||
+    source.score ||
+    source.totalXp ||
+    source.xp,
     0,
   );
   const firstPlaceCount: number | null = getFirstPlaceCount(source);

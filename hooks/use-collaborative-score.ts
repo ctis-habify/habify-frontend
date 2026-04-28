@@ -1,7 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
-import { useAuth } from './use-auth';
 import { collaborativeScoreService } from '../services/collaborative-score.service';
 import {
   CollaborativeRankInfo,
@@ -9,6 +8,7 @@ import {
   createLeaderboardCupAward,
   resolveCollaborativeRank,
 } from '../types/collaborative-score';
+import { useAuth } from './use-auth';
 
 interface UseCollaborativeScoreResult {
   readonly points: number;
@@ -47,7 +47,6 @@ export function useCollaborativeScore(): UseCollaborativeScoreResult {
         : null;
       setCup(data.cup ?? fallbackCup);
     } catch {
-      // Gracefully fallback to defaults on error
       setPoints(0);
       setStreak(0);
       setNextBonusStreak(5);

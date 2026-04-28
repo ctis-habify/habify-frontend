@@ -1,23 +1,22 @@
 import { HomeButton } from '@/components/navigation/home-button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Colors } from '@/constants/theme';
-import { friendService, UserSearchResult } from '@/services/friend.service';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { friendService, UserSearchResult } from '@/services/friend.service';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const SEARCH_DEBOUNCE_MS = 400;
@@ -145,10 +144,10 @@ export default function AddFriendScreen(): React.ReactElement {
         {results.map((user) => (
           <View key={user.id} style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.avatarWrap}>
-              <UserAvatar 
-                url={user.avatarUrl} 
-                name={user.name} 
-                size={48} 
+              <UserAvatar
+                url={user.avatarUrl}
+                name={user.name}
+                size={48}
               />
             </View>
             <View style={styles.info}>
