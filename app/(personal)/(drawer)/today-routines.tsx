@@ -18,7 +18,7 @@ import type { Routine, TodayScreenResponse } from '../../../types/routine';
 
 
 import { Toast } from '@/components/ui/toast';
-import { Colors, getBackgroundGradient } from '@/constants/theme';
+import { getBackgroundGradient } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { setAuthToken } from '@/services/api';
@@ -41,7 +41,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
   const isFocused = useIsFocused();
   const { token: authContextToken } = useAuth();
   const theme = useColorScheme() ?? 'light';
-  const colors = Colors[theme];
   const screenColors = getBackgroundGradient(theme);
 
   const opacity = useSharedValue(0);
@@ -104,10 +103,7 @@ export default function TodayRoutinesScreen(): React.ReactElement {
         setItems([]);
         return;
       }
-
-      // Token'ı interceptor'a set et
       setAuthToken(token);
-
       try {
         const joinedCollab = await routineService.getCollaborativeRoutines();
         const cIds = new Set(joinedCollab.map(r => r.id));
@@ -116,7 +112,6 @@ export default function TodayRoutinesScreen(): React.ReactElement {
       }
 
       const res: TodayScreenResponse = await routineService.getTodayRoutines();
-
       const incoming: Routine[] = res.routines || [];
       const normalized: Routine[] = incoming;
       setStreak(res.streak ?? 0);

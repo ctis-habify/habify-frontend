@@ -64,6 +64,7 @@ type GroupParticipant = {
   };
   lives?: number;
   missedCount?: number;
+  streak?: number;
 };
 
 type CollaborativeRoutineDetail = Routine & {
@@ -220,11 +221,15 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
         routineService.getRoutineLogs(routineId).catch(() => []),
       ]) as any;
       setRoutineDetail(detail);
+      console.log('DEBUG [RoutineDetail]:', {
+        id: detail?.id,
+        name: detail?.routineName || detail?.name,
+        isPublic: detail?.isPublic,
+      });
       setLeaderboard(leaderboardData);
       setGlobalLeaderboard(globalLeaderboardData);
       setLogs(routineLogs);
 
-      // Automated Elimination & Cleanup Logic
       if (detail) {
         await checkAndHandleEliminations(detail, leaderboardData);
       }
@@ -362,7 +367,26 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     detailNumber(routineDetail, ['maxLives']) ??
     detailNumber(routineDetail, ['rules.lives']) ??
     displayLives;
+
+  const currentUserId = user?.id ? String(user.id).trim() : '';
+
+  const uniqueParticipants = useMemo(() => {
+    const participants = routineDetail?.participants || [];
+    const seen = new Set<string>();
+    return participants.filter((p) => {
+      const uId = String(p.userId || p.user?.id || p.id || '').trim();
+      if (!uId || seen.has(uId)) return false;
+      seen.add(uId);
+      return true;
+    });
+  }, [routineDetail?.participants]);
+
+  const myParticipant = useMemo(() => {
+    return uniqueParticipants.find(p => String(p.userId || p.user?.id || p.id).trim() === currentUserId);
+  }, [uniqueParticipants, currentUserId]);
+
   const displayStreak =
+    myParticipant?.streak ??
     streakFromParams ??
     detailNumber(routineDetail, ['streak']) ??
     0;
@@ -381,11 +405,10 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
   const visibilityRaw = String(detailString(routineDetail, ['visibility']) || '').toLowerCase();
   const detailIsPublic =
     detailNumber(routineDetail, ['isPublic']) === 1 ||
-    detailString(routineDetail, ['isPublic']) === 'true' ||
+    pickDetailValue(routineDetail, ['isPublic']) === true ||
     visibilityRaw === 'public';
   const displayVisibility = (isPublicFromParams ?? detailIsPublic) ? 'Public' : 'Private';
 
-  const currentUserId = user?.id ? String(user.id).trim() : '';
   const globalCupByUserId = useMemo(() => {
     const cupMap = new Map<string, UserCupAward | null>();
 
@@ -411,16 +434,6 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
     [globalCupByUserId, leaderboard],
   );
 
-  const uniqueParticipants = useMemo(() => {
-    const participants = routineDetail?.participants || [];
-    const seen = new Set<string>();
-    return participants.filter((p) => {
-      const uId = String(p.userId || p.user?.id || p.id || '').trim();
-      if (!uId || seen.has(uId)) return false;
-      seen.add(uId);
-      return true;
-    });
-  }, [routineDetail?.participants]);
 
   const creatorCandidate = pickDetailValue(routineDetail, ['userId', 'creatorId']);
   const isParticipantAdmin = (routineDetail?.participants || []).some(
@@ -637,7 +650,7 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               endTime={routineDetail?.endTime}
             />
 
-            {/* 3. Enrolled Users Card (Previously nested) */}
+            {/* 3. Enrolled Users Card */}
             <Animated.View entering={FadeInDown.delay(150).duration(420)} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={[styles.sectionTitle, { color: collaborativePrimary, marginBottom: 0 }]}>Members & Habit Pokes</Text>
@@ -651,7 +664,6 @@ export default function CollaborativeRoutineViewScreen(): React.ReactElement {
               ) : (
                 <View style={styles.participantsContainer}>
                   {(() => {
-                    // Get today's completion status for each participant
                     const todayStr = new Date().toISOString().split('T')[0];
                     const statusMap = new Map<string, 'completed' | 'pending' | 'missed' | 'none'>();
 
